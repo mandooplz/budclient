@@ -30,6 +30,7 @@ public final class AuthBoard {
     public nonisolated let budClient: BudClient.ID
     private nonisolated let mode: SystemMode
     
+    public var currentUser: UserID?
     public var emailForm: EmailForm.ID?
     
     
@@ -47,9 +48,7 @@ public final class AuthBoard {
     public struct ID: Sendable, Hashable {
         public let value: UUID
     }
-    public struct UserID: Sendable, Hashable {
-        public let value: String
-    }
+    public typealias UserID = String
 }
 
 

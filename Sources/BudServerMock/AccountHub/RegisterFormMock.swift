@@ -14,7 +14,7 @@ public final class RegisterFormMock: Sendable {
     // MARK: core
     public init(accountHub: AccountHubMock,
                 ticket: AccountHubMock.Ticket) {
-        self.id = ID(value: .init())
+        self.id = ID()
         self.accountHub = accountHub
         self.ticket = ticket
 
@@ -67,6 +67,9 @@ public final class RegisterFormMock: Sendable {
     // MARK: value
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        public init(value: UUID = UUID()) {
+            self.value = value
+        }
     }
     public enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil

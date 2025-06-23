@@ -8,6 +8,13 @@ import Foundation
 import Testing
 import BudServerLink
 
+
+// MARK: Tags
+extension Tag {
+    @Tag static var real: Self
+}
+
+
 // MARK: Tests
 @Suite("RegisterRequest")
 struct RegisterRequestTests {

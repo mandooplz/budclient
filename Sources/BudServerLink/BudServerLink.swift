@@ -10,8 +10,8 @@ import FirebaseCore
 
 
 // MARK: Link
-public struct BudServer: Sendable {
-    // MARK: link
+public struct BudServerLink: Sendable {
+    // MARK: core
     private nonisolated let mode: SystemMode
     public init(mode: SystemMode = .real) throws {
         self.mode = mode
@@ -27,5 +27,10 @@ public struct BudServer: Sendable {
             
             FirebaseApp.configure(options: options)
         }
+    }
+    
+    // MARK: state
+    public func getAccountHub() -> AccountHubLink {
+        return AccountHubLink(mode: self.mode)
     }
 }

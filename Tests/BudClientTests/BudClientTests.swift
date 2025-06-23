@@ -9,6 +9,12 @@ import Foundation
 import BudClient
 
 
+// MARK: Tags
+extension Tag {
+    @Tag static var real: Self
+}
+
+
 // MARK: Tests
 @Suite("BudClient")
 struct BudClientTests {

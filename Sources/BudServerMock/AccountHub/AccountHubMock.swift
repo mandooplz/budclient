@@ -55,7 +55,7 @@ public final class AccountHubMock: Sendable {
     public struct Ticket: Sendable, Hashable {
         public let value: UUID
         
-        public init(_ value: UUID = UUID()) {
+        public init(value: UUID = UUID()) {
             self.value = value
         }
     }

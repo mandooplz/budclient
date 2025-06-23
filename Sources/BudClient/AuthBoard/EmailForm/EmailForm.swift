@@ -33,7 +33,7 @@ public final class EmailForm: Sendable {
     public var email: String?
     public var password: String?
     
-    public var registerForm: RegisterForm.ID?
+    public var signUpForm: SignUpForm.ID?
     
     
     // MARK: action
@@ -42,9 +42,9 @@ public final class EmailForm: Sendable {
     }
     public func setUpRegisterForm() {
         // mutate
-        if self.registerForm != nil { return }
-        let registerFormRef = RegisterForm(emailForm: self.id, mode: self.mode)
-        self.registerForm = registerFormRef.id
+        if self.signUpForm != nil { return }
+        let registerFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
+        self.signUpForm = registerFormRef.id
     }
     
     

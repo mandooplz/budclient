@@ -22,37 +22,37 @@ struct EmailFormTests {
         
         @Test func setRegisterForm() async throws {
             // given
-            try await #require(emailFormRef.registerForm == nil)
+            try await #require(emailFormRef.signUpForm == nil)
             
             // when
             await emailFormRef.setUpRegisterForm()
             
             // then
-            await #expect(emailFormRef.registerForm != nil)
+            await #expect(emailFormRef.signUpForm != nil)
         }
         @Test func createRegisterForm() async throws {
             // given
-            try await #require(emailFormRef.registerForm == nil)
+            try await #require(emailFormRef.signUpForm == nil)
             
             // when
             await emailFormRef.setUpRegisterForm()
             
             // then
-            let registerForm = try #require(await emailFormRef.registerForm)
-            await #expect(RegisterFormManager.get(registerForm) != nil)
+            let registerForm = try #require(await emailFormRef.signUpForm)
+            await #expect(SignUpFormManager.get(registerForm) != nil)
         }
         @Test func whenRegisterFormAlreadyExists() async throws {
             // given
-            try await #require(emailFormRef.registerForm == nil)
+            try await #require(emailFormRef.signUpForm == nil)
             
             await emailFormRef.setUpRegisterForm()
-            let registerForm = try #require(await emailFormRef.registerForm)
+            let registerForm = try #require(await emailFormRef.signUpForm)
             
             // when
             await emailFormRef.setUpRegisterForm()
             
             // then
-            await #expect(emailFormRef.registerForm == registerForm)
+            await #expect(emailFormRef.signUpForm == registerForm)
         }
     }
 }
