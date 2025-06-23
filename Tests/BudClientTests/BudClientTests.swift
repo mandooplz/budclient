@@ -9,6 +9,7 @@ import Foundation
 import BudClient
 
 
+// MARK: Tests
 @Suite("BudClient")
 struct BudClientTests {
     struct SetUp {

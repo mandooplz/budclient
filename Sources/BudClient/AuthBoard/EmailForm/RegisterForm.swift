@@ -32,8 +32,9 @@ public final class RegisterForm: Sendable {
     
     
     // MARK: action
-    public func register() {
-        // Register logic to be implemented
+    public func registerAndSignIn() {
+        // 이를 구현하려면 Server가 필요하다. 
+        fatalError()
     }
     
     

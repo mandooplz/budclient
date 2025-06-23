@@ -34,7 +34,7 @@ public final class EmailForm: Sendable {
     
     // MARK: action
     public func signIn() {
-        
+        fatalError()
     }
     public func setUpRegisterForm() {
         // mutate

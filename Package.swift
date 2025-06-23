@@ -15,8 +15,8 @@ let package = Package(
         
         // MARK: BudServer
         .library(
-            name: "BudServer",
-            targets: ["BudServer"]
+            name: "BudServerLink",
+            targets: ["BudServerLink"]
         ),
         
         // MARK: Tools
@@ -32,7 +32,7 @@ let package = Package(
         // MARK: BudClient
         .target(
             name: "BudClient",
-            dependencies: ["BudServer", "Tools"]
+            dependencies: ["BudServerLink", "Tools"]
         ),
         .testTarget(
             name: "BudClientTests",
@@ -42,7 +42,7 @@ let package = Package(
         
         // MARK: BudServer
         .target(
-            name: "BudServer",
+            name: "BudServerLink",
             dependencies: [
                 "Tools",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
@@ -53,14 +53,8 @@ let package = Package(
         ),
         .testTarget(
             name: "BudServerTests",
-            dependencies: ["Tools", "BudServer"]
+            dependencies: ["Tools", "BudServerLink"]
         ),
-        
-        .target(
-            name: "BudServerMock",
-            dependencies: ["Tools"]
-        ),
-        
         
         
         // MARK: Tools

@@ -8,7 +8,7 @@ import Foundation
 import Tools
 
 
-// MARK: Object
+// MARK: System
 @MainActor
 public final class BudClient: Sendable {
     // MARK: core
@@ -46,7 +46,7 @@ public final class BudClient: Sendable {
 }
 
 
-// MARK: Object Manager
+// MARK: System Manager
 @MainActor
 public final class BudClientManager: Sendable {
     // MARK: state
