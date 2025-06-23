@@ -11,8 +11,7 @@ import Foundation
 @MainActor
 public final class Account: Sendable {
     // MARK: core
-    public init(email: String,
-                password: String) {
+    public init(email: String, password: String) {
         self.id = ID(value: UUID())
         self.userId = UUID().uuidString
         
@@ -38,6 +37,7 @@ public final class Account: Sendable {
     public struct ID: Sendable, Hashable {
         public let value: UUID
     }
+    public typealias UserID = String
 }
 
 

@@ -17,4 +17,9 @@ public struct Issue: Error, Hashable, Sendable, Identifiable {
         self.isKnown = isKnown
         self.reason = reason
     }
+    
+    public init<T: RawRepresentable<String>>(isKnown: Bool, reason: T) {
+        self.isKnown = isKnown
+        self.reason = reason.rawValue
+    }
 }

@@ -70,7 +70,7 @@ let package = Package(
         ),
         .testTarget(
             name: "BudServerMockTests",
-            dependencies: ["Tools"]
+            dependencies: ["Tools", "BudServerMock"]
         ),
         
         
