@@ -22,10 +22,18 @@ public final class BudClient: Sendable {
     
     
     // MARK: state
-    public let id: ID
+    public nonisolated let id: ID
+    
+    public var authBoard: AuthBoard.ID?
     
     
     // MARK: action
+    public func setUp() {
+        // mutate
+        if self.authBoard != nil { return }
+        let authBoardRef = AuthBoard()
+        self.authBoard = authBoardRef.id
+    }
     
     
     // MARK: value
