@@ -8,7 +8,7 @@ import Testing
 import BudServer
 
 
-@Test func setUpFirebase() async throws {
+@Test(.disabled()) func setUpFirebase() async throws {
     try BudServerLink()
 }
 

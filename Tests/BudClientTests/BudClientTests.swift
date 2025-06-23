@@ -14,7 +14,7 @@ struct BudClientTests {
     struct SetUp {
         let budClientRef: BudClient
         init() async throws {
-            self.budClientRef = await BudClient()
+            self.budClientRef = await BudClient(mode: .test)
         }
         @Test func setAuthBoard() async throws {
             // given

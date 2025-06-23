@@ -57,7 +57,8 @@ let package = Package(
         ),
         
         .target(
-            name: "BudServerMock"
+            name: "BudServerMock",
+            dependencies: ["Tools"]
         ),
         
         

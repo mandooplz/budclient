@@ -5,14 +5,16 @@
 //  Created by 김민우 on 6/23/25.
 //
 import Foundation
+import Tools
 
 
 // MARK: Object
 @MainActor
 public final class BudClient: Sendable {
     // MARK: core
-    public init() {
+    public init(mode: SystemMode = .real) {
         self.id = ID(value: UUID())
+        self.mode = mode
         
         BudClientManager.register(self)
     }
@@ -23,6 +25,7 @@ public final class BudClient: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
+    public nonisolated let mode: SystemMode
     
     public var authBoard: AuthBoard.ID?
     

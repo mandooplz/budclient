@@ -16,13 +16,44 @@ struct AuthBoardTests {
         let budClientRef: BudClient
         let authBoardRef: AuthBoard
         init() async {
-            self.budClientRef = await BudClient()
+            self.budClientRef = await BudClient(mode: .test)
             self.authBoardRef = await getAuthBoard(self.budClientRef)
         }
         
-        @Test func setEmailForm() async throws { }
-        @Test func createEmailForm() async throws { }
-        
+        @Test func setEmailForm() async throws {
+            // given
+            try await #require(authBoardRef.emailForm == nil)
+            
+            // when
+            await authBoardRef.setUpEmailForm()
+            
+            // then
+            try await #require(authBoardRef.emailForm != nil)
+        }
+        @Test func createEmailForm() async throws {
+            // given
+            try await #require(authBoardRef.emailForm == nil)
+            
+            // when
+            await authBoardRef.setUpEmailForm()
+            
+            // then
+            let emailForm = try #require(await authBoardRef.emailForm)
+            await #expect(EmailFormManager.get(emailForm) != nil)
+        }
+        @Test func whenEmailFormAlreadyExists() async throws {
+            // given
+            try await #require(authBoardRef.emailForm == nil)
+            
+            await authBoardRef.setUpEmailForm()
+            let emailForm = try #require(await authBoardRef.emailForm)
+            
+            // when
+            await authBoardRef.setUpEmailForm()
+            
+            // then
+            await #expect(authBoardRef.emailForm == emailForm)
+        }
     }
 }
 

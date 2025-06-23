@@ -32,6 +32,7 @@ public final class AuthBoard {
     // MARK: action
     public func setUpEmailForm() {
         // mutate
+        if self.emailForm != nil { return }
         let emailFormRef = EmailForm(authBoard: self.id)
         self.emailForm = emailFormRef.id
     }

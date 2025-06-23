@@ -8,4 +8,3 @@
 
 // MARK: Hook
 public typealias Hook = (@Sendable () async -> Void)
-

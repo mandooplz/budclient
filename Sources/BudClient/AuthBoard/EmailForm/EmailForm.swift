@@ -26,30 +26,27 @@ public final class EmailForm: Sendable {
     public nonisolated let id: ID
     public nonisolated let authBoard: AuthBoard.ID
     
-    public var email: String = ""
-    public var password: String = ""
+    public var email: String?
+    public var password: String?
+    
+    public var registerForm: RegisterForm.ID?
     
     
     // MARK: action
+    public func signIn() {
+        
+    }
+    public func setUpRegisterForm() {
+        // mutate
+        if self.registerForm != nil { return }
+        let registerFormRef = RegisterForm(emailForm: self.id)
+        self.registerForm = registerFormRef.id
+    }
     
     
     // MARK: value
     public struct ID: Sendable, Hashable {
         public let value: UUID
-    }
-    internal struct Email: Sendable, Hashable {
-        internal let value: String
-        
-        internal init?(_ value: String) {
-            guard Email.isValid(value) else { return nil }
-            self.value = value
-        }
-        
-        internal static func isValid(_ value: String) -> Bool {
-            // Basic email regex for demonstration; adjust as needed
-            let regex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
-            return value.range(of: regex, options: .regularExpression) != nil
-        }
     }
 }
 
