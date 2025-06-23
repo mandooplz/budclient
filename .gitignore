@@ -8,4 +8,5 @@ DerivedData/
 .netrc
 GoogleService-Info.plist
 .command
+Sources/**/GoogleService-Info.plist
 Sources/BudServer/GoogleService-Info.plist
