@@ -51,7 +51,6 @@ public final class AccountHubMock: Sendable {
     }
     
     
-    
     // MARK: value
     public struct Ticket: Sendable, Hashable {
         public let value: UUID
