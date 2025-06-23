@@ -1,6 +1,16 @@
+//
+//  BudClientTests.swift
+//  BudClient
+//
+//  Created by 김민우 on 6/23/25.
+//
 import Testing
-@testable import BudClient
+import Foundation
+import BudClient
 
-@Test func example() async throws {
-    // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+
+@Suite("BudClient")
+struct BudClientTests {
+    
 }
+
