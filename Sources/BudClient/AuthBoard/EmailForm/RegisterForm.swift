@@ -5,15 +5,19 @@
 //  Created by 김민우 on 6/23/25.
 //
 import Foundation
+import Tools
+import BudServerLink
 
 
 // MARK: Object
 @MainActor
 public final class RegisterForm: Sendable {
     // MARK: core
-    public init(emailForm: EmailForm.ID) {
+    public init(emailForm: EmailForm.ID,
+                mode: SystemMode) {
         self.id = ID(value: UUID())
         self.emailForm = emailForm
+        self.mode = mode
         
         RegisterFormManager.register(self)
     }
@@ -25,6 +29,7 @@ public final class RegisterForm: Sendable {
     // MARK: state
     public nonisolated let id: ID
     public nonisolated let emailForm: EmailForm.ID
+    private nonisolated let mode: SystemMode
     
     public var email: String?
     public var password: String?
@@ -33,7 +38,9 @@ public final class RegisterForm: Sendable {
     
     // MARK: action
     public func registerAndSignIn() {
-        // 이를 구현하려면 Server가 필요하다. 
+        // 이를 구현하려면 BudServer가 필요하다.
+        let budServerLink = try! BudServer(mode: self.mode)
+        
         fatalError()
     }
     

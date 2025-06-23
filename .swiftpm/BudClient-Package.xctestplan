@@ -18,8 +18,13 @@
         },
         {
           "containerPath" : "container:",
-          "identifier" : "BudServer",
-          "name" : "BudServer"
+          "identifier" : "BudServerLink",
+          "name" : "BudServerLink"
+        },
+        {
+          "containerPath" : "container:",
+          "identifier" : "BudServerMock",
+          "name" : "BudServerMock"
         }
       ]
     },
@@ -29,15 +34,22 @@
     {
       "target" : {
         "containerPath" : "container:",
-        "identifier" : "BudServerTests",
-        "name" : "BudServerTests"
+        "identifier" : "BudClientTests",
+        "name" : "BudClientTests"
       }
     },
     {
       "target" : {
         "containerPath" : "container:",
-        "identifier" : "BudClientTests",
-        "name" : "BudClientTests"
+        "identifier" : "BudServerLinkTests",
+        "name" : "BudServerLinkTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "BudServerMockTests",
+        "name" : "BudServerMockTests"
       }
     }
   ],

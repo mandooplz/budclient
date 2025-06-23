@@ -63,6 +63,20 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BudServerMock"
+               BuildableName = "BudServerMock"
+               BlueprintName = "BudServerMock"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -94,6 +108,26 @@
                BlueprintIdentifier = "BudServerTests"
                BuildableName = "BudServerTests"
                BlueprintName = "BudServerTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BudServerLinkTests"
+               BuildableName = "BudServerLinkTests"
+               BlueprintName = "BudServerLinkTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BudServerMockTests"
+               BuildableName = "BudServerMockTests"
+               BlueprintName = "BudServerMockTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>

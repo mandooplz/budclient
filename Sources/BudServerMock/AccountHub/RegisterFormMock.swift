@@ -9,20 +9,24 @@ import Foundation
 
 // MARK: Object
 @MainActor
-public final class RegisterRequest: Sendable {
-    // MARK: core
-    public init() {
-        self.id = ID(value: UUID())
+public final class RegisterFormMock: Sendable {
+    // MARK: link
+    public init(accountHub: AccountHubMock) {
+        self.id = ID(value: .init())
+        self.accountHub = accountHub
 
-        RegisterRequestManager.register(self)
+        RegisterFormMockManager.register(self)
     }
     internal func delete() {
-        RegisterRequestManager.unregister(self.id)
+        RegisterFormMockManager.unregister(self.id)
     }
+    
+    // MARK: core
+    
 
     // MARK: state
     public nonisolated let id: ID
-    public nonisolated let accountHub = AccountHub.self
+    public nonisolated let accountHub: AccountHubMock
     
     public var email: String?
     public var password: String?
@@ -42,7 +46,7 @@ public final class RegisterRequest: Sendable {
         
         // mutate
         let account = Account(email: email, password: password)
-        AccountHub.accounts.insert(account.id)
+        accountHub.accounts.insert(account.id)
     }
 
     // MARK: value
@@ -53,15 +57,15 @@ public final class RegisterRequest: Sendable {
 
 // MARK: Object Manager
 @MainActor
-public final class RegisterRequestManager: Sendable {
-    private static var container: [RegisterRequest.ID: RegisterRequest] = [:]
-    public static func register(_ object: RegisterRequest) {
+public final class RegisterFormMockManager: Sendable {
+    private static var container: [RegisterFormMock.ID: RegisterFormMock] = [:]
+    public static func register(_ object: RegisterFormMock) {
         container[object.id] = object
     }
-    public static func unregister(_ id: RegisterRequest.ID) {
+    public static func unregister(_ id: RegisterFormMock.ID) {
         container[id] = nil
     }
-    public static func get(_ id: RegisterRequest.ID) -> RegisterRequest? {
+    public static func get(_ id: RegisterFormMock.ID) -> RegisterFormMock? {
         container[id]
     }
 }

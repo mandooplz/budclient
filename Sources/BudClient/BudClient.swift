@@ -25,7 +25,7 @@ public final class BudClient: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
-    public nonisolated let mode: SystemMode
+    private nonisolated let mode: SystemMode
     
     public var authBoard: AuthBoard.ID?
     
@@ -34,7 +34,7 @@ public final class BudClient: Sendable {
     public func setUp() {
         // mutate
         if self.authBoard != nil { return }
-        let authBoardRef = AuthBoard(budClient: self.id)
+        let authBoardRef = AuthBoard(budClient: self.id, mode: self.mode)
         self.authBoard = authBoardRef.id
     }
     

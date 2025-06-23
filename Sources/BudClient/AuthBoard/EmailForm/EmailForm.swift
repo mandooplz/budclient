@@ -5,15 +5,18 @@
 //  Created by 김민우 on 6/23/25.
 //
 import Foundation
+import Tools
 
 
 // MARK: Object
 @MainActor
 public final class EmailForm: Sendable {
     // MARK: core
-    public init(authBoard: AuthBoard.ID) {
+    public init(authBoard: AuthBoard.ID,
+                mode: SystemMode) {
         self.id = ID(value: UUID())
         self.authBoard = authBoard
+        self.mode = mode
         
         EmailFormManager.register(self)
     }
@@ -25,6 +28,7 @@ public final class EmailForm: Sendable {
     // MARK: state
     public nonisolated let id: ID
     public nonisolated let authBoard: AuthBoard.ID
+    private nonisolated let mode: SystemMode
     
     public var email: String?
     public var password: String?
@@ -39,7 +43,7 @@ public final class EmailForm: Sendable {
     public func setUpRegisterForm() {
         // mutate
         if self.registerForm != nil { return }
-        let registerFormRef = RegisterForm(emailForm: self.id)
+        let registerFormRef = RegisterForm(emailForm: self.id, mode: self.mode)
         self.registerForm = registerFormRef.id
     }
     

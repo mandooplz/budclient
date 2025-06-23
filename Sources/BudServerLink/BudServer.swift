@@ -11,9 +11,14 @@ import FirebaseCore
 
 // MARK: Link
 public struct BudServer: Sendable {
-    // 이 루틴은 어딘가에 존재하는 BudServer의 링크를 생성하는 루틴
+    // MARK: link
+    private nonisolated let mode: SystemMode
     public init(mode: SystemMode = .real) throws {
+        self.mode = mode
         if mode == .real {
+            if FirebaseApp.app() != nil {
+                return
+            }
             guard let filePath = Bundle.module.path(forResource: "GoogleService-Info",
                                                     ofType: "plist"),
                   let options = FirebaseOptions(contentsOfFile: filePath) else {
@@ -24,4 +29,3 @@ public struct BudServer: Sendable {
         }
     }
 }
-

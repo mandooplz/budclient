@@ -7,13 +7,15 @@
 import Foundation
 
 
-// MARK: Object
+// MARK: Link
 @MainActor
 public final class Account: Sendable {
     // MARK: core
-    public init(email: String, password: String) {
+    public init(email: String,
+                password: String) {
         self.id = ID(value: UUID())
         self.userId = UUID().uuidString
+        
         self.email = email
         self.password = password
         
