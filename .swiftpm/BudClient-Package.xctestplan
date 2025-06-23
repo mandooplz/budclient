@@ -1,0 +1,45 @@
+{
+  "configurations" : [
+    {
+      "id" : "590C5DF4-6EA1-4646-8466-DE160E89D4DF",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:",
+          "identifier" : "BudClient",
+          "name" : "BudClient"
+        },
+        {
+          "containerPath" : "container:",
+          "identifier" : "BudServer",
+          "name" : "BudServer"
+        }
+      ]
+    },
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "BudServerTests",
+        "name" : "BudServerTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "BudClientTests",
+        "name" : "BudClientTests"
+      }
+    }
+  ],
+  "version" : 1
+}
