@@ -31,7 +31,7 @@ public final class BudClient: Sendable {
     public func setUp() {
         // mutate
         if self.authBoard != nil { return }
-        let authBoardRef = AuthBoard()
+        let authBoardRef = AuthBoard(budClient: self.id)
         self.authBoard = authBoardRef.id
     }
     

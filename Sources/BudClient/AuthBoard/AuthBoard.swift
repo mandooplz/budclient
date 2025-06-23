@@ -11,8 +11,9 @@ import Foundation
 @MainActor
 public final class AuthBoard {
     // MARK: core
-    public init() {
+    public init(budClient: BudClient.ID) {
         self.id = ID(value: UUID())
+        self.budClient = budClient
         
         AuthBoardManager.register(self)
     }
@@ -23,14 +24,25 @@ public final class AuthBoard {
     
     // MARK: state
     public nonisolated let id: ID
+    public nonisolated let budClient: BudClient.ID
+    
+    public var emailForm: EmailForm.ID?
     
     
     // MARK: action
+    public func setUpEmailForm() {
+        // mutate
+        let emailFormRef = EmailForm(authBoard: self.id)
+        self.emailForm = emailFormRef.id
+    }
     
     
     // MARK: value
     public struct ID: Sendable, Hashable {
         public let value: UUID
+    }
+    public struct UserID: Sendable, Hashable {
+        public let value: String
     }
 }
 

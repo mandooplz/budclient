@@ -8,7 +8,9 @@ import Testing
 import BudServer
 
 
-@Suite("BudServerLink")
-struct BudServerLinkTests {
-    
+@Test func setUpFirebase() async throws {
+    try BudServerLink()
 }
+
+
+

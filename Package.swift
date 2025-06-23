@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "BudClient",
+    platforms: [.macOS(.v15)],
     products: [
         // MARK: BudClient
         .library(
@@ -24,6 +25,9 @@ let package = Package(
             targets: ["Tools"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "10.24.0")
+    ],
     targets: [
         // MARK: BudClient
         .target(
@@ -39,12 +43,23 @@ let package = Package(
         // MARK: BudServer
         .target(
             name: "BudServer",
-            dependencies: ["Tools"]
+            dependencies: [
+                "Tools",
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
+            ],
+            resources: [
+                .process("GoogleService-Info.plist")
+            ]
         ),
         .testTarget(
             name: "BudServerTests",
-            dependencies: ["Tools"]
+            dependencies: ["Tools", "BudServer"]
         ),
+        
+        .target(
+            name: "BudServerMock"
+        ),
+        
         
         
         // MARK: Tools
@@ -52,3 +67,4 @@ let package = Package(
             name: "Tools")
     ]
 )
+
