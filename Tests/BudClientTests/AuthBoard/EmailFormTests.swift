@@ -96,12 +96,102 @@ struct EmailFormTests {
         
         @Test func updateCurrentUserInAuthBoard() async throws {
             // given
-            let authBoardRef = await AuthBoardManager.get(budClientRef.authBoard!)
-            try await #require(authBoardRef!.currentUser == nil)
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            
+            await signUpWithEmailForm(emailFormRef,
+                                      email: testEmail,
+                                      password: testPassword)
+            
+            // given
+            let authBoard = await budClientRef.authBoard!
+            let authBoardRef = await AuthBoardManager.get(authBoard)!
+            await authBoardRef.signOut()
+            try await #require(authBoardRef.currentUser == nil)
+            try await #require(authBoardRef.emailForm != nil)
+            
+            let newEmailForm = await authBoardRef.emailForm!
+            try #require(newEmailForm != emailFormRef.id)
+            let newEmailFormRef = await EmailFormManager.get(newEmailForm)!
+            
+            await MainActor.run {
+                newEmailFormRef.email = testEmail
+                newEmailFormRef.password = testPassword
+            }
             
             // when
+            await newEmailFormRef.signIn()
             
             // then
+            await #expect(newEmailFormRef.issue == nil)
+            
+            await #expect(authBoardRef.currentUser != nil)
+        }
+        @Test func setNilToEmailFormInAuthBoard() async throws {
+            // given
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            
+            await signUpWithEmailForm(emailFormRef,
+                                      email: testEmail,
+                                      password: testPassword)
+            
+            // given
+            let authBoard = await budClientRef.authBoard!
+            let authBoardRef = await AuthBoardManager.get(authBoard)!
+            await authBoardRef.signOut()
+            try await #require(authBoardRef.currentUser == nil)
+            try await #require(authBoardRef.emailForm != nil)
+            
+            let newEmailForm = await authBoardRef.emailForm!
+            try #require(newEmailForm != emailFormRef.id)
+            let newEmailFormRef = await EmailFormManager.get(newEmailForm)!
+            
+            await MainActor.run {
+                newEmailFormRef.email = testEmail
+                newEmailFormRef.password = testPassword
+            }
+            
+            // when
+            await newEmailFormRef.signIn()
+            
+            // then
+            await #expect(newEmailFormRef.issue == nil)
+            
+            await #expect(authBoardRef.emailForm == nil)
+        }
+        @Test func deleteEmailFormWhenSignedIn() async throws {
+            // given
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            
+            await signUpWithEmailForm(emailFormRef,
+                                      email: testEmail,
+                                      password: testPassword)
+            
+            // given
+            let authBoard = await budClientRef.authBoard!
+            let authBoardRef = await AuthBoardManager.get(authBoard)!
+            await authBoardRef.signOut()
+            try await #require(authBoardRef.currentUser == nil)
+            try await #require(authBoardRef.emailForm != nil)
+            
+            let newEmailForm = await authBoardRef.emailForm!
+            try #require(newEmailForm != emailFormRef.id)
+            let newEmailFormRef = await EmailFormManager.get(newEmailForm)!
+            
+            await MainActor.run {
+                newEmailFormRef.email = testEmail
+                newEmailFormRef.password = testPassword
+            }
+            
+            // when
+            await newEmailFormRef.signIn()
+            
+            // then
+            await #expect(newEmailFormRef.issue == nil)
+            
+            await #expect(EmailFormManager.get(newEmailForm) == nil)
         }
     }
 }
@@ -116,6 +206,20 @@ internal func getEmailForm(_ budClientRef: BudClient) async -> EmailForm {
     let emailFormRef = await EmailFormManager.get(emailForm)!
     return emailFormRef
 }
-private func signUpWithEmailForm(_ emailFormRef: EmailForm) async {
+private func signUpWithEmailForm(_ emailFormRef: EmailForm,
+                                 email: String,
+                                 password: String) async {
+    await emailFormRef.setUpSignUpForm()
     
+    let signUpForm = await emailFormRef.signUpForm!
+    let signUpFormRef = await SignUpFormManager.get(signUpForm)!
+    
+    await MainActor.run {
+        signUpFormRef.email = email
+        signUpFormRef.password = password
+        signUpFormRef.passwordCheck = password
+    }
+    
+    await signUpFormRef.signUp()
+    await signUpFormRef.remove()
 }

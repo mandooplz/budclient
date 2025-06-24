@@ -50,6 +50,7 @@ public final class EmailForm: Sendable {
         // capture
         guard let email else { issue = Issue(isKnown: true, reason: Error.emailIsNil); return }
         guard let password else { issue = Issue(isKnown: true, reason: Error.passwordIsNil); return}
+        let authBoardRef = AuthBoardManager.get(self.authBoard)!
         
         // compute
         let userId: String
@@ -70,7 +71,10 @@ public final class EmailForm: Sendable {
             return
         }
         
-        fatalError()
+        // mutate
+        authBoardRef.currentUser = userId
+        authBoardRef.emailForm = nil
+        self.delete()
     }
     
     

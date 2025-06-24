@@ -7,6 +7,7 @@
 import Foundation
 import Testing
 import BudClient
+import Tools
 
 
 // MARK: Tests
@@ -55,6 +56,48 @@ struct AuthBoardTests {
             await #expect(authBoardRef.emailForm == emailForm)
         }
     }
+    
+    struct SignOut {
+        let budClientRef: BudClient
+        let authBoardRef: AuthBoard
+        init() async {
+            self.budClientRef = await BudClient(mode: .test)
+            self.authBoardRef = await getAuthBoard(self.budClientRef)
+            
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            
+            await signUpWithEmailForm(authBoardRef,
+                                      email: testEmail,
+                                      password: testPassword)
+            
+            try! await #require(authBoardRef.currentUser != nil)
+            try! await #require(authBoardRef.emailForm == nil)
+        }
+        
+        @Test func setNilCurrentUserInAuthBoard() async throws {
+            // when
+            await authBoardRef.signOut()
+            
+            // then
+            await #expect(authBoardRef.currentUser == nil)
+        }
+        @Test func setEmailFormInAuthBoard() async throws {
+            // when
+            await authBoardRef.signOut()
+            
+            // then
+            await #expect(authBoardRef.emailForm != nil)
+        }
+        @Test func createEmailForm() async throws {
+            // when
+            await authBoardRef.signOut()
+            
+            // then
+            let emailForm = try #require(await authBoardRef.emailForm)
+            await #expect(EmailFormManager.get(emailForm) != nil)
+        }
+    }
 }
 
 
@@ -67,4 +110,26 @@ func getAuthBoard(_ budClientRef: BudClient) async -> AuthBoard {
     let authBoard = await budClientRef.authBoard!
     let authBoardRef = await AuthBoardManager.get(authBoard)!
     return authBoardRef
+}
+private func signUpWithEmailForm(_ authBoardRef: AuthBoard,
+                                 email: String,
+                                 password: String) async {
+    await authBoardRef.setUpEmailForm()
+    
+    let emailForm = try! #require(await authBoardRef.emailForm)
+    let emailFormRef = try! #require(await EmailFormManager.get(emailForm))
+    
+    await emailFormRef.setUpSignUpForm()
+    
+    let signUpForm = await emailFormRef.signUpForm!
+    let signUpFormRef = await SignUpFormManager.get(signUpForm)!
+    
+    await MainActor.run {
+        signUpFormRef.email = email
+        signUpFormRef.password = password
+        signUpFormRef.passwordCheck = password
+    }
+    
+    await signUpFormRef.signUp()
+    await signUpFormRef.remove()
 }

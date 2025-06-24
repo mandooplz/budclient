@@ -42,6 +42,13 @@ public final class AuthBoard {
                                      mode: self.mode)
         self.emailForm = emailFormRef.id
     }
+    public func signOut() {
+        // mutate
+        self.currentUser = nil
+        let emailFormRef = EmailForm(authBoard: self.id,
+                                     mode: self.mode)
+        self.emailForm = emailFormRef.id
+    }
     
     
     // MARK: value

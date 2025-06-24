@@ -32,6 +32,11 @@
   },
   "testTargets" : [
     {
+      "skippedTags" : {
+        "tags" : [
+          ".real"
+        ]
+      },
       "target" : {
         "containerPath" : "container:",
         "identifier" : "BudServerTests",
@@ -39,6 +44,11 @@
       }
     },
     {
+      "skippedTags" : {
+        "tags" : [
+          ".real"
+        ]
+      },
       "target" : {
         "containerPath" : "container:",
         "identifier" : "BudClientTests",
@@ -46,6 +56,11 @@
       }
     },
     {
+      "skippedTags" : {
+        "tags" : [
+          ".real"
+        ]
+      },
       "target" : {
         "containerPath" : "container:",
         "identifier" : "BudServerMockTests",
