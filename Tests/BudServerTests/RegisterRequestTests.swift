@@ -6,7 +6,7 @@
 //
 import Foundation
 import Testing
-import BudServerLink
+import BudServer
 
 
 // MARK: Tags

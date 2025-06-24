@@ -12,7 +12,7 @@ import BudServerMock
 // MARK: Link
 public struct AccountHubLink: Sendable {
     // MARK: core
-    private nonisolated let mode: SystemMode
+    private let mode: SystemMode
     public init(mode: SystemMode) {
         self.mode = mode
     }

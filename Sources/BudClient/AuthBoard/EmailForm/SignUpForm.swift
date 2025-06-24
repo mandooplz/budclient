@@ -6,7 +6,7 @@
 //
 import Foundation
 import Tools
-import BudServerLink
+import BudServer
 
 
 // MARK: Object
@@ -55,7 +55,7 @@ public final class SignUpForm: Sendable {
         let userId: AuthBoard.UserID?
         do {
             // register
-            let budServerLink = try BudServerLink(mode: self.mode)
+            let budServerLink = BudServerLink(mode: self.mode)
             let accountHubLink = budServerLink.getAccountHub()
             
             let newTicket = AccountHubLink.Ticket()
