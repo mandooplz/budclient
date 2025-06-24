@@ -202,7 +202,7 @@ struct SignUpFormTests {
 internal func getSignUpForm(_ budClientRef: BudClient) async -> SignUpForm {
     let emailForm = await getEmailForm(budClientRef)
     
-    await emailForm.setUpRegisterForm()
+    await emailForm.setUpSignUpForm()
     let signUpForm = try! #require(await emailForm.signUpForm)
     let signUpFormRef = await SignUpFormManager.get(signUpForm)!
     return signUpFormRef

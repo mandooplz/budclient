@@ -26,7 +26,7 @@ struct EmailFormTests {
             try await #require(emailFormRef.signUpForm == nil)
             
             // when
-            await emailFormRef.setUpRegisterForm()
+            await emailFormRef.setUpSignUpForm()
             
             // then
             await #expect(emailFormRef.signUpForm != nil)
@@ -36,7 +36,7 @@ struct EmailFormTests {
             try await #require(emailFormRef.signUpForm == nil)
             
             // when
-            await emailFormRef.setUpRegisterForm()
+            await emailFormRef.setUpSignUpForm()
             
             // then
             let registerForm = try #require(await emailFormRef.signUpForm)
@@ -46,11 +46,11 @@ struct EmailFormTests {
             // given
             try await #require(emailFormRef.signUpForm == nil)
             
-            await emailFormRef.setUpRegisterForm()
+            await emailFormRef.setUpSignUpForm()
             let registerForm = try #require(await emailFormRef.signUpForm)
             
             // when
-            await emailFormRef.setUpRegisterForm()
+            await emailFormRef.setUpSignUpForm()
             
             // then
             await #expect(emailFormRef.signUpForm == registerForm)
@@ -100,7 +100,6 @@ struct EmailFormTests {
             try await #require(authBoardRef!.currentUser == nil)
             
             // when
-            
             
             // then
         }

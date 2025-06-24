@@ -40,7 +40,7 @@ public final class EmailForm: Sendable {
     
     
     // MARK: action
-    public func setUpRegisterForm() {
+    public func setUpSignUpForm() {
         // mutate
         if self.signUpForm != nil { return }
         let registerFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
@@ -70,7 +70,7 @@ public final class EmailForm: Sendable {
             return
         }
         
-        // mutate
+        fatalError()
     }
     
     
