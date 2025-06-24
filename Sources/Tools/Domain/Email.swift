@@ -23,7 +23,7 @@ public struct Email: Sendable, Hashable {
     }
     
     public static func random() -> Email {
-        let usernames = ["user", "test", "demo", "sample", "random", "mail", "hello", "swift", "dev", "alpha"]
+        let usernames = ["user", "test", "demo", "sample", "random", "mail", "hello", "swift", "dev", "alpha", "beta", "apple", "orange", "java", "kotlin", "typescript"]
         let domains = ["example", "testmail", "mailhost", "email", "demoapp", "swiftdev", "mydomain", "budclient", "samplehost"]
         let tlds = ["com", "net", "org", "co", "dev", "io"]
         

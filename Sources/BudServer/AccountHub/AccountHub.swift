@@ -36,6 +36,31 @@ final class AccountHub {
         
         return true
     }
+    func getUserId(email: String, password: String) async throws -> String {
+        // 현재 로그인되어 있다면 가져옴
+        if let currentUser = Auth.auth().currentUser {
+            return currentUser.uid
+        }
+        
+        // 없다면 로그인 시도
+        do {
+            let result = try await Auth.auth().signIn(withEmail: email, password: password)
+            return result.user.uid
+        } catch let error as NSError {
+            if let errorCode = AuthErrorCode.Code(rawValue: error.code) {
+                switch errorCode {
+                case .userNotFound:
+                    throw AccountHubLink.Error.userNotFound
+                case .wrongPassword:
+                    throw AccountHubLink.Error.wrongPassword
+                default:
+                    throw error
+                }
+            } else {
+                throw error
+            }
+        }
+    }
     
     var tickets: Set<Ticket> = []
     var registerForms: [Ticket:RegisterForm.ID] = [:]

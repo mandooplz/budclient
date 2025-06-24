@@ -41,7 +41,16 @@ public struct AccountHubLink: Sendable {
                 throw error
             }
         case .real:
-            fatalError()
+            do {
+                return try await AccountHub.shared.getUserId(email: email, password: password)
+            } catch(let error as AccountHubMock.Error) {
+                switch error {
+                case .userNotFound: throw Error.userNotFound;
+                case .wrongPassword: throw Error.wrongPassword
+                }
+            } catch {
+                throw error
+            }
         }
     }
     
