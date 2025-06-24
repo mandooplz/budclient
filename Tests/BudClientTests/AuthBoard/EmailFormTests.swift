@@ -55,6 +55,15 @@ struct EmailFormTests {
             await #expect(emailFormRef.signUpForm == registerForm)
         }
     }
+    
+    struct SignIn {
+        let budClientRef: BudClient
+        let emailFormRef: EmailForm
+        init() async throws {
+            self.budClientRef = await BudClient(mode: .test)
+            self.emailFormRef = await getEmailForm(budClientRef)
+        }
+    }
 }
 
 

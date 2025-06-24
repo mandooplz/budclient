@@ -35,22 +35,33 @@ public final class EmailForm: Sendable {
     
     public var signUpForm: SignUpForm.ID?
     
+    public var issue: Issue?
+    
     
     // MARK: action
-    public func signIn() {
-        fatalError()
-    }
     public func setUpRegisterForm() {
         // mutate
         if self.signUpForm != nil { return }
         let registerFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
         self.signUpForm = registerFormRef.id
     }
+    public func signIn() {
+        // capture
+        guard let email else { issue = Issue(isKnown: true, reason: Error.emailIsNil); return }
+        guard let password else { issue = Issue(isKnown: true, reason: Error.passwordIsNil); return}
+        
+        // compute
+        let userId: String
+    }
+    
     
     
     // MARK: value
     public struct ID: Sendable, Hashable {
         public let value: UUID
+    }
+    public enum Error: String, Swift.Error {
+        case emailIsNil, passwordIsNil
     }
 }
 
