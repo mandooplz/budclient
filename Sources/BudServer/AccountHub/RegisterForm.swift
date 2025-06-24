@@ -7,6 +7,7 @@
 import Foundation
 import Tools
 import BudServerMock
+import FirebaseAuth
 
 
 // MARK: Link
@@ -27,7 +28,7 @@ public struct RegisterFormLink: Sendable {
         self.id = ID(idForMock: idForMock)
         self.idForMock = idForMock
     }
-    
+     
     // MARK: state
     public func setEmail(_ value: String) async throws {
         switch mode {
@@ -73,6 +74,7 @@ public struct RegisterFormLink: Sendable {
                 registerFormRef.submit()
             }
         case .real:
+            try await Auth.auth().createUser(withEmail: "", password: "")
             fatalError()
         }
     }

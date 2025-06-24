@@ -15,8 +15,8 @@ let package = Package(
         
         // MARK: BudServerLink
         .library(
-            name: "BudServerLink",
-            targets: ["BudServerLink"]
+            name: "BudServer",
+            targets: ["BudServer"]
         ),
         
         // MARK: BudServerMock
@@ -38,7 +38,7 @@ let package = Package(
         // MARK: BudClient
         .target(
             name: "BudClient",
-            dependencies: ["BudServerLink", "Tools"]
+            dependencies: ["BudServer", "Tools"]
         ),
         .testTarget(
             name: "BudClientTests",
@@ -48,7 +48,7 @@ let package = Package(
         
         // MARK: BudServerLink
         .target(
-            name: "BudServerLink",
+            name: "BudServer",
             dependencies: [
                 "Tools",
                 "BudServerMock",
@@ -59,8 +59,8 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "BudServerLinkTests",
-            dependencies: ["Tools", "BudServerLink"]
+            name: "BudServerTests",
+            dependencies: ["Tools", "BudServer"]
         ),
         
         // MARK: BudServerMock

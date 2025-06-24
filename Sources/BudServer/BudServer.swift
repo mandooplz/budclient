@@ -1,5 +1,5 @@
 //
-//  BudServerLink.swift
+//  BudServer.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/23/25.
@@ -10,8 +10,9 @@ import FirebaseCore
 
 
 // MARK: Link
-public struct BudServerLink: Sendable {
+public struct BudServer: Sendable {
     // MARK: core
+    // 이건 객체의 생성인가?
     private nonisolated let mode: SystemMode
     public init(mode: SystemMode = .real) throws {
         self.mode = mode
