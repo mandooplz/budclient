@@ -6,7 +6,7 @@
 //
 import Foundation
 import Testing
-@testable import BudServer
+import BudServer
 import Tools
 
 
@@ -37,7 +37,7 @@ struct RegisterFormTests {
             let isExist = try await accountHubLink.isExist(email: testEmail,
                                                            password: testPassword)
             #expect(isExist == true)
-        } catch(let error as AccountHub.Error) {
+        } catch(let error as AccountHubLink.Error) {
             Issue.record("\(error)")
         } catch {
             // Package 환경에서는 Keychain 접근이 불가능하기 때문에 에러가 발생

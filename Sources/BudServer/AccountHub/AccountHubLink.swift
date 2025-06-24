@@ -13,7 +13,7 @@ import BudServerMock
 public struct AccountHubLink: Sendable {
     // MARK: core
     private let mode: SystemMode
-    public init(mode: SystemMode) {
+    internal init(mode: SystemMode) {
         self.mode = mode
     }
     
@@ -96,5 +96,9 @@ public struct AccountHubLink: Sendable {
         fileprivate var forReal: AccountHub.Ticket {
             AccountHub.Ticket(value: self.value)
         }
+    }
+    public enum Error: String, Swift.Error {
+        case userNotFound
+        case wrongPassword
     }
 }

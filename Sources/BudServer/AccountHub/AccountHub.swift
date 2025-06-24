@@ -23,9 +23,9 @@ final class AccountHub {
             if let errorCode = AuthErrorCode.Code(rawValue: error.code) {
                 switch errorCode {
                 case .userNotFound:
-                    throw Error.userNotFound
+                    throw AccountHubLink.Error.userNotFound
                 case .wrongPassword:
-                    throw Error.wrongPassword
+                    throw AccountHubLink.Error.wrongPassword
                 default:
                     throw error
                 }
@@ -61,11 +61,6 @@ final class AccountHub {
             self.value = value
         }
     }
-    enum Error: String, Swift.Error {
-        case userNotFound
-        case wrongPassword
-    }
-    
 }
 
 

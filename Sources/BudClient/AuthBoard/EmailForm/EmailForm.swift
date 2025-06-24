@@ -6,6 +6,7 @@
 //
 import Foundation
 import Tools
+import BudServer
 
 
 // MARK: Object
@@ -52,6 +53,17 @@ public final class EmailForm: Sendable {
         
         // compute
         let userId: String
+        do {
+            let budServerLink = BudServerLink(mode: self.mode)
+            let accountHubLink = budServerLink.getAccountHub()
+            
+            // userId를 가져온다.
+        } catch {
+            
+        }
+        
+        // mutate
+        // 가져온 userId로 상태를 업데이트한다. 
     }
     
     
