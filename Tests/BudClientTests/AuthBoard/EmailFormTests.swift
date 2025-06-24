@@ -93,6 +93,17 @@ struct EmailFormTests {
             #expect(issue.isKnown == true)
             #expect(issue.reason == "passwordIsNil")
         }
+        
+        @Test func updateCurrentUserInAuthBoard() async throws {
+            // given
+            let authBoardRef = await AuthBoardManager.get(budClientRef.authBoard!)
+            try await #require(authBoardRef!.currentUser == nil)
+            
+            // when
+            
+            
+            // then
+        }
     }
 }
 
@@ -105,4 +116,7 @@ internal func getEmailForm(_ budClientRef: BudClient) async -> EmailForm {
     let emailForm = await authBoardRef.emailForm!
     let emailFormRef = await EmailFormManager.get(emailForm)!
     return emailFormRef
+}
+private func signUpWithEmailForm(_ emailFormRef: EmailForm) async {
+    
 }

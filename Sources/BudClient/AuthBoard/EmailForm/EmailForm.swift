@@ -46,7 +46,7 @@ public final class EmailForm: Sendable {
         let registerFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
         self.signUpForm = registerFormRef.id
     }
-    public func signIn() {
+    public func signIn() async {
         // capture
         guard let email else { issue = Issue(isKnown: true, reason: Error.emailIsNil); return }
         guard let password else { issue = Issue(isKnown: true, reason: Error.passwordIsNil); return}
@@ -57,13 +57,20 @@ public final class EmailForm: Sendable {
             let budServerLink = BudServerLink(mode: self.mode)
             let accountHubLink = budServerLink.getAccountHub()
             
-            // userId를 가져온다.
+            userId = try await accountHubLink.getUserId(email: email,
+                                               password: password)
+        } catch(let error as AccountHubLink.Error) {
+            switch error {
+            case .userNotFound: issue = Issue(isKnown: true, reason: Error.userNotFound)
+            case .wrongPassword: issue = Issue(isKnown: true, reason: Error.wrongPassword)
+            }
+            return
         } catch {
-            
+            issue = Issue(isKnown: false, reason: error.localizedDescription)
+            return
         }
         
         // mutate
-        // 가져온 userId로 상태를 업데이트한다. 
     }
     
     
@@ -74,6 +81,7 @@ public final class EmailForm: Sendable {
     }
     public enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
+        case userNotFound, wrongPassword
     }
 }
 

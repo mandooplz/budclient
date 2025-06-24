@@ -28,11 +28,20 @@ public final class AccountHubMock: Sendable {
             .contains { $0.email == email && $0.password == password }
         return isExist
     }
-    public func getUserId(email: String, password: String) -> Account.UserID? {
-        self.accounts.lazy
+    public func getUserId(email: String, password: String) throws -> Account.UserID {
+        let filtered = self.accounts.lazy
             .compactMap { AccountManager.get($0) }
-            .first { $0.email == email && $0.password == password }?
-            .userId
+            .filter { $0.email == email }
+        
+        if filtered.isEmpty { throw Error.userNotFound }
+        
+        guard let userId = filtered.lazy
+            .first(where: { $0.password == password })?
+            .userId else {
+                throw Error.wrongPassword
+            }
+        
+        return userId
     }
     
     public var tickets: Set<Ticket> = []
@@ -58,5 +67,8 @@ public final class AccountHubMock: Sendable {
         public init(value: UUID = UUID()) {
             self.value = value
         }
+    }
+    public enum Error: String, Swift.Error {
+        case userNotFound, wrongPassword
     }
 }

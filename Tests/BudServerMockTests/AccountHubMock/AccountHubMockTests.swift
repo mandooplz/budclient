@@ -66,23 +66,39 @@ struct AccountHubMockTests {
             }
             
             // when
-            let userId = await accountHubRef.getUserId(email: testEmail,
+            let userId = try await accountHubRef.getUserId(email: testEmail,
                                                        password: testPasssword)
             
             // then
             #expect(userId == accountRef.userId)
         }
-        @Test func whenAccountIsNotExist() async throws {
+        @Test func whenUserNotFound() async throws {
             // given
             let testEmail = Email.random().value
             let testPasssword = UUID().uuidString
             
             // when
-            let userId = await accountHubRef.getUserId(email: testEmail,
-                                                       password: testPasssword)
+            await #expect(throws: AccountHubMock.Error.userNotFound) {
+                let _ = try await accountHubRef.getUserId(email: testEmail,
+                                                               password: testPasssword)
+            }
+        }
+        @Test func whenPasswordIsWrong() async throws {
+            // given
+            let testEmail = Email.random().value
+            let testPasssword = UUID().uuidString
+            let accountRef = await Account(email: testEmail,
+                                           password: testPasssword)
+            let _ = await MainActor.run {
+                accountHubRef.accounts.insert(accountRef.id)
+            }
             
-            // then
-            #expect(userId == nil)
+            // when
+            await #expect(throws: AccountHubMock.Error.wrongPassword) {
+                let _ = try await accountHubRef.getUserId(email: testEmail,
+                                                          password: "wrongPassword")
+            }
+            
         }
     }
     

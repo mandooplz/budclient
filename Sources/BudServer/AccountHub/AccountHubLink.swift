@@ -27,10 +27,19 @@ public struct AccountHubLink: Sendable {
             try await AccountHub.shared.isExist(email: email, password: password)
         }
     }
-    public func getUserId(email: String, password: String) async throws -> String? {
+    public func getUserId(email: String, password: String) async throws -> String {
         switch mode {
         case .test:
-            await AccountHubMock.shared.getUserId(email: email, password: password)
+            do {
+                return try await AccountHubMock.shared.getUserId(email: email, password: password)
+            } catch(let error as AccountHubMock.Error) {
+                switch error {
+                case .userNotFound: throw Error.userNotFound;
+                case .wrongPassword: throw Error.wrongPassword
+                }
+            } catch {
+                throw error
+            }
         case .real:
             fatalError()
         }
@@ -98,7 +107,6 @@ public struct AccountHubLink: Sendable {
         }
     }
     public enum Error: String, Swift.Error {
-        case userNotFound
-        case wrongPassword
+        case userNotFound, wrongPassword
     }
 }
