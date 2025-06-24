@@ -7,6 +7,7 @@
 import Testing
 import Foundation
 import BudClient
+import Tools
 
 
 // MARK: Tests
@@ -62,6 +63,35 @@ struct EmailFormTests {
         init() async throws {
             self.budClientRef = await BudClient(mode: .test)
             self.emailFormRef = await getEmailForm(budClientRef)
+        }
+        
+        @Test func whenEmailIsNil() async throws {
+            // given
+            await MainActor.run {
+                emailFormRef.email = nil
+            }
+            
+            // when
+            await emailFormRef.signIn()
+            
+            // then
+            let issue = try #require(await emailFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "emailIsNil")
+        }
+        @Test func whenPasswordIsNil() async throws {
+            await MainActor.run {
+                emailFormRef.email = Email.random().value
+                emailFormRef.password = nil
+            }
+            
+            // when
+            await emailFormRef.signIn()
+            
+            // then
+            let issue = try #require(await emailFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "passwordIsNil")
         }
     }
 }

@@ -161,6 +161,40 @@ struct SignUpFormTests {
             await #expect(authBoardRef.emailForm == nil)
         }
     }
+    
+    struct Remove {
+        let budClientRef: BudClient
+        let signUpFormRef: SignUpForm
+        init() async {
+            self.budClientRef = await BudClient(mode: .test)
+            self.signUpFormRef = await getSignUpForm(budClientRef)
+        }
+        @Test func deleteSignUpForm() async throws {
+            // given
+            try await #require(SignUpFormManager.get(signUpFormRef.id) != nil)
+            
+            // when
+            await signUpFormRef.remove()
+            
+            // then
+            try await #require(signUpFormRef.issue == nil)
+            await #expect(SignUpFormManager.get(signUpFormRef.id) == nil)
+        }
+        @Test func setNilToSignUpFormInEmailForm() async throws {
+            // given
+            let emailForm = signUpFormRef.emailForm
+            let emailFormRef = try #require(await EmailFormManager.get(emailForm))
+            
+            try #require(await emailFormRef.signUpForm != nil)
+            
+            // when
+            await signUpFormRef.remove()
+            
+            // then
+            await #expect(emailFormRef.signUpForm == nil)
+            
+        }
+    }
 }
 
 

@@ -87,6 +87,12 @@ public final class SignUpForm: Sendable {
         self.isConsumed = true
         self.delete()
     }
+    public func remove() {
+        // mutate
+        let emailFormRef = EmailFormManager.get(emailForm)
+        emailFormRef?.signUpForm = nil
+        self.delete()
+    }
     
     
     // MARK: value
