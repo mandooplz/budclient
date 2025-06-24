@@ -68,6 +68,7 @@ public final class SignUpForm: Sendable {
             try await registerFormLink.setEmail(email)
             try await registerFormLink.setPassword(password)
             try await registerFormLink.submit()
+            try await registerFormLink.remove()
             
             // getUserId
             userId = try await accountHubLink.getUserId(email: email,

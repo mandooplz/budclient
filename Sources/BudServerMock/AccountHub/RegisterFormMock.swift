@@ -59,6 +59,9 @@ public final class RegisterFormMock: Sendable {
         // mutate
         let account = Account(email: email, password: password)
         accountHub.accounts.insert(account.id)
+    }
+    public func remove() {
+        // mutate
         accountHub.registerForms[ticket] = nil
         self.delete()
     }

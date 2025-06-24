@@ -1,88 +1,71 @@
 //
-//  AccountHubLink.swift
+//  AccountHub.swift
 //  BudClient
 //
-//  Created by 김민우 on 6/23/25.
+//  Created by 김민우 on 6/24/25.
 //
 import Foundation
 import Tools
-import BudServerMock
+import FirebaseAuth
 
 
-// MARK: Link
-public struct AccountHubLink: Sendable {
+// MARK: Object
+@Server
+final class AccountHub {
     // MARK: core
-    private let mode: SystemMode
-    public init(mode: SystemMode) {
-        self.mode = mode
-    }
-    
+    static let shared = AccountHub()
     
     // MARK: state
-    public func isExist(email: String, password: String) async throws -> Bool {
-        switch mode {
-        case .test:
-            await AccountHubMock.shared.isExist(email: email, password: password)
-        case .real:
-            fatalError()
+    func isExist(email: String, password: String) async throws -> Bool {
+        do {
+            let _ = try await Auth.auth().signIn(withEmail: email, password: password)
+        } catch let error as NSError {
+            if let errorCode = AuthErrorCode.Code(rawValue: error.code) {
+                switch errorCode {
+                case .userNotFound:
+                    throw Error.userNotFound
+                case .wrongPassword:
+                    throw Error.wrongPassword
+                default:
+                    throw error
+                }
+            } else {
+                throw error
+            }
         }
-    }
-    public func getUserId(email: String, password: String) async throws -> String? {
-        switch mode {
-        case .test:
-            await AccountHubMock.shared.getUserId(email: email, password: password)
-        case .real:
-            fatalError()
-        }
+        
+        return true
     }
     
-    public func insertTicket(_ ticket: Ticket) async throws {
-        switch mode {
-        case .test:
-            await MainActor.run {
-                let ticketForMock = AccountHubMock.Ticket(value: ticket.value)
-                AccountHubMock.shared.tickets.insert(ticketForMock)
-            }
-        case .real:
-            fatalError()
-        }
-    }
-    public func getRegisterForm(_ ticket: Ticket) async throws -> RegisterFormLink? {
-        switch mode {
-        case .test:
-            let registerForm = await MainActor.run {
-                AccountHubMock.shared.registerForms[ticket.forMock]
-            }
-            guard let registerForm else { return nil }
-            return RegisterFormLink(mode: self.mode,
-                                    idForMock: registerForm)
-            
-        case .real:
-            fatalError()
-        }
-    }
+    var tickets: Set<Ticket> = []
+    var registerForms: [Ticket:RegisterForm.ID] = [:]
     
     
     // MARK: action
-    public func generateForms() async throws {
-        switch mode {
-        case .test:
-            await AccountHubMock.shared.generateForms()
-        case .real:
-            fatalError()
+    func generateForms() {
+        // mutate
+        for ticket in tickets {
+            let registerFormRef = RegisterForm(accountHubRef: self,
+                                               ticket: ticket)
+            self.registerForms[ticket] = registerFormRef.id
+            tickets.remove(ticket)
         }
     }
     
     
     // MARK: value
-    public struct Ticket: Sendable, Hashable {
-        public let value: UUID
-        public init(value: UUID = UUID()) {
+    struct Ticket: Sendable, Hashable {
+        let value: UUID
+        
+        init(value: UUID = UUID()) {
             self.value = value
         }
-        
-        fileprivate var forMock: AccountHubMock.Ticket {
-            AccountHubMock.Ticket(value: self.value)
-        }
     }
+    enum Error: String, Swift.Error {
+        case userNotFound
+        case wrongPassword
+    }
+    
 }
+
+

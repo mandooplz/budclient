@@ -34,37 +34,6 @@ struct RegisterFormMockTests {
             await #expect(AccountHubMock.shared.isExist(email: testEmail,
                                                         password: testPassword) == true)
         }
-        @Test func deleteWhenSuccess() async throws {
-            // given
-            let testEmail = "test22@test.com"
-            let testPassword = "123456"
-            await MainActor.run {
-                registerFormRef.email = testEmail
-                registerFormRef.password = testPassword
-            }
-            
-            // when
-            await registerFormRef.submit()
-            
-            // then
-            await #expect(RegisterFormMockManager.get(registerFormRef.id) == nil)
-        }
-        @Test func removeInAccountHub() async throws {
-            // given
-            let testEmail = "test33@test.com"
-            let testPassword = "123456"
-            await MainActor.run {
-                registerFormRef.email = testEmail
-                registerFormRef.password = testPassword
-            }
-            
-            // when
-            await registerFormRef.submit()
-            
-            // then
-            let registerForms = await AccountHubMock.shared.registerForms.values
-            #expect(registerForms.contains(registerFormRef.id) == false)
-        }
         
         @Test func whenEmailIsNil() async throws {
             // given
@@ -96,6 +65,35 @@ struct RegisterFormMockTests {
             let issue = try #require(await registerFormRef.issue)
             #expect(issue.isKnown == true)
             #expect(issue.reason == "passwordIsNil")
+        }
+    }
+    
+    struct Remove {
+        let registerFormRef: RegisterFormMock
+        init() async throws {
+            self.registerFormRef = await getRegisterFormMock()
+        }
+        @Test func deleteWhenSuccess() async throws {
+            // given
+            try await #require(RegisterFormMockManager.get(registerFormRef.id) != nil)
+            
+            // when
+            await registerFormRef.remove()
+            
+            // then
+            await #expect(RegisterFormMockManager.get(registerFormRef.id) == nil)
+        }
+        @Test func removeInAccountHub() async throws {
+            // given
+            let form = await AccountHubMock.shared.registerForms.values
+            #expect(form.contains(registerFormRef.id) == true)
+            
+            // when
+            await registerFormRef.remove()
+            
+            // then
+            let updatedForms = await AccountHubMock.shared.registerForms.values
+            #expect(updatedForms.contains(registerFormRef.id) == false)
         }
     }
 }

@@ -27,7 +27,7 @@ public struct Password: Sendable, Hashable {
     public static func random() -> Password {
         // Generate a random password (at least 8 chars, alphanumerics)
         let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        let password = String((0..<8).map { _ in letters.randomElement()! })
+        let password = String((6..<12).map { _ in letters.randomElement()! })
         return Password(password)!
     }
 }
