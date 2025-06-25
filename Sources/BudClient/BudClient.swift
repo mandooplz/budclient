@@ -28,6 +28,7 @@ public final class BudClient: Sendable {
     private nonisolated let mode: SystemMode
     
     public var authBoard: AuthBoard.ID?
+    public var projectBoard: ProjectBoard.ID?
     
     
     // MARK: action
