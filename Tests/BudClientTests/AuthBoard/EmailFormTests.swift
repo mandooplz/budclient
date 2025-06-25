@@ -193,6 +193,39 @@ struct EmailFormTests {
             
             await #expect(EmailFormManager.get(newEmailForm) == nil)
         }
+        
+        @Test func updateAndCreateProjectBoard() async throws {
+            // given
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            
+            await signUpWithEmailForm(emailFormRef,
+                                      email: testEmail,
+                                      password: testPassword)
+            
+            // given
+            let authBoard = await budClientRef.authBoard!
+            let authBoardRef = await AuthBoardManager.get(authBoard)!
+            await authBoardRef.signOut()
+            try await #require(authBoardRef.currentUser == nil)
+            try await #require(authBoardRef.emailForm != nil)
+            
+            let newEmailForm = await authBoardRef.emailForm!
+            try #require(newEmailForm != emailFormRef.id)
+            let newEmailFormRef = await EmailFormManager.get(newEmailForm)!
+            
+            await MainActor.run {
+                newEmailFormRef.email = testEmail
+                newEmailFormRef.password = testPassword
+            }
+            
+            // when
+            await newEmailFormRef.signIn()
+            
+            // then
+            let projectBoard = try #require(await budClientRef.projectBoard)
+            await #expect(ProjectBoardManager.get(projectBoard) != nil)
+        }
     }
 }
 

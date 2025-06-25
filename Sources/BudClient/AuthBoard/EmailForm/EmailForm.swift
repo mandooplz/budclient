@@ -51,6 +51,7 @@ public final class EmailForm: Sendable {
         guard let email else { issue = Issue(isKnown: true, reason: Error.emailIsNil); return }
         guard let password else { issue = Issue(isKnown: true, reason: Error.passwordIsNil); return}
         let authBoardRef = AuthBoardManager.get(self.authBoard)!
+        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
         
         // compute
         let userId: String
@@ -72,6 +73,9 @@ public final class EmailForm: Sendable {
         }
         
         // mutate
+        let projectBoardRef = ProjectBoard(userId: userId)
+        budClientRef.projectBoard = projectBoardRef.id
+        
         authBoardRef.currentUser = userId
         authBoardRef.emailForm = nil
         self.delete()
