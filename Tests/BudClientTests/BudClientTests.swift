@@ -27,6 +27,10 @@ struct BudClientTests {
             // then
             await #expect(budClientRef.authBoard != nil)
         }
+        @Test func setProjectBoard() async throws {
+            // then
+            await #expect(budClientRef.projectBoard == nil)
+        }
         @Test func createAuthBoard() async throws {
             // given
             try await #require(budClientRef.authBoard == nil)
