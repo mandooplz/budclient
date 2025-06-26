@@ -14,7 +14,7 @@ import Observation
 @MainActor @Observable
 public final class BudClient: Sendable {
     // MARK: core
-    public init(mode: SystemMode = .real,
+    public init(mode: SystemMode,
                 plistPath: String = "") {
         self.id = ID(value: UUID())
         self.mode = mode
