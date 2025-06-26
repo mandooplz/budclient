@@ -33,17 +33,19 @@ public final class RegisterFormMock: Sendable {
     public var email: String?
     public var password: String?
     
-    public var issue: Issue?
+    public var issue: (any Issuable)?
 
     
     // MARK: action
     public func submit() {
         // capture
         guard let email else {
-            self.issue = Issue(isKnown: true, reason: Error.emailIsNil); return
+            self.issue = KnownIssue(Error.emailIsNil)
+            return
         }
         guard let password else {
-            self.issue = Issue(isKnown: true, reason: Error.passwordIsNil); return
+            self.issue = KnownIssue(Error.passwordIsNil)
+            return
         }
         let accounts = accountHub.accounts
         
@@ -51,8 +53,8 @@ public final class RegisterFormMock: Sendable {
         let isDuplicate = accounts.lazy
             .compactMap { AccountManager.get($0) }
             .contains { $0.email == email }
-        if isDuplicate == true {
-            self.issue = Issue(isKnown: true, reason: Error.emailDuplicate)
+        guard isDuplicate == false else {
+            self.issue = KnownIssue(Error.emailDuplicate)
             return
         }
         

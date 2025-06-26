@@ -35,7 +35,7 @@ public final class SignUpForm: Sendable {
     public var password: String?
     public var passwordCheck: String?
     
-    public internal(set) var issue: Issue?
+    public internal(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
     
     public internal(set) var isConsumed: Bool = false
@@ -44,12 +44,9 @@ public final class SignUpForm: Sendable {
     // MARK: action
     public func signUp() async {
         // capture
-        guard let email else { issue = Issue(isKnown: true,
-                                             reason: Error.emailIsNil); return }
-        guard let password else { issue = Issue(isKnown: true,
-                                                reason: Error.passwordIsNil); return}
-        if password != passwordCheck { issue = Issue(isKnown: true,
-                                                     reason: Error.passwordsDoNotMatch); return }
+        guard let email else { issue = KnownIssue(Error.emailIsNil); return }
+        guard let password else { issue = KnownIssue(Error.passwordIsNil); return}
+        if password != passwordCheck { issue = KnownIssue(Error.passwordsDoNotMatch); return }
         let emailFormRef = EmailFormManager.get(self.emailForm)!
         let authBoardRef = AuthBoardManager.get(emailFormRef.authBoard)!
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
@@ -66,7 +63,7 @@ public final class SignUpForm: Sendable {
             
             // 문제는 이를 재현할 수 있는가.
             guard let registerFormLink = try await accountHubLink.getRegisterForm(newTicket) else {
-                throw Issue(isKnown: false, reason: "AccountHubLink.generateForms() failed")
+                throw UnknownIssue(reason: "AccountHubLink.generateForms() failed")
             }
             try await registerFormLink.setEmail(email)
             try await registerFormLink.setPassword(password)
@@ -78,8 +75,7 @@ public final class SignUpForm: Sendable {
             userId = try await accountHubLink.getUserId(email: email,
                                                         password: password)
         } catch {
-            self.issue = Issue(isKnown: false,
-                               reason: error.localizedDescription)
+            self.issue = UnknownIssue(error)
             return
         }
         

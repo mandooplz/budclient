@@ -36,7 +36,7 @@ public final class EmailForm: Sendable {
     
     public internal(set) var signUpForm: SignUpForm.ID?
     
-    public internal(set) var issue: Issue?
+    public internal(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
     
     
@@ -49,8 +49,8 @@ public final class EmailForm: Sendable {
     }
     public func signIn() async {
         // capture
-        guard let email else { issue = Issue(isKnown: true, reason: Error.emailIsNil); return }
-        guard let password else { issue = Issue(isKnown: true, reason: Error.passwordIsNil); return}
+        guard let email else { self.issue = KnownIssue(Error.emailIsNil); return }
+        guard let password else { self.issue = KnownIssue(Error.passwordIsNil); return}
         let authBoardRef = AuthBoardManager.get(self.authBoard)!
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
         let budServerLink = budClientRef.budServerLink!
@@ -65,12 +65,12 @@ public final class EmailForm: Sendable {
                                                password: password)
         } catch(let error as AccountHubLink.Error) {
             switch error {
-            case .userNotFound: issue = Issue(isKnown: true, reason: Error.userNotFound)
-            case .wrongPassword: issue = Issue(isKnown: true, reason: Error.wrongPassword)
+            case .userNotFound: issue = KnownIssue(Error.userNotFound)
+            case .wrongPassword: issue = KnownIssue(Error.wrongPassword)
             }
             return
         } catch {
-            issue = Issue(isKnown: false, reason: error.localizedDescription)
+            self.issue = UnknownIssue(error)
             return
         }
         

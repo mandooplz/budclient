@@ -35,7 +35,7 @@ public final class BudClient: Sendable {
     public internal(set) var projectBoard: ProjectBoard.ID?
     public var isSetupRequired: Bool { authBoard == nil }
     
-    public private(set) var issue: Issue?
+    public private(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { issue != nil }
     
     
@@ -43,7 +43,7 @@ public final class BudClient: Sendable {
     public func setUp() {
         // capture
         guard self.isSetupRequired else {
-            self.issue = Issue(isKnown: true, reason: Error.alreadySetUp)
+            self.issue = KnownIssue(Error.alreadySetUp)
             return
         }
         
@@ -55,9 +55,9 @@ public final class BudClient: Sendable {
         } catch(let error) {
             switch error {
             case .plistPathIsWrong:
-                issue = Issue(isKnown: true, reason: Error.invalidPlistPath)
+                self.issue = KnownIssue(Error.invalidPlistPath)
+                return
             }
-            return
         }
         
         // mutate

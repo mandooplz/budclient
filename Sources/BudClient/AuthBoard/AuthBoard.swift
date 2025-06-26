@@ -32,7 +32,7 @@ public final class AuthBoard {
     
     public internal(set) var emailForm: EmailForm.ID?
     
-    public internal(set) var issue: Issue?
+    public internal(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
     
     
@@ -47,7 +47,7 @@ public final class AuthBoard {
     public func signOut() {
         // capture
         guard isUserSignedIn else {
-            self.issue = Issue(isKnown: true, reason: Error.userIsNotSignedIn)
+            self.issue = KnownIssue(Error.userIsNotSignedIn)
             return
         }
         let budClientRef = BudClientManager.get(self.budClient)!

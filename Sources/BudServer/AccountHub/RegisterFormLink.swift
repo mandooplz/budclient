@@ -63,7 +63,7 @@ public struct RegisterFormLink: Sendable {
         }
     }
         
-    public func getIssue() async throws -> Issue? {
+    public func getIssue() async throws -> (any Issuable)? {
             switch mode {
             case .test:
                 await MainActor.run {

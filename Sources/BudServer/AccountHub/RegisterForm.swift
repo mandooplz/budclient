@@ -34,17 +34,19 @@ final class RegisterForm {
     var email: String?
     var password: String?
     
-    var issue: Issue?
+    var issue: (any Issuable)?
 
     
     // MARK: action
     func submit() async {
         // capture
         guard let email else {
-            self.issue = Issue(isKnown: true, reason: Error.emailIsNil); return
+            self.issue = KnownIssue(Error.emailIsNil)
+            return
         }
         guard let password else {
-            self.issue = Issue(isKnown: true, reason: Error.passwordIsNil); return
+            self.issue = KnownIssue(Error.passwordIsNil)
+            return
         }
         
         // mutate
@@ -52,8 +54,8 @@ final class RegisterForm {
             try await Auth.auth().createUser(withEmail: email,
                                              password: password)
         } catch {
-            self.issue = Issue(isKnown: false,
-                               reason: error.localizedDescription)
+            self.issue = UnknownIssue(error)
+            return
         }
     }
     func remove() async {
