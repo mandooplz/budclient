@@ -10,7 +10,7 @@ import BudServer
 
 
 // MARK: Object
-@MainActor
+@MainActor @Observable
 public final class EmailForm: Sendable {
     // MARK: core
     public init(authBoard: AuthBoard.ID,

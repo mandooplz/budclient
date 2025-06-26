@@ -9,7 +9,7 @@ import Tools
 
 
 // MARK: Object
-@MainActor
+@MainActor @Observable
 public final class AuthBoard {
     // MARK: core
     public init(budClient: BudClient.ID,

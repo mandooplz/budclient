@@ -7,10 +7,11 @@
 import Foundation
 import Tools
 import BudServer
+import Observation
 
 
 // MARK: System
-@MainActor
+@MainActor @Observable
 public final class BudClient: Sendable {
     // MARK: core
     public init(mode: SystemMode = .real,
