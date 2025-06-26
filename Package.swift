@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "BudClient",
-    platforms: [.macOS(.v15)],
+    platforms: [.macOS(.v15), .iOS(.v18), .tvOS(.v18)],
     products: [
         // MARK: BudClient
         .library(
