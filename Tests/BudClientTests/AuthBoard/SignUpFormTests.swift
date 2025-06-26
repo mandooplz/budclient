@@ -81,7 +81,7 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            try await #require(signUpFormRef.issue == nil)
+            try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(signUpFormRef.isConsumed == true)
         }
         @Test func deleteSignUpFormWhenSuccess() async throws {
@@ -98,7 +98,7 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            try await #require(signUpFormRef.issue == nil)
+            try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(SignUpFormManager.get(signUpFormRef.id) == nil)
         }
         @Test func deleteEmailFormWhenSuccess() async throws {
@@ -117,7 +117,7 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            try await #require(signUpFormRef.issue == nil)
+            try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(EmailFormManager.get(emailForm) == nil)
         }
         @Test func setCurrentUserInAuthBoard() async throws {
@@ -137,7 +137,7 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            try await #require(signUpFormRef.issue == nil)
+            try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(authBoardRef.currentUser != nil)
         }
         @Test func setNilToEmailFormInAuthBoard() async throws {
@@ -157,8 +157,45 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            try await #require(signUpFormRef.issue == nil)
+            try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(authBoardRef.emailForm == nil)
+        }
+        
+        @Test func setProjectBoardInBudClient() async throws {
+            // given
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            await MainActor.run {
+                signUpFormRef.email = testEmail
+                signUpFormRef.password = testPassword
+                signUpFormRef.passwordCheck = testPassword
+            }
+            
+            // when
+            await signUpFormRef.signUp()
+            
+            // then
+            try await #require(signUpFormRef.isIssueOccurred == false)
+            await #expect(budClientRef.projectBoard != nil)
+        }
+        @Test func createProjectBoard() async throws {
+            // given
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            await MainActor.run {
+                signUpFormRef.email = testEmail
+                signUpFormRef.password = testPassword
+                signUpFormRef.passwordCheck = testPassword
+            }
+            
+            // when
+            await signUpFormRef.signUp()
+            
+            // then
+            try await #require(signUpFormRef.isIssueOccurred == false)
+            let projectBoard = try #require(await budClientRef.projectBoard)
+            
+            await #expect(ProjectBoardManager.get(projectBoard) != nil)
         }
     }
     

@@ -8,7 +8,7 @@
 import Foundation
 
 // MARK: Object
-@MainActor
+@MainActor @Observable 
 public final class Project: Sendable {
     // MARK: core
     public init(userId: String) {

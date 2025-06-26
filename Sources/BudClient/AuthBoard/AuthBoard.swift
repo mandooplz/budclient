@@ -20,9 +20,6 @@ public final class AuthBoard {
         
         AuthBoardManager.register(self)
     }
-    internal func delete() {
-        AuthBoardManager.unregister(self.id)
-    }
     
     
     // MARK: state
@@ -30,8 +27,13 @@ public final class AuthBoard {
     public nonisolated let budClient: BudClient.ID
     private nonisolated let mode: SystemMode
     
-    public var currentUser: UserID?
-    public var emailForm: EmailForm.ID?
+    public internal(set) var currentUser: UserID?
+    public var isUserSignedIn: Bool { currentUser != nil }
+    
+    public internal(set) var emailForm: EmailForm.ID?
+    
+    public internal(set) var issue: Issue?
+    public var isIssueOccurred: Bool { self.issue != nil }
     
     
     // MARK: action
@@ -43,11 +45,23 @@ public final class AuthBoard {
         self.emailForm = emailFormRef.id
     }
     public func signOut() {
+        // capture
+        guard isUserSignedIn else {
+            self.issue = Issue(isKnown: true, reason: Error.userIsNotSignedIn)
+            return
+        }
+        let budClientRef = BudClientManager.get(self.budClient)!
+        let projectBoard = budClientRef.projectBoard!
+        let projectBoardRef = ProjectBoardManager.get(projectBoard)!
+        
         // mutate
         self.currentUser = nil
         let emailFormRef = EmailForm(authBoard: self.id,
                                      mode: self.mode)
         self.emailForm = emailFormRef.id
+        
+        budClientRef.projectBoard = nil
+        projectBoardRef.delete()
     }
     
     
@@ -56,6 +70,9 @@ public final class AuthBoard {
         public let value: UUID
     }
     public typealias UserID = String
+    public enum Error: String, Swift.Error {
+        case userIsNotSignedIn
+    }
 }
 
 

@@ -69,7 +69,8 @@ struct BudClientTests {
             // when
             await budClientRef.setUp()
             
-            // then
+            // then            
+            try await #require(budClientRef.isIssueOccurred == true)
             let issue = try #require(await budClientRef.issue)
             #expect(issue.isKnown == true)
             #expect(issue.reason == "alreadySetUp")

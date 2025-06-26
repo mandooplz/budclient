@@ -25,31 +25,33 @@ public final class BudClient: Sendable {
     
     
     // MARK: state
-    public nonisolated let id: ID
+    internal nonisolated let id: ID
     private nonisolated let mode: SystemMode
     
-    internal nonisolated let plistPath: String
+    private nonisolated let plistPath: String
     internal var budServerLink: BudServerLink?
     
-    public var authBoard: AuthBoard.ID?
-    public var projectBoard: ProjectBoard.ID?
+    public internal(set) var authBoard: AuthBoard.ID?
+    public internal(set) var projectBoard: ProjectBoard.ID?
+    public var isSetupRequired: Bool { authBoard == nil }
     
-    public var issue: Issue?
+    public private(set) var issue: Issue?
     public var isIssueOccurred: Bool { issue != nil }
     
     
     // MARK: action
     public func setUp() {
         // capture
-        if self.authBoard != nil {
-            issue = Issue(isKnown: true, reason: Error.alreadySetUp)
+        guard self.isSetupRequired else {
+            self.issue = Issue(isKnown: true, reason: Error.alreadySetUp)
             return
         }
         
         // compute
         let budServerLink: BudServerLink
         do {
-            budServerLink = try BudServerLink(mode: self.mode, plistPath: plistPath)
+            budServerLink = try BudServerLink(mode: self.mode,
+                                              plistPath: plistPath)
         } catch(let error) {
             switch error {
             case .plistPathIsWrong:
@@ -59,9 +61,10 @@ public final class BudClient: Sendable {
         }
         
         // mutate
+        self.budServerLink = budServerLink
+        
         let authBoardRef = AuthBoard(budClient: self.id, mode: self.mode)
         self.authBoard = authBoardRef.id
-        self.budServerLink = budServerLink
     }
     
     

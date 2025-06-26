@@ -35,8 +35,10 @@ public final class SignUpForm: Sendable {
     public var password: String?
     public var passwordCheck: String?
     
-    public var issue: Issue?
-    public var isConsumed: Bool = false
+    public internal(set) var issue: Issue?
+    public var isIssueOccurred: Bool { self.issue != nil }
+    
+    public internal(set) var isConsumed: Bool = false
     
     
     // MARK: action
@@ -54,20 +56,21 @@ public final class SignUpForm: Sendable {
         let budServerLink = budClientRef.budServerLink!
         
         // compute
-        let userId: AuthBoard.UserID?
+        let userId: AuthBoard.UserID
         do {
-            // register
             let accountHubLink = budServerLink.getAccountHub()
             
             let newTicket = AccountHubLink.Ticket()
             try await accountHubLink.insertTicket(newTicket)
             try await accountHubLink.generateForms()
             
+            // 문제는 이를 재현할 수 있는가.
             guard let registerFormLink = try await accountHubLink.getRegisterForm(newTicket) else {
-                throw Issue(isKnown: false, reason: "registerFormDoesNotExist")
+                throw Issue(isKnown: false, reason: "AccountHubLink.generateForms() failed")
             }
             try await registerFormLink.setEmail(email)
             try await registerFormLink.setPassword(password)
+            
             try await registerFormLink.submit()
             try await registerFormLink.remove()
             
@@ -82,6 +85,9 @@ public final class SignUpForm: Sendable {
         
         
         // mutate
+        let projectBoardRef = ProjectBoard(userId: userId)
+        budClientRef.projectBoard = projectBoardRef.id
+        
         authBoardRef.currentUser = userId
         authBoardRef.emailForm = nil
         emailFormRef.delete()

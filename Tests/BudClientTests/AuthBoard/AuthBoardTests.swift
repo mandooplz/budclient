@@ -42,7 +42,8 @@ struct AuthBoardTests {
             let emailForm = try #require(await authBoardRef.emailForm)
             await #expect(EmailFormManager.get(emailForm) != nil)
         }
-        @Test func whenEmailFormAlreadyExists() async throws {
+        
+        @Test func whenAlreadySetUp() async throws {
             // given
             try await #require(authBoardRef.emailForm == nil)
             
@@ -75,6 +76,23 @@ struct AuthBoardTests {
             try! await #require(authBoardRef.emailForm == nil)
         }
         
+        @Test func whenUserIsNotSignedIn() async throws {
+            // given
+            let budClientRef = await BudClient(mode: .test)
+            let authBoardRef = await getAuthBoard(budClientRef)
+            
+            try await #require(authBoardRef.isUserSignedIn == false)
+            try await #require(authBoardRef.isIssueOccurred == false)
+            
+            // when
+            await authBoardRef.signOut()
+            
+            // then
+            let issue = try #require(await authBoardRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == AuthBoard.Error.userIsNotSignedIn.rawValue)
+        }
+        
         @Test func setNilCurrentUserInAuthBoard() async throws {
             // when
             await authBoardRef.signOut()
@@ -96,6 +114,29 @@ struct AuthBoardTests {
             // then
             let emailForm = try #require(await authBoardRef.emailForm)
             await #expect(EmailFormManager.get(emailForm) != nil)
+        }
+        
+        // ProjectBoard와 관련된 모든 객체들 제거
+        @Test func setNilProjectBoardInBudClient() async throws {
+            // given
+            try await #require(budClientRef.projectBoard != nil)
+            
+            // when
+            await authBoardRef.signOut()
+            
+            // then
+            await #expect(budClientRef.projectBoard == nil)
+        }
+        @Test func deleteProjectBoard() async throws {
+            // given
+            let projectBoard = try #require(await budClientRef.projectBoard)
+            try await #require(ProjectBoardManager.get(projectBoard) != nil)
+            
+            // when
+            await authBoardRef.signOut()
+            
+            // then
+            await #expect(ProjectBoardManager.get(projectBoard) == nil)
         }
     }
 }

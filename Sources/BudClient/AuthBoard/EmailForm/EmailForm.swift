@@ -34,9 +34,10 @@ public final class EmailForm: Sendable {
     public var email: String?
     public var password: String?
     
-    public var signUpForm: SignUpForm.ID?
+    public internal(set) var signUpForm: SignUpForm.ID?
     
-    public var issue: Issue?
+    public internal(set) var issue: Issue?
+    public var isIssueOccurred: Bool { self.issue != nil }
     
     
     // MARK: action

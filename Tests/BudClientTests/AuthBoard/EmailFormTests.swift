@@ -13,7 +13,7 @@ import Tools
 // MARK: Tests
 @Suite("EmailForm")
 struct EmailFormTests {
-    struct SetUpRegisterForm {
+    struct SetUpSignUpForm {
         let budClientRef: BudClient
         let emailFormRef: EmailForm
         init() async throws {
@@ -93,6 +93,21 @@ struct EmailFormTests {
             #expect(issue.isKnown == true)
             #expect(issue.reason == "passwordIsNil")
         }
+        @Test func whenUserNotFound() async throws {
+            await MainActor.run {
+                emailFormRef.email = Email.random().value
+                emailFormRef.password = Password.random().value
+            }
+            
+            // when
+            await emailFormRef.signIn()
+            
+            // then
+            try await #require(emailFormRef.isIssueOccurred == true)
+            let issue = await emailFormRef.issue!
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "userNotFound")
+        }
         
         @Test func updateCurrentUserInAuthBoard() async throws {
             // given
@@ -127,6 +142,7 @@ struct EmailFormTests {
             
             await #expect(authBoardRef.currentUser != nil)
         }
+        
         @Test func setNilToEmailFormInAuthBoard() async throws {
             // given
             let testEmail = Email.random().value
@@ -189,12 +205,12 @@ struct EmailFormTests {
             await newEmailFormRef.signIn()
             
             // then
-            await #expect(newEmailFormRef.issue == nil)
+            try await #require(newEmailFormRef.issue == nil)
             
             await #expect(EmailFormManager.get(newEmailForm) == nil)
         }
         
-        @Test func updateAndCreateProjectBoard() async throws {
+        @Test func setAndCreateProjectBoardInBudClient() async throws {
             // given
             let testEmail = Email.random().value
             let testPassword = Password.random().value
@@ -223,8 +239,46 @@ struct EmailFormTests {
             await newEmailFormRef.signIn()
             
             // then
+            await #expect(authBoardRef.isUserSignedIn == true)
+            
             let projectBoard = try #require(await budClientRef.projectBoard)
             await #expect(ProjectBoardManager.get(projectBoard) != nil)
+        }
+        
+        @Test func whenPasswordIsWrong() async throws {
+            // given
+            let testEmail = Email.random().value
+            let testPassword = Password.random().value
+            
+            await signUpWithEmailForm(emailFormRef,
+                                      email: testEmail,
+                                      password: testPassword)
+            
+            // given
+            let authBoard = await budClientRef.authBoard!
+            let authBoardRef = await AuthBoardManager.get(authBoard)!
+            await authBoardRef.signOut()
+            try await #require(authBoardRef.currentUser == nil)
+            try await #require(authBoardRef.emailForm != nil)
+            
+            let newEmailForm = await authBoardRef.emailForm!
+            try #require(newEmailForm != emailFormRef.id)
+            let newEmailFormRef = await EmailFormManager.get(newEmailForm)!
+            
+            // given
+            await MainActor.run {
+                newEmailFormRef.email = testEmail
+                newEmailFormRef.password = "wrongPasswordForTestEmail"
+            }
+            
+            // when
+            await newEmailFormRef.signIn()
+            
+            // then
+            try await #require(newEmailFormRef.isIssueOccurred == true)
+            let issue = await newEmailFormRef.issue!
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "wrongPassword")
         }
     }
 }
