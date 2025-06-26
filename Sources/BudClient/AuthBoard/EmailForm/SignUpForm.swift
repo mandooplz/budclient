@@ -13,7 +13,7 @@ import BudServer
 @MainActor @Observable
 public final class SignUpForm: Sendable {
     // MARK: core
-    public init(emailForm: EmailForm.ID,
+    internal init(emailForm: EmailForm.ID,
                 mode: SystemMode) {
         self.id = ID(value: UUID())
         self.emailForm = emailForm
@@ -46,6 +46,9 @@ public final class SignUpForm: Sendable {
         // capture
         guard let email else { issue = KnownIssue(Error.emailIsNil); return }
         guard let password else { issue = KnownIssue(Error.passwordIsNil); return}
+        guard let passwordCheck else {
+            issue = KnownIssue(Error.passwordCheckIsNil); return
+        }
         if password != passwordCheck { issue = KnownIssue(Error.passwordsDoNotMatch); return }
         let emailFormRef = EmailFormManager.get(self.emailForm)!
         let authBoardRef = AuthBoardManager.get(emailFormRef.authBoard)!
@@ -61,7 +64,6 @@ public final class SignUpForm: Sendable {
             try await accountHubLink.insertTicket(newTicket)
             try await accountHubLink.generateForms()
             
-            // 문제는 이를 재현할 수 있는가.
             guard let registerFormLink = try await accountHubLink.getRegisterForm(newTicket) else {
                 throw UnknownIssue(reason: "AccountHubLink.generateForms() failed")
             }
@@ -82,13 +84,21 @@ public final class SignUpForm: Sendable {
         
         // mutate
         let projectBoardRef = ProjectBoard(userId: userId)
-        budClientRef.projectBoard = projectBoardRef.id
+        let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
+                                           userId: userId,
+                                           mode: self.mode)
         
-        authBoardRef.currentUser = userId
-        authBoardRef.emailForm = nil
-        emailFormRef.delete()
+        budClientRef.authBoard = nil
+        budClientRef.projectBoard = projectBoardRef.id
+        budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.isUserSignedIn = true
+        
         self.isConsumed = true
         self.delete()
+        emailFormRef.delete()
+        emailFormRef.signUpForm = nil
+        authBoardRef.delete()
+        authBoardRef.emailForm = nil
     }
     public func remove() {
         // mutate
@@ -104,7 +114,7 @@ public final class SignUpForm: Sendable {
     }
     public enum Error: String, Swift.Error {
         case budClientIsNotSetUp
-        case emailIsNil, passwordIsNil
+        case emailIsNil, passwordIsNil, passwordCheckIsNil
         case passwordsDoNotMatch
     }
 }

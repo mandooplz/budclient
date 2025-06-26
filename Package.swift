@@ -42,7 +42,7 @@ let package = Package(
         ),
         .testTarget(
             name: "BudClientTests",
-            dependencies: ["BudClient", "Tools"]
+            dependencies: ["BudClient", "BudServer", "Tools"]
         ),
         
         

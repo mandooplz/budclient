@@ -12,7 +12,7 @@ import Tools
 @MainActor @Observable
 public final class AuthBoard {
     // MARK: core
-    public init(budClient: BudClient.ID,
+    internal init(budClient: BudClient.ID,
                 mode: SystemMode) {
         self.id = ID(value: UUID())
         self.budClient = budClient
@@ -20,15 +20,15 @@ public final class AuthBoard {
         
         AuthBoardManager.register(self)
     }
+    internal func delete() {
+        AuthBoardManager.unregister(self.id)
+    }
     
     
     // MARK: state
     public nonisolated let id: ID
     public nonisolated let budClient: BudClient.ID
     private nonisolated let mode: SystemMode
-    
-    public internal(set) var currentUser: UserID?
-    public var isUserSignedIn: Bool { currentUser != nil }
     
     public internal(set) var emailForm: EmailForm.ID?
     public var isSetUpRequired: Bool { emailForm == nil }
@@ -46,26 +46,6 @@ public final class AuthBoard {
         self.emailForm = emailFormRef.id
     }
     
-    // 추후에 Profile 객체에서 이를 
-    public func signOut() {
-        // capture
-        guard isUserSignedIn else {
-            self.issue = KnownIssue(Error.userIsNotSignedIn)
-            return
-        }
-        let budClientRef = BudClientManager.get(self.budClient)!
-        let projectBoard = budClientRef.projectBoard!
-        let projectBoardRef = ProjectBoardManager.get(projectBoard)!
-        
-        // mutate
-        self.currentUser = nil
-        let emailFormRef = EmailForm(authBoard: self.id,
-                                     mode: self.mode)
-        self.emailForm = emailFormRef.id
-        
-        budClientRef.projectBoard = nil
-        projectBoardRef.delete()
-    }
     
     
     // MARK: value
@@ -84,8 +64,11 @@ public final class AuthBoard {
 public final class AuthBoardManager {
     // MARK: state
     private static var container: [AuthBoard.ID: AuthBoard] = [:]
-    public static func register(_ object: AuthBoard) {
+    internal static func register(_ object: AuthBoard) {
         container[object.id] = object
+    }
+    internal static func unregister(_ id: AuthBoard.ID) {
+        container[id] = nil
     }
     public static func get(_ id: AuthBoard.ID) -> AuthBoard? {
         container[id]

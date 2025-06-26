@@ -17,7 +17,7 @@ public final class ProjectBoard: Sendable {
         
         ProjectBoardManager.register(self)
     }
-    func delete() {
+    internal func delete() {
         ProjectBoardManager.unregister(self.id)
     }
     
@@ -26,7 +26,7 @@ public final class ProjectBoard: Sendable {
     public nonisolated let id: ID
     public nonisolated let userId: String
     
-    public var projects: [Project.ID] = []
+    public internal(set) var projects: [Project.ID] = []
     
     
     // MARK: action

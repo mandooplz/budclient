@@ -13,7 +13,7 @@ import BudServer
 @MainActor @Observable
 public final class EmailForm: Sendable {
     // MARK: core
-    public init(authBoard: AuthBoard.ID,
+    internal init(authBoard: AuthBoard.ID,
                 mode: SystemMode) {
         self.id = ID(value: UUID())
         self.authBoard = authBoard
@@ -71,7 +71,7 @@ public final class EmailForm: Sendable {
             let accountHubLink = budServerLink.getAccountHub()
             
             userId = try await accountHubLink.getUserId(email: email,
-                                               password: password)
+                                                        password: password)
         } catch(let error as AccountHubLink.Error) {
             switch error {
             case .userNotFound: issue = KnownIssue(Error.userNotFound)
@@ -85,11 +85,21 @@ public final class EmailForm: Sendable {
         
         // mutate
         let projectBoardRef = ProjectBoard(userId: userId)
+        let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
+                                           userId: userId,
+                                           mode: self.mode)
+        
         budClientRef.projectBoard = projectBoardRef.id
+        budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.authBoard = nil
+        budClientRef.isUserSignedIn = true
         
-        authBoardRef.currentUser = userId
         authBoardRef.emailForm = nil
-        
+        authBoardRef.delete()
+        if let signUpForm {
+            let signUpFormRef = SignUpFormManager.get(signUpForm)
+            signUpFormRef?.delete()
+        }
         self.delete()
     }
     

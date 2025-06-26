@@ -31,8 +31,11 @@ public final class BudClient: Sendable {
     private nonisolated let plistPath: String
     internal var budServerLink: BudServerLink?
     
+    public internal(set) var isUserSignedIn: Bool = false
+    
     public internal(set) var authBoard: AuthBoard.ID?
     public internal(set) var projectBoard: ProjectBoard.ID?
+    public internal(set) var profileBoard: ProfileBoard.ID?
     public var isSetupRequired: Bool { authBoard == nil }
     
     public private(set) var issue: (any Issuable)?
