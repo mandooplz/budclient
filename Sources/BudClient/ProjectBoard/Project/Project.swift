@@ -4,11 +4,11 @@
 //
 //  Created by 김민우 on 6/25/25.
 //
-
 import Foundation
 
+
 // MARK: Object
-@MainActor @Observable 
+@MainActor @Observable
 public final class Project: Sendable {
     // MARK: core
     public init(userId: String) {

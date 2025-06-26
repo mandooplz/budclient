@@ -26,8 +26,13 @@ public final class ProjectBoard: Sendable {
     public nonisolated let id: ID
     public nonisolated let userId: String
     
+    public var projects: [Project.ID] = []
+    
     
     // MARK: action
+    public func fetchProjects() async {
+        // BudServer.ProjectHub에 있는 나의 모든 서버를 가져온다. 
+    }
     
     
     // MARK: value

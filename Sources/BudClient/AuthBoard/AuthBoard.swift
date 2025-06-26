@@ -45,6 +45,8 @@ public final class AuthBoard {
                                      mode: self.mode)
         self.emailForm = emailFormRef.id
     }
+    
+    // 추후에 Profile 객체에서 이를 
     public func signOut() {
         // capture
         guard isUserSignedIn else {
