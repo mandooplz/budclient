@@ -50,12 +50,13 @@ public final class SignUpForm: Sendable {
                                                      reason: Error.passwordsDoNotMatch); return }
         let emailFormRef = EmailFormManager.get(self.emailForm)!
         let authBoardRef = AuthBoardManager.get(emailFormRef.authBoard)!
+        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        let budServerLink = budClientRef.budServerLink!
         
         // compute
         let userId: AuthBoard.UserID?
         do {
             // register
-            let budServerLink = BudServerLink(mode: self.mode)
             let accountHubLink = budServerLink.getAccountHub()
             
             let newTicket = AccountHubLink.Ticket()
@@ -100,6 +101,7 @@ public final class SignUpForm: Sendable {
         public let value: UUID
     }
     public enum Error: String, Swift.Error {
+        case budClientIsNotSetUp
         case emailIsNil, passwordIsNil
         case passwordsDoNotMatch
     }

@@ -6,20 +6,20 @@
 //
 import Foundation
 import Tools
+import BudServer
 
 
 // MARK: System
 @MainActor
 public final class BudClient: Sendable {
     // MARK: core
-    public init(mode: SystemMode = .real) {
+    public init(mode: SystemMode = .real,
+                plistPath: String = "") {
         self.id = ID(value: UUID())
         self.mode = mode
+        self.plistPath = plistPath
         
         BudClientManager.register(self)
-    }
-    internal func delete() {
-        BudClientManager.unregister(self.id)
     }
     
     
@@ -27,22 +27,48 @@ public final class BudClient: Sendable {
     public nonisolated let id: ID
     private nonisolated let mode: SystemMode
     
+    internal nonisolated let plistPath: String
+    internal var budServerLink: BudServerLink?
+    
     public var authBoard: AuthBoard.ID?
     public var projectBoard: ProjectBoard.ID?
     
+    public var issue: Issue?
     
     // MARK: action
     public func setUp() {
+        // capture
+        if self.authBoard != nil {
+            issue = Issue(isKnown: true, reason: Error.alreadySetUp)
+            return
+        }
+        
+        // compute
+        let budServerLink: BudServerLink
+        do {
+            budServerLink = try BudServerLink(mode: self.mode, plistPath: plistPath)
+        } catch(let error) {
+            switch error {
+            case .plistPathIsWrong:
+                issue = Issue(isKnown: true, reason: Error.invalidPlistPath)
+            }
+            return
+        }
+        
         // mutate
-        if self.authBoard != nil { return }
         let authBoardRef = AuthBoard(budClient: self.id, mode: self.mode)
         self.authBoard = authBoardRef.id
+        self.budServerLink = budServerLink
     }
     
     
     // MARK: value
     public struct ID: Sendable, Hashable {
         public let value: UUID
+    }
+    public enum Error: String, Swift.Error {
+        case alreadySetUp
+        case invalidPlistPath
     }
 }
 
@@ -54,9 +80,6 @@ public final class BudClientManager: Sendable {
     private static var container: [BudClient.ID: BudClient] = [:]
     public static func register(_ object: BudClient) {
         container[object.id] = object
-    }
-    public static func unregister(_ id: BudClient.ID) {
-        container[id] = nil
     }
     public static func get(_ id: BudClient.ID) -> BudClient? {
         container[id]

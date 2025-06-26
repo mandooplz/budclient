@@ -53,9 +53,6 @@ let package = Package(
                 "Tools",
                 "BudServerMock",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
-            ],
-            resources: [
-                .process("GoogleService-Info.plist")
             ]
         ),
         .testTarget(

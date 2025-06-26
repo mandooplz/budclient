@@ -6,7 +6,7 @@
 //
 import Testing
 import Foundation
-import BudClient
+@testable import BudClient
 
 
 // MARK: Tests
@@ -15,7 +15,8 @@ struct BudClientTests {
     struct SetUp {
         let budClientRef: BudClient
         init() async throws {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient(mode: .test,
+                                                plistPath: "pathForTest")
         }
         @Test func setAuthBoard() async throws {
             // given
@@ -25,12 +26,26 @@ struct BudClientTests {
             await budClientRef.setUp()
             
             // then
+            try await #require(budClientRef.issue == nil)
             await #expect(budClientRef.authBoard != nil)
         }
         @Test func setProjectBoard() async throws {
             // then
+            try await #require(budClientRef.issue == nil)
             await #expect(budClientRef.projectBoard == nil)
         }
+        @Test func setBudServerLink() async throws {
+            // given
+            try await #require(budClientRef.budServerLink == nil)
+            
+            // when
+            await budClientRef.setUp()
+            
+            // then
+            try await #require(budClientRef.issue == nil)
+            await #expect(budClientRef.budServerLink != nil)
+        }
+        
         @Test func createAuthBoard() async throws {
             // given
             try await #require(budClientRef.authBoard == nil)
@@ -39,6 +54,8 @@ struct BudClientTests {
             await budClientRef.setUp()
             
             // then
+            try await #require(budClientRef.issue == nil)
+            
             let authBoard = try #require(await budClientRef.authBoard)
             await #expect(AuthBoardManager.get(authBoard) != nil)
         }
@@ -53,7 +70,25 @@ struct BudClientTests {
             await budClientRef.setUp()
             
             // then
+            let issue = try #require(await budClientRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "alreadySetUp")
+            
             await #expect(budClientRef.authBoard == authBoard)
+        }
+        
+        @Test func whenPlistPathIsWrong() async throws {
+            // given
+            let budClientForReal = await BudClient(mode: .real,
+                                                   plistPath: "wrongPath")
+            
+            // when
+            await budClientForReal.setUp()
+            
+            // then
+            let issue = try #require(await budClientForReal.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "invalidPlistPath")
         }
     }
 }

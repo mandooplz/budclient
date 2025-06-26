@@ -20,11 +20,6 @@
           "containerPath" : "container:",
           "identifier" : "BudServerMock",
           "name" : "BudServerMock"
-        },
-        {
-          "containerPath" : "container:",
-          "identifier" : "BudServer",
-          "name" : "BudServer"
         }
       ]
     },

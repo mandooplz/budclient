@@ -13,15 +13,17 @@ import FirebaseCore
 public struct BudServerLink: Sendable {
     // MARK: core
     private let mode: SystemMode
-    public init(mode: SystemMode = .real) {
+    
+    public init(mode: SystemMode = .real,
+                plistPath: String = "") throws(Error) {
         self.mode = mode
         
         if mode == .real {
             if FirebaseApp.app() != nil { return }
             
-            let filePath = Bundle.module.path(forResource: "GoogleService-Info", ofType: "plist")!
-            let options = FirebaseOptions(contentsOfFile: filePath)!
-            
+            guard let options = FirebaseOptions(contentsOfFile: plistPath) else {
+                throw .plistPathIsWrong
+            }
             FirebaseApp.configure(options: options)
         }
     }
@@ -29,5 +31,8 @@ public struct BudServerLink: Sendable {
     // MARK: state
     public func getAccountHub() -> AccountHubLink {
         AccountHubLink(mode: self.mode)
+    }
+    public enum Error: String, Swift.Error {
+        case plistPathIsWrong
     }
 }

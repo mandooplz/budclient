@@ -52,11 +52,12 @@ public final class EmailForm: Sendable {
         guard let password else { issue = Issue(isKnown: true, reason: Error.passwordIsNil); return}
         let authBoardRef = AuthBoardManager.get(self.authBoard)!
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        let budServerLink = budClientRef.budServerLink!
         
         // compute
         let userId: String
         do {
-            let budServerLink = BudServerLink(mode: self.mode)
+
             let accountHubLink = budServerLink.getAccountHub()
             
             userId = try await accountHubLink.getUserId(email: email,

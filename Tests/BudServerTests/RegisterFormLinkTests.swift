@@ -16,7 +16,8 @@ struct RegisterFormTests {
     let budServerLink: BudServerLink
     let registerFormLink: RegisterFormLink
     init() async {
-        self.budServerLink = BudServerLink(mode: .real)
+        self.budServerLink = try! BudServerLink(mode: .real,
+                                           plistPath: "testPath")
         self.registerFormLink = await getReigsterFormLink(budServerLink)
     }
     
