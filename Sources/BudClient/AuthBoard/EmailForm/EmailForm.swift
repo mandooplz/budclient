@@ -35,6 +35,7 @@ public final class EmailForm: Sendable {
     public var password: String?
     
     public internal(set) var signUpForm: SignUpForm.ID?
+    public var isSetUpRequired: Bool { signUpForm == nil }
     
     public internal(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
@@ -43,14 +44,22 @@ public final class EmailForm: Sendable {
     // MARK: action
     public func setUpSignUpForm() {
         // mutate
-        if self.signUpForm != nil { return }
-        let registerFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
-        self.signUpForm = registerFormRef.id
+        guard isSetUpRequired else { return }
+        
+        let signUpFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
+        self.signUpForm = signUpFormRef.id
     }
     public func signIn() async {
         // capture
-        guard let email else { self.issue = KnownIssue(Error.emailIsNil); return }
-        guard let password else { self.issue = KnownIssue(Error.passwordIsNil); return}
+        guard let email else {
+            self.issue = KnownIssue(Error.emailIsNil)
+            return
+        }
+        guard let password else {
+            self.issue = KnownIssue(Error.passwordIsNil)
+            return
+        }
+        
         let authBoardRef = AuthBoardManager.get(self.authBoard)!
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
         let budServerLink = budClientRef.budServerLink!
@@ -80,6 +89,7 @@ public final class EmailForm: Sendable {
         
         authBoardRef.currentUser = userId
         authBoardRef.emailForm = nil
+        
         self.delete()
     }
     

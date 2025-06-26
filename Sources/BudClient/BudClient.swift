@@ -51,7 +51,7 @@ public final class BudClient: Sendable {
         let budServerLink: BudServerLink
         do {
             budServerLink = try BudServerLink(mode: self.mode,
-                                              plistPath: plistPath)
+                                              plistPath: self.plistPath)
         } catch(let error) {
             switch error {
             case .plistPathIsWrong:

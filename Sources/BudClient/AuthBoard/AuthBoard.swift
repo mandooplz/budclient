@@ -31,6 +31,7 @@ public final class AuthBoard {
     public var isUserSignedIn: Bool { currentUser != nil }
     
     public internal(set) var emailForm: EmailForm.ID?
+    public var isSetUpRequired: Bool { emailForm == nil }
     
     public internal(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
@@ -39,7 +40,7 @@ public final class AuthBoard {
     // MARK: action
     public func setUpEmailForm() {
         // mutate
-        if self.emailForm != nil { return }
+        guard self.isSetUpRequired else { return }
         let emailFormRef = EmailForm(authBoard: self.id,
                                      mode: self.mode)
         self.emailForm = emailFormRef.id
@@ -83,9 +84,6 @@ public final class AuthBoardManager {
     private static var container: [AuthBoard.ID: AuthBoard] = [:]
     public static func register(_ object: AuthBoard) {
         container[object.id] = object
-    }
-    public static func unregister(_ id: AuthBoard.ID) {
-        container[id] = nil
     }
     public static func get(_ id: AuthBoard.ID) -> AuthBoard? {
         container[id]

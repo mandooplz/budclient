@@ -52,7 +52,8 @@ let package = Package(
             dependencies: [
                 "Tools",
                 "BudServerMock",
-                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk")
             ]
         ),
         .testTarget(
