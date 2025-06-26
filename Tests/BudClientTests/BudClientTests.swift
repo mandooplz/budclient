@@ -86,6 +86,8 @@ struct BudClientTests {
             await budClientForReal.setUp()
             
             // then
+            try await #require(budClientForReal.isIssueOccurred == true)
+            
             let issue = try #require(await budClientForReal.issue)
             #expect(issue.isKnown == true)
             #expect(issue.reason == "invalidPlistPath")

@@ -35,6 +35,8 @@ public final class BudClient: Sendable {
     public var projectBoard: ProjectBoard.ID?
     
     public var issue: Issue?
+    public var isIssueOccurred: Bool { issue != nil }
+    
     
     // MARK: action
     public func setUp() {
