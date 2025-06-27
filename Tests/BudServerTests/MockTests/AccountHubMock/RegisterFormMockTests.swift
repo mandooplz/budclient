@@ -4,9 +4,9 @@
 //
 //  Created by 김민우 on 6/23/25.
 //
-import BudServerMock
 import Testing
 import Foundation
+import BudServer
 
 
 // MARK: Tests

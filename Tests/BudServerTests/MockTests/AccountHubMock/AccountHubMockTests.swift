@@ -5,9 +5,9 @@
 //  Created by 김민우 on 6/23/25.
 //
 import Testing
-import BudServerMock
 import Foundation
 import Tools
+import BudServer
 
 
 // MARK: Tests
@@ -35,7 +35,7 @@ struct AccountHubMockTests {
             // given
             let testEmail = Email.random().value
             let testPasssword = UUID().uuidString
-            let accountRef = await Account(email: testEmail,
+            let accountRef = await AccountMock(email: testEmail,
                                            password: testPasssword)
             let _ = await MainActor.run {
                 accountHubRef.accounts.insert(accountRef.id)
@@ -59,7 +59,7 @@ struct AccountHubMockTests {
             // given
             let testEmail = Email.random().value
             let testPasssword = UUID().uuidString
-            let accountRef = await Account(email: testEmail,
+            let accountRef = await AccountMock(email: testEmail,
                                            password: testPasssword)
             let _ = await MainActor.run {
                 accountHubRef.accounts.insert(accountRef.id)
@@ -87,7 +87,7 @@ struct AccountHubMockTests {
             // given
             let testEmail = Email.random().value
             let testPasssword = UUID().uuidString
-            let accountRef = await Account(email: testEmail,
+            let accountRef = await AccountMock(email: testEmail,
                                            password: testPasssword)
             let _ = await MainActor.run {
                 accountHubRef.accounts.insert(accountRef.id)

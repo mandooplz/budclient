@@ -17,20 +17,20 @@ public final class AccountHubMock: Sendable {
     
     
     // MARK: state
-    public var accounts: Set<Account.ID> = []
+    public var accounts: Set<AccountMock.ID> = []
     public func isExist(email: String, password: String) -> Bool {
         // capture
         let accounts = self.accounts
         
         // compute
         let isExist = accounts.lazy
-            .compactMap { AccountManager.get($0) }
+            .compactMap { AccountMockManager.get($0) }
             .contains { $0.email == email && $0.password == password }
         return isExist
     }
-    public func getUserId(email: String, password: String) throws -> Account.UserID {
+    public func getUserId(email: String, password: String) throws -> AccountMock.UserID {
         let filtered = self.accounts.lazy
-            .compactMap { AccountManager.get($0) }
+            .compactMap { AccountMockManager.get($0) }
             .filter { $0.email == email }
         
         if filtered.isEmpty { throw Error.userNotFound }

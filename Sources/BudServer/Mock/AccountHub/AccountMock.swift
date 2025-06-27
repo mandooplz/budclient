@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: Link
 @MainActor
-public final class Account: Sendable {
+public final class AccountMock: Sendable {
     // MARK: core
     public init(email: String, password: String) {
         self.id = ID(value: UUID())
@@ -18,10 +18,10 @@ public final class Account: Sendable {
         self.email = email
         self.password = password
         
-        AccountManager.register(self)
+        AccountMockManager.register(self)
     }
     internal func delete() {
-        AccountManager.unregister(self.id)
+        AccountMockManager.unregister(self.id)
     }
     
     
@@ -43,19 +43,19 @@ public final class Account: Sendable {
 
 // MARK: Object Manager
 @MainActor
-public final class AccountManager: Sendable {
+public final class AccountMockManager: Sendable {
     // MARK: state
-    private static var container: [Account.ID: Account] = [:]
+    private static var container: [AccountMock.ID: AccountMock] = [:]
     
-    public static func register(_ object: Account) {
+    public static func register(_ object: AccountMock) {
         container[object.id] = object
     }
     
-    public static func unregister(_ id: Account.ID) {
+    public static func unregister(_ id: AccountMock.ID) {
         container[id] = nil
     }
     
-    public static func get(_ id: Account.ID) -> Account? {
+    public static func get(_ id: AccountMock.ID) -> AccountMock? {
         container[id]
     }
 }

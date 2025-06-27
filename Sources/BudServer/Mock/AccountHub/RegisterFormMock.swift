@@ -51,7 +51,7 @@ public final class RegisterFormMock: Sendable {
         
         // compute
         let isDuplicate = accounts.lazy
-            .compactMap { AccountManager.get($0) }
+            .compactMap { AccountMockManager.get($0) }
             .contains { $0.email == email }
         guard isDuplicate == false else {
             self.issue = KnownIssue(Error.emailDuplicate)
@@ -59,7 +59,7 @@ public final class RegisterFormMock: Sendable {
         }
         
         // mutate
-        let account = Account(email: email, password: password)
+        let account = AccountMock(email: email, password: password)
         accountHub.accounts.insert(account.id)
     }
     public func remove() {
