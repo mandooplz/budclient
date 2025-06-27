@@ -31,8 +31,8 @@ public final class EmailForm: Sendable {
     public nonisolated let authBoard: AuthBoard.ID
     private nonisolated let mode: SystemMode
     
-    public var email: String?
-    public var password: String?
+    public var email: String = ""
+    public var password: String = ""
     
     public internal(set) var signUpForm: SignUpForm.ID?
     public var isSetUpRequired: Bool { signUpForm == nil }
@@ -51,11 +51,11 @@ public final class EmailForm: Sendable {
     }
     public func signIn() async {
         // capture
-        guard let email else {
+        guard email != "" else {
             self.issue = KnownIssue(Error.emailIsNil)
             return
         }
-        guard let password else {
+        guard password != "" else {
             self.issue = KnownIssue(Error.passwordIsNil)
             return
         }

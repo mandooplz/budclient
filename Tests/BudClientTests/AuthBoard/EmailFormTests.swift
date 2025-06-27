@@ -76,7 +76,7 @@ struct EmailFormTests {
         @Test func whenEmailIsNil() async throws {
             // given
             await MainActor.run {
-                emailFormRef.email = nil
+                emailFormRef.email = ""
             }
             
             // when
@@ -90,7 +90,7 @@ struct EmailFormTests {
         @Test func whenPasswordIsNil() async throws {
             await MainActor.run {
                 emailFormRef.email = validEmail
-                emailFormRef.password = nil
+                emailFormRef.password = ""
             }
             
             // when
