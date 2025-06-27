@@ -37,10 +37,10 @@ final class AccountHub {
         return true
     }
     func getUserId(email: String, password: String) async throws -> String {
-        // 현재 로그인되어 있다면 가져옴
-        if let currentUser = Auth.auth().currentUser {
-            return currentUser.uid
-        }
+        // 현재 로그인되어 있다면 -> 추가 시스템을 만들어 테스트
+//        if let currentUser = Auth.auth().currentUser {
+//            return currentUser.uid
+//        }
         
         // 없다면 로그인 시도
         do {
