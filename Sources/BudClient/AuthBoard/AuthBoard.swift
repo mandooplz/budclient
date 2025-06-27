@@ -33,7 +33,7 @@ public final class AuthBoard {
     public internal(set) var emailForm: EmailForm.ID?
     public var isSetUpRequired: Bool { emailForm == nil }
     
-    public internal(set) var issue: (any Issuable)?
+    public var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
     
     
