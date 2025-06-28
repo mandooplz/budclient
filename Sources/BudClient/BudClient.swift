@@ -25,7 +25,7 @@ public final class BudClient: Sendable {
         
         BudClientManager.register(self)
     }
-    internal init() {
+    public init() {
         self.id = ID(value: UUID())
         self.mode = .test
         self.plistPath = ""
