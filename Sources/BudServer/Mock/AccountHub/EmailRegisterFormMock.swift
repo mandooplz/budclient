@@ -1,5 +1,5 @@
 //
-//  RegisterRequest.swift
+//  RegisterFormMock.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/23/25.
@@ -10,7 +10,7 @@ import Tools
 
 // MARK: Object
 @MainActor
-package final class RegisterFormMock: Sendable {
+package final class EmailRegisterFormMock: Sendable {
     // MARK: core
     package init(accountHub: AccountHubMock,
                 ticket: AccountHubMock.Ticket) {
@@ -18,10 +18,10 @@ package final class RegisterFormMock: Sendable {
         self.accountHub = accountHub
         self.ticket = ticket
 
-        RegisterFormMockManager.register(self)
+        EmailRegisterFormMockManager.register(self)
     }
     internal func delete() {
-        RegisterFormMockManager.unregister(self.id)
+        EmailRegisterFormMockManager.unregister(self.id)
     }
     
 
@@ -64,7 +64,7 @@ package final class RegisterFormMock: Sendable {
     }
     package func remove() {
         // mutate
-        accountHub.registerForms[ticket] = nil
+        accountHub.emailRegisterForms[ticket] = nil
         self.delete()
     }
 
@@ -84,15 +84,15 @@ package final class RegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @MainActor
-package final class RegisterFormMockManager: Sendable {
-    private static var container: [RegisterFormMock.ID: RegisterFormMock] = [:]
-    package static func register(_ object: RegisterFormMock) {
+package final class EmailRegisterFormMockManager: Sendable {
+    private static var container: [EmailRegisterFormMock.ID: EmailRegisterFormMock] = [:]
+    package static func register(_ object: EmailRegisterFormMock) {
         container[object.id] = object
     }
-    package static func unregister(_ id: RegisterFormMock.ID) {
+    package static func unregister(_ id: EmailRegisterFormMock.ID) {
         container[id] = nil
     }
-    package static func get(_ id: RegisterFormMock.ID) -> RegisterFormMock? {
+    package static func get(_ id: EmailRegisterFormMock.ID) -> EmailRegisterFormMock? {
         container[id]
     }
 }

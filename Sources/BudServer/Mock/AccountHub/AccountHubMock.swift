@@ -1,5 +1,5 @@
 //
-//  AccountHub.swift
+//  AccountHubMock.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/23/25.
@@ -13,7 +13,7 @@ import Tools
 package final class AccountHubMock: Sendable {
     // MARK: core
     package static let shared = AccountHubMock()
-    private init() { }
+    internal init() { }
     
     
     // MARK: state
@@ -44,18 +44,30 @@ package final class AccountHubMock: Sendable {
         return userId
     }
     
-    package var tickets: Set<Ticket> = []
-    package var registerForms: [Ticket:RegisterFormMock.ID] = [:]
+    package var emailTickets: Set<Ticket> = []
+    package var emailRegisterForms: [Ticket:EmailRegisterFormMock.ID] = [:]
+    
+    package var googleTickets: Set<Ticket> = []
+    package var googleRegisterForms: [Ticket: GoogleRegisterFormMock.ID] = [:]
     
     
     // MARK: action
-    package func generateForms() {
+    package func updateEmailForms() {
         // mutate
-        for ticket in tickets {
-            let registerFormRef = RegisterFormMock(accountHub: self,
+        for ticket in emailTickets {
+            let emailRegisterFormRef = EmailRegisterFormMock(accountHub: self,
                                                    ticket: ticket)
-            self.registerForms[ticket] = registerFormRef.id
-            tickets.remove(ticket)
+            self.emailRegisterForms[ticket] = emailRegisterFormRef.id
+            emailTickets.remove(ticket)
+        }
+    }
+    package func updateGoogleForms() {
+        // mutate
+        for ticket in googleTickets {
+            let googleRegisterFormRef = GoogleRegisterFormMock(accountHub: self,
+                                                               ticket: ticket)
+            self.googleRegisterForms[ticket] = googleRegisterFormRef.id
+            googleTickets.remove(ticket)
         }
     }
     

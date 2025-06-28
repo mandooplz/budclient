@@ -14,7 +14,7 @@ package struct RegisterFormLink: Sendable {
     // MARK: core
     private nonisolated let mode: SystemMode
     private nonisolated let id: ID
-    private nonisolated let idForMock: RegisterFormMock.ID!
+    private nonisolated let idForMock: EmailRegisterFormMock.ID!
     package init(mode: SystemMode,
                 id: ID) {
         self.mode = mode
@@ -22,7 +22,7 @@ package struct RegisterFormLink: Sendable {
         self.idForMock = nil
     }
     internal init(mode: SystemMode,
-                  idForMock: RegisterFormMock.ID) {
+                  idForMock: EmailRegisterFormMock.ID) {
         self.mode = mode
         self.id = ID(idForMock: idForMock)
         self.idForMock = idForMock
@@ -33,7 +33,7 @@ package struct RegisterFormLink: Sendable {
         switch mode {
         case .test:
             await MainActor.run {
-                let registerFormRef = RegisterFormMockManager.get(idForMock)!
+                let registerFormRef = EmailRegisterFormMockManager.get(idForMock)!
                 registerFormRef.email = value
             }
         case .real:
@@ -49,7 +49,7 @@ package struct RegisterFormLink: Sendable {
         switch mode {
         case .test:
             await MainActor.run {
-                let registerFormRef = RegisterFormMockManager.get(idForMock)!
+                let registerFormRef = EmailRegisterFormMockManager.get(idForMock)!
                 registerFormRef.password = value
             }
         case .real:
@@ -66,7 +66,7 @@ package struct RegisterFormLink: Sendable {
             switch mode {
             case .test:
                 await MainActor.run {
-                    let registerFormRef = RegisterFormMockManager.get(idForMock)!
+                    let registerFormRef = EmailRegisterFormMockManager.get(idForMock)!
                     return registerFormRef.issue
                 }
             case .real:
@@ -83,7 +83,7 @@ package struct RegisterFormLink: Sendable {
         switch mode {
         case .test:
             await MainActor.run {
-                let registerFormRef = RegisterFormMockManager.get(idForMock)!
+                let registerFormRef = EmailRegisterFormMockManager.get(idForMock)!
                 registerFormRef.submit()
             }
         case .real:
@@ -95,7 +95,7 @@ package struct RegisterFormLink: Sendable {
         switch mode {
         case .test:
             await MainActor.run {
-                let registerFormRef = RegisterFormMockManager.get(idForMock)!
+                let registerFormRef = EmailRegisterFormMockManager.get(idForMock)!
                 registerFormRef.remove()
             }
         case .real:
@@ -113,7 +113,7 @@ package struct RegisterFormLink: Sendable {
             self.value = realId.value
         }
         
-        internal init(idForMock: RegisterFormMock.ID) {
+        internal init(idForMock: EmailRegisterFormMock.ID) {
             self.value = idForMock.value
         }
         

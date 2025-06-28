@@ -13,7 +13,7 @@ import Tools
 package final class BudServerMock: Sendable {
     // MARK: core
     package static let shared = BudServerMock()
-    private init() {
+    internal init() {
         self.id = ID(value: .init())
     }
     

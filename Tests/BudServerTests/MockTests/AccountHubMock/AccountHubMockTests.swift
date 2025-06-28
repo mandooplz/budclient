@@ -7,7 +7,7 @@
 import Testing
 import Foundation
 import Tools
-import BudServer
+@testable import BudServer
 
 
 // MARK: Tests
@@ -17,7 +17,7 @@ struct AccountHubMockTests {
     struct IsExist {
         let accountHubRef: AccountHubMock
         init() async {
-            self.accountHubRef = await AccountHubMock.shared
+            self.accountHubRef = await AccountHubMock()
         }
         @Test func whenAccountIsNotExistThenFalse() async throws {
             // given
@@ -50,10 +50,10 @@ struct AccountHubMockTests {
         }
     }
     
-    struct GetUserId {
+    struct GetUserIdByEmail {
         let accountHubRef: AccountHubMock
         init() async {
-            self.accountHubRef = await AccountHubMock.shared
+            self.accountHubRef = await AccountHubMock()
         }
         @Test func whenAccountIsExist() async throws {
             // given
@@ -102,52 +102,107 @@ struct AccountHubMockTests {
         }
     }
     
-    // MARK: action
-    struct GenerateForms {
+    struct GetUserIdByGoogle {
         let accountHubRef: AccountHubMock
         init() async {
-            self.accountHubRef = await AccountHubMock.shared
+            self.accountHubRef = await AccountHubMock()
+        }
+    }
+    
+    // MARK: action
+    struct UpdateEmailForms {
+        let accountHubRef: AccountHubMock
+        init() async {
+            self.accountHubRef = await AccountHubMock()
         }
         
         @Test func removeTicket() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
             let _ = await MainActor.run {
-                accountHubRef.tickets.insert(ticket)
+                accountHubRef.emailTickets.insert(ticket)
             }
             
             // when
-            await accountHubRef.generateForms()
+            await accountHubRef.updateEmailForms()
             
             // then
-            await #expect(accountHubRef.tickets.contains(ticket) == false)
+            await #expect(accountHubRef.emailTickets.contains(ticket) == false)
         }
-        @Test func addRegisterForm() async throws {
+        @Test func appendEmailRegisterForm() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
             let _ = await MainActor.run {
-                accountHubRef.tickets.insert(ticket)
+                accountHubRef.emailTickets.insert(ticket)
             }
             
             // when
-            await accountHubRef.generateForms()
+            await accountHubRef.updateEmailForms()
             
             // then
-            await #expect(accountHubRef.registerForms[ticket] != nil)
+            await #expect(accountHubRef.emailRegisterForms[ticket] != nil)
         }
-        @Test func createRegisterForm() async throws {
+        @Test func createEmailRegisterForm() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
             let _ = await MainActor.run {
-                accountHubRef.tickets.insert(ticket)
+                accountHubRef.emailTickets.insert(ticket)
             }
             
             // when
-            await accountHubRef.generateForms()
+            await accountHubRef.updateEmailForms()
             
             // then
-            let registerForm = try #require(await accountHubRef.registerForms[ticket])
-            await #expect(RegisterFormMockManager.get(registerForm) != nil)
+            let emailRegisterForm = try #require(await accountHubRef.emailRegisterForms[ticket])
+            await #expect(EmailRegisterFormMockManager.get(emailRegisterForm) != nil)
+        }
+    }
+    
+    struct UpdateGoogleForms {
+        let accountHubRef: AccountHubMock
+        init() async {
+            self.accountHubRef = await AccountHubMock()
+        }
+        
+        @Test func removeTicket() async throws {
+            // given
+            let ticket = AccountHubMock.Ticket()
+            let _ = await MainActor.run {
+                accountHubRef.googleTickets.insert(ticket)
+            }
+            
+            // when
+            await accountHubRef.updateGoogleForms()
+            
+            // then
+            await #expect(accountHubRef.googleTickets.contains(ticket) == false)
+        }
+        @Test func appendGoogleRegisterForm() async throws {
+            // given
+            let ticket = AccountHubMock.Ticket()
+            let _ = await MainActor.run {
+                accountHubRef.googleTickets.insert(ticket)
+            }
+            
+            // when
+            await accountHubRef.updateGoogleForms()
+            
+            // then
+            await #expect(accountHubRef.googleRegisterForms[ticket] != nil)
+        }
+        @Test func createGoogleRegisterForm() async throws {
+            // given
+            let ticket = AccountHubMock.Ticket()
+            let _ = await MainActor.run {
+                accountHubRef.googleTickets.insert(ticket)
+            }
+            
+            // when
+            await accountHubRef.updateGoogleForms()
+            
+            // then
+            let googleRegisterForm = try #require(await accountHubRef.googleRegisterForms[ticket])
+            await #expect(GoogleRegisterFormMockManager.get(googleRegisterForm) != nil)
         }
     }
 }

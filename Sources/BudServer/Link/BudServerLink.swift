@@ -7,11 +7,12 @@
 import Foundation
 import Tools
 import FirebaseCore
+import FirebaseAuth
 import FirebaseFirestore
 
 
 // MARK: Link
-package struct BudServerLink: Sendable {
+public struct BudServerLink: Sendable {
     // MARK: core
     private let mode: SystemMode
     
@@ -30,6 +31,9 @@ package struct BudServerLink: Sendable {
     }
     
     // MARK: state
+    public func getGoogleClientId() -> String? {
+        FirebaseApp.app()?.options.clientID
+    }
     package func getAccountHub() -> AccountHubLink {
         AccountHubLink(mode: self.mode)
     }

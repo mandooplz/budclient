@@ -1,5 +1,5 @@
 //
-//  Account.swift
+//  AccountMock.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/23/25.
@@ -20,6 +20,14 @@ package final class AccountMock: Sendable {
         
         AccountMockManager.register(self)
     }
+    package init(googleUserId: String) {
+        self.id = ID(value: .init())
+        self.userId = UUID().uuidString
+        
+        self.googleUserId = googleUserId
+        
+        AccountMockManager.register(self)
+    }
     internal func delete() {
         AccountMockManager.unregister(self.id)
     }
@@ -29,8 +37,10 @@ package final class AccountMock: Sendable {
     package nonisolated let id: ID
     package nonisolated let userId: String
     
-    package var email: String
-    package var password: String
+    package var email: String?
+    package var password: String?
+    
+    package var googleUserId: String?
     
     
     // MARK: value
@@ -46,15 +56,12 @@ package final class AccountMock: Sendable {
 package final class AccountMockManager: Sendable {
     // MARK: state
     private static var container: [AccountMock.ID: AccountMock] = [:]
-    
     package static func register(_ object: AccountMock) {
         container[object.id] = object
     }
-    
     package static func unregister(_ id: AccountMock.ID) {
         container[id] = nil
     }
-    
     package static func get(_ id: AccountMock.ID) -> AccountMock? {
         container[id]
     }

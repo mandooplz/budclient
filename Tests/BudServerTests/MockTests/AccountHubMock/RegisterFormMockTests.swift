@@ -1,5 +1,5 @@
 //
-//  RegisterFormMockTests.swift
+//  EmailForm.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/23/25.
@@ -10,10 +10,10 @@ import BudServer
 
 
 // MARK: Tests
-@Suite("RegisterFormMock")
+@Suite("EmailFormMockTests")
 struct RegisterFormMockTests {
     struct Submit {
-        let registerFormRef: RegisterFormMock
+        let registerFormRef: EmailRegisterFormMock
         init() async throws {
             self.registerFormRef = await getRegisterFormMock()
         }
@@ -69,30 +69,30 @@ struct RegisterFormMockTests {
     }
     
     struct Remove {
-        let registerFormRef: RegisterFormMock
+        let registerFormRef: EmailRegisterFormMock
         init() async throws {
             self.registerFormRef = await getRegisterFormMock()
         }
         @Test func deleteWhenSuccess() async throws {
             // given
-            try await #require(RegisterFormMockManager.get(registerFormRef.id) != nil)
+            try await #require(EmailRegisterFormMockManager.get(registerFormRef.id) != nil)
             
             // when
             await registerFormRef.remove()
             
             // then
-            await #expect(RegisterFormMockManager.get(registerFormRef.id) == nil)
+            await #expect(EmailRegisterFormMockManager.get(registerFormRef.id) == nil)
         }
         @Test func removeInAccountHub() async throws {
             // given
-            let form = await AccountHubMock.shared.registerForms.values
+            let form = await AccountHubMock.shared.emailRegisterForms.values
             #expect(form.contains(registerFormRef.id) == true)
             
             // when
             await registerFormRef.remove()
             
             // then
-            let updatedForms = await AccountHubMock.shared.registerForms.values
+            let updatedForms = await AccountHubMock.shared.emailRegisterForms.values
             #expect(updatedForms.contains(registerFormRef.id) == false)
         }
     }
@@ -100,14 +100,14 @@ struct RegisterFormMockTests {
 
 
 // MARK: Helphers
-func getRegisterFormMock() async -> RegisterFormMock {
+func getRegisterFormMock() async -> EmailRegisterFormMock {
     let accountHubRef = await AccountHubMock.shared
     let newTicket = AccountHubMock.Ticket()
     
     return await MainActor.run {
-        accountHubRef.tickets.insert(newTicket)
-        accountHubRef.generateForms()
-        let registerForm = accountHubRef.registerForms[newTicket]!
-        return RegisterFormMockManager.get(registerForm)!
+        accountHubRef.emailTickets.insert(newTicket)
+        accountHubRef.updateEmailForms()
+        let registerForm = accountHubRef.emailRegisterForms[newTicket]!
+        return EmailRegisterFormMockManager.get(registerForm)!
     }
 }

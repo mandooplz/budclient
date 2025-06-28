@@ -58,7 +58,7 @@ package struct AccountHubLink: Sendable {
         case .test:
             await MainActor.run {
                 let ticketForMock = AccountHubMock.Ticket(value: ticket.value)
-                AccountHubMock.shared.tickets.insert(ticketForMock)
+                AccountHubMock.shared.emailTickets.insert(ticketForMock)
             }
         case .real:
             await Server.run {
@@ -72,7 +72,7 @@ package struct AccountHubLink: Sendable {
         case .test:
             // test에는 RegisterFormLink를 제공
             let registerForm = await MainActor.run {
-                AccountHubMock.shared.registerForms[ticket.forMock]
+                AccountHubMock.shared.emailRegisterForms[ticket.forMock]
             }
             guard let registerForm else { return nil }
             return RegisterFormLink(mode: self.mode,
@@ -93,7 +93,7 @@ package struct AccountHubLink: Sendable {
     package func generateForms() async throws {
         switch mode {
         case .test:
-            await AccountHubMock.shared.generateForms()
+            await AccountHubMock.shared.updateEmailForms()
         case .real:
             await AccountHub.shared.generateForms()
         }

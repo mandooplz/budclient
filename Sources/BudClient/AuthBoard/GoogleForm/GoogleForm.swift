@@ -5,7 +5,6 @@
 //  Created by 김민우 on 6/28/25.
 //
 import Foundation
-import FirebaseAuth
 import Tools
 import BudCache
 import BudServer
@@ -46,7 +45,14 @@ public final class GoogleForm: Sendable {
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
         
         
+        // compute
+        // 이 안에서 이루어져야 하는 작업은?
         // idToken과 accessToken을 사용해 로그인 처리한다.
+//        let googleCredential = GoogleAuthProvider.credential(withIDToken: idToken,
+//                                                             accessToken: accessToken)
+//        
+//        let result = Auth.auth().signIn(with: googleCredential)
+
         
         // mutate
         print(idToken, accessToken)
