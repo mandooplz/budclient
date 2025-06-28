@@ -1,5 +1,5 @@
 //
-//  RegisterForm.swift
+//  EmailRegisterForm.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/24/25.
@@ -11,7 +11,7 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-internal final class RegisterForm {
+internal final class EmailRegisterForm {
     // MARK: core
     internal init(accountHubRef: AccountHub,
         ticket: AccountHub.Ticket) {
@@ -19,10 +19,10 @@ internal final class RegisterForm {
         self.id = .init()
         self.ticket = ticket
         
-        RegisterFormManager.register(self)
+        EmailRegisterFormManager.register(self)
     }
     internal func delete() {
-        RegisterFormManager.unregister(self.id)
+        EmailRegisterFormManager.unregister(self.id)
     }
     
     
@@ -82,17 +82,17 @@ internal final class RegisterForm {
 
 // MARK: Object Manager
 @Server
-internal final class RegisterFormManager {
-    private static var container: [RegisterForm.ID: RegisterForm] = [:]
-    internal static func register(_ object: RegisterForm) {
+internal final class EmailRegisterFormManager {
+    private static var container: [EmailRegisterForm.ID: EmailRegisterForm] = [:]
+    internal static func register(_ object: EmailRegisterForm) {
         container[object.id] = object
     }
     
-    internal static func unregister(_ id: RegisterForm.ID) {
+    internal static func unregister(_ id: EmailRegisterForm.ID) {
         container[id] = nil
     }
     
-    internal static func get(_ id: RegisterForm.ID) -> RegisterForm? {
+    internal static func get(_ id: EmailRegisterForm.ID) -> EmailRegisterForm? {
         container[id]
     }
 }

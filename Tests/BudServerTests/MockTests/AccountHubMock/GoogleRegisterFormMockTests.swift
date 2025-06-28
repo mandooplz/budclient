@@ -90,20 +90,45 @@ struct GoogleRegisterFormMockTests {
         
         @Test func appendAccount() async throws {
             // given
-            await
+            await MainActor.run {
+                googleRegisterFormRef.idToken = Token.random().value
+                googleRegisterFormRef.accessToken = Token.random().value
+                googleRegisterFormRef.fetchGoogleUserId()
+            }
             
             // when
+            await googleRegisterFormRef.submit()
             
             // then
+            try await #require(googleRegisterFormRef.issue == nil)
+            
+            let googleUserId = try #require(await googleRegisterFormRef.googleUserId)
+            await #expect(accountHubRef.isExist(googleUserId: googleUserId) == true)
         }
         @Test func createAccount() async throws {
             // given
+            await MainActor.run {
+                googleRegisterFormRef.idToken = Token.random().value
+                googleRegisterFormRef.accessToken = Token.random().value
+                googleRegisterFormRef.fetchGoogleUserId()
+            }
             
             // when
+            await googleRegisterFormRef.submit()
             
             // then
+            try await #require(googleRegisterFormRef.issue == nil)
+            
+            let googleUserId = try #require(await googleRegisterFormRef.googleUserId)
+            let accountRef = await MainActor.run {
+                accountHubRef.accounts.lazy
+                    .compactMap { AccountMockManager.get($0) }
+                    .first { $0.googleUserId == googleUserId }!
+            }
+            await #expect(AccountMockManager.get(accountRef.id) != nil)
+            
         }
-        @Test func whenAccountAlreadyExists() async throws {
+        @Test(.disabled()) func whenAccountAlreadyExists() async throws {
             // given
             
             // when

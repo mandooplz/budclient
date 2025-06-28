@@ -38,7 +38,7 @@ package struct RegisterFormLink: Sendable {
             }
         case .real:
             let registerForm = id.forReal()
-            let registerFormRef = await RegisterFormManager.get(registerForm)!
+            let registerFormRef = await EmailRegisterFormManager.get(registerForm)!
             
             await Server.run {
                 registerFormRef.email = value
@@ -54,7 +54,7 @@ package struct RegisterFormLink: Sendable {
             }
         case .real:
             let registerForm = id.forReal()
-            let registerFormRef = await RegisterFormManager.get(registerForm)!
+            let registerFormRef = await EmailRegisterFormManager.get(registerForm)!
             
             await Server.run {
                 registerFormRef.password = value
@@ -71,7 +71,7 @@ package struct RegisterFormLink: Sendable {
                 }
             case .real:
                 await Server.run {
-                    let registerFormRef = RegisterFormManager.get(id.forReal())!
+                    let registerFormRef = EmailRegisterFormManager.get(id.forReal())!
                     return registerFormRef.issue
                 }
             }
@@ -87,7 +87,7 @@ package struct RegisterFormLink: Sendable {
                 registerFormRef.submit()
             }
         case .real:
-            let registerFormRef = await RegisterFormManager.get(id.forReal())!
+            let registerFormRef = await EmailRegisterFormManager.get(id.forReal())!
             await registerFormRef.submit()
         }
     }
@@ -99,7 +99,7 @@ package struct RegisterFormLink: Sendable {
                 registerFormRef.remove()
             }
         case .real:
-            let registerFormRef = await RegisterFormManager.get(id.forReal())!
+            let registerFormRef = await EmailRegisterFormManager.get(id.forReal())!
             await registerFormRef.remove()
         }
     }
@@ -109,7 +109,7 @@ package struct RegisterFormLink: Sendable {
     package struct ID: Sendable, Hashable {
         package let value: UUID
         
-        internal init(realId: RegisterForm.ID) {
+        internal init(realId: EmailRegisterForm.ID) {
             self.value = realId.value
         }
         
@@ -117,7 +117,7 @@ package struct RegisterFormLink: Sendable {
             self.value = idForMock.value
         }
         
-        fileprivate func forReal() -> RegisterForm.ID {
+        fileprivate func forReal() -> EmailRegisterForm.ID {
             return .init(value: self.value)
         }
     }

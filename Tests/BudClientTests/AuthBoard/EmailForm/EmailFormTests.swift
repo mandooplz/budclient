@@ -420,10 +420,10 @@ private func register(email: String, password: String) async {
     let accountHubLink = budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
-    try! await accountHubLink.insertTicket(newTicket)
-    try! await accountHubLink.generateForms()
+    try! await accountHubLink.insertEmailTicket(newTicket)
+    try! await accountHubLink.updateEmailForms()
     
-    let registerFormLink = try! await accountHubLink.getRegisterForm(newTicket)!
+    let registerFormLink = try! await accountHubLink.getEmailRegisterForm(newTicket)!
     try! await registerFormLink.setEmail(email)
     try! await registerFormLink.setPassword(password)
     
@@ -443,10 +443,10 @@ private func setEmailCredentialInBudCache(budClientRef: BudClient) async {
     let accountHubLink = budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
-    try! await accountHubLink.insertTicket(newTicket)
-    try! await accountHubLink.generateForms()
+    try! await accountHubLink.insertEmailTicket(newTicket)
+    try! await accountHubLink.updateEmailForms()
     
-    let registerFormLink = try! await accountHubLink.getRegisterForm(newTicket)!
+    let registerFormLink = try! await accountHubLink.getEmailRegisterForm(newTicket)!
     try! await registerFormLink.setEmail(testEmail)
     try! await registerFormLink.setPassword(testPassword)
     

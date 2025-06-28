@@ -44,8 +44,18 @@ public final class GoogleForm: Sendable {
         guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
         
+        let authBoardRef = AuthBoardManager.get(self.authBoard)!
+        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        let budServerLink = budClientRef.budServerLink
         
         // compute
+        let userId: String
+        do {
+            
+        } catch {
+            self.issue = UnknownIssue(error)
+            return
+        }
         // 이 안에서 이루어져야 하는 작업은?
         // idToken과 accessToken을 사용해 로그인 처리한다.
 //        let googleCredential = GoogleAuthProvider.credential(withIDToken: idToken,
@@ -55,8 +65,8 @@ public final class GoogleForm: Sendable {
 
         
         // mutate
-        print(idToken, accessToken)
-        // EmailForm, SignUpForm에서처럼
+        
+        // EmailForm, SignUpForm에서처럼 전체 시스템 객체의 상태를 변화시킨다. 
     }
     
     

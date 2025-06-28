@@ -54,10 +54,12 @@ package final class GoogleRegisterFormMock: Sendable {
     }
     public func submit() {
         // capture
-        guard let googleUserId else { issue = KnownIssue(Error.googleUserIdIsNil); return}
+        guard let googleUserId else { issue = KnownIssue(Error.googleUserIdIsNil); return }
+        if accountHub.isExist(googleUserId: googleUserId) == true { return }
         
         // mutate
-        
+        let accountRef = AccountMock(googleUserId: googleUserId)
+        accountHub.accounts.insert(accountRef.id)
         // signIn과 signUp이 동시에 이루어진다.
         // 기존 계정이 있다면 생성하지 X
         // 기존 계정이 없다면 새로운 Account 객체를 생성한다. 그리고 이 Account 객체의

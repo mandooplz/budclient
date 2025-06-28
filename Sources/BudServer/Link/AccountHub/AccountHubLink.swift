@@ -53,7 +53,7 @@ package struct AccountHubLink: Sendable {
         }
     }
     
-    package func insertTicket(_ ticket: Ticket) async throws {
+    package func insertEmailTicket(_ ticket: Ticket) async throws {
         switch mode {
         case .test:
             await MainActor.run {
@@ -67,7 +67,7 @@ package struct AccountHubLink: Sendable {
             }
         }
     }
-    package func getRegisterForm(_ ticket: Ticket) async throws -> RegisterFormLink? {
+    package func getEmailRegisterForm(_ ticket: Ticket) async throws -> RegisterFormLink? {
         switch mode {
         case .test:
             // test에는 RegisterFormLink를 제공
@@ -90,7 +90,7 @@ package struct AccountHubLink: Sendable {
     
     
     // MARK: action
-    package func generateForms() async throws {
+    package func updateEmailForms() async throws {
         switch mode {
         case .test:
             await AccountHubMock.shared.updateEmailForms()

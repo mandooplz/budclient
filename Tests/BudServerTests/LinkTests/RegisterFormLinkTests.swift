@@ -52,9 +52,9 @@ internal func getReigsterFormLink(_ budServerLink: BudServerLink) async -> Regis
     let accountHubLink = budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
-    try! await accountHubLink.insertTicket(newTicket)
-    try! await accountHubLink.generateForms()
+    try! await accountHubLink.insertEmailTicket(newTicket)
+    try! await accountHubLink.updateEmailForms()
     
-    let registerFormLink = try! await accountHubLink.getRegisterForm(newTicket)!
+    let registerFormLink = try! await accountHubLink.getEmailRegisterForm(newTicket)!
     return registerFormLink
 }

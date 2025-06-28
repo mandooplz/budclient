@@ -65,10 +65,10 @@ public final class SignUpForm: Sendable {
             let accountHubLink = budServerLink.getAccountHub()
             
             let newTicket = AccountHubLink.Ticket()
-            try await accountHubLink.insertTicket(newTicket)
-            try await accountHubLink.generateForms()
+            try await accountHubLink.insertEmailTicket(newTicket)
+            try await accountHubLink.updateEmailForms()
             
-            guard let registerFormLink = try await accountHubLink.getRegisterForm(newTicket) else {
+            guard let registerFormLink = try await accountHubLink.getEmailRegisterForm(newTicket) else {
                 throw UnknownIssue(reason: "AccountHubLink.generateForms() failed")
             }
             try await registerFormLink.setEmail(email)

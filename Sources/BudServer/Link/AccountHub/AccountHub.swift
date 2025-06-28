@@ -65,14 +65,14 @@ internal final class AccountHub {
     }
     
     internal var tickets: Set<Ticket> = []
-    internal var registerForms: [Ticket:RegisterForm.ID] = [:]
+    internal var registerForms: [Ticket:EmailRegisterForm.ID] = [:]
     
     
     // MARK: action
     internal func generateForms() {
         // mutate
         for ticket in tickets {
-            let registerFormRef = RegisterForm(accountHubRef: self,
+            let registerFormRef = EmailRegisterForm(accountHubRef: self,
                                                ticket: ticket)
             self.registerForms[ticket] = registerFormRef.id
             tickets.remove(ticket)

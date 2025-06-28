@@ -43,6 +43,11 @@ package final class AccountHubMock: Sendable {
         
         return userId
     }
+    package func getUserId(googleUserId: String) -> AccountMock.UserID? {
+        accounts.lazy
+            .compactMap { AccountMockManager.get($0) }
+            .first { $0.googleUserId == googleUserId }?.userId
+    }
     
     package var emailTickets: Set<Ticket> = []
     package var emailRegisterForms: [Ticket:EmailRegisterFormMock.ID] = [:]
