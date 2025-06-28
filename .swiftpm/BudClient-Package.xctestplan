@@ -15,11 +15,6 @@
           "containerPath" : "container:",
           "identifier" : "BudClient",
           "name" : "BudClient"
-        },
-        {
-          "containerPath" : "container:",
-          "identifier" : "BudServerMock",
-          "name" : "BudServerMock"
         }
       ]
     },
@@ -27,6 +22,11 @@
   },
   "testTargets" : [
     {
+      "skippedTags" : {
+        "tags" : [
+          ".real"
+        ]
+      },
       "target" : {
         "containerPath" : "container:",
         "identifier" : "BudCacheTests",
