@@ -8,7 +8,6 @@ import Foundation
 import Tools
 import BudServer
 import BudCache
-import os
 
 
 // MARK: Object
@@ -32,8 +31,7 @@ public final class EmailForm: Sendable {
     public nonisolated let id: ID
     public nonisolated let authBoard: AuthBoard.ID
     private nonisolated let mode: SystemMode
-    private nonisolated let logger = Logger(subsystem: "com.ginger.budclient", category: "EmailForm")
-    
+
     public var email: String = ""
     public var password: String = ""
     
@@ -127,6 +125,9 @@ public final class EmailForm: Sendable {
                         userId: userId)
     }
     private func mutateForSignIn(budClientRef: BudClient, authBoardRef: AuthBoard, userId: String) {
+        let googleForm = authBoardRef.googleForm!
+        let googleFormRef = GoogleFormManager.get(googleForm)!
+        
         let projectBoardRef = ProjectBoard(userId: userId)
         let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
                                            userId: userId,
@@ -143,6 +144,7 @@ public final class EmailForm: Sendable {
             let signUpFormRef = SignUpFormManager.get(signUpForm)
             signUpFormRef?.delete()
         }
+        googleFormRef.delete()
         self.delete()
     }
     

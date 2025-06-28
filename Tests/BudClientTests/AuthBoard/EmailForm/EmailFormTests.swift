@@ -151,6 +151,19 @@ struct EmailFormTests {
             await #expect(budClientRef.isUserSignedIn == true)
         }
         
+        @Test func deleteGoogleFormWhenSuccess() async throws {
+            // given
+            let authBoardRef = await AuthBoardManager.get(emailFormRef.authBoard)!
+            let googleForm = await authBoardRef.googleForm!
+            
+            // when
+            await emailFormRef.signInByCache()
+            
+            // then
+            try await #require(emailFormRef.isIssueOccurred == false)
+            await #expect(GoogleFormManager.get(googleForm) == nil)
+        }
+        
         // emailCredential이 존재하지 않는 경우 실패할 때 테스트 작성
         @Test func whenEmailCredentialIsMissing() async throws {
             // given
@@ -291,6 +304,24 @@ struct EmailFormTests {
             // then
             await #expect(SignUpFormManager.get(signUpForm) == nil)
         }
+        @Test func deleteGoogleFormWhenSuccess() async throws {
+            // given
+            let authBoardRef = await AuthBoardManager.get(emailFormRef.authBoard)!
+            let googleForm = await authBoardRef.googleForm!
+            
+            await MainActor.run {
+                emailFormRef.email = validEmail
+                emailFormRef.password = validPassword
+            }
+            
+            // when
+            await emailFormRef.signIn()
+            
+            // then
+            try await #require(emailFormRef.isIssueOccurred == false)
+            
+            await #expect(GoogleFormManager.get(googleForm) == nil)
+        }
         @Test func deleteAuthBoardWhenSuccess() async throws {
             // given
             await MainActor.run {
@@ -379,7 +410,7 @@ struct EmailFormTests {
 internal func getEmailForm(_ budClientRef: BudClient) async -> EmailForm {
     let authBoardRef = await getAuthBoard(budClientRef)
     
-    await authBoardRef.setUpEmailForm()
+    await authBoardRef.setUpForms()
     let emailForm = await authBoardRef.emailForm!
     let emailFormRef = await EmailFormManager.get(emailForm)!
     return emailFormRef

@@ -167,6 +167,25 @@ struct SignUpFormTests {
             try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(EmailFormManager.get(emailForm) == nil)
         }
+        @Test func deleteGoogleFormWhenSucess() async throws {
+            // given
+            let authBoardRef = await AuthBoardManager.get(budClientRef.authBoard!)!
+            let googleForm = await authBoardRef.googleForm!
+            
+            await MainActor.run {
+                signUpFormRef.email = testEmail
+                signUpFormRef.password = testPassword
+                signUpFormRef.passwordCheck = testPassword
+            }
+            
+            // when
+            await signUpFormRef.signUp()
+            
+            // then
+            try await #require(signUpFormRef.isIssueOccurred == false)
+            
+            await #expect(GoogleFormManager.get(googleForm) == nil)
+        }
         @Test func deleteAuthBoadWhenSuccess() async throws {
             // given
             await MainActor.run {

@@ -31,19 +31,22 @@ public final class AuthBoard {
     private nonisolated let mode: SystemMode
     
     public internal(set) var emailForm: EmailForm.ID?
-    public var isSetUpRequired: Bool { emailForm == nil }
+    public internal(set) var googleForm: GoogleForm.ID?
     
     public var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
     
     
     // MARK: action
-    public func setUpEmailForm() {
+    public func setUpForms() {
         // mutate
-        guard self.isSetUpRequired else { return }
-        let emailFormRef = EmailForm(authBoard: self.id,
-                                     mode: self.mode)
+        guard emailForm == nil && googleForm == nil else { return }
+        
+        let emailFormRef = EmailForm(authBoard: id, mode: mode)
+        let googleFormRef = GoogleForm(authBoard: id, mode: mode)
+        
         self.emailForm = emailFormRef.id
+        self.googleForm = googleFormRef.id
     }
     
     

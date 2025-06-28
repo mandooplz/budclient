@@ -56,6 +56,8 @@ public final class SignUpForm: Sendable {
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
         let budServerLink = budClientRef.budServerLink!
         let budCacheLink = budClientRef.budCacheLink
+        let googleForm = authBoardRef.googleForm!
+        let googleFormRef = GoogleFormManager.get(googleForm)!
         
         // compute
         let userId: AuthBoard.UserID
@@ -101,6 +103,7 @@ public final class SignUpForm: Sendable {
         
         self.isConsumed = true
         self.delete()
+        googleFormRef.delete()
         emailFormRef.delete()
         emailFormRef.signUpForm = nil
         authBoardRef.delete()

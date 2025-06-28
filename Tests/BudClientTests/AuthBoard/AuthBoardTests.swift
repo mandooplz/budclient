@@ -13,7 +13,7 @@ import Tools
 // MARK: Tests
 @Suite("AuthBoard")
 struct AuthBoardTests {
-    struct SetUpEmailForm {
+    struct SetUpForms {
         let budClientRef: BudClient
         let authBoardRef: AuthBoard
         init() async {
@@ -26,7 +26,7 @@ struct AuthBoardTests {
             try await #require(authBoardRef.emailForm == nil)
             
             // when
-            await authBoardRef.setUpEmailForm()
+            await authBoardRef.setUpForms()
             
             // then
             try await #require(authBoardRef.emailForm != nil)
@@ -36,25 +36,51 @@ struct AuthBoardTests {
             try await #require(authBoardRef.emailForm == nil)
             
             // when
-            await authBoardRef.setUpEmailForm()
+            await authBoardRef.setUpForms()
             
             // then
             let emailForm = try #require(await authBoardRef.emailForm)
             await #expect(EmailFormManager.get(emailForm) != nil)
         }
         
-        @Test func whenAlreadySetUp() async throws {
+        @Test func setGoogleForm() async throws {
             // given
-            try await #require(authBoardRef.emailForm == nil)
-            
-            await authBoardRef.setUpEmailForm()
-            let emailForm = try #require(await authBoardRef.emailForm)
+            try await #require(authBoardRef.googleForm == nil)
             
             // when
-            await authBoardRef.setUpEmailForm()
+            await authBoardRef.setUpForms()
+            
+            // then
+            await #expect(authBoardRef.googleForm != nil)
+        }
+        @Test func createGoogleForm() async throws {
+            // given
+            try await #require(authBoardRef.googleForm == nil)
+            
+            // when
+            await authBoardRef.setUpForms()
+            
+            // then
+            let googleForm = try #require(await authBoardRef.googleForm)
+            await #expect(GoogleFormManager.get(googleForm) != nil)
+        }
+        
+        @Test func whenFormsAlreadySetUp() async throws {
+            // given
+            try await #require(authBoardRef.emailForm == nil)
+            try await #require(authBoardRef.googleForm == nil)
+            
+            await authBoardRef.setUpForms()
+            
+            let emailForm = try #require(await authBoardRef.emailForm)
+            let googleForm = try #require(await authBoardRef.googleForm)
+            
+            // when
+            await authBoardRef.setUpForms()
             
             // then
             await #expect(authBoardRef.emailForm == emailForm)
+            await #expect(authBoardRef.googleForm == googleForm)
         }
     }
 }
@@ -73,7 +99,7 @@ func getAuthBoard(_ budClientRef: BudClient) async -> AuthBoard {
 private func signUpWithEmailForm(_ authBoardRef: AuthBoard,
                                  email: String,
                                  password: String) async {
-    await authBoardRef.setUpEmailForm()
+    await authBoardRef.setUpForms()
     
     let emailForm = try! #require(await authBoardRef.emailForm)
     let emailFormRef = try! #require(await EmailFormManager.get(emailForm))

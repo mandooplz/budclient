@@ -90,7 +90,7 @@ private func getProfileBoard(_ budClientRef: BudClient) async -> ProfileBoard {
     let authBoard = await budClientRef.authBoard!
     let authBoardRef = await AuthBoardManager.get(authBoard)!
     
-    await authBoardRef.setUpEmailForm()
+    await authBoardRef.setUpForms()
     let emailForm = await authBoardRef.emailForm!
     let emailFormRef = await EmailFormManager.get(emailForm)!
     
