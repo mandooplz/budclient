@@ -15,8 +15,7 @@ struct BudClientTests {
     struct SetUp {
         let budClientRef: BudClient
         init() async throws {
-            self.budClientRef = await BudClient(mode: .test,
-                                                plistPath: "pathForTest")
+            self.budClientRef = await BudClient()
         }
         @Test func setAuthBoard() async throws {
             // given
@@ -80,8 +79,7 @@ struct BudClientTests {
         
         @Test func whenPlistPathIsWrong() async throws {
             // given
-            let budClientForReal = await BudClient(mode: .real,
-                                                   plistPath: "wrongPath")
+            let budClientForReal = await BudClient(plistPath: "wrongPath")
             
             // when
             await budClientForReal.setUp()

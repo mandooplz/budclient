@@ -7,6 +7,7 @@
 import Foundation
 import Tools
 import BudServer
+import BudCache
 import Observation
 
 
@@ -14,14 +15,27 @@ import Observation
 @MainActor @Observable
 public final class BudClient: Sendable {
     // MARK: core
-    public init(mode: SystemMode,
-                plistPath: String = "") {
+    public init(plistPath: String) {
         self.id = ID(value: UUID())
-        self.mode = mode
+        self.mode = .real
         self.plistPath = plistPath
+        self.budCacheMockRef = .shared
+        self.budCacheLink = BudCacheLink(mode: self.mode,
+                                         budCacheMockRef: .shared)
         
         BudClientManager.register(self)
     }
+    internal init() {
+        self.id = ID(value: UUID())
+        self.mode = .test
+        self.plistPath = ""
+        self.budCacheMockRef = BudCacheMock()
+        self.budCacheLink = BudCacheLink(mode: self.mode,
+                                         budCacheMockRef: budCacheMockRef)
+        
+        BudClientManager.register(self)
+    }
+    
     
     
     // MARK: state
@@ -29,15 +43,17 @@ public final class BudClient: Sendable {
     internal nonisolated let mode: SystemMode
     
     private nonisolated let plistPath: String
-    internal var budServerLink: BudServerLink?
-    
-    public internal(set) var isUserSignedIn: Bool = false
+    internal private(set) var budServerLink: BudServerLink?
+    internal nonisolated let budCacheMockRef: BudCacheMock
+    internal nonisolated let budCacheLink: BudCacheLink
     
     public internal(set) var authBoard: AuthBoard.ID?
-    public internal(set) var projectBoard: ProjectBoard.ID?
-    public internal(set) var profileBoard: ProfileBoard.ID?
     public var isSetupRequired: Bool { authBoard == nil }
     
+    public internal(set) var isUserSignedIn: Bool = false
+    public internal(set) var projectBoard: ProjectBoard.ID?
+    public internal(set) var profileBoard: ProfileBoard.ID?
+        
     public private(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { issue != nil }
     

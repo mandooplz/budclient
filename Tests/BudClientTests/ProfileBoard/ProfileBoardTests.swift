@@ -6,7 +6,7 @@
 //
 import Foundation
 import Testing
-import BudClient
+@testable import BudClient
 import Tools
 
 
@@ -17,7 +17,7 @@ struct ProfileBoardTests {
         let budClientRef: BudClient
         let profileBoardRef: ProfileBoard
         init() async {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient()
             self.profileBoardRef = await getProfileBoard(budClientRef)
         }
         

@@ -7,6 +7,7 @@
 import Foundation
 import Tools
 import BudServer
+import BudCache
 
 
 // MARK: Object
@@ -54,6 +55,7 @@ public final class SignUpForm: Sendable {
         let authBoardRef = AuthBoardManager.get(emailFormRef.authBoard)!
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
         let budServerLink = budClientRef.budServerLink!
+        let budCacheLink = budClientRef.budCacheLink
         
         // compute
         let userId: AuthBoard.UserID
@@ -76,6 +78,10 @@ public final class SignUpForm: Sendable {
             // getUserId
             userId = try await accountHubLink.getUserId(email: email,
                                                         password: password)
+            
+            // setEmailCredential in BudCache
+            try await budCacheLink.setEmailCredential(.init(email: email,
+                                                            password: password))
         } catch {
             self.issue = UnknownIssue(error)
             return

@@ -8,8 +8,8 @@ import Testing
 import Foundation
 import Tools
 @testable import BudClient
-import BudServer
-import BudCache
+@testable import BudServer
+@testable import BudCache
 
 
 // MARK: Tests
@@ -19,7 +19,7 @@ struct EmailFormTests {
         let budClientRef: BudClient
         let emailFormRef: EmailForm
         init() async throws {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient()
             self.emailFormRef = await getEmailForm(budClientRef)
         }
         
@@ -63,10 +63,10 @@ struct EmailFormTests {
         let budClientRef: BudClient
         let emailFormRef: EmailForm
         init() async throws {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient()
             self.emailFormRef = await getEmailForm(budClientRef)
             
-            await setEmailCredentialInBudCache(mode: .test)
+            await setEmailCredentialInBudCache(budClientRef: budClientRef)
         }
         
         @Test func signInWithOutEmailAndPassword() async throws {
@@ -94,7 +94,6 @@ struct EmailFormTests {
             try await #require(emailFormRef.isIssueOccurred == false)
             await #expect(budClientRef.authBoard == nil)
         }
-        
         @Test func deleteEmailFormWhenSuccess() async throws {
             // when
             await emailFormRef.signInByCache()
@@ -151,6 +150,22 @@ struct EmailFormTests {
             
             await #expect(budClientRef.isUserSignedIn == true)
         }
+        
+        // emailCredential이 존재하지 않는 경우 실패할 때 테스트 작성
+        @Test func whenEmailCredentialIsMissing() async throws {
+            // given
+            let newBudClientRef = await BudClient()
+            
+            let emailFormRef = await getEmailForm(newBudClientRef)
+            
+            // when
+            await emailFormRef.signInByCache()
+            
+            // then
+            let issueForDebug = try #require(await emailFormRef.issueForDebug)
+            #expect(issueForDebug.isKnown == true)
+            #expect(issueForDebug.reason == "userIdIsNilInCache")
+        }
     }
     
     struct SignIn {
@@ -159,7 +174,7 @@ struct EmailFormTests {
         let validEmail: String
         let validPassword: String
         init() async throws {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient()
             self.emailFormRef = await getEmailForm(budClientRef)
             
             self.validEmail = Email.random().value
@@ -335,9 +350,27 @@ struct EmailFormTests {
             await #expect(budClientRef.isUserSignedIn == true)
         }
         
-        // BudCache를 통해 Credential을 저장.
-        // 이를 통해 이메일없이도 로그인 가능
-        // signIn, sinUp 과정에서 BudCache에서 Credential을 저장해야 한다.
+        @Test func saveCredentialToBudCacheWhenSuccess() async throws {
+            // given
+            try await #require(emailFormRef.issue == nil)
+            try await #require(emailFormRef.issueForDebug == nil)
+            
+            await MainActor.run {
+                emailFormRef.email = validEmail
+                emailFormRef.password = validPassword
+            }
+            
+            await emailFormRef.signInByCache()
+            try await #require(emailFormRef.issueForDebug != nil)
+            
+            // when
+            await emailFormRef.signIn()
+            
+            // then
+            let budCacheLink = BudCacheLink(mode: budClientRef.mode,
+                                            budCacheMockRef: budClientRef.budCacheMockRef)
+            await #expect(budCacheLink.isEmailCredentialSet() == true)
+        }
     }
 }
 
@@ -366,7 +399,10 @@ private func register(email: String, password: String) async {
     try! await registerFormLink.submit()
     try! await registerFormLink.remove()
 }
-private func setEmailCredentialInBudCache(mode: SystemMode) async {
+private func setEmailCredentialInBudCache(budClientRef: BudClient) async {
+    let mode = budClientRef.mode
+    let budCacheMockRef = budClientRef.budCacheMockRef
+    
     // email & password
     let testEmail = Email.random().value
     let testPassword = Password.random().value
@@ -388,7 +424,7 @@ private func setEmailCredentialInBudCache(mode: SystemMode) async {
     
     
     // setEmailCredential
-    let budCacheLink = BudCacheLink(mode: mode)
+    let budCacheLink = BudCacheLink(mode: mode, budCacheMockRef: budCacheMockRef)
     
     try! await budCacheLink.setEmailCredential(.init(email: testEmail,
                                                     password: testPassword))

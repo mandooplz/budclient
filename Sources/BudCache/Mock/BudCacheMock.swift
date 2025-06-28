@@ -14,11 +14,11 @@ import BudServer
 package final class BudCacheMock: Sendable {
     // MARK: core
     package static let shared = BudCacheMock()
-    internal init() { }
+    package init() { }
     
     
     // MARK: state
-    package var userId: String?
+    package private(set) var userId: String?
     package var emailCredential: EmailCredential?
     
     
@@ -44,6 +44,11 @@ package final class BudCacheMock: Sendable {
         
         // mutate
         self.userId = userId
+    }
+    package func signOut() async {
+        // mutate
+        self.userId = nil
+        self.emailCredential = nil
     }
     
     

@@ -8,6 +8,7 @@ import Foundation
 import Tools
 import BudServer
 import BudCache
+import os
 
 
 // MARK: Object
@@ -15,7 +16,7 @@ import BudCache
 public final class EmailForm: Sendable {
     // MARK: core
     internal init(authBoard: AuthBoard.ID,
-                mode: SystemMode) {
+                  mode: SystemMode) {
         self.id = ID(value: UUID())
         self.authBoard = authBoard
         self.mode = mode
@@ -31,6 +32,7 @@ public final class EmailForm: Sendable {
     public nonisolated let id: ID
     public nonisolated let authBoard: AuthBoard.ID
     private nonisolated let mode: SystemMode
+    private nonisolated let logger = Logger(subsystem: "com.ginger.budclient", category: "EmailForm")
     
     public var email: String = ""
     public var password: String = ""
@@ -38,8 +40,10 @@ public final class EmailForm: Sendable {
     public internal(set) var signUpForm: SignUpForm.ID?
     public var isSetUpRequired: Bool { signUpForm == nil }
     
-    public internal(set) var issue: (any Issuable)?
+    public var issue: (any Issuable)?
     public var isIssueOccurred: Bool { self.issue != nil }
+    
+    internal var issueForDebug: (any Issuable)?
     
     
     // MARK: action
@@ -59,18 +63,18 @@ public final class EmailForm: Sendable {
         // compute
         let userId: String
         do {
-            let budCacheLink = BudCacheLink(mode: self.mode)
+            let budCacheLink = budClientRef.budCacheLink
             try await budCacheLink.signIn()
             
             guard let userIdFromCache = await budCacheLink.getUserId() else {
-                self.issue = KnownIssue(Error.userIdIsNilInCache)
+                issueForDebug = KnownIssue(Error.userIdIsNilInCache)
                 return
             }
             
             userId = userIdFromCache
             
         } catch {
-            self.issue = UnknownIssue(error)
+            self.issueForDebug = UnknownIssue(error)
             return
         }
         
@@ -94,6 +98,7 @@ public final class EmailForm: Sendable {
         let authBoardRef = AuthBoardManager.get(self.authBoard)!
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
         let budServerLink = budClientRef.budServerLink!
+        let budCacheLink = budClientRef.budCacheLink
         
         // compute
         let userId: String
@@ -102,6 +107,9 @@ public final class EmailForm: Sendable {
             
             userId = try await accountHubLink.getUserId(email: email,
                                                         password: password)
+            
+            try await budCacheLink.setEmailCredential(.init(email: email,
+                                                            password: password))
         } catch(let error as AccountHubLink.Error) {
             switch error {
             case .userNotFound: issue = KnownIssue(Error.userNotFound)
@@ -118,9 +126,7 @@ public final class EmailForm: Sendable {
                         authBoardRef: authBoardRef,
                         userId: userId)
     }
-    private func mutateForSignIn(budClientRef: BudClient,
-                                 authBoardRef: AuthBoard,
-                                 userId: String) {
+    private func mutateForSignIn(budClientRef: BudClient, authBoardRef: AuthBoard, userId: String) {
         let projectBoardRef = ProjectBoard(userId: userId)
         let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
                                            userId: userId,

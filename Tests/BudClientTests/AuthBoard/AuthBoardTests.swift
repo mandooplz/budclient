@@ -6,7 +6,7 @@
 //
 import Foundation
 import Testing
-import BudClient
+@testable import BudClient
 import Tools
 
 
@@ -17,7 +17,7 @@ struct AuthBoardTests {
         let budClientRef: BudClient
         let authBoardRef: AuthBoard
         init() async {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient()
             self.authBoardRef = await getAuthBoard(self.budClientRef)
         }
         

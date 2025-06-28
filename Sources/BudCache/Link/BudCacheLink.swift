@@ -9,13 +9,16 @@ import Tools
 import FirebaseAuth
 import BudServer
 
-
+// BudClient(budCacheMockRef:)를 통해 BudCacheMock을 주입할 수 있다.
+// 이를 통해 BudCacheLink의 이니셜라이저로 Mock 인스턴스를 주입할 수 있다.
 // MARK: Link
 package struct BudCacheLink: Sendable {
     // MARK: core
     private let mode: SystemMode
-    package init(mode: SystemMode) {
+    private let budCacheMockRef: BudCacheMock
+    package init(mode: SystemMode, budCacheMockRef: BudCacheMock) {
         self.mode = mode
+        self.budCacheMockRef = budCacheMockRef
     }
     
     
@@ -23,7 +26,7 @@ package struct BudCacheLink: Sendable {
     package func getUserId() async -> String? {
         switch mode {
         case .test:
-            return await BudCacheMock.shared.userId
+            return await budCacheMockRef.userId
         case .real:
             return Auth.auth().currentUser?.uid
         }
@@ -32,7 +35,7 @@ package struct BudCacheLink: Sendable {
         switch mode {
         case .test:
             await MainActor.run {
-                BudCacheMock.shared.emailCredential = credential.forMock()
+                budCacheMockRef.emailCredential = credential.forMock()
             }
         case .real:
             if Auth.auth().currentUser != nil { return }
@@ -41,13 +44,21 @@ package struct BudCacheLink: Sendable {
                                                  password: credential.password)
         }
     }
+    package func isEmailCredentialSet() async -> Bool {
+        switch mode {
+        case .test:
+            return await budCacheMockRef.emailCredential != nil
+        case .real:
+            return Auth.auth().currentUser != nil
+        }
+    }
     
     
     // MARK: action
     package func signIn() async throws {
         switch mode {
         case .test:
-            await BudCacheMock.shared.signIn()
+            await budCacheMockRef.signIn()
         case .real:
             if Auth.auth().currentUser != nil {
                 return
@@ -57,7 +68,9 @@ package struct BudCacheLink: Sendable {
             
         }
     }
-    
+    package func signOut() async throws {
+        
+    }
     
     
     // MARK: value

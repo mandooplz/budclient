@@ -7,7 +7,8 @@
 import Foundation
 import Testing
 import Tools
-import BudClient
+@testable import BudClient
+@testable import BudCache
 
 
 // MARK: Tests
@@ -19,7 +20,7 @@ struct SignUpFormTests {
         let testEmail: String
         let testPassword: String
         init() async {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient()
             self.signUpFormRef = await getSignUpForm(budClientRef)
             self.testEmail = Email.random().value
             self.testPassword = Password.random().value
@@ -215,13 +216,35 @@ struct SignUpFormTests {
             let profileBoard = try #require(await budClientRef.profileBoard)
             await #expect(ProfileBoardManager.get(profileBoard) != nil)
         }
+        
+        @Test func saveCredentialToBudCacheWhenSuccess() async throws {
+            // given
+            let budCacheLink = BudCacheLink(mode: budClientRef.mode,
+                                            budCacheMockRef: budClientRef.budCacheMockRef)
+            await #expect(budCacheLink.isEmailCredentialSet() == false)
+            
+            // given
+            try await #require(signUpFormRef.issue == nil)
+            
+            await MainActor.run {
+                signUpFormRef.email = testEmail
+                signUpFormRef.password = testPassword
+                signUpFormRef.passwordCheck = testPassword
+            }
+            
+            // when
+            await signUpFormRef.signUp()
+            
+            // then
+            await #expect(budCacheLink.isEmailCredentialSet() == true)
+        }
     }
     
     struct Remove {
         let budClientRef: BudClient
         let signUpFormRef: SignUpForm
         init() async {
-            self.budClientRef = await BudClient(mode: .test)
+            self.budClientRef = await BudClient()
             self.signUpFormRef = await getSignUpForm(budClientRef)
         }
         @Test func deleteSignUpForm() async throws {
