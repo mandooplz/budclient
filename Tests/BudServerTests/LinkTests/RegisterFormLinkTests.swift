@@ -14,7 +14,7 @@ import Tools
 @Suite("RegisterForm", .tags(.real))
 struct RegisterFormTests {
     let budServerLink: BudServerLink
-    let registerFormLink: RegisterFormLink
+    let registerFormLink: EmailRegisterFormLink
     init() async {
         self.budServerLink = try! BudServerLink(mode: .real,
                                            plistPath: "testPath")
@@ -48,7 +48,7 @@ struct RegisterFormTests {
 
 
 // MARK: Helphers
-internal func getReigsterFormLink(_ budServerLink: BudServerLink) async -> RegisterFormLink {
+internal func getReigsterFormLink(_ budServerLink: BudServerLink) async -> EmailRegisterFormLink {
     let accountHubLink = budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()

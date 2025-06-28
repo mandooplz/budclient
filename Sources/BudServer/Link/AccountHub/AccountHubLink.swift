@@ -67,7 +67,7 @@ package struct AccountHubLink: Sendable {
             }
         }
     }
-    package func getEmailRegisterForm(_ ticket: Ticket) async throws -> RegisterFormLink? {
+    package func getEmailRegisterForm(_ ticket: Ticket) async throws -> EmailRegisterFormLink? {
         switch mode {
         case .test:
             // test에는 RegisterFormLink를 제공
@@ -75,7 +75,7 @@ package struct AccountHubLink: Sendable {
                 AccountHubMock.shared.emailRegisterForms[ticket.forMock]
             }
             guard let registerForm else { return nil }
-            return RegisterFormLink(mode: self.mode,
+            return EmailRegisterFormLink(mode: self.mode,
                                     idForMock: registerForm)
             
         case .real:
@@ -83,7 +83,7 @@ package struct AccountHubLink: Sendable {
                 AccountHub.shared.registerForms[ticket.forReal]
             }
             guard let registerForm else { return nil }
-            return RegisterFormLink(mode: self.mode,
+            return EmailRegisterFormLink(mode: self.mode,
                                     id: .init(realId: registerForm))
         }
     }

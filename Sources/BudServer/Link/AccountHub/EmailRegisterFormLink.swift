@@ -10,7 +10,7 @@ import FirebaseAuth
 
 
 // MARK: Link
-package struct RegisterFormLink: Sendable {
+package struct EmailRegisterFormLink: Sendable {
     // MARK: core
     private nonisolated let mode: SystemMode
     private nonisolated let id: ID
