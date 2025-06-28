@@ -38,11 +38,11 @@ let package = Package(
         // MARK: BudClient
         .target(
             name: "BudClient",
-            dependencies: ["BudServer", "Tools"]
+            dependencies: ["BudServer", "Tools", "BudCache"]
         ),
         .testTarget(
             name: "BudClientTests",
-            dependencies: ["BudClient", "BudServer", "Tools"]
+            dependencies: ["BudClient", "BudServer", "Tools", "BudCache"]
         ),
         
         

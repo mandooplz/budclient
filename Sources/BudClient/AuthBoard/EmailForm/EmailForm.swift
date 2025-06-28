@@ -7,6 +7,7 @@
 import Foundation
 import Tools
 import BudServer
+import BudCache
 
 
 // MARK: Object
@@ -49,8 +50,37 @@ public final class EmailForm: Sendable {
         let signUpFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
         self.signUpForm = signUpFormRef.id
     }
-    public func signInByCache() {
-        fatalError()
+    
+    public func signInByCache() async {
+        // capture
+        let authBoardRef = AuthBoardManager.get(self.authBoard)!
+        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        
+        // compute
+        let userId: String
+        do {
+            let budCacheLink = BudCacheLink(mode: self.mode)
+            try await budCacheLink.signIn()
+            userId = try await budCacheLink.getUserId()
+            
+        } catch(let error as BudCacheLink.Error) {
+            switch error {
+            case .userIdIsNil:
+                self.issue = KnownIssue(Error.userIdIsNilInBudCache)
+            case .emailCredentialNotSet:
+                self.issue = KnownIssue(Error.emailCredentialNotSetInBudCache)
+            }
+            return
+        } catch {
+            self.issue = UnknownIssue(error)
+            return
+        }
+        
+        // mutate
+        mutateForSignIn(budClientRef: budClientRef,
+                        authBoardRef: authBoardRef,
+                        userId: userId)
+        
     }
     public func signIn() async {
         // capture
@@ -70,7 +100,6 @@ public final class EmailForm: Sendable {
         // compute
         let userId: String
         do {
-
             let accountHubLink = budServerLink.getAccountHub()
             
             userId = try await accountHubLink.getUserId(email: email,
@@ -87,6 +116,13 @@ public final class EmailForm: Sendable {
         }
         
         // mutate
+        mutateForSignIn(budClientRef: budClientRef,
+                        authBoardRef: authBoardRef,
+                        userId: userId)
+    }
+    private func mutateForSignIn(budClientRef: BudClient,
+                                 authBoardRef: AuthBoard,
+                                 userId: String) {
         let projectBoardRef = ProjectBoard(userId: userId)
         let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
                                            userId: userId,
@@ -108,6 +144,7 @@ public final class EmailForm: Sendable {
     
     
     
+    
     // MARK: value
     public struct ID: Sendable, Hashable {
         public let value: UUID
@@ -115,6 +152,8 @@ public final class EmailForm: Sendable {
     public enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case userNotFound, wrongPassword
+        case emailCredentialNotSetInBudCache
+        case userIdIsNilInBudCache
     }
 }
 

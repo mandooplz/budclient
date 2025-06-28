@@ -14,16 +14,13 @@ import BudServer
 package struct BudCacheLink: Sendable {
     // MARK: core
     private let mode: SystemMode
-    private let budServerLink: BudServerLink
-    private var emailCredential: EmailCredential?
-    package init(mode: SystemMode, budServerLink: BudServerLink) {
+    package init(mode: SystemMode) {
         self.mode = mode
-        self.budServerLink = budServerLink
     }
     
     
     // MARK: state
-    package func getUserId() async throws -> String {
+    package func getUserId() async throws(Error) -> String {
         switch mode {
         case .test:
             guard let userId = await BudCacheMock.shared.userId else {
@@ -37,15 +34,17 @@ package struct BudCacheLink: Sendable {
             return user.uid
         }
     }
-    package mutating func setEmailCredential(_ credential: EmailCredential) async {
+    package func setEmailCredential(_ credential: EmailCredential) async throws {
         switch mode {
         case .test:
             await MainActor.run {
                 BudCacheMock.shared.emailCredential = credential.forMock()
             }
         case .real:
-            self.emailCredential = credential
-            return
+            if Auth.auth().currentUser != nil { return }
+            
+            let _ = try await Auth.auth().signIn(withEmail: credential.email,
+                                                 password: credential.password)
         }
     }
     
@@ -56,7 +55,12 @@ package struct BudCacheLink: Sendable {
         case .test:
             await BudCacheMock.shared.signIn()
         case .real:
-            if let user = Auth.auth().currentUser { return }
+            if Auth.auth().currentUser != nil {
+                return
+            } else {
+                throw Error.emailCredentialNotSet
+            }
+            
         }
     }
     
@@ -67,11 +71,17 @@ package struct BudCacheLink: Sendable {
         package let email: String
         package let password: String
         
+        package init(email: String, password: String) {
+            self.email = email
+            self.password = password
+        }
+        
         internal func forMock() -> BudCacheMock.EmailCredential {
             return .init(email: self.email, password: self.password)
         }
     }
     package enum Error: String, Swift.Error {
         case userIdIsNil
+        case emailCredentialNotSet
     }
 }

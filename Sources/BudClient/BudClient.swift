@@ -26,7 +26,7 @@ public final class BudClient: Sendable {
     
     // MARK: state
     internal nonisolated let id: ID
-    private nonisolated let mode: SystemMode
+    internal nonisolated let mode: SystemMode
     
     private nonisolated let plistPath: String
     internal var budServerLink: BudServerLink?

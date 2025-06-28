@@ -14,7 +14,7 @@ import BudServer
 package final class BudCacheMock: Sendable {
     // MARK: core
     package static let shared = BudCacheMock()
-    private init() { }
+    internal init() { }
     
     
     // MARK: state

@@ -27,15 +27,10 @@
   },
   "testTargets" : [
     {
-      "skippedTags" : {
-        "tags" : [
-          ".real"
-        ]
-      },
       "target" : {
         "containerPath" : "container:",
-        "identifier" : "BudServerTests",
-        "name" : "BudServerTests"
+        "identifier" : "BudCacheTests",
+        "name" : "BudCacheTests"
       }
     },
     {
@@ -58,8 +53,8 @@
       },
       "target" : {
         "containerPath" : "container:",
-        "identifier" : "BudServerMockTests",
-        "name" : "BudServerMockTests"
+        "identifier" : "BudServerTests",
+        "name" : "BudServerTests"
       }
     }
   ],

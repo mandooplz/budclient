@@ -6,9 +6,10 @@
 //
 import Testing
 import Foundation
-import BudClient
 import Tools
+@testable import BudClient
 import BudServer
+import BudCache
 
 
 // MARK: Tests
@@ -55,6 +56,28 @@ struct EmailFormTests {
             
             // then
             await #expect(emailFormRef.signUpForm == registerForm)
+        }
+    }
+    
+    struct SignInByCache {
+        let budClientRef: BudClient
+        let emailFormRef: EmailForm
+        init() async throws {
+            self.budClientRef = await BudClient(mode: .test)
+            self.emailFormRef = await getEmailForm(budClientRef)
+            
+            await setEmailCredentialInBudCache(mode: .test)
+        }
+        
+        @Test func issueIsNotOccurred() async throws {
+            // given
+            try await #require(emailFormRef.isIssueOccurred == false)
+            
+            // when
+            await emailFormRef.signInByCache()
+            
+            // then
+            await #expect(emailFormRef.issue == nil)
         }
     }
     
@@ -239,6 +262,10 @@ struct EmailFormTests {
             
             await #expect(budClientRef.isUserSignedIn == true)
         }
+        
+        // BudCache를 통해 Credential을 저장.
+        // 이를 통해 이메일없이도 로그인 가능
+        // signIn, sinUp 과정에서 BudCache에서 Credential을 저장해야 한다.
     }
 }
 
@@ -266,4 +293,31 @@ private func register(email: String, password: String) async {
     
     try! await registerFormLink.submit()
     try! await registerFormLink.remove()
+}
+private func setEmailCredentialInBudCache(mode: SystemMode) async {
+    // email & password
+    let testEmail = Email.random().value
+    let testPassword = Password.random().value
+    
+    // register
+    let budServerLink = try! BudServerLink(mode: .test)
+    let accountHubLink = budServerLink.getAccountHub()
+    
+    let newTicket = AccountHubLink.Ticket()
+    try! await accountHubLink.insertTicket(newTicket)
+    try! await accountHubLink.generateForms()
+    
+    let registerFormLink = try! await accountHubLink.getRegisterForm(newTicket)!
+    try! await registerFormLink.setEmail(testEmail)
+    try! await registerFormLink.setPassword(testPassword)
+    
+    try! await registerFormLink.submit()
+    try! await registerFormLink.remove()
+    
+    
+    // setEmailCredential
+    let budCacheLink = BudCacheLink(mode: mode)
+    
+    try! await budCacheLink.setEmailCredential(.init(email: testEmail,
+                                                    password: testPassword))
 }
