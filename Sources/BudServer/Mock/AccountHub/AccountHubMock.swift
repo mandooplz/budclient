@@ -19,14 +19,14 @@ package final class AccountHubMock: Sendable {
     // MARK: state
     package var accounts: Set<AccountMock.ID> = []
     package func isExist(email: String, password: String) -> Bool {
-        // capture
-        let accounts = self.accounts
-        
-        // compute
-        let isExist = accounts.lazy
+        accounts.lazy
             .compactMap { AccountMockManager.get($0) }
             .contains { $0.email == email && $0.password == password }
-        return isExist
+    }
+    package func isExist(googleUserId: String) -> Bool {
+        accounts.lazy
+            .compactMap { AccountMockManager.get($0) }
+            .contains { $0.googleUserId == googleUserId }
     }
     package func getUserId(email: String, password: String) throws -> AccountMock.UserID {
         let filtered = self.accounts.lazy

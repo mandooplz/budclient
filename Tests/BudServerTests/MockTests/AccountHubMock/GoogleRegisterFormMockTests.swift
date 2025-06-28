@@ -6,6 +6,7 @@
 //
 import Foundation
 import Testing
+import Tools
 @testable import BudServer
 
 
@@ -72,6 +73,42 @@ struct GoogleRegisterFormMockTests {
         init() async {
             self.accountHubRef = await AccountHubMock()
             self.googleRegisterFormRef = await getGoogleRegisterForm(accountHubRef)
+        }
+        
+        @Test func whenGoogleUserIdIsNil() async throws {
+            // given
+            try await #require(googleRegisterFormRef.googleUserId == nil)
+            
+            // when
+            await googleRegisterFormRef.submit()
+            
+            // then
+            let issue = try #require(await googleRegisterFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "googleUserIdIsNil")
+        }
+        
+        @Test func appendAccount() async throws {
+            // given
+            await
+            
+            // when
+            
+            // then
+        }
+        @Test func createAccount() async throws {
+            // given
+            
+            // when
+            
+            // then
+        }
+        @Test func whenAccountAlreadyExists() async throws {
+            // given
+            
+            // when
+            
+            // then
         }
     }
 }

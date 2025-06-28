@@ -32,7 +32,7 @@ package final class GoogleRegisterFormMock: Sendable {
     package var idToken: String?
     package var accessToken: String?
     
-    package var googleUserId: String?
+    package private(set) var googleUserId: String?
     
     package var issue: (any Issuable)?
     
@@ -53,7 +53,12 @@ package final class GoogleRegisterFormMock: Sendable {
         self.googleUserId = googleUserId.getValue()
     }
     public func submit() {
-        // signIn과 signUp이 동시에 이루어진다. 
+        // capture
+        guard let googleUserId else { issue = KnownIssue(Error.googleUserIdIsNil); return}
+        
+        // mutate
+        
+        // signIn과 signUp이 동시에 이루어진다.
         // 기존 계정이 있다면 생성하지 X
         // 기존 계정이 없다면 새로운 Account 객체를 생성한다. 그리고 이 Account 객체의
     }
@@ -65,6 +70,7 @@ package final class GoogleRegisterFormMock: Sendable {
     }
     package enum Error: String, Swift.Error {
         case idTokenIsNil, accessTokenIsNil
+        case googleUserIdIsNil
     }
     private struct GoogleUserID: Sendable, Hashable {
         let idToken: String
