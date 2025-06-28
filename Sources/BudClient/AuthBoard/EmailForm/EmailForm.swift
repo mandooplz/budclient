@@ -49,6 +49,9 @@ public final class EmailForm: Sendable {
         let signUpFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
         self.signUpForm = signUpFormRef.id
     }
+    public func signInByCache() {
+        fatalError()
+    }
     public func signIn() async {
         // capture
         guard email != "" else {

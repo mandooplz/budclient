@@ -65,7 +65,7 @@ let package = Package(
         .target(
             name: "BudCache",
             dependencies: [
-                "Tools"
+                "Tools", "BudServer"
             ]
         ),
         .testTarget(
