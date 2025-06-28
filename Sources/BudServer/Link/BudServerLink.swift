@@ -11,11 +11,11 @@ import FirebaseFirestore
 
 
 // MARK: Link
-public struct BudServerLink: Sendable {
+package struct BudServerLink: Sendable {
     // MARK: core
     private let mode: SystemMode
     
-    public init(mode: SystemMode = .real,
+    package init(mode: SystemMode = .real,
                 plistPath: String = "") throws(Error) {
         self.mode = mode
         
@@ -30,10 +30,10 @@ public struct BudServerLink: Sendable {
     }
     
     // MARK: state
-    public func getAccountHub() -> AccountHubLink {
+    package func getAccountHub() -> AccountHubLink {
         AccountHubLink(mode: self.mode)
     }
-    public enum Error: String, Swift.Error {
+    package enum Error: String, Swift.Error {
         case plistPathIsWrong
     }
 }

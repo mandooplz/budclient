@@ -9,9 +9,9 @@ import Foundation
 
 // MARK: Link
 @MainActor
-public final class AccountMock: Sendable {
+package final class AccountMock: Sendable {
     // MARK: core
-    public init(email: String, password: String) {
+    package init(email: String, password: String) {
         self.id = ID(value: UUID())
         self.userId = UUID().uuidString
         
@@ -26,36 +26,36 @@ public final class AccountMock: Sendable {
     
     
     // MARK: state
-    public nonisolated let id: ID
-    public nonisolated let userId: String
+    package nonisolated let id: ID
+    package nonisolated let userId: String
     
-    public var email: String
-    public var password: String
+    package var email: String
+    package var password: String
     
     
     // MARK: value
-    public struct ID: Sendable, Hashable {
+    package struct ID: Sendable, Hashable {
         public let value: UUID
     }
-    public typealias UserID = String
+    package typealias UserID = String
 }
 
 
 // MARK: Object Manager
 @MainActor
-public final class AccountMockManager: Sendable {
+package final class AccountMockManager: Sendable {
     // MARK: state
     private static var container: [AccountMock.ID: AccountMock] = [:]
     
-    public static func register(_ object: AccountMock) {
+    package static func register(_ object: AccountMock) {
         container[object.id] = object
     }
     
-    public static func unregister(_ id: AccountMock.ID) {
+    package static func unregister(_ id: AccountMock.ID) {
         container[id] = nil
     }
     
-    public static func get(_ id: AccountMock.ID) -> AccountMock? {
+    package static func get(_ id: AccountMock.ID) -> AccountMock? {
         container[id]
     }
 }

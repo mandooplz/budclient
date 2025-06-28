@@ -9,7 +9,7 @@ import Tools
 
 
 // MARK: Link
-public struct AccountHubLink: Sendable {
+package struct AccountHubLink: Sendable {
     // MARK: core
     private let mode: SystemMode
     internal init(mode: SystemMode) {
@@ -18,7 +18,7 @@ public struct AccountHubLink: Sendable {
     
     
     // MARK: state
-    public func isExist(email: String, password: String) async throws -> Bool {
+    package func isExist(email: String, password: String) async throws -> Bool {
         switch mode {
         case .test:
             await AccountHubMock.shared.isExist(email: email, password: password)
@@ -26,7 +26,7 @@ public struct AccountHubLink: Sendable {
             try await AccountHub.shared.isExist(email: email, password: password)
         }
     }
-    public func getUserId(email: String, password: String) async throws -> String {
+    package func getUserId(email: String, password: String) async throws -> String {
         switch mode {
         case .test:
             do {
@@ -53,7 +53,7 @@ public struct AccountHubLink: Sendable {
         }
     }
     
-    public func insertTicket(_ ticket: Ticket) async throws {
+    package func insertTicket(_ ticket: Ticket) async throws {
         switch mode {
         case .test:
             await MainActor.run {
@@ -67,7 +67,7 @@ public struct AccountHubLink: Sendable {
             }
         }
     }
-    public func getRegisterForm(_ ticket: Ticket) async throws -> RegisterFormLink? {
+    package func getRegisterForm(_ ticket: Ticket) async throws -> RegisterFormLink? {
         switch mode {
         case .test:
             // test에는 RegisterFormLink를 제공
@@ -90,7 +90,7 @@ public struct AccountHubLink: Sendable {
     
     
     // MARK: action
-    public func generateForms() async throws {
+    package func generateForms() async throws {
         switch mode {
         case .test:
             await AccountHubMock.shared.generateForms()
@@ -101,9 +101,9 @@ public struct AccountHubLink: Sendable {
     
     
     // MARK: value
-    public struct Ticket: Sendable, Hashable {
-        public let value: UUID
-        public init(value: UUID = UUID()) {
+    package struct Ticket: Sendable, Hashable {
+        package let value: UUID
+        package init(value: UUID = UUID()) {
             self.value = value
         }
         
@@ -114,7 +114,7 @@ public struct AccountHubLink: Sendable {
             AccountHub.Ticket(value: self.value)
         }
     }
-    public enum Error: String, Swift.Error {
+    package enum Error: String, Swift.Error {
         case userNotFound, wrongPassword
     }
 }

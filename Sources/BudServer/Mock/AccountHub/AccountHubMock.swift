@@ -10,15 +10,15 @@ import Tools
 
 // MARK: Object
 @MainActor
-public final class AccountHubMock: Sendable {
+package final class AccountHubMock: Sendable {
     // MARK: core
-    public static let shared = AccountHubMock()
+    package static let shared = AccountHubMock()
     private init() { }
     
     
     // MARK: state
-    public var accounts: Set<AccountMock.ID> = []
-    public func isExist(email: String, password: String) -> Bool {
+    package var accounts: Set<AccountMock.ID> = []
+    package func isExist(email: String, password: String) -> Bool {
         // capture
         let accounts = self.accounts
         
@@ -28,7 +28,7 @@ public final class AccountHubMock: Sendable {
             .contains { $0.email == email && $0.password == password }
         return isExist
     }
-    public func getUserId(email: String, password: String) throws -> AccountMock.UserID {
+    package func getUserId(email: String, password: String) throws -> AccountMock.UserID {
         let filtered = self.accounts.lazy
             .compactMap { AccountMockManager.get($0) }
             .filter { $0.email == email }
@@ -44,12 +44,12 @@ public final class AccountHubMock: Sendable {
         return userId
     }
     
-    public var tickets: Set<Ticket> = []
-    public var registerForms: [Ticket:RegisterFormMock.ID] = [:]
+    package var tickets: Set<Ticket> = []
+    package var registerForms: [Ticket:RegisterFormMock.ID] = [:]
     
     
     // MARK: action
-    public func generateForms() {
+    package func generateForms() {
         // mutate
         for ticket in tickets {
             let registerFormRef = RegisterFormMock(accountHub: self,
@@ -61,14 +61,14 @@ public final class AccountHubMock: Sendable {
     
     
     // MARK: value
-    public struct Ticket: Sendable, Hashable {
+    package struct Ticket: Sendable, Hashable {
         public let value: UUID
         
         public init(value: UUID = UUID()) {
             self.value = value
         }
     }
-    public enum Error: String, Swift.Error {
+    package enum Error: String, Swift.Error {
         case userNotFound, wrongPassword
     }
 }

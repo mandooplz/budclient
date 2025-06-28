@@ -10,9 +10,9 @@ import Tools
 
 // MARK: Object
 @MainActor
-public final class RegisterFormMock: Sendable {
+package final class RegisterFormMock: Sendable {
     // MARK: core
-    public init(accountHub: AccountHubMock,
+    package init(accountHub: AccountHubMock,
                 ticket: AccountHubMock.Ticket) {
         self.id = ID()
         self.accountHub = accountHub
@@ -26,18 +26,18 @@ public final class RegisterFormMock: Sendable {
     
 
     // MARK: state
-    public nonisolated let id: ID
-    public nonisolated let ticket: AccountHubMock.Ticket
-    public nonisolated let accountHub: AccountHubMock
+    package nonisolated let id: ID
+    package nonisolated let ticket: AccountHubMock.Ticket
+    package nonisolated let accountHub: AccountHubMock
     
-    public var email: String?
-    public var password: String?
+    package var email: String?
+    package var password: String?
     
-    public var issue: (any Issuable)?
+    package var issue: (any Issuable)?
 
     
     // MARK: action
-    public func submit() {
+    package func submit() {
         // capture
         guard let email else {
             self.issue = KnownIssue(Error.emailIsNil)
@@ -62,7 +62,7 @@ public final class RegisterFormMock: Sendable {
         let account = AccountMock(email: email, password: password)
         accountHub.accounts.insert(account.id)
     }
-    public func remove() {
+    package func remove() {
         // mutate
         accountHub.registerForms[ticket] = nil
         self.delete()
@@ -70,13 +70,13 @@ public final class RegisterFormMock: Sendable {
 
     
     // MARK: value
-    public struct ID: Sendable, Hashable {
+    package struct ID: Sendable, Hashable {
         public let value: UUID
         public init(value: UUID = UUID()) {
             self.value = value
         }
     }
-    public enum Error: String, Swift.Error {
+    package enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case emailDuplicate
     }
@@ -84,15 +84,15 @@ public final class RegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @MainActor
-public final class RegisterFormMockManager: Sendable {
+package final class RegisterFormMockManager: Sendable {
     private static var container: [RegisterFormMock.ID: RegisterFormMock] = [:]
-    public static func register(_ object: RegisterFormMock) {
+    package static func register(_ object: RegisterFormMock) {
         container[object.id] = object
     }
-    public static func unregister(_ id: RegisterFormMock.ID) {
+    package static func unregister(_ id: RegisterFormMock.ID) {
         container[id] = nil
     }
-    public static func get(_ id: RegisterFormMock.ID) -> RegisterFormMock? {
+    package static func get(_ id: RegisterFormMock.ID) -> RegisterFormMock? {
         container[id]
     }
 }

@@ -11,12 +11,14 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-final class AccountHub {
+internal final class AccountHub {
     // MARK: core
-    static let shared = AccountHub()
+    internal static let shared = AccountHub()
+    private init() { }
+    
     
     // MARK: state
-    func isExist(email: String, password: String) async throws -> Bool {
+    internal func isExist(email: String, password: String) async throws -> Bool {
         do {
             let _ = try await Auth.auth().signIn(withEmail: email, password: password)
         } catch let error as NSError {
@@ -36,7 +38,7 @@ final class AccountHub {
         
         return true
     }
-    func getUserId(email: String, password: String) async throws -> String {
+    internal func getUserId(email: String, password: String) async throws -> String {
         // 현재 로그인되어 있다면 -> 추가 시스템을 만들어 테스트
 //        if let currentUser = Auth.auth().currentUser {
 //            return currentUser.uid
@@ -62,12 +64,12 @@ final class AccountHub {
         }
     }
     
-    var tickets: Set<Ticket> = []
-    var registerForms: [Ticket:RegisterForm.ID] = [:]
+    internal var tickets: Set<Ticket> = []
+    internal var registerForms: [Ticket:RegisterForm.ID] = [:]
     
     
     // MARK: action
-    func generateForms() {
+    internal func generateForms() {
         // mutate
         for ticket in tickets {
             let registerFormRef = RegisterForm(accountHubRef: self,
@@ -79,10 +81,10 @@ final class AccountHub {
     
     
     // MARK: value
-    struct Ticket: Sendable, Hashable {
-        let value: UUID
+    internal struct Ticket: Sendable, Hashable {
+        internal let value: UUID
         
-        init(value: UUID = UUID()) {
+        internal init(value: UUID = UUID()) {
             self.value = value
         }
     }

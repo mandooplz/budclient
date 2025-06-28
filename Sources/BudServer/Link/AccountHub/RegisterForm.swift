@@ -11,9 +11,9 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-final class RegisterForm {
+internal final class RegisterForm {
     // MARK: core
-    init(accountHubRef: AccountHub,
+    internal init(accountHubRef: AccountHub,
         ticket: AccountHub.Ticket) {
         self.accountHubRef = accountHubRef
         self.id = .init()
@@ -21,24 +21,24 @@ final class RegisterForm {
         
         RegisterFormManager.register(self)
     }
-    func delete() {
+    internal func delete() {
         RegisterFormManager.unregister(self.id)
     }
     
     
     // MARK: state
-    nonisolated let id: ID
-    nonisolated let ticket: AccountHub.Ticket
-    nonisolated let accountHubRef: AccountHub
+    internal nonisolated let id: ID
+    internal nonisolated let ticket: AccountHub.Ticket
+    internal nonisolated let accountHubRef: AccountHub
     
-    var email: String?
-    var password: String?
+    internal var email: String?
+    internal var password: String?
     
-    var issue: (any Issuable)?
+    internal var issue: (any Issuable)?
 
     
     // MARK: action
-    func submit() async {
+    internal func submit() async {
         // capture
         guard let email else {
             self.issue = KnownIssue(Error.emailIsNil)
@@ -58,7 +58,7 @@ final class RegisterForm {
             return
         }
     }
-    func remove() async {
+    internal func remove() async {
         // mutate
         accountHubRef.registerForms[ticket] = nil
         self.delete()
@@ -66,13 +66,13 @@ final class RegisterForm {
 
     
     // MARK: value
-    struct ID: Sendable, Hashable {
-        let value: UUID
-        init(value: UUID = UUID()) {
+    internal struct ID: Sendable, Hashable {
+        internal let value: UUID
+        internal init(value: UUID = UUID()) {
             self.value = value
         }
     }
-    enum Error: String, Swift.Error {
+    internal enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case emailDuplicate
     }
@@ -82,17 +82,17 @@ final class RegisterForm {
 
 // MARK: Object Manager
 @Server
-final class RegisterFormManager {
+internal final class RegisterFormManager {
     private static var container: [RegisterForm.ID: RegisterForm] = [:]
-    public static func register(_ object: RegisterForm) {
+    internal static func register(_ object: RegisterForm) {
         container[object.id] = object
     }
     
-    public static func unregister(_ id: RegisterForm.ID) {
+    internal static func unregister(_ id: RegisterForm.ID) {
         container[id] = nil
     }
     
-    public static func get(_ id: RegisterForm.ID) -> RegisterForm? {
+    internal static func get(_ id: RegisterForm.ID) -> RegisterForm? {
         container[id]
     }
 }

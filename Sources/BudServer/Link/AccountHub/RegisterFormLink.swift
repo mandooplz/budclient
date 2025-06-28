@@ -10,12 +10,12 @@ import FirebaseAuth
 
 
 // MARK: Link
-public struct RegisterFormLink: Sendable {
+package struct RegisterFormLink: Sendable {
     // MARK: core
     private nonisolated let mode: SystemMode
     private nonisolated let id: ID
     private nonisolated let idForMock: RegisterFormMock.ID!
-    public init(mode: SystemMode,
+    package init(mode: SystemMode,
                 id: ID) {
         self.mode = mode
         self.id = id
@@ -29,7 +29,7 @@ public struct RegisterFormLink: Sendable {
     }
     
     // MARK: state
-    public func setEmail(_ value: String) async throws {
+    package func setEmail(_ value: String) async throws {
         switch mode {
         case .test:
             await MainActor.run {
@@ -45,7 +45,7 @@ public struct RegisterFormLink: Sendable {
             }
         }
     }
-    public func setPassword(_ value: String) async throws {
+    package func setPassword(_ value: String) async throws {
         switch mode {
         case .test:
             await MainActor.run {
@@ -62,7 +62,7 @@ public struct RegisterFormLink: Sendable {
         }
     }
         
-    public func getIssue() async throws -> (any Issuable)? {
+    package func getIssue() async throws -> (any Issuable)? {
             switch mode {
             case .test:
                 await MainActor.run {
@@ -79,7 +79,7 @@ public struct RegisterFormLink: Sendable {
         
     
     // MARK: action
-    public func submit() async throws {
+    package func submit() async throws {
         switch mode {
         case .test:
             await MainActor.run {
@@ -91,7 +91,7 @@ public struct RegisterFormLink: Sendable {
             await registerFormRef.submit()
         }
     }
-    public func remove() async throws {
+    package func remove() async throws {
         switch mode {
         case .test:
             await MainActor.run {
@@ -106,8 +106,8 @@ public struct RegisterFormLink: Sendable {
     
     
     // MARK: value
-    public struct ID: Sendable, Hashable {
-        public let value: UUID
+    package struct ID: Sendable, Hashable {
+        package let value: UUID
         
         internal init(realId: RegisterForm.ID) {
             self.value = realId.value
