@@ -22,7 +22,7 @@ internal final class AccountHub {
         do {
             let _ = try await Auth.auth().signIn(withEmail: email, password: password)
         } catch let error as NSError {
-            if let errorCode = AuthErrorCode.Code(rawValue: error.code) {
+            if let errorCode = AuthErrorCode(rawValue: error.code) {
                 switch errorCode {
                 case .userNotFound:
                     throw AccountHubLink.Error.userNotFound
@@ -49,7 +49,7 @@ internal final class AccountHub {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             return result.user.uid
         } catch let error as NSError {
-            if let errorCode = AuthErrorCode.Code(rawValue: error.code) {
+            if let errorCode = AuthErrorCode(rawValue: error.code) {
                 switch errorCode {
                 case .userNotFound:
                     throw AccountHubLink.Error.userNotFound
