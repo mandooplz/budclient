@@ -61,16 +61,14 @@ public final class EmailForm: Sendable {
         do {
             let budCacheLink = BudCacheLink(mode: self.mode)
             try await budCacheLink.signIn()
-            userId = try await budCacheLink.getUserId()
             
-        } catch(let error as BudCacheLink.Error) {
-            switch error {
-            case .userIdIsNil:
-                self.issue = KnownIssue(Error.userIdIsNilInBudCache)
-            case .emailCredentialNotSet:
-                self.issue = KnownIssue(Error.emailCredentialNotSetInBudCache)
+            guard let userIdFromCache = await budCacheLink.getUserId() else {
+                self.issue = KnownIssue(Error.userIdIsNilInCache)
+                return
             }
-            return
+            
+            userId = userIdFromCache
+            
         } catch {
             self.issue = UnknownIssue(error)
             return
@@ -152,8 +150,8 @@ public final class EmailForm: Sendable {
     public enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case userNotFound, wrongPassword
-        case emailCredentialNotSetInBudCache
-        case userIdIsNilInBudCache
+        case missingEmailCredentialInCache
+        case userIdIsNilInCache
     }
 }
 

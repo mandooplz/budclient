@@ -20,18 +20,12 @@ package struct BudCacheLink: Sendable {
     
     
     // MARK: state
-    package func getUserId() async throws(Error) -> String {
+    package func getUserId() async -> String? {
         switch mode {
         case .test:
-            guard let userId = await BudCacheMock.shared.userId else {
-                throw Error.userIdIsNil
-            }
-            return userId
+            return await BudCacheMock.shared.userId
         case .real:
-            guard let user = Auth.auth().currentUser else {
-                throw Error.userIdIsNil
-            }
-            return user.uid
+            return Auth.auth().currentUser?.uid
         }
     }
     package func setEmailCredential(_ credential: EmailCredential) async throws {
