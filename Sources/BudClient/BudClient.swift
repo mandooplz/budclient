@@ -39,7 +39,7 @@ public final class BudClient: Sendable {
     internal nonisolated let mode: SystemMode
     
     private nonisolated let plistPath: String
-    internal private(set) var budServerLink: BudServerLink?
+    public private(set) var budServerLink: BudServerLink?
     private nonisolated let budCacheMockRef: BudCacheMock
     internal nonisolated let budCacheLink: BudCacheLink
     
