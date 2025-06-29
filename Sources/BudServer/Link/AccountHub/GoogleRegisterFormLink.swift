@@ -50,8 +50,26 @@ package struct GoogleRegisterFormLink: Sendable {
     
     
     // MARK: action
-    package func submit() async throws { }
-    package func remove() async throws { }
+    package func submit() async {
+        switch mode {
+        case .test(let mock):
+            let googleRegisterFormRef = await GoogleRegisterFormMockManager.get(mock)!
+            await googleRegisterFormRef.submit()
+        case .real(let object):
+            let googleRegisterFormRef = await GoogleRegisterFormManager.get(object)!
+            await googleRegisterFormRef.submit()
+        }
+    }
+    package func remove() async {
+        switch mode {
+        case .test(let mock):
+            let googleRegisterFormRef = await GoogleRegisterFormMockManager.get(mock)!
+            await googleRegisterFormRef.remove()
+        case .real(let object):
+            let googleRegisterFormRef = await GoogleRegisterFormManager.get(object)!
+            await googleRegisterFormRef.remove()
+        }
+    }
     
     
     // MARK: value

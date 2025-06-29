@@ -62,14 +62,10 @@ internal final class AccountHub {
             return user.uid
         }
         
-        do {
-            let credential = GoogleAuthProvider.credential(withIDToken: googleIdToken,
-                                                           accessToken: googleAccessToken)
-            let result = try await Auth.auth().signIn(with: credential)
-            return result.user.uid
-        } catch {
-            throw UnknownIssue(error)
-        }
+        let credential = GoogleAuthProvider.credential(withIDToken: googleIdToken,
+                                                       accessToken: googleAccessToken)
+        let result = try await Auth.auth().signIn(with: credential)
+        return result.user.uid
     }
     
     internal var emailTickets: Set<Ticket> = []

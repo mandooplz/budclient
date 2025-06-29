@@ -65,17 +65,17 @@ public final class SignUpForm: Sendable {
             let accountHubLink = budServerLink.getAccountHub()
             
             let newTicket = AccountHubLink.Ticket()
-            try await accountHubLink.insertEmailTicket(newTicket)
-            try await accountHubLink.updateEmailForms()
+            await accountHubLink.insertEmailTicket(newTicket)
+            await accountHubLink.updateEmailForms()
             
-            guard let registerFormLink = try await accountHubLink.getEmailRegisterForm(newTicket) else {
+            guard let registerFormLink = await accountHubLink.getEmailRegisterForm(newTicket) else {
                 throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
             }
-            try await registerFormLink.setEmail(email)
-            try await registerFormLink.setPassword(password)
+            await registerFormLink.setEmail(email)
+            await registerFormLink.setPassword(password)
             
-            try await registerFormLink.submit()
-            try await registerFormLink.remove()
+            await registerFormLink.submit()
+            await registerFormLink.remove()
             
             // getUserId
             userId = try await accountHubLink.getUserId(email: email,
@@ -91,6 +91,7 @@ public final class SignUpForm: Sendable {
         
         
         // mutate
+        guard budClientRef.isUserSignedIn == false else { return }
         let projectBoardRef = ProjectBoard(userId: userId)
         let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
                                            userId: userId,

@@ -52,8 +52,21 @@ package struct AccountHubLink: Sendable {
             }
         }
     }
+    package func getUserId(idToken: String, accessToken: String) async throws -> String {
+        switch mode {
+        case .test:
+            guard let userId = await AccountHubMock.shared.getUserId(googleIdToken: idToken,
+                                                                     googleAccessToken: accessToken) else {
+                throw Error.userNotFound
+            }
+            return userId
+        case .real:
+            let userId = try await AccountHub.shared.getUserId(googleIdToken: idToken,googleAccessToken: accessToken)
+            return userId
+        }
+    }
     
-    package func insertEmailTicket(_ ticket: Ticket) async throws {
+    package func insertEmailTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
             let _ = await MainActor.run {
@@ -65,28 +78,25 @@ package struct AccountHubLink: Sendable {
             }
         }
     }
-    package func getEmailRegisterForm(_ ticket: Ticket) async throws -> EmailRegisterFormLink? {
+    package func getEmailRegisterForm(_ ticket: Ticket) async -> EmailRegisterFormLink? {
         switch mode {
         case .test:
-            // test에는 RegisterFormLink를 제공
-            let registerForm = await MainActor.run {
+            let emailRegisterForm = await MainActor.run {
                 AccountHubMock.shared.emailRegisterForms[ticket.forMock]
             }
-            guard let registerForm else { return nil }
-            return EmailRegisterFormLink(mode: self.mode,
-                                    idForMock: registerForm)
+            guard let emailRegisterForm else { return nil }
+            return .init(mode: .test(mock: emailRegisterForm))
             
         case .real:
-            let registerForm = await Server.run {
+            let emailRegisterForm = await Server.run {
                 AccountHub.shared.emailRegisterForms[ticket.forReal]
             }
-            guard let registerForm else { return nil }
-            return EmailRegisterFormLink(mode: self.mode,
-                                    id: .init(realId: registerForm))
+            guard let emailRegisterForm else { return nil }
+            return .init(mode: .real(object: emailRegisterForm))
         }
     }
     
-    package func insertGoogleTicket(_ ticket: Ticket) async throws {
+    package func insertGoogleTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
             let _ = await MainActor.run {
@@ -98,13 +108,28 @@ package struct AccountHubLink: Sendable {
             }
         }
     }
-    package func getGoogleRegisterForm(_ ticket: Ticket) async throws {
-        
+    package func getGoogleRegisterForm(_ ticket: Ticket) async -> GoogleRegisterFormLink? {
+        switch mode {
+        case .test:
+            return await MainActor.run {
+                guard let googleRegisterForm = AccountHubMock.shared.googleRegisterForms[ticket.forMock] else {
+                    return nil
+                }
+                return .init(mode: .test(mock: googleRegisterForm))
+            }
+        case .real:
+            return await Server.run {
+                guard let googleRegisterForm = AccountHub.shared.googleRegisterForms[ticket.forReal] else {
+                    return nil
+                }
+                return .init(mode: .real(object: googleRegisterForm))
+            }
+        }
     }
     
     
     // MARK: action
-    package func updateEmailForms() async throws {
+    package func updateEmailForms() async {
         switch mode {
         case .test:
             await AccountHubMock.shared.updateEmailForms()
@@ -112,7 +137,7 @@ package struct AccountHubLink: Sendable {
             await AccountHub.shared.updateEmailForms()
         }
     }
-    package func updateGoogleForms() async throws {
+    package func updateGoogleForms() async {
         switch mode {
         case .test:
             await AccountHubMock.shared.updateGoogleForms()

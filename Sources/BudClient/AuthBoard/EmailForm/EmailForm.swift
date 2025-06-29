@@ -124,7 +124,10 @@ public final class EmailForm: Sendable {
                         authBoardRef: authBoardRef,
                         userId: userId)
     }
-    private func mutateForSignIn(budClientRef: BudClient, authBoardRef: AuthBoard, userId: String) {
+    private func mutateForSignIn(budClientRef: BudClient,
+                                 authBoardRef: AuthBoard,
+                                 userId: String) {
+        guard budClientRef.isUserSignedIn == false else { return }
         let googleForm = authBoardRef.googleForm!
         let googleFormRef = GoogleFormManager.get(googleForm)!
         

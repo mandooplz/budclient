@@ -14,8 +14,9 @@ import CryptoKit
 internal final class GoogleRegisterFormMock: Sendable {
     // MARK: core
     internal init(accountHub: AccountHubMock,
-                 ticket: AccountHubMock.Ticket) {
+                  ticket: AccountHubMock.Ticket) {
         self.id = ID(value: UUID())
+        self.ticket = ticket
         self.accountHub = accountHub
         
         GoogleRegisterFormMockManager.register(self)
@@ -27,6 +28,7 @@ internal final class GoogleRegisterFormMock: Sendable {
     
     // MARK: state
     internal nonisolated let id: ID
+    private nonisolated let ticket: AccountHubMock.Ticket
     private nonisolated let accountHub: AccountHubMock
     
     internal var idToken: String?
@@ -45,6 +47,11 @@ internal final class GoogleRegisterFormMock: Sendable {
         // mutate
         let accountRef = AccountMock(idToken: idToken, accessToken: accessToken)
         accountHub.accounts.insert(accountRef.id)
+    }
+    internal func remove() {
+        // mutate
+        accountHub.googleRegisterForms[ticket] = nil
+        self.delete()
     }
     
     

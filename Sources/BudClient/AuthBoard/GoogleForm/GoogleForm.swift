@@ -27,6 +27,7 @@ public final class GoogleForm: Sendable {
     }
     
     
+    
     // MARK: state
     public nonisolated let id: ID
     public nonisolated let authBoard: AuthBoard.ID
@@ -39,43 +40,71 @@ public final class GoogleForm: Sendable {
     
     
     // MARK: action
-    public func signIn() {
+    public func signIn() async {
         // capture
+        guard self.id.isValid else { return }
         guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
         
         let authBoardRef = AuthBoardManager.get(self.authBoard)!
         let budClientRef = BudClientManager.get(authBoardRef.budClient)!
-        let budServerLink = budClientRef.budServerLink
+        let budServerLink = budClientRef.budServerLink!
         
         // compute
         let userId: String
         do {
-            let accountHubLink = budServerLink?.getAccountHub()
+            // register
+            let accountHubLink = budServerLink.getAccountHub()
             let ticket = AccountHubLink.Ticket()
-
             
+            await accountHubLink.insertGoogleTicket(ticket)
+            await accountHubLink.updateGoogleForms()
+            
+            guard let googleRegisterFormLink = await accountHubLink.getGoogleRegisterForm(ticket) else {
+                throw UnknownIssue(reason: "GoogleRegisterFormLink.updateGoogleForms() failed")
+            }
+            
+            await googleRegisterFormLink.setIdToken(idToken)
+            await googleRegisterFormLink.setAccessToken(accessToken)
+            
+            await googleRegisterFormLink.submit()
+            await googleRegisterFormLink.remove()
+            
+            // signIn
+            userId = try await accountHubLink.getUserId(idToken: idToken, accessToken: accessToken)
         } catch {
             self.issue = UnknownIssue(error)
             return
         }
-        // 이 안에서 이루어져야 하는 작업은?
-        // idToken과 accessToken을 사용해 로그인 처리한다.
-//        let googleCredential = GoogleAuthProvider.credential(withIDToken: idToken,
-//                                                             accessToken: accessToken)
-//        
-//        let result = Auth.auth().signIn(with: googleCredential)
-
         
         // mutate
+        guard budClientRef.isUserSignedIn == false else { return }
         
-        // EmailForm, SignUpForm에서처럼 전체 시스템 객체의 상태를 변화시킨다. 
+        let projectBoardRef = ProjectBoard(userId: userId)
+        let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
+                                           userId: userId,
+                                           mode: self.mode)
+        
+        budClientRef.projectBoard = projectBoardRef.id
+        budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.authBoard = nil
+        budClientRef.isUserSignedIn = true
+        
+        authBoardRef.emailForm = nil
+        authBoardRef.delete()
+        self.delete()
+        // EmailForm, SignUpForm에서처럼 전체 시스템 객체의 상태를 변화시킨다.
     }
     
     
     // MARK: value
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        
+        @MainActor internal var isValid: Bool {
+            GoogleFormManager.get(self) != nil
+        }
     }
     public enum Error: String, Swift.Error {
         case idTokenIsNil, accessTokenIsNil

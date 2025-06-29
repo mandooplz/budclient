@@ -69,7 +69,7 @@ package struct BudCacheLink: Sendable {
         }
     }
     package func signOut() async throws {
-        
+        fatalError()
     }
     
     

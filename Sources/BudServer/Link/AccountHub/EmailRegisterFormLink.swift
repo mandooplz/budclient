@@ -66,7 +66,7 @@ package struct EmailRegisterFormLink: Sendable {
         
     
     // MARK: action
-    package func submit() async throws {
+    package func submit() async {
         switch mode {
         case .test(let mock):
             await MainActor.run {
