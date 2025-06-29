@@ -125,7 +125,7 @@ struct SignUpFormTests {
             #expect(issue.reason == "passwordsDoNotMatch")
         }
         
-        @Test func toggleIsConsumedWhenSuccess() async throws {
+        @Test func setIsConsumedToTrue() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -140,8 +140,7 @@ struct SignUpFormTests {
             try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(signUpFormRef.isConsumed == true)
         }
-        
-        @Test func setIsUserSignedInAtBudClient() async throws {
+        @Test func setIsUserSignedIn() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -156,22 +155,7 @@ struct SignUpFormTests {
             try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(budClientRef.isUserSignedIn == true)
         }
-        @Test func setAuthBoardNilInBudClient() async throws {
-            // given
-            await MainActor.run {
-                signUpFormRef.email = testEmail
-                signUpFormRef.password = testPassword
-                signUpFormRef.passwordCheck = testPassword
-            }
-            
-            // when
-            await signUpFormRef.signUp()
-            
-            // then
-            await #expect(budClientRef.authBoard == nil)
-        }
-        
-        @Test func deleteSignUpFormWhenSuccess() async throws {
+        @Test func deleteSignUpForm() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -186,7 +170,7 @@ struct SignUpFormTests {
             try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(signUpFormRef.id.isExist == false)
         }
-        @Test func deleteSignInFormWhenSuccess() async throws {
+        @Test func deleteSignInForm() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -203,7 +187,7 @@ struct SignUpFormTests {
             try await #require(signUpFormRef.isIssueOccurred == false)
             await #expect(emailForm.isExist == false)
         }
-        @Test func deleteGoogleFormWhenSucess() async throws {
+        @Test func deleteGoogleForm() async throws {
             // given
             let authBoardRef = await budClientRef.authBoard!.ref!
             let googleForm = await authBoardRef.googleForm!
@@ -222,7 +206,21 @@ struct SignUpFormTests {
             
             await #expect(googleForm.isExist == false)
         }
-        @Test func deleteAuthBoadWhenSuccess() async throws {
+        @Test func setAuthBoard() async throws {
+            // given
+            await MainActor.run {
+                signUpFormRef.email = testEmail
+                signUpFormRef.password = testPassword
+                signUpFormRef.passwordCheck = testPassword
+            }
+            
+            // when
+            await signUpFormRef.signUp()
+            
+            // then
+            await #expect(budClientRef.authBoard == nil)
+        }
+        @Test func deleteAuthBoad() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -238,14 +236,15 @@ struct SignUpFormTests {
             // then
             await #expect(authBoard.isExist == false)
         }
-        
-        @Test func createProjectBoardWhenSuccess() async throws {
+        @Test func createProjectBoard() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
                 signUpFormRef.password = testPassword
                 signUpFormRef.passwordCheck = testPassword
             }
+            
+            try await #require(budClientRef.projectBoard == nil)
             
             // when
             await signUpFormRef.signUp()
@@ -256,7 +255,7 @@ struct SignUpFormTests {
             
             await #expect(projectBoard.isExist == true)
         }
-        @Test func createProfileBoardWhenSuccess() async throws {
+        @Test func createProfileBoard() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -264,12 +263,31 @@ struct SignUpFormTests {
                 signUpFormRef.passwordCheck = testPassword
             }
             
+            try await #require(budClientRef.profileBoard == nil)
+            
             // when
             await signUpFormRef.signUp()
             
             // then
             let profileBoard = try #require(await budClientRef.profileBoard)
             await #expect(profileBoard.isExist == true)
+        }
+        @Test func createCommunity() async throws {
+            // given
+            await MainActor.run {
+                signUpFormRef.email = testEmail
+                signUpFormRef.password = testPassword
+                signUpFormRef.passwordCheck = testPassword
+            }
+            
+            try await #require(budClientRef.community == nil)
+            
+            // when
+            await signUpFormRef.signUp()
+            
+            // then
+            let community = try #require(await budClientRef.community)
+            await #expect(community.isExist == true)
         }
         
         @Test func setUserIdInBudCache() async throws {

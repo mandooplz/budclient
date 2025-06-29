@@ -21,6 +21,11 @@ struct ProfileBoardTests {
             self.profileBoardRef = try await getProfileBoard(budClientRef)
         }
         
+        @Test func whenProfileBoardIsDeletedBeforeCapture() async throws { }
+        @Test func whenProfileBoardIsDeletedBeforeMutate() async throws { }
+        
+        
+        // TODO: ProjectBoard, ProfileBoard의 하위 객체들을 정의한다면 테스트를 추가해야 함
         @Test func setIsUserSignedInAtBudClient() async throws {
             // given
             try await #require(budClientRef.isUserSignedIn == true)
@@ -31,8 +36,6 @@ struct ProfileBoardTests {
             // then
             await #expect(budClientRef.isUserSignedIn == true)
         }
-        
-        // TODO: ProjectBoard, ProfileBoard의 하위 객체들을 정의한다면 테스트를 추가해야 함
         @Test func createAuthBoard() async throws {
             // given
             try await #require(budClientRef.authBoard == nil)
@@ -70,8 +73,6 @@ struct ProfileBoardTests {
         }
         @Test func deleteProfileBoard() async throws {
             // given
-            try await #require(budClientRef.profileBoard != nil)
-            
             let profileBoard = try #require(await budClientRef.profileBoard)
             
             // when
@@ -80,6 +81,17 @@ struct ProfileBoardTests {
             // then
             await #expect(budClientRef.profileBoard == nil)
             await #expect(profileBoard.isExist == false)
+        }
+        @Test func deleteCommunity() async throws {
+            // given
+            let community = try #require(await budClientRef.community)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(community.isExist == false
+            )
         }
     }
 }

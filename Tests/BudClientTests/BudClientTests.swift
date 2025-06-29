@@ -33,6 +33,11 @@ struct BudClientTests {
             try await #require(budClientRef.issue == nil)
             await #expect(budClientRef.projectBoard == nil)
         }
+        @Test func setCommunity() async throws {
+            // then
+            try await #require(budClientRef.issue == nil)
+            await #expect(budClientRef.community == nil)
+        }
         @Test func setBudServerLink() async throws {
             // given
             try await #require(budClientRef.budServerLink == nil)

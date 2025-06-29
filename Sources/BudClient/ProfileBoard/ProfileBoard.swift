@@ -13,9 +13,7 @@ import BudServer
 @MainActor @Observable
 public final class ProfileBoard: Sendable {
     // MARK: core
-    internal init(budClient: BudClient.ID,
-                  userId: String,
-                  mode: SystemMode) {
+    internal init(mode: SystemMode, budClient: BudClient.ID, userId: String) {
         self.id = ID(value: UUID())
         self.userId = userId
         self.budClient = budClient
@@ -27,6 +25,7 @@ public final class ProfileBoard: Sendable {
         ProfileBoardManager.unregister(self.id)
     }
 
+    
     // MARK: state
     public nonisolated let id: ID
     private nonisolated let mode: SystemMode
@@ -39,11 +38,16 @@ public final class ProfileBoard: Sendable {
     // MARK: action
     public func signOut() {
         // capture
-        let budClientRef = budClient.ref!
-        let projectBoard = budClientRef.projectBoard!
-        let projectBoardRef = projectBoard.ref!
+        let projectBoard = budClient.ref!.projectBoard
+        let community = budClient.ref!.community
+        
+        // compute
+        
         
         // mutate
+        let budClientRef = self.budClient.ref!
+        let projectBoardRef = projectBoard!.ref!
+        let communityRef = community!.ref!
         let authBoardRef = AuthBoard(budClient: self.budClient,
                                      mode: self.mode)
         budClientRef.authBoard = authBoardRef.id
@@ -51,6 +55,7 @@ public final class ProfileBoard: Sendable {
         budClientRef.profileBoard = nil
         
         projectBoardRef.delete()
+        communityRef.delete()
         self.delete()
     }
 

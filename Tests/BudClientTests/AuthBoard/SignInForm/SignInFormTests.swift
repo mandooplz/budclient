@@ -192,6 +192,14 @@ struct SignInFormTests {
             let profileBoard = try #require(await budClientRef.profileBoard)
             await #expect(profileBoard.isExist == true)
         }
+        @Test func createCommunity() async throws {
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            let community = try #require(await budClientRef.community)
+            await #expect(community.isExist == true)
+        }
         @Test func setIsUserSignedIn() async throws {
             // when
             await signInFormRef.signInByCache()
@@ -457,6 +465,20 @@ struct SignInFormTests {
             let profileBoard = try #require(await budClientRef.profileBoard)
             await #expect(profileBoard.isExist == true)
         }
+        @Test func createCommunity() async throws {
+            // given
+            await MainActor.run {
+                signInFormRef.email = validEmail
+                signInFormRef.password = validPassword
+            }
+            
+            // when
+            await signInFormRef.signIn()
+            
+            // then
+            let community = try #require(await budClientRef.community)
+            await #expect(community.isExist == true)
+        }
         @Test func setIsUserSignedIn() async throws {
             // given
             await MainActor.run {
@@ -506,7 +528,7 @@ internal func getEmailForm(_ budClientRef: BudClient) async -> SignInForm {
     return await emailForm.ref!
 }
 private func register(email: String, password: String) async {
-    let budServerLink = try! await BudServerLink(mode: .test)
+    let budServerLink = try! BudServerLink(mode: .test)
     let accountHubLink = budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
@@ -526,7 +548,7 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     let testPassword = Password.random().value
     
     // register
-    let budServerLink = try! await BudServerLink(mode: .test)
+    let budServerLink = try! BudServerLink(mode: .test)
     let accountHubLink = budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()

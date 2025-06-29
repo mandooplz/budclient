@@ -125,20 +125,19 @@ public final class SignInForm: Sendable {
                         authBoardRef: authBoardRef,
                         userId: userId)
     }
-    private func mutateForSignIn(budClientRef: BudClient,
-                                 authBoardRef: AuthBoard,
+    private func mutateForSignIn(budClientRef: BudClient, authBoardRef: AuthBoard,
                                  userId: String) {
         guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return  }
         guard budClientRef.isUserSignedIn == false else { return }
         let googleForm = authBoardRef.googleForm
         
-        let projectBoardRef = ProjectBoard(userId: userId)
-        let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
-                                           userId: userId,
-                                           mode: self.mode)
+        let projectBoardRef = ProjectBoard(mode: mode, budClient: budClientRef.id, userId: userId)
+        let profileBoardRef = ProfileBoard(mode: mode, budClient: budClientRef.id, userId: userId)
+        let communityRef = Community(mode: mode, budClient: budClientRef.id, userId: userId)
         
         budClientRef.projectBoard = projectBoardRef.id
         budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.community = communityRef.id
         budClientRef.authBoard = nil
         budClientRef.isUserSignedIn = true
         

@@ -46,6 +46,7 @@ public final class BudClient: Sendable {
     public internal(set) var isUserSignedIn: Bool = false
     public internal(set) var projectBoard: ProjectBoard.ID?
     public internal(set) var profileBoard: ProfileBoard.ID?
+    public internal(set) var community: Community.ID?
         
     public private(set) var issue: (any Issuable)?
     public var isIssueOccurred: Bool { issue != nil }

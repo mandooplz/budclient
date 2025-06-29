@@ -35,7 +35,7 @@ struct AuthBoardTests {
             await #expect(authBoardRef.googleForm == nil)
         }
         
-        @Test func setEmailForm() async throws {
+        @Test func setSignInForm() async throws {
             // given
             try await #require(authBoardRef.signInForm == nil)
             
@@ -45,7 +45,7 @@ struct AuthBoardTests {
             // then
             try await #require(authBoardRef.signInForm != nil)
         }
-        @Test func createEmailForm() async throws {
+        @Test func createSignInForm() async throws {
             // given
             try await #require(authBoardRef.signInForm == nil)
             

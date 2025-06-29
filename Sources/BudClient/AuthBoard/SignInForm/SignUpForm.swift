@@ -101,14 +101,14 @@ public final class SignUpForm: Sendable {
         // mutate
         await mutateHook?()
         guard id.isExist else { return }
-        let projectBoardRef = ProjectBoard(userId: userId)
-        let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
-                                           userId: userId,
-                                           mode: self.mode)
+        let projectBoardRef = ProjectBoard(mode: mode, budClient: budClientRef.id, userId: userId)
+        let profileBoardRef = ProfileBoard(mode: mode, budClient: budClientRef.id, userId: userId)
+        let communityRef = Community(mode: mode, budClient: budClientRef.id, userId: userId)
         
         budClientRef.authBoard = nil
         budClientRef.projectBoard = projectBoardRef.id
         budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.community = communityRef.id
         budClientRef.isUserSignedIn = true
         
         self.isConsumed = true

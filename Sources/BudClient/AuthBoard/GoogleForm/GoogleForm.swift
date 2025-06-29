@@ -95,13 +95,13 @@ public final class GoogleForm: Sendable {
         authBoardRef.signInForm?.ref?.signUpForm?.ref?.delete()
         authBoardRef.signInForm?.ref?.delete()
          
-        let projectBoardRef = ProjectBoard(userId: userId)
-        let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
-                                           userId: userId,
-                                           mode: self.mode)
+        let projectBoardRef = ProjectBoard(mode: mode, budClient: budClientRef.id, userId: userId)
+        let profileBoardRef = ProfileBoard(mode: mode, budClient: budClientRef.id, userId: userId)
+        let communityRef = Community(mode: mode, budClient: budClientRef.id, userId: userId)
         
         budClientRef.projectBoard = projectBoardRef.id
         budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.community = communityRef.id
         budClientRef.authBoard = nil
         budClientRef.isUserSignedIn = true
         

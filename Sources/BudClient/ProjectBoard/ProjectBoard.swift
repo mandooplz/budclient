@@ -5,14 +5,17 @@
 //  Created by 김민우 on 6/25/25.
 //
 import Foundation
+import Tools
 
 
 // MARK: Object
 @MainActor @Observable
 public final class ProjectBoard: Sendable {
     // MARK: core
-    init(userId: String) {
+    init(mode: SystemMode, budClient: BudClient.ID, userId: String) {
         self.id = ID(value: .init())
+        self.mode = mode
+        self.budClient = budClient
         self.userId = userId
         
         ProjectBoardManager.register(self)
@@ -24,6 +27,8 @@ public final class ProjectBoard: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
+    internal nonisolated let mode: SystemMode
+    public nonisolated let budClient: BudClient.ID
     public nonisolated let userId: String
     
     public internal(set) var projects: [Project.ID] = []
