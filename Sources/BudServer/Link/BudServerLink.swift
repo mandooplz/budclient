@@ -15,7 +15,6 @@ import FirebaseFirestore
 public struct BudServerLink: Sendable {
     // MARK: core
     private let mode: SystemMode
-    
     package init(mode: SystemMode = .real,
                 plistPath: String = "") throws(Error) {
         self.mode = mode

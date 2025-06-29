@@ -26,11 +26,11 @@ struct RegisterFormTests {
         let testEmail = Email.random().value
         let testPassword = Password.random().value
         
-        try! await registerFormLink.setEmail(testEmail)
-        try! await registerFormLink.setPassword(testPassword)
+        await registerFormLink.setEmail(testEmail)
+        await registerFormLink.setPassword(testPassword)
         
         // when
-        try! await registerFormLink.submit()
+        await registerFormLink.submit()
         
         // then
         do {
@@ -52,9 +52,9 @@ internal func getReigsterFormLink(_ budServerLink: BudServerLink) async -> Email
     let accountHubLink = budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
-    try! await accountHubLink.insertEmailTicket(newTicket)
-    try! await accountHubLink.updateEmailForms()
+    await accountHubLink.insertEmailTicket(newTicket)
+    await accountHubLink.updateEmailForms()
     
-    let registerFormLink = try! await accountHubLink.getEmailRegisterForm(newTicket)!
+    let registerFormLink = await accountHubLink.getEmailRegisterForm(newTicket)!
     return registerFormLink
 }

@@ -1,5 +1,5 @@
 //
-//  EmailForm.swift
+//  SignInForm.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/23/25.
@@ -12,7 +12,7 @@ import BudCache
 
 // MARK: Object
 @MainActor @Observable
-public final class EmailForm: Sendable {
+public final class SignInForm: Sendable {
     // MARK: core
     internal init(authBoard: AuthBoard.ID,
                   mode: SystemMode) {
@@ -45,18 +45,16 @@ public final class EmailForm: Sendable {
     
     
     // MARK: action
-    public func setUpSignUpForm() {
-        // mutate
-        guard isSetUpRequired else { return }
-        
-        let signUpFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
-        self.signUpForm = signUpFormRef.id
-    }
-    
     public func signInByCache() async {
+        await signInByCache(captureHook: nil,
+                            mutateHook: nil)
+    }
+    internal func signInByCache(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
-        let authBoardRef = AuthBoardManager.get(self.authBoard)!
-        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        await captureHook?()
+        guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return }
+        let authBoardRef = self.authBoard.ref!
+        let budClientRef = authBoardRef.budClient.ref!
         
         // compute
         let userId: String
@@ -77,13 +75,20 @@ public final class EmailForm: Sendable {
         }
         
         // mutate
+        await mutateHook?()
         mutateForSignIn(budClientRef: budClientRef,
                         authBoardRef: authBoardRef,
                         userId: userId)
         
     }
+    
     public func signIn() async {
+        await self.signIn(captureHook: nil, mutateHook: nil)
+    }
+    internal func signIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
+        await captureHook?()
+        guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return }
         guard email != "" else {
             self.issue = KnownIssue(Error.emailIsNil)
             return
@@ -93,8 +98,8 @@ public final class EmailForm: Sendable {
             return
         }
         
-        let authBoardRef = AuthBoardManager.get(self.authBoard)!
-        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        let authBoardRef = self.authBoard.ref!
+        let budClientRef = authBoardRef.budClient.ref!
         let budServerLink = budClientRef.budServerLink!
         let budCacheLink = budClientRef.budCacheLink
         
@@ -120,6 +125,7 @@ public final class EmailForm: Sendable {
         }
         
         // mutate
+        await mutateHook?()
         mutateForSignIn(budClientRef: budClientRef,
                         authBoardRef: authBoardRef,
                         userId: userId)
@@ -127,9 +133,9 @@ public final class EmailForm: Sendable {
     private func mutateForSignIn(budClientRef: BudClient,
                                  authBoardRef: AuthBoard,
                                  userId: String) {
+        guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return  }
         guard budClientRef.isUserSignedIn == false else { return }
-        let googleForm = authBoardRef.googleForm!
-        let googleFormRef = GoogleFormManager.get(googleForm)!
+        let googleForm = authBoardRef.googleForm
         
         let projectBoardRef = ProjectBoard(userId: userId)
         let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
@@ -141,24 +147,42 @@ public final class EmailForm: Sendable {
         budClientRef.authBoard = nil
         budClientRef.isUserSignedIn = true
         
-        authBoardRef.emailForm = nil
+        authBoardRef.signInForm = nil
         authBoardRef.delete()
-        if let signUpForm {
-            let signUpFormRef = SignUpFormManager.get(signUpForm)
-            signUpFormRef?.delete()
-        }
-        googleFormRef.delete()
+        signUpForm?.ref?.delete()
+        googleForm?.ref?.delete()
         self.delete()
     }
     
+    public func setUpSignUpForm() async {
+        await setUpSignUpForm(mutateHook: nil)
+    }
+    internal func setUpSignUpForm(mutateHook: Hook?) async {
+        // mutate
+        await mutateHook?()
+        guard id.isExist else { return }
+        guard isSetUpRequired else { return }
+        
+        let signUpFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
+        self.signUpForm = signUpFormRef.id
+    }
     
     
     
     // MARK: value
+    @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        internal var isExist: Bool {
+            EmailFormManager.container[self] != nil
+        }
+        public var ref: SignInForm? {
+            EmailFormManager.container[self]
+        }
     }
     public enum Error: String, Swift.Error {
+        case deleted
         case emailIsNil, passwordIsNil
         case userNotFound, wrongPassword
         case missingEmailCredentialInCache
@@ -169,16 +193,13 @@ public final class EmailForm: Sendable {
 
 // MARK: Object Manager
 @MainActor
-public final class EmailFormManager: Sendable {
+fileprivate final class EmailFormManager: Sendable {
     // MARK: state
-    private static var container: [EmailForm.ID: EmailForm] = [:]
-    public static func register(_ object: EmailForm) {
+    fileprivate static var container: [SignInForm.ID: SignInForm] = [:]
+    fileprivate static func register(_ object: SignInForm) {
         container[object.id] = object
     }
-    public static func unregister(_ id: EmailForm.ID) {
+    fileprivate static func unregister(_ id: SignInForm.ID) {
         container[id] = nil
-    }
-    public static func get(_ id: EmailForm.ID) -> EmailForm? {
-        container[id]
     }
 }

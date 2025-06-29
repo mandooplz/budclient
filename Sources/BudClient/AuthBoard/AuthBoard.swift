@@ -30,30 +30,42 @@ public final class AuthBoard {
     public nonisolated let budClient: BudClient.ID
     private nonisolated let mode: SystemMode
     
-    public internal(set) var emailForm: EmailForm.ID?
+    public internal(set) var signInForm: SignInForm.ID?
     public internal(set) var googleForm: GoogleForm.ID?
     
     public var issue: (any Issuable)?
-    public var isIssueOccurred: Bool { self.issue != nil }
     
     
     // MARK: action
-    public func setUpForms() {
-        // mutate
-        guard emailForm == nil && googleForm == nil else { return }
+    public func setUpForms() async {
+        await setUpForms(beforeMutate: nil)
+    }
+    internal func setUpForms(beforeMutate: Hook?) async {
+        await beforeMutate?()
         
-        let emailFormRef = EmailForm(authBoard: id, mode: mode)
+        // mutate
+        guard id.isExist else { return }
+        guard signInForm == nil && googleForm == nil else { return }
+        
+        let emailFormRef = SignInForm(authBoard: id, mode: mode)
         let googleFormRef = GoogleForm(authBoard: id, mode: mode)
         
-        self.emailForm = emailFormRef.id
+        self.signInForm = emailFormRef.id
         self.googleForm = googleFormRef.id
     }
     
     
-    
     // MARK: value
+    @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        internal var isExist: Bool {
+            AuthBoardManager.container[self] != nil
+        }
+        public var ref: AuthBoard? {
+            AuthBoardManager.container[self]
+        }
     }
     public typealias UserID = String
     public enum Error: String, Swift.Error {
@@ -64,16 +76,13 @@ public final class AuthBoard {
 
 // MARK: Object Manager
 @MainActor
-public final class AuthBoardManager {
+fileprivate final class AuthBoardManager {
     // MARK: state
-    private static var container: [AuthBoard.ID: AuthBoard] = [:]
-    internal static func register(_ object: AuthBoard) {
+    fileprivate static var container: [AuthBoard.ID: AuthBoard] = [:]
+    fileprivate static func register(_ object: AuthBoard) {
         container[object.id] = object
     }
-    internal static func unregister(_ id: AuthBoard.ID) {
+    fileprivate static func unregister(_ id: AuthBoard.ID) {
         container[id] = nil
-    }
-    public static func get(_ id: AuthBoard.ID) -> AuthBoard? {
-        container[id]
     }
 }

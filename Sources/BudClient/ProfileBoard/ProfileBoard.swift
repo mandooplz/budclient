@@ -39,9 +39,9 @@ public final class ProfileBoard: Sendable {
     // MARK: action
     public func signOut() {
         // capture
-        let budClientRef = BudClientManager.get(self.budClient)!
+        let budClientRef = budClient.ref!
         let projectBoard = budClientRef.projectBoard!
-        let projectBoardRef = ProjectBoardManager.get(projectBoard)!
+        let projectBoardRef = projectBoard.ref!
         
         // mutate
         let authBoardRef = AuthBoard(budClient: self.budClient,
@@ -56,24 +56,28 @@ public final class ProfileBoard: Sendable {
 
 
     // MARK: value
-    public struct ID: Sendable, Hashable {
+    @MainActor public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        internal var isExist: Bool {
+            ProfileBoardManager.container[self] != nil
+        }
+        public var ref: ProfileBoard? {
+            ProfileBoardManager.container[self]
+        }
     }
 }
 
 
 // MARK: Object Manager
 @MainActor
-public final class ProfileBoardManager: Sendable {
+fileprivate final class ProfileBoardManager: Sendable {
     // MARK: state
-    private static var container: [ProfileBoard.ID: ProfileBoard] = [:]
-    public static func register(_ object: ProfileBoard) {
+    fileprivate static var container: [ProfileBoard.ID: ProfileBoard] = [:]
+    fileprivate static func register(_ object: ProfileBoard) {
         container[object.id] = object
     }
-    public static func unregister(_ id: ProfileBoard.ID) {
+    fileprivate static func unregister(_ id: ProfileBoard.ID) {
         container[id] = nil
-    }
-    public static func get(_ id: ProfileBoard.ID) -> ProfileBoard? {
-        container[id]
     }
 }

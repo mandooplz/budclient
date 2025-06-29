@@ -14,7 +14,7 @@ import BudCache
 @MainActor @Observable
 public final class SignUpForm: Sendable {
     // MARK: core
-    internal init(emailForm: EmailForm.ID,
+    internal init(emailForm: SignInForm.ID,
                 mode: SystemMode) {
         self.id = ID(value: UUID())
         self.emailForm = emailForm
@@ -29,7 +29,7 @@ public final class SignUpForm: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
-    public nonisolated let emailForm: EmailForm.ID
+    public nonisolated let emailForm: SignInForm.ID
     private nonisolated let mode: SystemMode
     
     public var email: String?
@@ -44,20 +44,25 @@ public final class SignUpForm: Sendable {
     
     // MARK: action
     public func signUp() async {
+        await signUp(captureHook: nil, mutateHook: nil)
+    }
+    internal func signUp(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
+        await captureHook?()
+        guard id.isExist else { return }
         guard let email else { issue = KnownIssue(Error.emailIsNil); return }
         guard let password else { issue = KnownIssue(Error.passwordIsNil); return}
         guard let passwordCheck else {
             issue = KnownIssue(Error.passwordCheckIsNil); return
         }
         if password != passwordCheck { issue = KnownIssue(Error.passwordsDoNotMatch); return }
-        let emailFormRef = EmailFormManager.get(self.emailForm)!
-        let authBoardRef = AuthBoardManager.get(emailFormRef.authBoard)!
-        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        let emailFormRef = self.emailForm.ref!
+        let authBoardRef = emailFormRef.authBoard.ref!
+        let budClientRef = authBoardRef.budClient.ref!
+        let googleFormRef = authBoardRef.googleForm!.ref!
+        
         let budServerLink = budClientRef.budServerLink!
         let budCacheLink = budClientRef.budCacheLink
-        let googleForm = authBoardRef.googleForm!
-        let googleFormRef = GoogleFormManager.get(googleForm)!
         
         // compute
         let userId: AuthBoard.UserID
@@ -91,7 +96,8 @@ public final class SignUpForm: Sendable {
         
         
         // mutate
-        guard budClientRef.isUserSignedIn == false else { return }
+        await mutateHook?()
+        guard id.isExist else { return }
         let projectBoardRef = ProjectBoard(userId: userId)
         let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
                                            userId: userId,
@@ -108,19 +114,32 @@ public final class SignUpForm: Sendable {
         emailFormRef.delete()
         emailFormRef.signUpForm = nil
         authBoardRef.delete()
-        authBoardRef.emailForm = nil
+        authBoardRef.signInForm = nil
     }
-    public func remove() {
+    
+    public func remove() async {
+        await remove(mutateHook: nil)
+    }
+    internal func remove(mutateHook: Hook?) async {
         // mutate
-        let emailFormRef = EmailFormManager.get(emailForm)
-        emailFormRef?.signUpForm = nil
+        await mutateHook?()
+        guard id.isExist else { return }
+        emailForm.ref?.signUpForm = nil
         self.delete()
     }
     
     
     // MARK: value
+    @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        internal var isExist: Bool {
+            SignUpFormManager.get(self) != nil
+        }
+        public var ref: SignUpForm? {
+            SignUpFormManager.get(self)
+        }
     }
     public enum Error: String, Swift.Error {
         case budClientIsNotSetUp
@@ -131,16 +150,16 @@ public final class SignUpForm: Sendable {
 
 // MARK: Object Manager
 @MainActor
-public final class SignUpFormManager: Sendable {
+fileprivate final class SignUpFormManager: Sendable {
     // MARK: state
     private static var container: [SignUpForm.ID: SignUpForm] = [:]
-    public static func register(_ object: SignUpForm) {
+    fileprivate static func register(_ object: SignUpForm) {
         container[object.id] = object
     }
-    public static func unregister(_ id: SignUpForm.ID) {
+    fileprivate static func unregister(_ id: SignUpForm.ID) {
         container[id] = nil
     }
-    public static func get(_ id: SignUpForm.ID) -> SignUpForm? {
+    fileprivate static func get(_ id: SignUpForm.ID) -> SignUpForm? {
         container[id]
     }
 }

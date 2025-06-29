@@ -6,8 +6,8 @@
 //
 import Foundation
 import Testing
-@testable import BudClient
 import Tools
+@testable import BudClient
 
 
 // MARK: Tests
@@ -21,26 +21,40 @@ struct AuthBoardTests {
             self.authBoardRef = await getAuthBoard(self.budClientRef)
         }
         
+        @Test func whenAuthBoardDoesNotExist() async throws {
+            // given
+            try await #require(authBoardRef.id.isExist == true)
+                
+            // when
+            await authBoardRef.setUpForms {
+                await authBoardRef.delete()
+            }
+            
+            // then
+            await #expect(authBoardRef.signInForm == nil)
+            await #expect(authBoardRef.googleForm == nil)
+        }
+        
         @Test func setEmailForm() async throws {
             // given
-            try await #require(authBoardRef.emailForm == nil)
+            try await #require(authBoardRef.signInForm == nil)
             
             // when
             await authBoardRef.setUpForms()
             
             // then
-            try await #require(authBoardRef.emailForm != nil)
+            try await #require(authBoardRef.signInForm != nil)
         }
         @Test func createEmailForm() async throws {
             // given
-            try await #require(authBoardRef.emailForm == nil)
+            try await #require(authBoardRef.signInForm == nil)
             
             // when
             await authBoardRef.setUpForms()
             
             // then
-            let emailForm = try #require(await authBoardRef.emailForm)
-            await #expect(EmailFormManager.get(emailForm) != nil)
+            let emailForm = try #require(await authBoardRef.signInForm)
+            await #expect(emailForm.isExist == true)
         }
         
         @Test func setGoogleForm() async throws {
@@ -62,24 +76,24 @@ struct AuthBoardTests {
             
             // then
             let googleForm = try #require(await authBoardRef.googleForm)
-            await #expect(GoogleFormManager.get(googleForm) != nil)
+            await #expect(googleForm.isExist == true)
         }
         
         @Test func whenFormsAlreadySetUp() async throws {
             // given
-            try await #require(authBoardRef.emailForm == nil)
+            try await #require(authBoardRef.signInForm == nil)
             try await #require(authBoardRef.googleForm == nil)
             
             await authBoardRef.setUpForms()
             
-            let emailForm = try #require(await authBoardRef.emailForm)
+            let emailForm = try #require(await authBoardRef.signInForm)
             let googleForm = try #require(await authBoardRef.googleForm)
             
             // when
             await authBoardRef.setUpForms()
             
             // then
-            await #expect(authBoardRef.emailForm == emailForm)
+            await #expect(authBoardRef.signInForm == emailForm)
             await #expect(authBoardRef.googleForm == googleForm)
         }
     }
@@ -91,23 +105,20 @@ func getAuthBoard(_ budClientRef: BudClient) async -> AuthBoard {
     try! await #require(budClientRef.authBoard == nil)
     
     await budClientRef.setUp()
-    
-    let authBoard = await budClientRef.authBoard!
-    let authBoardRef = await AuthBoardManager.get(authBoard)!
-    return authBoardRef
+    return await budClientRef.authBoard!.ref!
 }
 private func signUpWithEmailForm(_ authBoardRef: AuthBoard,
                                  email: String,
                                  password: String) async {
     await authBoardRef.setUpForms()
     
-    let emailForm = try! #require(await authBoardRef.emailForm)
-    let emailFormRef = try! #require(await EmailFormManager.get(emailForm))
+    let emailForm = try! #require(await authBoardRef.signInForm)
+    let emailFormRef = try! #require(await emailForm.ref)
     
     await emailFormRef.setUpSignUpForm()
     
     let signUpForm = await emailFormRef.signUpForm!
-    let signUpFormRef = await SignUpFormManager.get(signUpForm)!
+    let signUpFormRef = await signUpForm.ref!
     
     await MainActor.run {
         signUpFormRef.email = email

@@ -27,7 +27,6 @@ public final class GoogleForm: Sendable {
     }
     
     
-    
     // MARK: state
     public nonisolated let id: ID
     public nonisolated let authBoard: AuthBoard.ID
@@ -41,13 +40,18 @@ public final class GoogleForm: Sendable {
     
     // MARK: action
     public func signIn() async {
+        await signIn(captureHook: nil, mutateHook: nil)
+    }
+    internal func signIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
-        guard self.id.isValid else { return }
+        await captureHook?()
+        guard self.id.isExist else { return }
         guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
         
-        let authBoardRef = AuthBoardManager.get(self.authBoard)!
-        let budClientRef = BudClientManager.get(authBoardRef.budClient)!
+        let authBoardRef = authBoard.ref!
+        let budClientRef = authBoardRef.budClient.ref!
+        
         let budServerLink = budClientRef.budServerLink!
         
         // compute
@@ -78,8 +82,12 @@ public final class GoogleForm: Sendable {
         }
         
         // mutate
-        guard budClientRef.isUserSignedIn == false else { return }
+        await mutateHook?()
+        guard id.isExist else { return }
         
+        authBoardRef.signInForm?.ref?.signUpForm?.ref?.delete()
+        authBoardRef.signInForm?.ref?.delete()
+         
         let projectBoardRef = ProjectBoard(userId: userId)
         let profileBoardRef = ProfileBoard(budClient: budClientRef.id,
                                            userId: userId,
@@ -90,20 +98,23 @@ public final class GoogleForm: Sendable {
         budClientRef.authBoard = nil
         budClientRef.isUserSignedIn = true
         
-        authBoardRef.emailForm = nil
+        authBoardRef.signInForm = nil
         authBoardRef.delete()
+        
         self.delete()
-        // EmailForm, SignUpForm에서처럼 전체 시스템 객체의 상태를 변화시킨다.
     }
     
     
     // MARK: value
+    @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
         
-        
-        @MainActor internal var isValid: Bool {
-            GoogleFormManager.get(self) != nil
+        internal var isExist: Bool {
+            GoogleFormManager.container[self] != nil
+        }
+        public var ref: GoogleForm? {
+            GoogleFormManager.container[self]
         }
     }
     public enum Error: String, Swift.Error {
@@ -114,16 +125,13 @@ public final class GoogleForm: Sendable {
 
 // MARK: Object Manager
 @MainActor
-public final class GoogleFormManager: Sendable {
+fileprivate final class GoogleFormManager: Sendable {
     // MARK: state
-    private static var container: [GoogleForm.ID: GoogleForm] = [:]
-    internal static func register(_ object: GoogleForm) {
+    fileprivate static var container: [GoogleForm.ID: GoogleForm] = [:]
+    fileprivate static func register(_ object: GoogleForm) {
         container[object.id] = object
     }
-    internal static func unregister(_ id: GoogleForm.ID) {
+    fileprivate static func unregister(_ id: GoogleForm.ID) {
         container[id] = nil
-    }
-    public static func get(_ id: GoogleForm.ID) -> GoogleForm? {
-        container[id]
     }
 }

@@ -36,25 +36,30 @@ public final class ProjectBoard: Sendable {
     
     
     // MARK: value
+    @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        internal var isExist: Bool {
+            ProjectBoardManager.container[self] != nil
+        }
+        public var ref: ProjectBoard? {
+            ProjectBoardManager.container[self]
+        }
     }
 }
 
 
 // MARK: Object Manager
 @MainActor
-public final class ProjectBoardManager: Sendable {
+fileprivate final class ProjectBoardManager: Sendable {
     // MARK: state
-    private static var container: [ProjectBoard.ID: ProjectBoard] = [:]
-    public static func register(_ object: ProjectBoard) {
+    fileprivate static var container: [ProjectBoard.ID: ProjectBoard] = [:]
+    fileprivate static func register(_ object: ProjectBoard) {
         container[object.id] = object
     }
-    public static func unregister(_ id: ProjectBoard.ID) {
+    fileprivate static func unregister(_ id: ProjectBoard.ID) {
         container[id] = nil
-    }
-    public static func get(_ id: ProjectBoard.ID) -> ProjectBoard? {
-        container[id]
     }
 }
 

@@ -26,6 +26,42 @@ struct SignUpFormTests {
             self.testPassword = Password.random().value
         }
         
+        @Test func whenSignUpFormIsDeletedBeforeCapture() async throws  {
+            // given
+            try await #require(signUpFormRef.id.isExist == true)
+            
+            // when
+            await signUpFormRef.signUp {
+                await signUpFormRef.delete()
+            } mutateHook: {
+                
+            }
+
+            // then
+            await #expect(signUpFormRef.issue == nil)
+        }
+        @Test func whenSignUpFormIsDeletedBeforeMutate() async throws {
+            // given
+            try await #require(signUpFormRef.id.isExist == true)
+            
+            await MainActor.run {
+                signUpFormRef.email = testEmail
+                signUpFormRef.password = testPassword
+                signUpFormRef.passwordCheck = testPassword
+            }
+            
+            // when
+            await signUpFormRef.signUp {
+                
+            } mutateHook: {
+                await signUpFormRef.delete()
+            }
+            
+            // then
+            await #expect(signUpFormRef.isConsumed == false)
+            await #expect(budClientRef.isUserSignedIn == false)
+        }
+        
         @Test func failsWhenEmailIsNil() async throws {
             // given
             await MainActor.run {
@@ -148,9 +184,9 @@ struct SignUpFormTests {
             
             // then
             try await #require(signUpFormRef.isIssueOccurred == false)
-            await #expect(SignUpFormManager.get(signUpFormRef.id) == nil)
+            await #expect(signUpFormRef.id.isExist == false)
         }
-        @Test func deleteEmailFormWhenSuccess() async throws {
+        @Test func deleteSignInFormWhenSuccess() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -165,11 +201,11 @@ struct SignUpFormTests {
             
             // then
             try await #require(signUpFormRef.isIssueOccurred == false)
-            await #expect(EmailFormManager.get(emailForm) == nil)
+            await #expect(emailForm.isExist == false)
         }
         @Test func deleteGoogleFormWhenSucess() async throws {
             // given
-            let authBoardRef = await AuthBoardManager.get(budClientRef.authBoard!)!
+            let authBoardRef = await budClientRef.authBoard!.ref!
             let googleForm = await authBoardRef.googleForm!
             
             await MainActor.run {
@@ -184,7 +220,7 @@ struct SignUpFormTests {
             // then
             try await #require(signUpFormRef.isIssueOccurred == false)
             
-            await #expect(GoogleFormManager.get(googleForm) == nil)
+            await #expect(googleForm.isExist == false)
         }
         @Test func deleteAuthBoadWhenSuccess() async throws {
             // given
@@ -200,7 +236,7 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            await #expect(AuthBoardManager.get(authBoard) == nil)
+            await #expect(authBoard.isExist == false)
         }
         
         @Test func createProjectBoardWhenSuccess() async throws {
@@ -218,7 +254,7 @@ struct SignUpFormTests {
             try await #require(signUpFormRef.isIssueOccurred == false)
             let projectBoard = try #require(await budClientRef.projectBoard)
             
-            await #expect(ProjectBoardManager.get(projectBoard) != nil)
+            await #expect(projectBoard.isExist == true)
         }
         @Test func createProfileBoardWhenSuccess() async throws {
             // given
@@ -233,7 +269,7 @@ struct SignUpFormTests {
             
             // then
             let profileBoard = try #require(await budClientRef.profileBoard)
-            await #expect(ProfileBoardManager.get(profileBoard) != nil)
+            await #expect(profileBoard.isExist == true)
         }
         
         @Test func saveCredentialToBudCacheWhenSuccess() async throws {
@@ -266,21 +302,36 @@ struct SignUpFormTests {
             self.budClientRef = await BudClient()
             self.signUpFormRef = await getSignUpForm(budClientRef)
         }
+        
+        @Test func whenSignUpFormIsDeletedBeforeMutate() async throws {
+            // given
+            try await #require(signUpFormRef.id.isExist == true)
+            
+            // when
+            await signUpFormRef.remove {
+                await signUpFormRef.delete()
+            }
+            
+            // then
+            let emailFormRef = await signUpFormRef.emailForm.ref!
+            await #expect(emailFormRef.signUpForm != nil)
+        }
+        
         @Test func deleteSignUpForm() async throws {
             // given
-            try await #require(SignUpFormManager.get(signUpFormRef.id) != nil)
+            try await #require(signUpFormRef.id.isExist == true)
             
             // when
             await signUpFormRef.remove()
             
             // then
             try await #require(signUpFormRef.issue == nil)
-            await #expect(SignUpFormManager.get(signUpFormRef.id) == nil)
+            await #expect(signUpFormRef.id.isExist == false)
         }
         @Test func setNilToSignUpFormInEmailForm() async throws {
             // given
             let emailForm = signUpFormRef.emailForm
-            let emailFormRef = try #require(await EmailFormManager.get(emailForm))
+            let emailFormRef = try #require(await emailForm.ref)
             
             try #require(await emailFormRef.signUpForm != nil)
             
@@ -301,6 +352,6 @@ internal func getSignUpForm(_ budClientRef: BudClient) async -> SignUpForm {
     
     await emailForm.setUpSignUpForm()
     let signUpForm = try! #require(await emailForm.signUpForm)
-    let signUpFormRef = await SignUpFormManager.get(signUpForm)!
+    let signUpFormRef = await signUpForm.ref!
     return signUpFormRef
 }

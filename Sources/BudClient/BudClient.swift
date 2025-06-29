@@ -8,7 +8,6 @@ import Foundation
 import Tools
 import BudServer
 import BudCache
-import Observation
 
 
 // MARK: System
@@ -35,7 +34,6 @@ public final class BudClient: Sendable {
         
         BudClientManager.register(self)
     }
-    
     
     
     // MARK: state
@@ -88,8 +86,12 @@ public final class BudClient: Sendable {
     
     
     // MARK: value
-    public struct ID: Sendable, Hashable {
+    @MainActor public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        public var ref: BudClient? {
+            BudClientManager.container[self]
+        }
     }
     public enum Error: String, Swift.Error {
         case alreadySetUp
@@ -100,13 +102,10 @@ public final class BudClient: Sendable {
 
 // MARK: System Manager
 @MainActor
-public final class BudClientManager: Sendable {
+fileprivate final class BudClientManager: Sendable {
     // MARK: state
-    private static var container: [BudClient.ID: BudClient] = [:]
-    public static func register(_ object: BudClient) {
+    fileprivate static var container: [BudClient.ID: BudClient] = [:]
+    fileprivate static func register(_ object: BudClient) {
         container[object.id] = object
-    }
-    public static func get(_ id: BudClient.ID) -> BudClient? {
-        container[id]
     }
 }

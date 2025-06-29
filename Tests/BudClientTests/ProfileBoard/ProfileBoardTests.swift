@@ -42,7 +42,7 @@ struct ProfileBoardTests {
             
             // then
             let authBoard = try #require(await budClientRef.authBoard)
-            await #expect(AuthBoardManager.get(authBoard) != nil)
+            await #expect(authBoard.isExist == true)
         }
         @Test func deleteProjectBoard() async throws {
             // given
@@ -52,12 +52,12 @@ struct ProfileBoardTests {
             await profileBoardRef.signOut()
             
             // then
-            await #expect(ProjectBoardManager.get(projectBoard) == nil)
+            await #expect(projectBoard.isExist == false)
         }
         @Test func deleteProjectsInProjectBoard() async throws {
             // given
             let projectBoard = try #require(await budClientRef.projectBoard)
-            let projectBoardRef = try #require(await ProjectBoardManager.get(projectBoard))
+            let projectBoardRef = try #require(await projectBoard.ref)
             let projects = await projectBoardRef.projects
             
             // when
@@ -72,12 +72,14 @@ struct ProfileBoardTests {
             // given
             try await #require(budClientRef.profileBoard != nil)
             
+            let profileBoard = try #require(await budClientRef.profileBoard)
+            
             // when
             await profileBoardRef.signOut()
             
             // then
             await #expect(budClientRef.profileBoard == nil)
-            await #expect(ProfileBoardManager.get(profileBoardRef.id) == nil)
+            await #expect(profileBoard.isExist == false)
         }
     }
 }
@@ -88,15 +90,15 @@ private func getProfileBoard(_ budClientRef: BudClient) async -> ProfileBoard {
     await budClientRef.setUp()
     
     let authBoard = await budClientRef.authBoard!
-    let authBoardRef = await AuthBoardManager.get(authBoard)!
+    let authBoardRef = await authBoard.ref!
     
     await authBoardRef.setUpForms()
-    let emailForm = await authBoardRef.emailForm!
-    let emailFormRef = await EmailFormManager.get(emailForm)!
+    let emailForm = await authBoardRef.signInForm!
+    let emailFormRef = await emailForm.ref!
     
     await emailFormRef.setUpSignUpForm()
     let signUpForm = await emailFormRef.signUpForm!
-    let signUpFormRef = await SignUpFormManager.get(signUpForm)!
+    let signUpFormRef = await signUpForm.ref!
     
     let testEmail = Email.random().value
     let testPassword = Password.random().value
@@ -115,6 +117,6 @@ private func getProfileBoard(_ budClientRef: BudClient) async -> ProfileBoard {
     try! await #require(budClientRef.profileBoard != nil)
     
     let profileBoard = await budClientRef.profileBoard!
-    let profileBoardRef = await ProfileBoardManager.get(profileBoard)!
+    let profileBoardRef = await profileBoard.ref!
     return profileBoardRef
 }

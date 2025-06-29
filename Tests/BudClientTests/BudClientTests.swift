@@ -56,7 +56,7 @@ struct BudClientTests {
             try await #require(budClientRef.issue == nil)
             
             let authBoard = try #require(await budClientRef.authBoard)
-            await #expect(AuthBoardManager.get(authBoard) != nil)
+            await #expect(authBoard.isExist == true)
         }
         @Test func whenAlreaySetUp() async throws {
             // given
