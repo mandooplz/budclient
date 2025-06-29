@@ -11,9 +11,9 @@ import CryptoKit
 
 // MARK: Object
 @MainActor
-package final class GoogleRegisterFormMock: Sendable {
+internal final class GoogleRegisterFormMock: Sendable {
     // MARK: core
-    package init(accountHub: AccountHubMock,
+    internal init(accountHub: AccountHubMock,
                  ticket: AccountHubMock.Ticket) {
         self.id = ID(value: UUID())
         self.accountHub = accountHub
@@ -26,17 +26,17 @@ package final class GoogleRegisterFormMock: Sendable {
     
     
     // MARK: state
-    package nonisolated let id: ID
+    internal nonisolated let id: ID
     private nonisolated let accountHub: AccountHubMock
     
-    package var idToken: String?
-    package var accessToken: String?
+    internal var idToken: String?
+    internal var accessToken: String?
     
-    package var issue: (any Issuable)?
+    internal var issue: (any Issuable)?
     
     
     // MARK: action
-    public func submit() {
+    internal func submit() {
         // capture
         guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return}
@@ -45,21 +45,18 @@ package final class GoogleRegisterFormMock: Sendable {
         // mutate
         let accountRef = AccountMock(idToken: idToken, accessToken: accessToken)
         accountHub.accounts.insert(accountRef.id)
-        // signIn과 signUp이 동시에 이루어진다.
-        // 기존 계정이 있다면 생성하지 X
-        // 기존 계정이 없다면 새로운 Account 객체를 생성한다. 그리고 이 Account 객체의
     }
     
     
     // MARK: value
-    package struct ID: Sendable, Hashable {
-        package let value: UUID
+    internal struct ID: Sendable, Hashable {
+        let value: UUID
     }
-    package enum Error: String, Swift.Error {
+    internal enum Error: String, Swift.Error {
         case idTokenIsNil, accessTokenIsNil
         case googleUserIdIsNil
     }
-    private struct GoogleUserID: Sendable, Hashable {
+    internal struct GoogleUserID: Sendable, Hashable {
         let idToken: String
         let accessToken: String
         
@@ -77,15 +74,15 @@ package final class GoogleRegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @MainActor
-package final class GoogleRegisterFormMockManager: Sendable {
+internal final class GoogleRegisterFormMockManager: Sendable {
     private static var container: [GoogleRegisterFormMock.ID: GoogleRegisterFormMock] = [:]
-    package static func register(_ object: GoogleRegisterFormMock) {
+    internal static func register(_ object: GoogleRegisterFormMock) {
         container[object.id] = object
     }
-    package static func unregister(_ id: GoogleRegisterFormMock.ID) {
+    internal static func unregister(_ id: GoogleRegisterFormMock.ID) {
         container[id] = nil
     }
-    package static func get(_ id: GoogleRegisterFormMock.ID) -> GoogleRegisterFormMock? {
+    internal static func get(_ id: GoogleRegisterFormMock.ID) -> GoogleRegisterFormMock? {
         container[id]
     }
 }

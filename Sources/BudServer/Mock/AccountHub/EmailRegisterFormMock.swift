@@ -10,9 +10,9 @@ import Tools
 
 // MARK: Object
 @MainActor
-package final class EmailRegisterFormMock: Sendable {
+internal final class EmailRegisterFormMock: Sendable {
     // MARK: core
-    package init(accountHub: AccountHubMock,
+    internal init(accountHub: AccountHubMock,
                 ticket: AccountHubMock.Ticket) {
         self.id = ID()
         self.accountHub = accountHub
@@ -26,18 +26,18 @@ package final class EmailRegisterFormMock: Sendable {
     
 
     // MARK: state
-    package nonisolated let id: ID
-    package nonisolated let ticket: AccountHubMock.Ticket
-    package nonisolated let accountHub: AccountHubMock
+    internal nonisolated let id: ID
+    internal nonisolated let ticket: AccountHubMock.Ticket
+    internal nonisolated let accountHub: AccountHubMock
     
-    package var email: String?
-    package var password: String?
+    internal var email: String?
+    internal var password: String?
     
-    package var issue: (any Issuable)?
+    internal var issue: (any Issuable)?
 
     
     // MARK: action
-    package func submit() {
+    internal func submit() {
         // capture
         guard let email else {
             self.issue = KnownIssue(Error.emailIsNil)
@@ -62,7 +62,7 @@ package final class EmailRegisterFormMock: Sendable {
         let account = AccountMock(email: email, password: password)
         accountHub.accounts.insert(account.id)
     }
-    package func remove() {
+    internal func remove() {
         // mutate
         accountHub.emailRegisterForms[ticket] = nil
         self.delete()
@@ -70,13 +70,13 @@ package final class EmailRegisterFormMock: Sendable {
 
     
     // MARK: value
-    package struct ID: Sendable, Hashable {
-        public let value: UUID
-        public init(value: UUID = UUID()) {
+    internal struct ID: Sendable, Hashable {
+        internal let value: UUID
+        internal init(value: UUID = UUID()) {
             self.value = value
         }
     }
-    package enum Error: String, Swift.Error {
+    internal enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case emailDuplicate
     }
@@ -84,15 +84,15 @@ package final class EmailRegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @MainActor
-package final class EmailRegisterFormMockManager: Sendable {
+internal final class EmailRegisterFormMockManager: Sendable {
     private static var container: [EmailRegisterFormMock.ID: EmailRegisterFormMock] = [:]
-    package static func register(_ object: EmailRegisterFormMock) {
+    internal static func register(_ object: EmailRegisterFormMock) {
         container[object.id] = object
     }
-    package static func unregister(_ id: EmailRegisterFormMock.ID) {
+    internal static func unregister(_ id: EmailRegisterFormMock.ID) {
         container[id] = nil
     }
-    package static func get(_ id: EmailRegisterFormMock.ID) -> EmailRegisterFormMock? {
+    internal static func get(_ id: EmailRegisterFormMock.ID) -> EmailRegisterFormMock? {
         container[id]
     }
 }

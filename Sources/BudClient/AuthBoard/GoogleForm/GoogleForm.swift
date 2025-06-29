@@ -51,6 +51,9 @@ public final class GoogleForm: Sendable {
         // compute
         let userId: String
         do {
+            let accountHubLink = budServerLink?.getAccountHub()
+            let ticket = AccountHubLink.Ticket()
+
             
         } catch {
             self.issue = UnknownIssue(error)

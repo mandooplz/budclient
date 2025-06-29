@@ -6,7 +6,7 @@
 //
 import Testing
 import Foundation
-import BudServer
+@testable import BudServer
 
 
 // MARK: Tests

@@ -10,25 +10,25 @@ import Tools
 
 // MARK: Object
 @MainActor
-package final class AccountHubMock: Sendable {
+internal final class AccountHubMock: Sendable {
     // MARK: core
-    package static let shared = AccountHubMock()
+    internal static let shared = AccountHubMock()
     internal init() { }
     
     
     // MARK: state
-    package var accounts: Set<AccountMock.ID> = []
-    package func isExist(email: String, password: String) -> Bool {
+    internal var accounts: Set<AccountMock.ID> = []
+    internal func isExist(email: String, password: String) -> Bool {
         accounts.lazy
             .compactMap { AccountMockManager.get($0) }
             .contains { $0.email == email && $0.password == password }
     }
-    package func isExist(idToken: String, accessToken: String) -> Bool {
+    internal func isExist(idToken: String, accessToken: String) -> Bool {
         accounts.lazy
             .compactMap { AccountMockManager.get($0) }
             .contains { $0.idToken == idToken && $0.accessToken == accessToken }
     }
-    package func getUserId(email: String, password: String) throws -> AccountMock.UserID {
+    internal func getUserId(email: String, password: String) throws -> AccountMock.UserID {
         let filtered = self.accounts.lazy
             .compactMap { AccountMockManager.get($0) }
             .filter { $0.email == email }
@@ -43,21 +43,21 @@ package final class AccountHubMock: Sendable {
         
         return userId
     }
-    package func getUserId(googleIdToken: String, googleAccessToken: String) -> AccountMock.UserID? {
+    internal func getUserId(googleIdToken: String, googleAccessToken: String) -> AccountMock.UserID? {
         accounts.lazy
             .compactMap { AccountMockManager.get($0) }
             .first { $0.idToken == googleIdToken && $0.accessToken == googleAccessToken }?.userId
     }
     
-    package var emailTickets: Set<Ticket> = []
-    package var emailRegisterForms: [Ticket:EmailRegisterFormMock.ID] = [:]
+    internal var emailTickets: Set<Ticket> = []
+    internal var emailRegisterForms: [Ticket:EmailRegisterFormMock.ID] = [:]
     
-    package var googleTickets: Set<Ticket> = []
-    package var googleRegisterForms: [Ticket: GoogleRegisterFormMock.ID] = [:]
+    internal var googleTickets: Set<Ticket> = []
+    internal var googleRegisterForms: [Ticket: GoogleRegisterFormMock.ID] = [:]
     
     
     // MARK: action
-    package func updateEmailForms() {
+    internal func updateEmailForms() {
         // mutate
         for ticket in emailTickets {
             let emailRegisterFormRef = EmailRegisterFormMock(accountHub: self,
@@ -66,7 +66,7 @@ package final class AccountHubMock: Sendable {
             emailTickets.remove(ticket)
         }
     }
-    package func updateGoogleForms() {
+    internal func updateGoogleForms() {
         // mutate
         for ticket in googleTickets {
             let googleRegisterFormRef = GoogleRegisterFormMock(accountHub: self,
@@ -78,14 +78,14 @@ package final class AccountHubMock: Sendable {
     
     
     // MARK: value
-    package struct Ticket: Sendable, Hashable {
-        public let value: UUID
+    internal struct Ticket: Sendable, Hashable {
+        internal let value: UUID
         
-        public init(value: UUID = UUID()) {
+        internal init(value: UUID = UUID()) {
             self.value = value
         }
     }
-    package enum Error: String, Swift.Error {
+    internal enum Error: String, Swift.Error {
         case userNotFound, wrongPassword
     }
 }

@@ -56,14 +56,12 @@ package struct AccountHubLink: Sendable {
     package func insertEmailTicket(_ ticket: Ticket) async throws {
         switch mode {
         case .test:
-            await MainActor.run {
-                let ticketForMock = AccountHubMock.Ticket(value: ticket.value)
-                AccountHubMock.shared.emailTickets.insert(ticketForMock)
+            let _ = await MainActor.run {
+                AccountHubMock.shared.emailTickets.insert(ticket.forMock)
             }
         case .real:
             await Server.run {
-                let realTicket = AccountHub.Ticket(value: ticket.value)
-                AccountHub.shared.emailTickets.insert(realTicket)
+                AccountHub.shared.emailTickets.insert(ticket.forReal)
             }
         }
     }
@@ -88,6 +86,22 @@ package struct AccountHubLink: Sendable {
         }
     }
     
+    package func insertGoogleTicket(_ ticket: Ticket) async throws {
+        switch mode {
+        case .test:
+            let _ = await MainActor.run {
+                AccountHubMock.shared.googleTickets.insert(ticket.forMock)
+            }
+        case .real:
+            await Server.run {
+                AccountHub.shared.googleTickets.insert(ticket.forReal)
+            }
+        }
+    }
+    package func getGoogleRegisterForm(_ ticket: Ticket) async throws {
+        
+    }
+    
     
     // MARK: action
     package func updateEmailForms() async throws {
@@ -96,6 +110,14 @@ package struct AccountHubLink: Sendable {
             await AccountHubMock.shared.updateEmailForms()
         case .real:
             await AccountHub.shared.updateEmailForms()
+        }
+    }
+    package func updateGoogleForms() async throws {
+        switch mode {
+        case .test:
+            await AccountHubMock.shared.updateGoogleForms()
+        case .real:
+            await AccountHub.shared.updateGoogleForms()
         }
     }
     

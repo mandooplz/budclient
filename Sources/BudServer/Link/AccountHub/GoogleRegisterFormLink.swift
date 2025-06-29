@@ -4,4 +4,59 @@
 //
 //  Created by 김민우 on 6/29/25.
 //
+import Foundation
+import Tools
+import FirebaseAuth
 
+
+// MARK: Link
+package struct GoogleRegisterFormLink: Sendable {
+    // MARK: core
+    private nonisolated let mode: Mode
+    internal init(mode: Mode) {
+        self.mode = mode
+    }
+    
+    
+    // MARK: state
+    package func setIdToken(_ value: String) async {
+        switch mode {
+        case .test(let mock):
+            await MainActor.run {
+                let googleRegisterFormRef = GoogleRegisterFormMockManager.get(mock)!
+                googleRegisterFormRef.idToken = value
+            }
+        case .real(let object):
+            await Server.run {
+                let googleRegisterFormRef = GoogleRegisterFormManager.get(object)!
+                googleRegisterFormRef.idToken = value
+            }
+        }
+    }
+    package func setAccessToken(_ value: String) async {
+        switch mode {
+        case .test(let mock):
+            await MainActor.run {
+                let googleRegisterFormRef = GoogleRegisterFormMockManager.get(mock)!
+                googleRegisterFormRef.accessToken = value
+            }
+        case .real(let object):
+            await Server.run {
+                let googleRegisterFormRef = GoogleRegisterFormManager.get(object)!
+                googleRegisterFormRef.accessToken = value
+            }
+        }
+    }
+    
+    
+    // MARK: action
+    package func submit() async throws { }
+    package func remove() async throws { }
+    
+    
+    // MARK: value
+    internal enum Mode: Sendable {
+        case test(mock: GoogleRegisterFormMock.ID)
+        case real(object: GoogleRegisterForm.ID)
+    }
+}

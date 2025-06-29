@@ -9,9 +9,9 @@ import Foundation
 
 // MARK: Link
 @MainActor
-package final class AccountMock: Sendable {
+internal final class AccountMock: Sendable {
     // MARK: core
-    package init(email: String, password: String) {
+    internal init(email: String, password: String) {
         self.id = ID(value: UUID())
         self.userId = UUID().uuidString
         
@@ -20,7 +20,7 @@ package final class AccountMock: Sendable {
         
         AccountMockManager.register(self)
     }
-    package init(idToken: String, accessToken: String) {
+    internal init(idToken: String, accessToken: String) {
         self.id = ID(value: .init())
         self.userId = UUID().uuidString
         
@@ -35,36 +35,36 @@ package final class AccountMock: Sendable {
     
     
     // MARK: state
-    package nonisolated let id: ID
-    package nonisolated let userId: String
+    internal nonisolated let id: ID
+    internal nonisolated let userId: String
     
-    package var email: String?
-    package var password: String?
+    internal var email: String?
+    internal var password: String?
     
-    package var idToken: String?
-    package var accessToken: String?
+    internal var idToken: String?
+    internal var accessToken: String?
     
     
     // MARK: value
-    package struct ID: Sendable, Hashable {
-        public let value: UUID
+    internal struct ID: Sendable, Hashable {
+        let value: UUID
     }
-    package typealias UserID = String
+    internal typealias UserID = String
 }
 
 
 // MARK: Object Manager
 @MainActor
-package final class AccountMockManager: Sendable {
+internal final class AccountMockManager: Sendable {
     // MARK: state
     private static var container: [AccountMock.ID: AccountMock] = [:]
-    package static func register(_ object: AccountMock) {
+    internal static func register(_ object: AccountMock) {
         container[object.id] = object
     }
-    package static func unregister(_ id: AccountMock.ID) {
+    internal static func unregister(_ id: AccountMock.ID) {
         container[id] = nil
     }
-    package static func get(_ id: AccountMock.ID) -> AccountMock? {
+    internal static func get(_ id: AccountMock.ID) -> AccountMock? {
         container[id]
     }
 }

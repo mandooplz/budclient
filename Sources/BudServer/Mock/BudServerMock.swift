@@ -10,22 +10,22 @@ import Tools
 
 // MARK: System
 @MainActor
-package final class BudServerMock: Sendable {
+internal final class BudServerMock: Sendable {
     // MARK: core
-    package static let shared = BudServerMock()
+    internal static let shared = BudServerMock()
     internal init() {
         self.id = ID(value: .init())
     }
     
     
     // MARK: state
-    package nonisolated let id: ID
+    internal nonisolated let id: ID
     
-    package let accountHub = AccountHubMock.shared
+    internal let accountHub = AccountHubMock.shared
     
     
     // MARK: value
-    package struct ID: Sendable, Hashable {
-        package let value: UUID
+    internal struct ID: Sendable, Hashable {
+        let value: UUID
     }
 }
