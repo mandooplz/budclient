@@ -29,7 +29,7 @@ struct GoogleFormTests {
             try await #require(googleFormRef.id.isExist == true)
             
             // when
-            await googleFormRef.signIn {
+            await googleFormRef.signUpAndSignIn {
                 await googleFormRef.delete()
             } mutateHook: {
                 
@@ -49,7 +49,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signIn {
+            await googleFormRef.signUpAndSignIn {
                 
             } mutateHook: {
                 await googleFormRef.delete()

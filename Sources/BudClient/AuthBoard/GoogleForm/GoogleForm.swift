@@ -40,9 +40,9 @@ public final class GoogleForm: Sendable {
     
     // MARK: action
     public func signUpAndSignIn() async {
-        await signIn(captureHook: nil, mutateHook: nil)
+        await signUpAndSignIn(captureHook: nil, mutateHook: nil)
     }
-    internal func signIn(captureHook: Hook?, mutateHook: Hook?) async {
+    internal func signUpAndSignIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
         guard self.id.isExist else { return }
