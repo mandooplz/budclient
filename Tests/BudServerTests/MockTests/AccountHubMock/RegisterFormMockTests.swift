@@ -10,12 +10,12 @@ import Foundation
 
 
 // MARK: Tests
-@Suite("EmailFormMockTests")
-struct RegisterFormMockTests {
+@Suite("EmailRegisterFormMock")
+struct EmailRegisterFormMockTests {
     struct Submit {
-        let registerFormRef: EmailRegisterFormMock
+        let emailRegisterFormRef: EmailRegisterFormMock
         init() async throws {
-            self.registerFormRef = await getRegisterFormMock()
+            self.emailRegisterFormRef = await getRegisterFormMock()
         }
         
         @Test func appendAccountInAccountHub() async throws {
@@ -23,12 +23,12 @@ struct RegisterFormMockTests {
             let testEmail = "test@test.com"
             let testPassword = "123456"
             await MainActor.run {
-                registerFormRef.email = testEmail
-                registerFormRef.password = testPassword
+                emailRegisterFormRef.email = testEmail
+                emailRegisterFormRef.password = testPassword
             }
             
             // when
-            await registerFormRef.submit()
+            await emailRegisterFormRef.submit()
             
             // then
             await #expect(AccountHubMock.shared.isExist(email: testEmail,
@@ -38,15 +38,15 @@ struct RegisterFormMockTests {
         @Test func whenEmailIsNil() async throws {
             // given
             await MainActor.run {
-                registerFormRef.email = nil
-                registerFormRef.password = nil
+                emailRegisterFormRef.email = nil
+                emailRegisterFormRef.password = nil
             }
             
             // when
-            await registerFormRef.submit()
+            await emailRegisterFormRef.submit()
             
             // then
-            let issue = try #require(await registerFormRef.issue)
+            let issue = try #require(await emailRegisterFormRef.issue)
             #expect(issue.isKnown == true)
             #expect(issue.reason == "emailIsNil")
         }
@@ -54,15 +54,15 @@ struct RegisterFormMockTests {
             // given
             let testEmail = "test@test.com"
             await MainActor.run {
-                registerFormRef.email = testEmail
-                registerFormRef.password = nil
+                emailRegisterFormRef.email = testEmail
+                emailRegisterFormRef.password = nil
             }
             
             // when
-            await registerFormRef.submit()
+            await emailRegisterFormRef.submit()
             
             // then
-            let issue = try #require(await registerFormRef.issue)
+            let issue = try #require(await emailRegisterFormRef.issue)
             #expect(issue.isKnown == true)
             #expect(issue.reason == "passwordIsNil")
         }
@@ -73,15 +73,15 @@ struct RegisterFormMockTests {
         init() async throws {
             self.registerFormRef = await getRegisterFormMock()
         }
-        @Test func deleteWhenSuccess() async throws {
+        @Test func deleteEmailRegisterForm() async throws {
             // given
-            try await #require(EmailRegisterFormMockManager.get(registerFormRef.id) != nil)
+            try await #require(registerFormRef.id.isExist == true)
             
             // when
             await registerFormRef.remove()
             
             // then
-            await #expect(EmailRegisterFormMockManager.get(registerFormRef.id) == nil)
+            await #expect(registerFormRef.id.isExist == false)
         }
         @Test func removeInAccountHub() async throws {
             // given
@@ -107,7 +107,8 @@ func getRegisterFormMock() async -> EmailRegisterFormMock {
     return await MainActor.run {
         accountHubRef.emailTickets.insert(newTicket)
         accountHubRef.updateEmailForms()
-        let registerForm = accountHubRef.emailRegisterForms[newTicket]!
-        return EmailRegisterFormMockManager.get(registerForm)!
+        
+        let emailRegisterForm = accountHubRef.emailRegisterForms[newTicket]!
+        return emailRegisterForm.ref!
     }
 }

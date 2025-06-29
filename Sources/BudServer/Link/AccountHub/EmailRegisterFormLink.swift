@@ -22,14 +22,11 @@ package struct EmailRegisterFormLink: Sendable {
         switch mode {
         case .test(let mock):
             await MainActor.run {
-                let emailRegisterFormRef = EmailRegisterFormMockManager.get(mock)!
-                emailRegisterFormRef.email = value
+                mock.ref?.email = value
             }
         case .real(let object):
-            
             await Server.run {
-                let emailRegisterFormRef = EmailRegisterFormManager.get(object)!
-                emailRegisterFormRef.email = value
+                object.ref?.email = value
             }
         }
     }
@@ -37,57 +34,31 @@ package struct EmailRegisterFormLink: Sendable {
         switch mode {
         case .test(let mock):
             await MainActor.run {
-                let registerFormRef = EmailRegisterFormMockManager.get(mock)!
-                registerFormRef.password = value
+                mock.ref?.password = value
             }
         case .real(let object):
-            let registerFormRef = await EmailRegisterFormManager.get(object)!
-            
             await Server.run {
-                registerFormRef.password = value
+                object.ref?.password = value
             }
         }
     }
-        
-    package func getIssue() async -> (any Issuable)? {
-            switch mode {
-            case .test(let mock):
-                await MainActor.run {
-                    let registerFormRef = EmailRegisterFormMockManager.get(mock)!
-                    return registerFormRef.issue
-                }
-            case .real(let object):
-                await Server.run {
-                    let registerFormRef = EmailRegisterFormManager.get(object)!
-                    return registerFormRef.issue
-                }
-            }
-        }
-        
+    
     
     // MARK: action
     package func submit() async {
         switch mode {
         case .test(let mock):
-            await MainActor.run {
-                let registerFormRef = EmailRegisterFormMockManager.get(mock)!
-                registerFormRef.submit()
-            }
+            await mock.ref?.submit()
         case .real(let object):
-            let registerFormRef = await EmailRegisterFormManager.get(object)!
-            await registerFormRef.submit()
+            await object.ref?.submit()
         }
     }
     package func remove() async {
         switch mode {
         case .test(let mock):
-            await MainActor.run {
-                let registerFormRef = EmailRegisterFormMockManager.get(mock)!
-                registerFormRef.remove()
-            }
+            await mock.ref?.remove()
         case .real(let object):
-            let registerFormRef = await EmailRegisterFormManager.get(object)!
-            await registerFormRef.remove()
+            await object.ref?.remove()
         }
     }
     

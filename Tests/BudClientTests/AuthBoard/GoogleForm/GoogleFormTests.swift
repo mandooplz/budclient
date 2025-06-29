@@ -201,8 +201,8 @@ struct GoogleFormTests {
             await #expect(budClientRef.isUserSignedIn == true)
         }
         
-        @Test func setCredentialInBudCache() async throws {
-            // 핵심은 userId을 저장한다는 사실 아닐까? 
+        @Test func saveUserIdInBudCache() async throws {
+            // 핵심은 userId을 저장한다는 사실 아닐까?
         }
     }
 }

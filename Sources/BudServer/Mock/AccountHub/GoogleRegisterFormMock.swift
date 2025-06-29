@@ -56,8 +56,16 @@ internal final class GoogleRegisterFormMock: Sendable {
     
     
     // MARK: value
+    @MainActor
     internal struct ID: Sendable, Hashable {
         let value: UUID
+        
+        var isExist: Bool {
+            GoogleRegisterFormMockManager.container[self] != nil
+        }
+        var ref: GoogleRegisterFormMock? {
+            GoogleRegisterFormMockManager.container[self]
+        }
     }
     internal enum Error: String, Swift.Error {
         case idTokenIsNil, accessTokenIsNil
@@ -81,16 +89,13 @@ internal final class GoogleRegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @MainActor
-internal final class GoogleRegisterFormMockManager: Sendable {
-    private static var container: [GoogleRegisterFormMock.ID: GoogleRegisterFormMock] = [:]
-    internal static func register(_ object: GoogleRegisterFormMock) {
+fileprivate final class GoogleRegisterFormMockManager: Sendable {
+    fileprivate static var container: [GoogleRegisterFormMock.ID: GoogleRegisterFormMock] = [:]
+    fileprivate static func register(_ object: GoogleRegisterFormMock) {
         container[object.id] = object
     }
-    internal static func unregister(_ id: GoogleRegisterFormMock.ID) {
+    fileprivate static func unregister(_ id: GoogleRegisterFormMock.ID) {
         container[id] = nil
-    }
-    internal static func get(_ id: GoogleRegisterFormMock.ID) -> GoogleRegisterFormMock? {
-        container[id]
     }
 }
 

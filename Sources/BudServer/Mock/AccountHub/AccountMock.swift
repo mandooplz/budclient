@@ -46,8 +46,16 @@ internal final class AccountMock: Sendable {
     
     
     // MARK: value
+    @MainActor
     internal struct ID: Sendable, Hashable {
         let value: UUID
+        
+        var isExist: Bool {
+            AccountMockManager.container[self] != nil
+        }
+        var ref: AccountMock? {
+            AccountMockManager.container[self]
+        }
     }
     internal typealias UserID = String
 }
@@ -55,16 +63,13 @@ internal final class AccountMock: Sendable {
 
 // MARK: Object Manager
 @MainActor
-internal final class AccountMockManager: Sendable {
+fileprivate final class AccountMockManager: Sendable {
     // MARK: state
-    private static var container: [AccountMock.ID: AccountMock] = [:]
-    internal static func register(_ object: AccountMock) {
+    fileprivate static var container: [AccountMock.ID: AccountMock] = [:]
+    fileprivate static func register(_ object: AccountMock) {
         container[object.id] = object
     }
-    internal static func unregister(_ id: AccountMock.ID) {
+    fileprivate static func unregister(_ id: AccountMock.ID) {
         container[id] = nil
-    }
-    internal static func get(_ id: AccountMock.ID) -> AccountMock? {
-        container[id]
     }
 }

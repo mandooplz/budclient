@@ -20,17 +20,17 @@ internal final class AccountHubMock: Sendable {
     internal var accounts: Set<AccountMock.ID> = []
     internal func isExist(email: String, password: String) -> Bool {
         accounts.lazy
-            .compactMap { AccountMockManager.get($0) }
+            .compactMap { $0.ref }
             .contains { $0.email == email && $0.password == password }
     }
     internal func isExist(idToken: String, accessToken: String) -> Bool {
         accounts.lazy
-            .compactMap { AccountMockManager.get($0) }
+            .compactMap { $0.ref }
             .contains { $0.idToken == idToken && $0.accessToken == accessToken }
     }
     internal func getUserId(email: String, password: String) throws -> AccountMock.UserID {
         let filtered = self.accounts.lazy
-            .compactMap { AccountMockManager.get($0) }
+            .compactMap { $0.ref }
             .filter { $0.email == email }
         
         if filtered.isEmpty { throw Error.userNotFound }
@@ -45,7 +45,7 @@ internal final class AccountHubMock: Sendable {
     }
     internal func getUserId(googleIdToken: String, googleAccessToken: String) -> AccountMock.UserID? {
         accounts.lazy
-            .compactMap { AccountMockManager.get($0) }
+            .compactMap { $0.ref }
             .first { $0.idToken == googleIdToken && $0.accessToken == googleAccessToken }?.userId
     }
     

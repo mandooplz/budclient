@@ -60,8 +60,16 @@ internal final class GoogleRegisterForm: Sendable {
     
     
     // MARK: value
+    @Server
     internal struct ID: Sendable, Hashable {
-        package let value: UUID
+        internal let value: UUID
+        
+        internal var isExist: Bool {
+            GoogleRegisterFormManager.container[self] != nil
+        }
+        internal var ref: GoogleRegisterForm? {
+            GoogleRegisterFormManager.container[self]
+        }
     }
     internal enum Error: String, Swift.Error {
         case idTokenIsNil, accessTokenIsNil
@@ -72,16 +80,13 @@ internal final class GoogleRegisterForm: Sendable {
 
 // MARK: Object Manager
 @Server
-internal final class GoogleRegisterFormManager: Sendable {
+fileprivate final class GoogleRegisterFormManager: Sendable {
     // MARK: state
-    private static var container: [GoogleRegisterForm.ID: GoogleRegisterForm] = [:]
-    internal static func register(_ object: GoogleRegisterForm) {
+    fileprivate static var container: [GoogleRegisterForm.ID: GoogleRegisterForm] = [:]
+    fileprivate static func register(_ object: GoogleRegisterForm) {
         container[object.id] = object
     }
-    internal static func unregister(_ id: GoogleRegisterForm.ID) {
+    fileprivate static func unregister(_ id: GoogleRegisterForm.ID) {
         container[id] = nil
-    }
-    internal static func get(_ id: GoogleRegisterForm.ID) -> GoogleRegisterForm? {
-        container[id]
     }
 }

@@ -23,13 +23,11 @@ package struct GoogleRegisterFormLink: Sendable {
         switch mode {
         case .test(let mock):
             await MainActor.run {
-                let googleRegisterFormRef = GoogleRegisterFormMockManager.get(mock)!
-                googleRegisterFormRef.idToken = value
+                mock.ref?.idToken = value
             }
         case .real(let object):
             await Server.run {
-                let googleRegisterFormRef = GoogleRegisterFormManager.get(object)!
-                googleRegisterFormRef.idToken = value
+                object.ref?.idToken = value
             }
         }
     }
@@ -37,13 +35,11 @@ package struct GoogleRegisterFormLink: Sendable {
         switch mode {
         case .test(let mock):
             await MainActor.run {
-                let googleRegisterFormRef = GoogleRegisterFormMockManager.get(mock)!
-                googleRegisterFormRef.accessToken = value
+                mock.ref?.accessToken = value
             }
         case .real(let object):
             await Server.run {
-                let googleRegisterFormRef = GoogleRegisterFormManager.get(object)!
-                googleRegisterFormRef.accessToken = value
+                object.ref?.accessToken = value
             }
         }
     }
@@ -53,21 +49,17 @@ package struct GoogleRegisterFormLink: Sendable {
     package func submit() async {
         switch mode {
         case .test(let mock):
-            let googleRegisterFormRef = await GoogleRegisterFormMockManager.get(mock)!
-            await googleRegisterFormRef.submit()
+            await mock.ref?.submit()
         case .real(let object):
-            let googleRegisterFormRef = await GoogleRegisterFormManager.get(object)!
-            await googleRegisterFormRef.submit()
+            await object.ref?.submit()
         }
     }
     package func remove() async {
         switch mode {
         case .test(let mock):
-            let googleRegisterFormRef = await GoogleRegisterFormMockManager.get(mock)!
-            await googleRegisterFormRef.remove()
+            await mock.ref?.remove()
         case .real(let object):
-            let googleRegisterFormRef = await GoogleRegisterFormManager.get(object)!
-            await googleRegisterFormRef.remove()
+            await object.ref?.remove()
         }
     }
     

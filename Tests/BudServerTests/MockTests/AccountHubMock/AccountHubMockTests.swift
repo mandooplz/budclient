@@ -154,7 +154,7 @@ struct AccountHubMockTests {
             
             // then
             let emailRegisterForm = try #require(await accountHubRef.emailRegisterForms[ticket])
-            await #expect(EmailRegisterFormMockManager.get(emailRegisterForm) != nil)
+            await #expect(emailRegisterForm.isExist == true)
         }
     }
     
@@ -202,7 +202,7 @@ struct AccountHubMockTests {
             
             // then
             let googleRegisterForm = try #require(await accountHubRef.googleRegisterForms[ticket])
-            await #expect(GoogleRegisterFormMockManager.get(googleRegisterForm) != nil)
+            await #expect(googleRegisterForm.isExist == true)
         }
     }
 }

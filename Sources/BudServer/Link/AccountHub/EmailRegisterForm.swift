@@ -11,12 +11,12 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-internal final class EmailRegisterForm {
+internal final class EmailRegisterForm: Sendable {
     // MARK: core
     internal init(accountHubRef: AccountHub,
                   ticket: AccountHub.Ticket) {
         self.accountHubRef = accountHubRef
-        self.id = .init()
+        self.id = ID(value: .init())
         self.ticket = ticket
         
         EmailRegisterFormManager.register(self)
@@ -66,10 +66,15 @@ internal final class EmailRegisterForm {
 
     
     // MARK: value
+    @Server
     internal struct ID: Sendable, Hashable {
         internal let value: UUID
-        internal init(value: UUID = UUID()) {
-            self.value = value
+        
+        internal var isExist: Bool {
+            EmailRegisterFormManager.container[self] != nil
+        }
+        internal var ref: EmailRegisterForm? {
+            EmailRegisterFormManager.container[self]
         }
     }
     internal enum Error: String, Swift.Error {
@@ -82,17 +87,12 @@ internal final class EmailRegisterForm {
 
 // MARK: Object Manager
 @Server
-internal final class EmailRegisterFormManager {
-    private static var container: [EmailRegisterForm.ID: EmailRegisterForm] = [:]
-    internal static func register(_ object: EmailRegisterForm) {
+fileprivate final class EmailRegisterFormManager: Sendable {
+    fileprivate static var container: [EmailRegisterForm.ID: EmailRegisterForm] = [:]
+    fileprivate static func register(_ object: EmailRegisterForm) {
         container[object.id] = object
     }
-    
-    internal static func unregister(_ id: EmailRegisterForm.ID) {
+    fileprivate static func unregister(_ id: EmailRegisterForm.ID) {
         container[id] = nil
-    }
-    
-    internal static func get(_ id: EmailRegisterForm.ID) -> EmailRegisterForm? {
-        container[id]
     }
 }

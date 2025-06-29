@@ -13,8 +13,8 @@ import Tools
 internal final class EmailRegisterFormMock: Sendable {
     // MARK: core
     internal init(accountHub: AccountHubMock,
-                ticket: AccountHubMock.Ticket) {
-        self.id = ID()
+                  ticket: AccountHubMock.Ticket) {
+        self.id = ID(value: .init())
         self.accountHub = accountHub
         self.ticket = ticket
 
@@ -51,7 +51,7 @@ internal final class EmailRegisterFormMock: Sendable {
         
         // compute
         let isDuplicate = accounts.lazy
-            .compactMap { AccountMockManager.get($0) }
+            .compactMap { $0.ref }
             .contains { $0.email == email }
         guard isDuplicate == false else {
             self.issue = KnownIssue(Error.emailDuplicate)
@@ -70,10 +70,15 @@ internal final class EmailRegisterFormMock: Sendable {
 
     
     // MARK: value
+    @MainActor
     internal struct ID: Sendable, Hashable {
         internal let value: UUID
-        internal init(value: UUID = UUID()) {
-            self.value = value
+        
+        internal var isExist: Bool {
+            EmailRegisterFormMockManager.container[self] != nil
+        }
+        internal var ref: EmailRegisterFormMock? {
+            EmailRegisterFormMockManager.container[self]
         }
     }
     internal enum Error: String, Swift.Error {
@@ -84,15 +89,12 @@ internal final class EmailRegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @MainActor
-internal final class EmailRegisterFormMockManager: Sendable {
-    private static var container: [EmailRegisterFormMock.ID: EmailRegisterFormMock] = [:]
-    internal static func register(_ object: EmailRegisterFormMock) {
+fileprivate final class EmailRegisterFormMockManager: Sendable {
+    fileprivate static var container: [EmailRegisterFormMock.ID: EmailRegisterFormMock] = [:]
+    fileprivate static func register(_ object: EmailRegisterFormMock) {
         container[object.id] = object
     }
-    internal static func unregister(_ id: EmailRegisterFormMock.ID) {
+    fileprivate static func unregister(_ id: EmailRegisterFormMock.ID) {
         container[id] = nil
-    }
-    internal static func get(_ id: EmailRegisterFormMock.ID) -> EmailRegisterFormMock? {
-        container[id]
     }
 }

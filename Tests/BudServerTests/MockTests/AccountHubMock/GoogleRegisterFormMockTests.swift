@@ -86,7 +86,7 @@ struct GoogleRegisterFormMockTests {
             
             let accountRef = await MainActor.run {
                 accountHubRef.accounts.lazy
-                    .compactMap { AccountMockManager.get($0) }
+                    .compactMap { $0.ref }
                     .first { $0.idToken == idToken && $0.accessToken == accessToken }
             }
             #expect(accountRef != nil)
@@ -113,5 +113,5 @@ private func getGoogleRegisterForm(_ accountHubRef: AccountHubMock) async -> Goo
     }
     
     let googleRegisterForm = await accountHubRef.googleRegisterForms[ticket]!
-    return await GoogleRegisterFormMockManager.get(googleRegisterForm)!
+    return await googleRegisterForm.ref!
 }
