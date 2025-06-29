@@ -41,9 +41,8 @@ public final class AuthBoard {
         await setUpForms(beforeMutate: nil)
     }
     internal func setUpForms(beforeMutate: Hook?) async {
-        await beforeMutate?()
-        
         // mutate
+        await beforeMutate?()
         guard id.isExist else { return }
         guard signInForm == nil && googleForm == nil else { return }
         

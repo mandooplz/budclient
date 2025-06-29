@@ -14,29 +14,45 @@ import FirebaseFirestore
 // MARK: Link
 public struct BudServerLink: Sendable {
     // MARK: core
-    private let mode: SystemMode
-    package init(mode: SystemMode = .real,
-                plistPath: String = "") throws(Error) {
+    private let mode: Mode
+    package init(mode: Mode) throws(Error) {
         self.mode = mode
         
-        if mode == .real {
+        if case .real(let plistPath) = mode {
             if FirebaseApp.app() != nil { return }
             
             guard let options = FirebaseOptions(contentsOfFile: plistPath) else {
-                throw .plistPathIsWrong
+                throw Error.plistPathIsWrong
             }
             FirebaseApp.configure(options: options)
         }
     }
+    
     
     // MARK: state
     public func getGoogleClientId() -> String? {
         FirebaseApp.app()?.options.clientID
     }
     package func getAccountHub() -> AccountHubLink {
-        AccountHubLink(mode: self.mode)
+        AccountHubLink(mode: mode.toSystemMode)
     }
     package enum Error: String, Swift.Error {
         case plistPathIsWrong
+    }
+    
+    
+    // MARK: value
+    package enum Mode: Sendable {
+        case test
+        case real(plistPath: String)
+        
+        var toSystemMode: SystemMode {
+            switch self {
+            case .test:
+                return .test
+            case .real:
+                return .real
+            }
+        }
     }
 }

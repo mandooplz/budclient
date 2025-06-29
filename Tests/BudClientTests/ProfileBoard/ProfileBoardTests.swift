@@ -16,9 +16,9 @@ struct ProfileBoardTests {
     struct SignOut {
         let budClientRef: BudClient
         let profileBoardRef: ProfileBoard
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.profileBoardRef = await getProfileBoard(budClientRef)
+            self.profileBoardRef = try await getProfileBoard(budClientRef)
         }
         
         @Test func setIsUserSignedInAtBudClient() async throws {
@@ -86,8 +86,9 @@ struct ProfileBoardTests {
 
 
 // MARK: Helphers
-private func getProfileBoard(_ budClientRef: BudClient) async -> ProfileBoard {
+private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileBoard {
     await budClientRef.setUp()
+    try await #require(budClientRef.issue == nil)
     
     let authBoard = await budClientRef.authBoard!
     let authBoardRef = await authBoard.ref!

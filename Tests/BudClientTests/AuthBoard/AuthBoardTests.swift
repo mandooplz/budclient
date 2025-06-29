@@ -105,6 +105,7 @@ func getAuthBoard(_ budClientRef: BudClient) async -> AuthBoard {
     try! await #require(budClientRef.authBoard == nil)
     
     await budClientRef.setUp()
+    try! await #require(budClientRef.issue == nil)
     return await budClientRef.authBoard!.ref!
 }
 private func signUpWithEmailForm(_ authBoardRef: AuthBoard,
