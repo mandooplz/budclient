@@ -9,7 +9,7 @@ import Tools
 
 
 // MARK: Object
-@MainActor
+@BudServer
 internal final class EmailRegisterFormMock: Sendable {
     // MARK: core
     internal init(accountHub: AccountHubMock,
@@ -70,7 +70,7 @@ internal final class EmailRegisterFormMock: Sendable {
 
     
     // MARK: value
-    @MainActor
+    @BudServer
     internal struct ID: Sendable, Hashable {
         internal let value: UUID
         
@@ -88,7 +88,7 @@ internal final class EmailRegisterFormMock: Sendable {
 }
 
 // MARK: Object Manager
-@MainActor
+@BudServer
 fileprivate final class EmailRegisterFormMockManager: Sendable {
     fileprivate static var container: [EmailRegisterFormMock.ID: EmailRegisterFormMock] = [:]
     fileprivate static func register(_ object: EmailRegisterFormMock) {

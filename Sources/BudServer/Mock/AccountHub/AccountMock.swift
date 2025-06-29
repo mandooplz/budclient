@@ -5,10 +5,11 @@
 //  Created by 김민우 on 6/23/25.
 //
 import Foundation
+import Tools
 
 
 // MARK: Link
-@MainActor
+@BudServer
 internal final class AccountMock: Sendable {
     // MARK: core
     internal init(email: String, password: String) {
@@ -46,7 +47,7 @@ internal final class AccountMock: Sendable {
     
     
     // MARK: value
-    @MainActor
+    @BudServer
     internal struct ID: Sendable, Hashable {
         let value: UUID
         
@@ -62,7 +63,7 @@ internal final class AccountMock: Sendable {
 
 
 // MARK: Object Manager
-@MainActor
+@BudServer
 fileprivate final class AccountMockManager: Sendable {
     // MARK: state
     fileprivate static var container: [AccountMock.ID: AccountMock] = [:]

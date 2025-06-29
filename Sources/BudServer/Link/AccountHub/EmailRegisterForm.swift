@@ -10,7 +10,7 @@ import FirebaseAuth
 
 
 // MARK: Object
-@Server
+@BudServer
 internal final class EmailRegisterForm: Sendable {
     // MARK: core
     internal init(accountHubRef: AccountHub,
@@ -66,7 +66,7 @@ internal final class EmailRegisterForm: Sendable {
 
     
     // MARK: value
-    @Server
+    @BudServer
     internal struct ID: Sendable, Hashable {
         internal let value: UUID
         
@@ -86,7 +86,7 @@ internal final class EmailRegisterForm: Sendable {
 
 
 // MARK: Object Manager
-@Server
+@BudServer
 fileprivate final class EmailRegisterFormManager: Sendable {
     fileprivate static var container: [EmailRegisterForm.ID: EmailRegisterForm] = [:]
     fileprivate static func register(_ object: EmailRegisterForm) {

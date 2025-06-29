@@ -9,7 +9,7 @@ import Tools
 
 
 // MARK: Object
-@MainActor
+@BudServer
 internal final class AccountHubMock: Sendable {
     // MARK: core
     internal static let shared = AccountHubMock()

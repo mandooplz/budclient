@@ -36,12 +36,15 @@ public struct BudServerLink: Sendable {
     package func getAccountHub() -> AccountHubLink {
         AccountHubLink(mode: mode.toSystemMode)
     }
-    package enum Error: String, Swift.Error {
-        case plistPathIsWrong
+    package func getProjectHub() -> ProjectHubLink {
+        ProjectHubLink(mode: mode.toSystemMode)
     }
     
     
     // MARK: value
+    package enum Error: String, Swift.Error {
+        case plistPathIsWrong
+    }
     package enum Mode: Sendable {
         case test
         case real(plistPath: String)
