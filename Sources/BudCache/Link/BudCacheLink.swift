@@ -9,86 +9,40 @@ import Tools
 import FirebaseAuth
 import BudServer
 
-// BudClient(budCacheMockRef:)를 통해 BudCacheMock을 주입할 수 있다.
-// 이를 통해 BudCacheLink의 이니셜라이저로 Mock 인스턴스를 주입할 수 있다.
+
 // MARK: Link
 package struct BudCacheLink: Sendable {
     // MARK: core
-    private let mode: SystemMode
-    private let budCacheMockRef: BudCacheMock
-    package init(mode: SystemMode, budCacheMockRef: BudCacheMock) {
+    private let mode: Mode
+    package init(mode: Mode) {
         self.mode = mode
-        self.budCacheMockRef = budCacheMockRef
     }
     
     
     // MARK: state
     package func getUserId() async -> String? {
         switch mode {
-        case .test:
-            return await budCacheMockRef.userId
+        case .test(let mockRef):
+            return await mockRef.userId
         case .real:
             return Auth.auth().currentUser?.uid
         }
     }
-    package func setEmailCredential(_ credential: EmailCredential) async throws {
+    package func setUserId(_ value: String) async {
         switch mode {
-        case .test:
+        case .test(let mockRef):
             await MainActor.run {
-                budCacheMockRef.emailCredential = credential.forMock()
+                mockRef.userId = value
             }
         case .real:
-            if Auth.auth().currentUser != nil { return }
-            
-            let _ = try await Auth.auth().signIn(withEmail: credential.email,
-                                                 password: credential.password)
+            return
         }
-    }
-    package func isEmailCredentialSet() async -> Bool {
-        switch mode {
-        case .test:
-            return await budCacheMockRef.emailCredential != nil
-        case .real:
-            return Auth.auth().currentUser != nil
-        }
-    }
-    
-    
-    // MARK: action
-    package func signIn() async throws {
-        switch mode {
-        case .test:
-            await budCacheMockRef.signIn()
-        case .real:
-            if Auth.auth().currentUser != nil {
-                return
-            } else {
-                throw Error.emailCredentialNotSet
-            }
-            
-        }
-    }
-    package func signOut() async throws {
-        fatalError()
     }
     
     
     // MARK: value
-    package struct EmailCredential: Sendable {
-        package let email: String
-        package let password: String
-        
-        package init(email: String, password: String) {
-            self.email = email
-            self.password = password
-        }
-        
-        internal func forMock() -> BudCacheMock.EmailCredential {
-            return .init(email: self.email, password: self.password)
-        }
-    }
-    package enum Error: String, Swift.Error {
-        case userIdIsNil
-        case emailCredentialNotSet
+    package enum Mode: Sendable {
+        case test(mockRef: BudCacheMock)
+        case real
     }
 }

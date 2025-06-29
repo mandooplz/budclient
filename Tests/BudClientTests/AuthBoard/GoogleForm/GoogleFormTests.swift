@@ -8,6 +8,7 @@ import Testing
 import Foundation
 import Tools
 @testable import BudClient
+@testable import BudCache
 
 
 // MARK: Tests
@@ -201,8 +202,21 @@ struct GoogleFormTests {
             await #expect(budClientRef.isUserSignedIn == true)
         }
         
-        @Test func saveUserIdInBudCache() async throws {
-            // 핵심은 userId을 저장한다는 사실 아닐까?
+        @Test func setUserIdInBudCache() async throws {
+            // given
+            let budCacheLink = budClientRef.budCacheLink
+            try await #require(budCacheLink.getUserId() == nil)
+            
+            await MainActor.run {
+                googleFormRef.idToken = Token.random().value
+                googleFormRef.accessToken = Token.random().value
+            }
+            
+            // when
+            await googleFormRef.signIn()
+            
+            // then
+            await #expect(budCacheLink.getUserId() != nil)
         }
     }
 }

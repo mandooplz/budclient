@@ -272,11 +272,10 @@ struct SignUpFormTests {
             await #expect(profileBoard.isExist == true)
         }
         
-        @Test func saveCredentialToBudCacheWhenSuccess() async throws {
+        @Test func setUserIdInBudCache() async throws {
             // given
-            let budCacheLink = BudCacheLink(mode: budClientRef.mode,
-                                            budCacheMockRef: budClientRef.budCacheMockRef)
-            await #expect(budCacheLink.isEmailCredentialSet() == false)
+            let budCacheLink = budClientRef.budCacheLink
+            try await #require(budCacheLink.getUserId() == nil)
             
             // given
             try await #require(signUpFormRef.issue == nil)
@@ -291,7 +290,7 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            await #expect(budCacheLink.isEmailCredentialSet() == true)
+            await #expect(budCacheLink.getUserId() != nil)
         }
     }
     

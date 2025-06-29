@@ -71,13 +71,6 @@ let package = Package(
                 "Tools", "BudServer"
             ]
         ),
-        .testTarget(
-            name: "BudCacheTests",
-            dependencies: [
-                "BudCache", "Tools",
-                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
-            ]
-        ),
         
         
         // MARK: Tools

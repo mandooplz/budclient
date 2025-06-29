@@ -55,22 +55,11 @@ public final class SignInForm: Sendable {
         guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return }
         let authBoardRef = self.authBoard.ref!
         let budClientRef = authBoardRef.budClient.ref!
+        let budCacheLink = budClientRef.budCacheLink
         
         // compute
-        let userId: String
-        do {
-            let budCacheLink = budClientRef.budCacheLink
-            try await budCacheLink.signIn()
-            
-            guard let userIdFromCache = await budCacheLink.getUserId() else {
-                issueForDebug = KnownIssue(Error.userIdIsNilInCache)
-                return
-            }
-            
-            userId = userIdFromCache
-            
-        } catch {
-            self.issueForDebug = UnknownIssue(error)
+        guard let userId = await budCacheLink.getUserId() else {
+            issueForDebug = KnownIssue(Error.userIdIsNilInCache)
             return
         }
         
@@ -111,8 +100,7 @@ public final class SignInForm: Sendable {
             userId = try await accountHubLink.getUserId(email: email,
                                                         password: password)
             
-            try await budCacheLink.setEmailCredential(.init(email: email,
-                                                            password: password))
+            await budCacheLink.setUserId(userId)
         } catch(let error as AccountHubLink.Error) {
             switch error {
             case .userNotFound: issue = KnownIssue(Error.userNotFound)

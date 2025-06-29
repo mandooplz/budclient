@@ -87,8 +87,7 @@ public final class SignUpForm: Sendable {
                                                         password: password)
             
             // setEmailCredential in BudCache
-            try await budCacheLink.setEmailCredential(.init(email: email,
-                                                            password: password))
+            await budCacheLink.setUserId(userId)
         } catch {
             self.issue = UnknownIssue(error)
             return

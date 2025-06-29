@@ -51,8 +51,8 @@ public final class GoogleForm: Sendable {
         
         let authBoardRef = authBoard.ref!
         let budClientRef = authBoardRef.budClient.ref!
-        
         let budServerLink = budClientRef.budServerLink!
+        let budCacheLink = budClientRef.budCacheLink
         
         // compute
         let userId: String
@@ -76,6 +76,9 @@ public final class GoogleForm: Sendable {
             
             // signIn
             userId = try await accountHubLink.getUserId(idToken: idToken, accessToken: accessToken)
+            
+            // save in BudCache
+            await budCacheLink.setUserId(userId)
         } catch {
             self.issue = UnknownIssue(error)
             return

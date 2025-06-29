@@ -19,8 +19,7 @@ public final class BudClient: Sendable {
         self.mode = .real
         self.plistPath = plistPath
         self.budCacheMockRef = .shared
-        self.budCacheLink = BudCacheLink(mode: self.mode,
-                                         budCacheMockRef: .shared)
+        self.budCacheLink = BudCacheLink(mode: .real)
         
         BudClientManager.register(self)
     }
@@ -29,8 +28,7 @@ public final class BudClient: Sendable {
         self.mode = .test
         self.plistPath = ""
         self.budCacheMockRef = BudCacheMock()
-        self.budCacheLink = BudCacheLink(mode: self.mode,
-                                         budCacheMockRef: budCacheMockRef)
+        self.budCacheLink = BudCacheLink(mode: .test(mockRef: budCacheMockRef))
         
         BudClientManager.register(self)
     }
@@ -42,7 +40,7 @@ public final class BudClient: Sendable {
     
     private nonisolated let plistPath: String
     internal private(set) var budServerLink: BudServerLink?
-    internal nonisolated let budCacheMockRef: BudCacheMock
+    private nonisolated let budCacheMockRef: BudCacheMock
     internal nonisolated let budCacheLink: BudCacheLink
     
     public internal(set) var authBoard: AuthBoard.ID?
