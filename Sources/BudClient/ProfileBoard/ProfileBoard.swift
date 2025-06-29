@@ -36,15 +36,30 @@ public final class ProfileBoard: Sendable {
     
     
     // MARK: action
-    public func signOut() {
+    public func signOut() async {
+        await signOut(captureHook: nil, mutateHook: nil)
+    }
+    internal func signOut(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
+        await captureHook?()
+        guard self.id.isExist else { return }
+        let budClient = self.budClient
         let projectBoard = budClient.ref!.projectBoard
         let community = budClient.ref!.community
+        let budCacheLink = budClient.ref!.budCacheLink
+        
         
         // compute
-        
+        do {
+            try await budCacheLink.resetUserId()
+        } catch {
+            self.issue = UnknownIssue(error)
+            return
+        }
         
         // mutate
+        await mutateHook?()
+        guard self.id.isExist else { return }
         let budClientRef = self.budClient.ref!
         let projectBoardRef = projectBoard!.ref!
         let communityRef = community!.ref!

@@ -38,6 +38,20 @@ package struct BudCacheLink: Sendable {
             return
         }
     }
+    package func resetUserId() async throws {
+        switch mode {
+        case .test(let mockRef):
+            await MainActor.run {
+                mockRef.userId = nil
+            }
+        case .real:
+            await withThrowingTaskGroup { group in
+                group.addTask {
+                    try Auth.auth().signOut()
+                }
+            }
+        }
+    }
     
     
     // MARK: value

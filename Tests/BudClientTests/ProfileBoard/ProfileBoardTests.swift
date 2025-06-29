@@ -21,11 +21,44 @@ struct ProfileBoardTests {
             self.profileBoardRef = try await getProfileBoard(budClientRef)
         }
         
-        @Test func whenProfileBoardIsDeletedBeforeCapture() async throws { }
-        @Test func whenProfileBoardIsDeletedBeforeMutate() async throws { }
+        @Test func whenProfileBoardIsDeletedBeforeCapture() async throws {
+            // given
+            try await #require(budClientRef.profileBoard?.isExist == true)
+            
+            let budCacheLink = budClientRef.budCacheLink
+            try await #require(budCacheLink.getUserId() != nil)
+            
+            // when
+            await profileBoardRef.signOut {
+                await profileBoardRef.delete()
+            } mutateHook: {
+                
+            }
+
+            // then
+            try await #require(budClientRef.profileBoard?.isExist == false)
+            await #expect(budCacheLink.getUserId() != nil)
+        }
+        @Test func whenProfileBoardIsDeletedBeforeMutate() async throws {
+            // given
+            try await #require(budClientRef.profileBoard?.isExist == true)
+            
+            let budCacheLink = budClientRef.budCacheLink
+            try await #require(budCacheLink.getUserId() != nil)
+            
+            // when
+            await profileBoardRef.signOut {
+                
+            } mutateHook: {
+                await profileBoardRef.delete()
+            }
+
+            // then
+            try await #require(budClientRef.profileBoard?.isExist == false)
+            
+            await #expect(budClientRef.isUserSignedIn == true)
+        }
         
-        
-        // TODO: ProjectBoard, ProfileBoard의 하위 객체들을 정의한다면 테스트를 추가해야 함
         @Test func setIsUserSignedInAtBudClient() async throws {
             // given
             try await #require(budClientRef.isUserSignedIn == true)
@@ -92,6 +125,18 @@ struct ProfileBoardTests {
             // then
             await #expect(community.isExist == false
             )
+        }
+        
+        @Test func setNilUserIdInBudCache() async throws {
+            // given
+            let budCacheLink = budClientRef.budCacheLink
+            try await #require(budCacheLink.getUserId() != nil)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(budCacheLink.getUserId() == nil)
         }
     }
 }
