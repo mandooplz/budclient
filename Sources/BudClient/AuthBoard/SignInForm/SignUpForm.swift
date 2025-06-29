@@ -67,26 +67,30 @@ public final class SignUpForm: Sendable {
         // compute
         let userId: AuthBoard.UserID
         do {
-            let accountHubLink = budServerLink.getAccountHub()
+            async let result = {
+                let accountHubLink = budServerLink.getAccountHub()
+                
+                let newTicket = AccountHubLink.Ticket()
+                await accountHubLink.insertEmailTicket(newTicket)
+                await accountHubLink.updateEmailForms()
+                
+                guard let registerFormLink = await accountHubLink.getEmailRegisterForm(newTicket) else {
+                    throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
+                }
+                await registerFormLink.setEmail(email)
+                await registerFormLink.setPassword(password)
+                
+                await registerFormLink.submit()
+                await registerFormLink.remove()
+                
+                // getUserId
+                return try await accountHubLink.getUserId(email: email,
+                                                          password: password)
+            }()
             
-            let newTicket = AccountHubLink.Ticket()
-            await accountHubLink.insertEmailTicket(newTicket)
-            await accountHubLink.updateEmailForms()
+            userId = try await result
             
-            guard let registerFormLink = await accountHubLink.getEmailRegisterForm(newTicket) else {
-                throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
-            }
-            await registerFormLink.setEmail(email)
-            await registerFormLink.setPassword(password)
-            
-            await registerFormLink.submit()
-            await registerFormLink.remove()
-            
-            // getUserId
-            userId = try await accountHubLink.getUserId(email: email,
-                                                        password: password)
-            
-            // setEmailCredential in BudCache
+            // setUserId
             await budCacheLink.setUserId(userId)
         } catch {
             self.issue = UnknownIssue(error)

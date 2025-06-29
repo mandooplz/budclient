@@ -13,7 +13,7 @@ import Tools
 public final class AuthBoard {
     // MARK: core
     internal init(budClient: BudClient.ID,
-                mode: SystemMode) {
+                  mode: SystemMode) {
         self.id = ID(value: UUID())
         self.budClient = budClient
         self.mode = mode

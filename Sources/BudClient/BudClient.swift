@@ -55,15 +55,15 @@ public final class BudClient: Sendable {
     public func setUp() async {
         // capture
         guard isSetUpRequired else {
-        issue = KnownIssue(Error.alreadySetUp)
+            issue = KnownIssue(Error.alreadySetUp)
             return
         }
         
         // compute
         let budServerLink: BudServerLink
         do {
-            async let link = try BudServerLink(mode: mode.forBudServerLink)
-            budServerLink = try await link
+            async let result = try BudServerLink(mode: mode.forBudServerLink)
+            budServerLink = try await result
         } catch {
             issue = UnknownIssue(error)
             return

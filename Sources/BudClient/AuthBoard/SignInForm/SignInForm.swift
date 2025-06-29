@@ -58,7 +58,10 @@ public final class SignInForm: Sendable {
         let budCacheLink = budClientRef.budCacheLink
         
         // compute
-        guard let userId = await budCacheLink.getUserId() else {
+        async let result = {
+            return await budCacheLink.getUserId()
+        }()
+        guard let userId = await result else {
             issueForDebug = KnownIssue(Error.userIdIsNilInCache)
             return
         }
@@ -77,12 +80,15 @@ public final class SignInForm: Sendable {
     internal func signIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return }
-        guard email != "" else {
+        guard id.isExist else {
+            issueForDebug = KnownIssue(Error.deleted)
+            return
+        }
+        guard email.isNotEmpty else {
             self.issue = KnownIssue(Error.emailIsNil)
             return
         }
-        guard password != "" else {
+        guard password.isNotEmpty else {
             self.issue = KnownIssue(Error.passwordIsNil)
             return
         }
@@ -97,8 +103,9 @@ public final class SignInForm: Sendable {
         do {
             let accountHubLink = budServerLink.getAccountHub()
             
-            userId = try await accountHubLink.getUserId(email: email,
-                                                        password: password)
+            async let userIdFromServer = try await accountHubLink.getUserId(email: email,
+                                                                            password: password)
+            userId = try await userIdFromServer
             
             await budCacheLink.setUserId(userId)
         } catch(let error as AccountHubLink.Error) {

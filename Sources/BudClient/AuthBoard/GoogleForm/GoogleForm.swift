@@ -58,24 +58,28 @@ public final class GoogleForm: Sendable {
         let userId: String
         do {
             // register
-            let accountHubLink = budServerLink.getAccountHub()
-            let ticket = AccountHubLink.Ticket()
+            async let result = {
+                let accountHubLink = budServerLink.getAccountHub()
+                let ticket = AccountHubLink.Ticket()
+                
+                await accountHubLink.insertGoogleTicket(ticket)
+                await accountHubLink.updateGoogleForms()
+                
+                guard let googleRegisterFormLink = await accountHubLink.getGoogleRegisterForm(ticket) else {
+                    throw UnknownIssue(reason: "GoogleRegisterFormLink.updateGoogleForms() failed")
+                }
+                
+                await googleRegisterFormLink.setIdToken(idToken)
+                await googleRegisterFormLink.setAccessToken(accessToken)
+                
+                await googleRegisterFormLink.submit()
+                await googleRegisterFormLink.remove()
+                
+                // signIn
+                return try await accountHubLink.getUserId(idToken: idToken, accessToken: accessToken)
+            }()
             
-            await accountHubLink.insertGoogleTicket(ticket)
-            await accountHubLink.updateGoogleForms()
-            
-            guard let googleRegisterFormLink = await accountHubLink.getGoogleRegisterForm(ticket) else {
-                throw UnknownIssue(reason: "GoogleRegisterFormLink.updateGoogleForms() failed")
-            }
-            
-            await googleRegisterFormLink.setIdToken(idToken)
-            await googleRegisterFormLink.setAccessToken(accessToken)
-            
-            await googleRegisterFormLink.submit()
-            await googleRegisterFormLink.remove()
-            
-            // signIn
-            userId = try await accountHubLink.getUserId(idToken: idToken, accessToken: accessToken)
+            userId = try await result
             
             // save in BudCache
             await budCacheLink.setUserId(userId)
