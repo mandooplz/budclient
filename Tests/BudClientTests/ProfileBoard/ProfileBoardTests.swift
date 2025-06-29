@@ -67,7 +67,7 @@ struct ProfileBoardTests {
             await profileBoardRef.signOut()
             
             // then
-            await #expect(budClientRef.isUserSignedIn == true)
+            await #expect(budClientRef.isUserSignedIn == false)
         }
         @Test func createAuthBoard() async throws {
             // given

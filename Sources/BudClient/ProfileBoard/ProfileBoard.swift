@@ -68,6 +68,7 @@ public final class ProfileBoard: Sendable {
         budClientRef.authBoard = authBoardRef.id
         budClientRef.projectBoard = nil
         budClientRef.profileBoard = nil
+        budClientRef.isUserSignedIn = false
         
         projectBoardRef.delete()
         communityRef.delete()
