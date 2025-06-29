@@ -39,7 +39,7 @@ public final class GoogleForm: Sendable {
     
     
     // MARK: action
-    public func signIn() async {
+    public func signUpAndSignIn() async {
         await signIn(captureHook: nil, mutateHook: nil)
     }
     internal func signIn(captureHook: Hook?, mutateHook: Hook?) async {

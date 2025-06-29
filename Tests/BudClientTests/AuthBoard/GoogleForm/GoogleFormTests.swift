@@ -14,7 +14,7 @@ import Tools
 // MARK: Tests
 @Suite("GoogleForm")
 struct GoogleFormTests {
-    struct SignIn {
+    struct SignUpAndSignIn {
         let budClientRef: BudClient
         let authBoardRef: AuthBoard
         let googleFormRef: GoogleForm
@@ -67,7 +67,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             let issue = try #require(await googleFormRef.issue)
@@ -82,7 +82,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             let issue = try #require(await googleFormRef.issue)
@@ -101,7 +101,7 @@ struct GoogleFormTests {
             try await #require(signInForm.isExist == true)
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             await #expect(signInForm.isExist == false)
@@ -120,7 +120,7 @@ struct GoogleFormTests {
             try await #require(signUpForm.isExist == true)
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             await #expect(signUpForm.isExist == false)
@@ -133,7 +133,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             try await #require(googleFormRef.issue == nil)
@@ -149,7 +149,7 @@ struct GoogleFormTests {
             try await #require(authBoardRef.id.isExist == true)
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             await #expect(authBoardRef.id.isExist == false)
@@ -165,7 +165,7 @@ struct GoogleFormTests {
             try await #require(budClientRef.projectBoard == nil)
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             let projectBoard = try #require(await budClientRef.projectBoard)
@@ -181,7 +181,7 @@ struct GoogleFormTests {
             try await #require(budClientRef.profileBoard == nil)
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             let profileBoard = try #require(await budClientRef.profileBoard)
@@ -196,7 +196,7 @@ struct GoogleFormTests {
             try await #require(budClientRef.isUserSignedIn == false)
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             await #expect(budClientRef.isUserSignedIn == true)
@@ -213,7 +213,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signIn()
+            await googleFormRef.signUpAndSignIn()
             
             // then
             await #expect(budCacheLink.getUserId() != nil)
