@@ -32,33 +32,18 @@ package final class GoogleRegisterFormMock: Sendable {
     package var idToken: String?
     package var accessToken: String?
     
-    package private(set) var googleUserId: String?
-    
     package var issue: (any Issuable)?
     
     
     // MARK: action
-    public func fetchGoogleUserId() {
+    public func submit() {
         // capture
         guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return}
-        
-        // compute
-        // idToken과 accessToken에 대해 결정론적으로 GoogleUserId가 생성된다.
-        // 절대 실패하지 않는다.
-        let googleUserId = GoogleUserID(idToken: idToken,
-                                        accessToken: accessToken)
+        if accountHub.isExist(idToken: idToken, accessToken: accessToken) == true { return }
         
         // mutate
-        self.googleUserId = googleUserId.getValue()
-    }
-    public func submit() {
-        // capture
-        guard let googleUserId else { issue = KnownIssue(Error.googleUserIdIsNil); return }
-        if accountHub.isExist(googleUserId: googleUserId) == true { return }
-        
-        // mutate
-        let accountRef = AccountMock(googleUserId: googleUserId)
+        let accountRef = AccountMock(idToken: idToken, accessToken: accessToken)
         accountHub.accounts.insert(accountRef.id)
         // signIn과 signUp이 동시에 이루어진다.
         // 기존 계정이 있다면 생성하지 X

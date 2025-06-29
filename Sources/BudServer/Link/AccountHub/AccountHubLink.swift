@@ -63,7 +63,7 @@ package struct AccountHubLink: Sendable {
         case .real:
             await Server.run {
                 let realTicket = AccountHub.Ticket(value: ticket.value)
-                AccountHub.shared.tickets.insert(realTicket)
+                AccountHub.shared.emailTickets.insert(realTicket)
             }
         }
     }
@@ -80,7 +80,7 @@ package struct AccountHubLink: Sendable {
             
         case .real:
             let registerForm = await Server.run {
-                AccountHub.shared.registerForms[ticket.forReal]
+                AccountHub.shared.emailRegisterForms[ticket.forReal]
             }
             guard let registerForm else { return nil }
             return EmailRegisterFormLink(mode: self.mode,
@@ -95,7 +95,7 @@ package struct AccountHubLink: Sendable {
         case .test:
             await AccountHubMock.shared.updateEmailForms()
         case .real:
-            await AccountHub.shared.generateForms()
+            await AccountHub.shared.updateEmailForms()
         }
     }
     

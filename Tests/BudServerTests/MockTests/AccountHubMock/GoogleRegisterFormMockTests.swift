@@ -13,7 +13,7 @@ import Tools
 // MARK: Tests
 @Suite("GoogleRegisterFormMock")
 struct GoogleRegisterFormMockTests {
-    struct FetchGoogleUserId {
+    struct Submit {
         let accountHubRef: AccountHubMock
         let googleRegisterFormRef: GoogleRegisterFormMock
         init() async {
@@ -28,7 +28,7 @@ struct GoogleRegisterFormMockTests {
             }
             
             // when
-            await googleRegisterFormRef.fetchGoogleUserId()
+            await googleRegisterFormRef.submit()
             
             // then
             let issue = try #require(await googleRegisterFormRef.issue)
@@ -43,7 +43,7 @@ struct GoogleRegisterFormMockTests {
             }
             
             // when
-            await googleRegisterFormRef.fetchGoogleUserId()
+            await googleRegisterFormRef.submit()
             
             // then
             let issue = try #require(await googleRegisterFormRef.issue)
@@ -51,49 +51,13 @@ struct GoogleRegisterFormMockTests {
             #expect(issue.reason == "accessTokenIsNil")
         }
         
-        @Test func setGoogleUserId() async throws {
-            // given
-            await MainActor.run {
-                googleRegisterFormRef.idToken = "sampleIdToken"
-                googleRegisterFormRef.accessToken = "sampleAccessToken"
-            }
-            
-            // when
-            await googleRegisterFormRef.fetchGoogleUserId()
-            
-            // then
-            try await #require(googleRegisterFormRef.issue == nil)
-            await #expect(googleRegisterFormRef.googleUserId != nil)
-        }
-    }
-    
-    struct Submit {
-        let accountHubRef: AccountHubMock
-        let googleRegisterFormRef: GoogleRegisterFormMock
-        init() async {
-            self.accountHubRef = await AccountHubMock()
-            self.googleRegisterFormRef = await getGoogleRegisterForm(accountHubRef)
-        }
-        
-        @Test func whenGoogleUserIdIsNil() async throws {
-            // given
-            try await #require(googleRegisterFormRef.googleUserId == nil)
-            
-            // when
-            await googleRegisterFormRef.submit()
-            
-            // then
-            let issue = try #require(await googleRegisterFormRef.issue)
-            #expect(issue.isKnown == true)
-            #expect(issue.reason == "googleUserIdIsNil")
-        }
-        
         @Test func appendAccount() async throws {
             // given
+            let idToken = Token.random().value
+            let accessToken = Token.random().value
             await MainActor.run {
-                googleRegisterFormRef.idToken = Token.random().value
-                googleRegisterFormRef.accessToken = Token.random().value
-                googleRegisterFormRef.fetchGoogleUserId()
+                googleRegisterFormRef.idToken = idToken
+                googleRegisterFormRef.accessToken = accessToken
             }
             
             // when
@@ -102,15 +66,16 @@ struct GoogleRegisterFormMockTests {
             // then
             try await #require(googleRegisterFormRef.issue == nil)
             
-            let googleUserId = try #require(await googleRegisterFormRef.googleUserId)
-            await #expect(accountHubRef.isExist(googleUserId: googleUserId) == true)
+            await #expect(accountHubRef.isExist(idToken: idToken,
+                                                accessToken: accessToken) == true)
         }
         @Test func createAccount() async throws {
             // given
+            let idToken = Token.random().value
+            let accessToken = Token.random().value
             await MainActor.run {
-                googleRegisterFormRef.idToken = Token.random().value
-                googleRegisterFormRef.accessToken = Token.random().value
-                googleRegisterFormRef.fetchGoogleUserId()
+                googleRegisterFormRef.idToken = idToken
+                googleRegisterFormRef.accessToken = accessToken
             }
             
             // when
@@ -119,13 +84,12 @@ struct GoogleRegisterFormMockTests {
             // then
             try await #require(googleRegisterFormRef.issue == nil)
             
-            let googleUserId = try #require(await googleRegisterFormRef.googleUserId)
             let accountRef = await MainActor.run {
                 accountHubRef.accounts.lazy
                     .compactMap { AccountMockManager.get($0) }
-                    .first { $0.googleUserId == googleUserId }!
+                    .first { $0.idToken == idToken && $0.accessToken == accessToken }
             }
-            await #expect(AccountMockManager.get(accountRef.id) != nil)
+            #expect(accountRef != nil)
             
         }
         @Test(.disabled()) func whenAccountAlreadyExists() async throws {

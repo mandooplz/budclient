@@ -14,7 +14,7 @@ import FirebaseAuth
 internal final class EmailRegisterForm {
     // MARK: core
     internal init(accountHubRef: AccountHub,
-        ticket: AccountHub.Ticket) {
+                  ticket: AccountHub.Ticket) {
         self.accountHubRef = accountHubRef
         self.id = .init()
         self.ticket = ticket
@@ -60,7 +60,7 @@ internal final class EmailRegisterForm {
     }
     internal func remove() async {
         // mutate
-        accountHubRef.registerForms[ticket] = nil
+        accountHubRef.emailRegisterForms[ticket] = nil
         self.delete()
     }
 

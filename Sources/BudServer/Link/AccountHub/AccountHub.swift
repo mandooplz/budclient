@@ -39,12 +39,6 @@ internal final class AccountHub {
         return true
     }
     internal func getUserId(email: String, password: String) async throws -> String {
-        // 현재 로그인되어 있다면 -> 추가 시스템을 만들어 테스트
-//        if let currentUser = Auth.auth().currentUser {
-//            return currentUser.uid
-//        }
-        
-        // 없다면 로그인 시도
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             return result.user.uid
@@ -63,19 +57,45 @@ internal final class AccountHub {
             }
         }
     }
+    internal func getUserId(googleIdToken: String, googleAccessToken: String) async throws -> String {
+        if let user = Auth.auth().currentUser {
+            return user.uid
+        }
+        
+        do {
+            let credential = GoogleAuthProvider.credential(withIDToken: googleIdToken,
+                                                           accessToken: googleAccessToken)
+            let result = try await Auth.auth().signIn(with: credential)
+            return result.user.uid
+        } catch {
+            throw UnknownIssue(error)
+        }
+    }
     
-    internal var tickets: Set<Ticket> = []
-    internal var registerForms: [Ticket:EmailRegisterForm.ID] = [:]
+    internal var emailTickets: Set<Ticket> = []
+    internal var emailRegisterForms: [Ticket:EmailRegisterForm.ID] = [:]
+    
+    internal var googleTickets: Set<Ticket> = []
+    internal var googleRegisterForms: [Ticket: GoogleRegisterForm.ID] = [:]
     
     
     // MARK: action
-    internal func generateForms() {
+    internal func updateEmailForms() {
         // mutate
-        for ticket in tickets {
+        for ticket in emailTickets {
             let registerFormRef = EmailRegisterForm(accountHubRef: self,
                                                ticket: ticket)
-            self.registerForms[ticket] = registerFormRef.id
-            tickets.remove(ticket)
+            self.emailRegisterForms[ticket] = registerFormRef.id
+            emailTickets.remove(ticket)
+        }
+    }
+    internal func updateGoogleForms() {
+        // mutate
+        for ticket in googleTickets {
+            let googleRegisterFormRef = GoogleRegisterForm(accountHubRef: self,
+                                                           ticket: ticket)
+            self.googleRegisterForms[ticket] = googleRegisterFormRef.id
+            googleTickets.remove(ticket)
         }
     }
     

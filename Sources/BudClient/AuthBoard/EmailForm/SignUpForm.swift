@@ -69,7 +69,7 @@ public final class SignUpForm: Sendable {
             try await accountHubLink.updateEmailForms()
             
             guard let registerFormLink = try await accountHubLink.getEmailRegisterForm(newTicket) else {
-                throw UnknownIssue(reason: "AccountHubLink.generateForms() failed")
+                throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
             }
             try await registerFormLink.setEmail(email)
             try await registerFormLink.setPassword(password)

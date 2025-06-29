@@ -23,10 +23,10 @@ package final class AccountHubMock: Sendable {
             .compactMap { AccountMockManager.get($0) }
             .contains { $0.email == email && $0.password == password }
     }
-    package func isExist(googleUserId: String) -> Bool {
+    package func isExist(idToken: String, accessToken: String) -> Bool {
         accounts.lazy
             .compactMap { AccountMockManager.get($0) }
-            .contains { $0.googleUserId == googleUserId }
+            .contains { $0.idToken == idToken && $0.accessToken == accessToken }
     }
     package func getUserId(email: String, password: String) throws -> AccountMock.UserID {
         let filtered = self.accounts.lazy
@@ -43,10 +43,10 @@ package final class AccountHubMock: Sendable {
         
         return userId
     }
-    package func getUserId(googleUserId: String) -> AccountMock.UserID? {
+    package func getUserId(googleIdToken: String, googleAccessToken: String) -> AccountMock.UserID? {
         accounts.lazy
             .compactMap { AccountMockManager.get($0) }
-            .first { $0.googleUserId == googleUserId }?.userId
+            .first { $0.idToken == googleIdToken && $0.accessToken == googleAccessToken }?.userId
     }
     
     package var emailTickets: Set<Ticket> = []

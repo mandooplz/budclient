@@ -20,11 +20,12 @@ package final class AccountMock: Sendable {
         
         AccountMockManager.register(self)
     }
-    package init(googleUserId: String) {
+    package init(idToken: String, accessToken: String) {
         self.id = ID(value: .init())
         self.userId = UUID().uuidString
         
-        self.googleUserId = googleUserId
+        self.idToken = idToken
+        self.accessToken = accessToken
         
         AccountMockManager.register(self)
     }
@@ -40,7 +41,8 @@ package final class AccountMock: Sendable {
     package var email: String?
     package var password: String?
     
-    package var googleUserId: String?
+    package var idToken: String?
+    package var accessToken: String?
     
     
     // MARK: value
