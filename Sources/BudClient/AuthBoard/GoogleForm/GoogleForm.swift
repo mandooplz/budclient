@@ -131,7 +131,7 @@ public final class GoogleForm: Sendable {
 
 
 // MARK: Object Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class GoogleFormManager: Sendable {
     // MARK: state
     fileprivate static var container: [GoogleForm.ID: GoogleForm] = [:]

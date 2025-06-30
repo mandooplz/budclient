@@ -52,7 +52,7 @@ public final class Project: Sendable {
 }
 
 // MARK: Object Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class ProjectManager: Sendable {
     // MARK: state
     fileprivate static var container: [Project.ID: Project] = [:]

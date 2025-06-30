@@ -186,7 +186,7 @@ public final class SignInForm: Sendable {
 
 
 // MARK: Object Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class EmailFormManager: Sendable {
     // MARK: state
     fileprivate static var container: [SignInForm.ID: SignInForm] = [:]

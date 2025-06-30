@@ -113,7 +113,7 @@ public final class BudClient: Sendable {
 
 
 // MARK: System Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class BudClientManager: Sendable {
     // MARK: state
     fileprivate static var container: [BudClient.ID: BudClient] = [:]

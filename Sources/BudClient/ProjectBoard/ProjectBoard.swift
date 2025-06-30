@@ -77,7 +77,7 @@ public final class ProjectBoard: Sendable {
 
 
 // MARK: Object Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class ProjectBoardManager: Sendable {
     // MARK: state
     fileprivate static var container: [ProjectBoard.ID: ProjectBoard] = [:]

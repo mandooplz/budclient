@@ -74,7 +74,7 @@ public final class AuthBoard {
 
 
 // MARK: Object Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class AuthBoardManager {
     // MARK: state
     fileprivate static var container: [AuthBoard.ID: AuthBoard] = [:]

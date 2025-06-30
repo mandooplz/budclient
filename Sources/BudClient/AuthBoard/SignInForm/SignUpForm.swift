@@ -152,7 +152,7 @@ public final class SignUpForm: Sendable {
 }
 
 // MARK: Object Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class SignUpFormManager: Sendable {
     // MARK: state
     private static var container: [SignUpForm.ID: SignUpForm] = [:]

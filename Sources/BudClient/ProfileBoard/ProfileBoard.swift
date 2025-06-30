@@ -91,7 +91,7 @@ public final class ProfileBoard: Sendable {
 
 
 // MARK: Object Manager
-@MainActor
+@MainActor @Observable
 fileprivate final class ProfileBoardManager: Sendable {
     // MARK: state
     fileprivate static var container: [ProfileBoard.ID: ProfileBoard] = [:]
