@@ -17,7 +17,9 @@ internal final class AccountHubMock: Sendable {
     
     
     // MARK: state
-    internal var accounts: Set<AccountMock.ID> = []
+    internal var accounts: Set<AccountMock.ID> = [
+        AccountMock(email: "test@test.com", password: "123456").id
+    ]
     internal func isExist(email: String, password: String) -> Bool {
         accounts.lazy
             .compactMap { $0.ref }
