@@ -144,37 +144,8 @@ struct ProfileBoardTests {
 
 // MARK: Helphers
 private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileBoard {
-    await budClientRef.setUp()
-    try await #require(budClientRef.issue == nil)
-    
-    let authBoard = await budClientRef.authBoard!
-    let authBoardRef = await authBoard.ref!
-    
-    await authBoardRef.setUpForms()
-    let emailForm = await authBoardRef.signInForm!
-    let emailFormRef = await emailForm.ref!
-    
-    await emailFormRef.setUpSignUpForm()
-    let signUpForm = await emailFormRef.signUpForm!
-    let signUpFormRef = await signUpForm.ref!
-    
-    let testEmail = Email.random().value
-    let testPassword = Password.random().value
-    await MainActor.run {
-        signUpFormRef.email = testEmail
-        signUpFormRef.password = testPassword
-        signUpFormRef.passwordCheck = testPassword
-    }
-    
-    await signUpFormRef.signUp()
-    try! await #require(signUpFormRef.isIssueOccurred == false)
-    
-    try! await #require(budClientRef.isUserSignedIn == true)
-    try! await #require(budClientRef.authBoard == nil)
-    try! await #require(budClientRef.projectBoard != nil)
-    try! await #require(budClientRef.profileBoard != nil)
+    await signIn(budClientRef)
     
     let profileBoard = await budClientRef.profileBoard!
-    let profileBoardRef = await profileBoard.ref!
-    return profileBoardRef
+    return await profileBoard.ref!
 }

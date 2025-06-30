@@ -35,13 +35,10 @@ public final class ProjectBoard: Sendable {
     
     
     // MARK: action
-    public func fetchProjects() async {
-        // BudServer.ProjectHub에 있는 나의 모든 서버를 가져온다. 
-    }
-    public func startObserving() async {
-        // 다른 BudClient 시스템에서 새로운 프로젝트가 생성되면 이러한 이벤트를 받아 로컬에 생성한다.
-    }
-    public func createNewProject() async {
+    public func startObserving() async { }
+    public func stopObserving() async { }
+    public func createEmptyProject() async {
+        // mutate
         // ProjectHubLink를 통해 새로운 Project를 생성한다.
         // 실시간 동기화를 고려해야 한다.
     }
