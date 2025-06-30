@@ -19,7 +19,10 @@ internal final class ProjectHubMock: Sendable {
     // MARK: state
     internal var projectSources: Set<ProjectSourceMock.ID> = []
     internal func getMyProjectSources(userId: String) -> [ProjectSourceMock.ID] {
-        fatalError()
+        projectSources
+            .compactMap { $0.ref }
+            .filter { $0.userId == userId }
+            .map { $0.id }
     }
     
     internal var tickets: Set<Ticket> = []
@@ -31,7 +34,7 @@ internal final class ProjectHubMock: Sendable {
         for ticket in tickets {
             switch ticket.purpose {
             case .createProjectSource:
-                let projectSourceRef = ProjectSourceMock(projectHubRef: self)
+                let projectSourceRef = ProjectSourceMock(projectHubRef: self, userId: ticket.userId)
                 projectSources.insert(projectSourceRef.id)
                 tickets.remove(ticket)
             }

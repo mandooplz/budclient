@@ -42,8 +42,22 @@ struct ProjectBoardTests {
             await #expect(project.isExist == true)
         }
         
-        @Test func createProjectSourceInBudServe() async throws {
+        @Test func createProjectSource() async throws {
+            // given
+            let budServerLink = try #require(await budClientRef.budServerLink)
+            let projectHubLink = budServerLink.getProjectHub()
             
+            let userId = try #require(await budClientRef.profileBoard?.ref?.userId)
+            
+            let oldProjects = await projectHubLink.getMyProjectSource(userId)
+            #expect(oldProjects.isEmpty)
+            
+            // when
+            await projectBoardRef.createEmptyProject()
+            
+            // then
+            let newProjects = await projectHubLink.getMyProjectSource(userId)
+            #expect(newProjects.count == 1)
         }
     }
     

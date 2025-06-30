@@ -6,6 +6,7 @@
 //
 import Foundation
 import Tools
+import BudServer
 
 
 // MARK: Object
@@ -33,14 +34,26 @@ public final class ProjectBoard: Sendable {
     
     public internal(set) var projects: [Project.ID] = []
     
+    public var issue: (any Issuable)?
+    
     
     // MARK: action
     public func startObserving() async { }
     public func stopObserving() async { }
     public func createEmptyProject() async {
+        // capture
+        let budServerLink = budClient.ref!.budServerLink!
+        let projectHubLink = budServerLink.getProjectHub()
+        
         // compute
-        // ProjectHubLink를 통해 새로운 Project를 생성한다.
-        // 실시간 동기화를 고려해야 한다.
+        do {
+            let ticket = ProjectHubLink.Ticket(userId: userId, for: .createProjectSource)
+            await projectHubLink.insertTicket(ticket)
+            try await projectHubLink.processTicket()
+        } catch {
+            issue = UnknownIssue(error)
+            return
+        }
         
         // mutate
         let projectRef = Project(mode: mode, projectBoard: id, userId: userId)

@@ -33,6 +33,7 @@ public struct BudServerLink: Sendable {
     public func getGoogleClientId() -> String? {
         FirebaseApp.app()?.options.clientID
     }
+    
     package func getAccountHub() -> AccountHubLink {
         AccountHubLink(mode: mode.toSystemMode)
     }

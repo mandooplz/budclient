@@ -12,9 +12,16 @@ import Tools
 @BudServer
 internal final class ProjectSourceMock: Sendable {
     // MARK: core
-    internal init(projectHubRef: ProjectHubMock) {
+    internal init(projectHubRef: ProjectHubMock,
+                  userId: String) {
         self.id = ID(value: .init())
         self.projectHubRef = projectHubRef
+        self.userId = userId
+        
+        ProjectSourceMockManager.register(self)
+    }
+    internal func delete() {
+        ProjectSourceMockManager.unregister(self.id)
     }
     
     
@@ -22,6 +29,9 @@ internal final class ProjectSourceMock: Sendable {
     // MARK: state
     internal nonisolated let id: ID
     internal nonisolated let projectHubRef: ProjectHubMock
+    
+    internal var name: String = "UnknownProject"
+    internal var userId: String
     
     
     // MARK: action

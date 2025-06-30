@@ -9,7 +9,7 @@ import Tools
 
 
 // MARK: Link
-public struct ProjectHubLink: Sendable {
+package struct ProjectHubLink: Sendable {
     // MARK: core
     private let mode: SystemMode
     init(mode: SystemMode) {
@@ -18,7 +18,7 @@ public struct ProjectHubLink: Sendable {
     
     
     // MARK: state
-    public func getMyProjectSource(_ userId: String) async -> [ProjectSourceLink] {
+    package func getMyProjectSource(_ userId: String) async -> [ProjectSourceLink] {
         switch mode {
         case .test:
             await ProjectHubMock.shared
@@ -28,11 +28,11 @@ public struct ProjectHubLink: Sendable {
             fatalError()
         }
     }
-    public func insertTicket(_ ticket: Ticket) async {
+    package func insertTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
-            await MainActor.run {
-                
+            await BudServer.run {
+                ProjectHubMock.shared.tickets.insert(ticket.forTest())
             }
         case .real:
             fatalError()
@@ -41,7 +41,7 @@ public struct ProjectHubLink: Sendable {
     
     
     // MARK: action
-    public func processTicket() async {
+    package func processTicket() async throws {
         switch mode {
         case .test:
             await ProjectHubMock.shared.processTickes()
@@ -52,19 +52,32 @@ public struct ProjectHubLink: Sendable {
     
     
     // MARK: value
-    public struct Ticket {
-        public let value: UUID
-        public let userId: String
-        public let purpose: Purpose
+    package struct Ticket {
+        package let value: UUID
+        package let userId: String
+        package let purpose: Purpose
         
-        public init(userId: String, for purpose: Purpose) {
+        package init(userId: String, for purpose: Purpose) {
             self.value = .init()
             self.userId = userId
             self.purpose = purpose
         }
         
-        public enum Purpose {
+        package enum Purpose {
             case createProjectSource
+        }
+        
+        internal func forTest() -> ProjectHubMock.Ticket {
+            switch purpose {
+            case .createProjectSource:
+                return .init(userId: userId, for: .createProjectSource)
+            }
+        }
+        internal func forReal() -> ProjectHub.Ticket {
+            switch purpose {
+            case .createProjectSource:
+                return .init(userId: userId, for: .createProjectSource)
+            }
         }
     }
 }
