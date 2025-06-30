@@ -10,7 +10,7 @@ import Tools
 
 
 // MARK: Tests
-@Suite("ProjectBoard")
+@Suite("ProjectBoard", .timeLimit(.minutes(1)))
 struct ProjectBoardTests {
     struct SetUp {
         let budClientRef: BudClient
@@ -54,9 +54,32 @@ struct ProjectBoardTests {
         init() async {
             self.budClientRef = await BudClient()
             self.projectBoardRef = await getProjectBoard(budClientRef)
+            
+            await projectBoardRef.setUp()
         }
         
-        @Test func getEventOfProjectCreation() async throws { }
+        @Test func getEventOfProjectCreation() async throws {
+            // given
+            try await #require(projectBoardRef.projects.isEmpty)
+            
+            // when
+            await confirmation(expectedCount: 1) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task.detached {
+                        await projectBoardRef.startObserving {
+                            confirm()
+                            continuation.resume()
+                        }
+                        
+                        await projectBoardRef.createEmptyProject()
+                    }
+                }
+            }
+            
+            
+            // then
+            await #expect(projectBoardRef.projects.count == 1)
+        }
     }
     
     struct StopObserving {

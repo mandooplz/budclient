@@ -34,9 +34,6 @@ internal final class ProjectBoardUpdater: Sendable {
     
     // MARK: action
     internal func update() {
-        // capture
-        
-        
         // mutate
         guard let projectBoardRef = projectBoard.ref else { return }
         let map = projectBoardRef.projectSourceMap
@@ -50,8 +47,11 @@ internal final class ProjectBoardUpdater: Sendable {
                                          userId: userId,
                                          source: projectSource)
                 projectBoardRef.projects.append(projectRef.id)
+                diffs.remove(diff)
             case .removed(let projectSource):
                 if map[projectSource] == nil { return }
+                // diff를 이용해 프로젝트 제거
+                diffs.remove(diff)
                 fatalError()
             }
         }

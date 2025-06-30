@@ -38,8 +38,10 @@ internal final class ProjectHubMock: Sendable {
             case .createProjectSource:
                 let projectSourceRef = ProjectSourceMock(projectHubRef: self, userId: ticket.userId)
                 projectSources.insert(projectSourceRef.id)
+                
                 let addHandler = handlers[ticket.userId]?.added
                 addHandler?(projectSourceRef.id.value.uuidString)
+                
                 tickets.remove(ticket)
             }
         }

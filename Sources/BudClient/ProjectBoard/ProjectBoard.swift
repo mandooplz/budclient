@@ -8,11 +8,15 @@ import Foundation
 import Tools
 import BudServer
 
+import os
+let logger = Logger()
+
 
 // MARK: Object
 @MainActor @Observable
 public final class ProjectBoard: Sendable {
     // MARK: core
+    
     init(mode: SystemMode, budClient: BudClient.ID, userId: String) {
         self.id = ID(value: .init())
         self.mode = mode
@@ -48,7 +52,11 @@ public final class ProjectBoard: Sendable {
                                              projectBoard: self.id)
         self.updater = updaterRef.id
     }
+    
     public func startObserving() async {
+        await self.startObserving(updateHook: nil)
+    }
+    internal func startObserving(updateHook: Hook?) async {
         // capture
         let budServerLink = budClient.ref!.budServerLink!
         let projectHubLink = budServerLink.getProjectHub()
@@ -61,8 +69,11 @@ public final class ProjectBoard: Sendable {
                     added: { projectSource in
                         Task { @MainActor in
                             guard let updaterRef = self.updater?.ref else { return }
+                            
                             updaterRef.diffs.insert(.added(projectSource: projectSource))
                             updaterRef.update()
+                            
+                            await updateHook?()
                         }
                     },
                     removed: { projectSource in
@@ -70,6 +81,7 @@ public final class ProjectBoard: Sendable {
                             guard let updaterRef = self.updater?.ref else { return }
                             updaterRef.diffs.insert(.removed(projectSource: projectSource))
                             updaterRef.update()
+                            await updateHook?()
                         }
                     }))
         } catch {
@@ -77,6 +89,7 @@ public final class ProjectBoard: Sendable {
             return
         }
     }
+    
     public func stopObserving() async { }
     public func createEmptyProject() async {
         // capture
