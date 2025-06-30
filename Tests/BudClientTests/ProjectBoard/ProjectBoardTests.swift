@@ -19,6 +19,52 @@ struct ProjectBoardTests {
             self.budClientRef = await BudClient()
             self.projectBoardRef = await getProjectBoard(budClientRef)
         }
+        
+        @Test func appendProject() async throws {
+            // given
+            try await #require(projectBoardRef.projects.isEmpty == true)
+            
+            // when
+            await projectBoardRef.createEmptyProject()
+            
+            // then
+            await #expect(projectBoardRef.projects.count == 1)
+        }
+        @Test func createProject() async throws {
+            // given
+            try await #require(projectBoardRef.projects.isEmpty == true)
+            
+            // when
+            await projectBoardRef.createEmptyProject()
+            
+            // then
+            let project = try #require(await projectBoardRef.projects.first)
+            await #expect(project.isExist == true)
+        }
+        
+        @Test func createProjectSourceInBudServe() async throws {
+            
+        }
+    }
+    
+    struct StartObserving {
+        let budClientRef: BudClient
+        let projectBoardRef: ProjectBoard
+        init() async {
+            self.budClientRef = await BudClient()
+            self.projectBoardRef = await getProjectBoard(budClientRef)
+        }
+        
+        @Test func getEventOfProjectCreation() async throws { }
+    }
+    
+    struct StopObserving {
+        let budClientRef: BudClient
+        let projectBoardRef: ProjectBoard
+        init() async {
+            self.budClientRef = await BudClient()
+            self.projectBoardRef = await getProjectBoard(budClientRef)
+        }
     }
 }
 

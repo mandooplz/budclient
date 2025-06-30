@@ -38,23 +38,28 @@ public final class Project: Sendable {
     
     
     // MARK: value
+    @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        
+        internal var isExist: Bool {
+            ProjectManager.container[self] != nil
+        }
+        public var ref: Project? {
+            ProjectManager.container[self]
+        }
     }
 }
 
 // MARK: Object Manager
 @MainActor
-public final class ProjectManager: Sendable {
+fileprivate final class ProjectManager: Sendable {
     // MARK: state
-    private static var container: [Project.ID: Project] = [:]
-    public static func register(_ object: Project) {
+    fileprivate static var container: [Project.ID: Project] = [:]
+    fileprivate static func register(_ object: Project) {
         container[object.id] = object
     }
-    public static func unregister(_ id: Project.ID) {
+    fileprivate static func unregister(_ id: Project.ID) {
         container[id] = nil
-    }
-    public static func get(_ id: Project.ID) -> Project? {
-        container[id]
     }
 }

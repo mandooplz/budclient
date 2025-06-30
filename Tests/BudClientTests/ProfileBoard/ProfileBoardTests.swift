@@ -101,7 +101,7 @@ struct ProfileBoardTests {
             
             // then
             for project in projects {
-                await #expect(ProjectManager.get(project) == nil)
+                await #expect(project.isExist == false)
             }
         }
         @Test func deleteProfileBoard() async throws {
