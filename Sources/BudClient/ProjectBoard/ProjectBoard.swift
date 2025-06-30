@@ -27,18 +27,56 @@ public final class ProjectBoard: Sendable {
     
     
     // MARK: state
-    public nonisolated let id: ID
+    internal nonisolated let id: ID
     internal nonisolated let mode: SystemMode
     public nonisolated let budClient: BudClient.ID
+    
     public nonisolated let userId: String
+    internal var updater: ProjectBoardUpdater.ID?
     
     public internal(set) var projects: [Project.ID] = []
+    internal var projectSourceMap: [ProjectSourceID: Project.ID] = [:]
     
     public var issue: (any Issuable)?
     
     
     // MARK: action
-    public func startObserving() async { }
+    public func setUp() {
+        // mutate
+        if self.updater != nil { return }
+        let updaterRef = ProjectBoardUpdater(mode: mode,
+                                             projectBoard: self.id)
+        self.updater = updaterRef.id
+    }
+    public func startObserving() async {
+        // capture
+        let budServerLink = budClient.ref!.budServerLink!
+        let projectHubLink = budServerLink.getProjectHub()
+        
+        // compute
+        do {
+            try await projectHubLink.setNotifier(
+                userId: userId,
+                notifier: .init(
+                    added: { projectSource in
+                        Task { @MainActor in
+                            guard let updaterRef = self.updater?.ref else { return }
+                            updaterRef.diffs.insert(.added(projectSource: projectSource))
+                            updaterRef.update()
+                        }
+                    },
+                    removed: { projectSource in
+                        Task { @MainActor in
+                            guard let updaterRef = self.updater?.ref else { return }
+                            updaterRef.diffs.insert(.removed(projectSource: projectSource))
+                            updaterRef.update()
+                        }
+                    }))
+        } catch {
+            issue = UnknownIssue(error)
+            return
+        }
+    }
     public func stopObserving() async { }
     public func createEmptyProject() async {
         // capture
@@ -50,14 +88,12 @@ public final class ProjectBoard: Sendable {
             let ticket = ProjectHubLink.Ticket(userId: userId, for: .createProjectSource)
             await projectHubLink.insertTicket(ticket)
             try await projectHubLink.processTicket()
+            
+            
         } catch {
             issue = UnknownIssue(error)
             return
         }
-        
-        // mutate
-        let projectRef = Project(mode: mode, projectBoard: id, userId: userId)
-        projects.append(projectRef.id)
     }
     
     
@@ -72,6 +108,10 @@ public final class ProjectBoard: Sendable {
         public var ref: ProjectBoard? {
             ProjectBoardManager.container[self]
         }
+    }
+    internal typealias ProjectSourceID = String
+    public enum Error: String, Swift.Error {
+        case updaterIsNotSet
     }
 }
 

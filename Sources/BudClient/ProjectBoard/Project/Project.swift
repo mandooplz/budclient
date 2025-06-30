@@ -12,11 +12,15 @@ import Tools
 @MainActor @Observable
 public final class Project: Sendable {
     // MARK: core
-    public init(mode: SystemMode, projectBoard: ProjectBoard.ID, userId: String) {
+    public init(mode: SystemMode,
+                projectBoard: ProjectBoard.ID,
+                userId: String,
+                source: String) {
         self.id = ID(value: .init())
         self.mode = mode
         self.projectBoard = projectBoard
         self.userId = userId
+        self.source = source
         
         ProjectManager.register(self)
     }
@@ -28,9 +32,10 @@ public final class Project: Sendable {
     // MARK: state
     public nonisolated let id: ID
     internal nonisolated let mode: SystemMode
-    public nonisolated let userId: String
     internal nonisolated let projectBoard: ProjectBoard.ID
     
+    public nonisolated let userId: String
+    public nonisolated let source: String
     public var name: String = "UnknownProject"
     
     

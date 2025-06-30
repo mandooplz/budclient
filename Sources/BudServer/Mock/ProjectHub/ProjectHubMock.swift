@@ -27,6 +27,8 @@ internal final class ProjectHubMock: Sendable {
     
     internal var tickets: Set<Ticket> = []
     
+    internal var handlers: [UserID: Notifier] = [:]
+    
     
     // MARK: action
     internal func processTickes() async {
@@ -36,13 +38,15 @@ internal final class ProjectHubMock: Sendable {
             case .createProjectSource:
                 let projectSourceRef = ProjectSourceMock(projectHubRef: self, userId: ticket.userId)
                 projectSources.insert(projectSourceRef.id)
+                let addHandler = handlers[ticket.userId]?.added
+                addHandler?(projectSourceRef.id.value.uuidString)
                 tickets.remove(ticket)
             }
         }
     }
     
     
-    // MARK: action
+    // MARK: value
     internal struct Ticket: Sendable, Hashable {
         let value: UUID
         let userId: String
@@ -58,5 +62,13 @@ internal final class ProjectHubMock: Sendable {
             case createProjectSource
         }
     }
+    internal struct Notifier: Sendable {
+        let added: Handler
+        let removed: Handler
+        
+        typealias Handler = @Sendable (ProjectSourceID) -> Void
+        typealias ProjectSourceID = String
+    }
+    internal typealias UserID = String
 }
 

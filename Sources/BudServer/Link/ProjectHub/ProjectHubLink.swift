@@ -49,6 +49,16 @@ package struct ProjectHubLink: Sendable {
             fatalError()
         }
     }
+    package func setNotifier(userId: UserID, notifier: Notifier) async throws {
+        switch mode {
+        case .test:
+            await BudServer.run {
+                ProjectHubMock.shared.handlers[userId] = notifier.forTest()
+            }
+        case .real:
+            fatalError()
+        }
+    }
     
     
     // MARK: value
@@ -80,4 +90,21 @@ package struct ProjectHubLink: Sendable {
             }
         }
     }
+    package struct Notifier: Sendable {
+        package let added: Handler
+        package let removed: Handler
+        
+        package init(added: @escaping Handler, removed: @escaping Handler) {
+            self.added = added
+            self.removed = removed
+        }
+        
+        package typealias Handler = @Sendable (ProjectSourceID) -> Void
+        package typealias ProjectSourceID = String
+        
+        internal func forTest() -> ProjectHubMock.Notifier {
+            .init(added: added, removed: removed)
+        }
+    }
+    package typealias UserID = String
 }

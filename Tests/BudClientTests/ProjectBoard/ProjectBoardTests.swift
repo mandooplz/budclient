@@ -12,7 +12,7 @@ import Tools
 // MARK: Tests
 @Suite("ProjectBoard")
 struct ProjectBoardTests {
-    struct CreateEmptyProject {
+    struct SetUp {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -20,44 +20,31 @@ struct ProjectBoardTests {
             self.projectBoardRef = await getProjectBoard(budClientRef)
         }
         
-        @Test func appendProject() async throws {
+        @Test func createUpdater() async throws {
             // given
-            try await #require(projectBoardRef.projects.isEmpty == true)
+            try await #require(projectBoardRef.updater == nil)
             
             // when
-            await projectBoardRef.createEmptyProject()
+            await projectBoardRef.setUp()
             
             // then
-            await #expect(projectBoardRef.projects.count == 1)
+            let updater = try #require(await projectBoardRef.updater)
+            await #expect(updater.isExist == true)
         }
-        @Test func createProject() async throws {
+        @Test func whenAlreadySetUp() async throws {
             // given
-            try await #require(projectBoardRef.projects.isEmpty == true)
+            try await #require(projectBoardRef.updater == nil)
+    
+            await projectBoardRef.setUp()
+            
+            let updater = try #require(await projectBoardRef.updater)
             
             // when
-            await projectBoardRef.createEmptyProject()
+            await projectBoardRef.setUp()
             
             // then
-            let project = try #require(await projectBoardRef.projects.first)
-            await #expect(project.isExist == true)
-        }
-        
-        @Test func createProjectSource() async throws {
-            // given
-            let budServerLink = try #require(await budClientRef.budServerLink)
-            let projectHubLink = budServerLink.getProjectHub()
-            
-            let userId = try #require(await budClientRef.profileBoard?.ref?.userId)
-            
-            let oldProjects = await projectHubLink.getMyProjectSource(userId)
-            #expect(oldProjects.isEmpty)
-            
-            // when
-            await projectBoardRef.createEmptyProject()
-            
-            // then
-            let newProjects = await projectHubLink.getMyProjectSource(userId)
-            #expect(newProjects.count == 1)
+            let newUpdater = try #require(await projectBoardRef.updater)
+            #expect(newUpdater == updater)
         }
     }
     
@@ -78,6 +65,49 @@ struct ProjectBoardTests {
         init() async {
             self.budClientRef = await BudClient()
             self.projectBoardRef = await getProjectBoard(budClientRef)
+        }
+    }
+    
+    struct CreateEmptyProject {
+        let budClientRef: BudClient
+        let projectBoardRef: ProjectBoard
+        init() async {
+            self.budClientRef = await BudClient()
+            self.projectBoardRef = await getProjectBoard(budClientRef)
+            
+            await projectBoardRef.startObserving()
+        }
+
+        // ProjectBoard.startObserving을 구현한 뒤에 테스트 작성
+        @Test(.disabled()) func appendInProjectSourceMap() async throws {
+            // given
+            try await #require(projectBoardRef.projectSourceMap.isEmpty == true)
+            
+            // when
+            await projectBoardRef.createEmptyProject()
+            
+            // then
+            let project = try #require(await projectBoardRef.projects.first)
+            let mapValues = await projectBoardRef.projectSourceMap.values
+            #expect(mapValues.contains(project) == true)
+        }
+        
+        @Test func createProjectSource() async throws {
+            // given
+            let budServerLink = try #require(await budClientRef.budServerLink)
+            let projectHubLink = budServerLink.getProjectHub()
+            
+            let userId = try #require(await budClientRef.profileBoard?.ref?.userId)
+            
+            let oldProjects = await projectHubLink.getMyProjectSource(userId)
+            #expect(oldProjects.isEmpty)
+            
+            // when
+            await projectBoardRef.createEmptyProject()
+            
+            // then
+            let newProjects = await projectHubLink.getMyProjectSource(userId)
+            #expect(newProjects.count == 1)
         }
     }
 }
