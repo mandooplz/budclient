@@ -6,7 +6,7 @@
 //
 import Foundation
 import Tools
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
 
 // MARK: Object
@@ -20,9 +20,10 @@ internal final class ProjectHub: Sendable {
     // MARK: state
     internal var tickets: Set<Ticket> = []
     internal nonisolated let id: ID = ID(value: UUID())
-    private let db = Firestore.firestore()
-    private var listener: ListenerRegistration?
+    @MainActor private let db = Firestore.firestore()
+    @MainActor private var listener: ListenerRegistration?
     
+    @MainActor
     internal func setNotifier(userId: ProjectHubLink.UserID,
                               notifier: ProjectHubLink.Notifier) {
         self.listener = db.collection("projects")
@@ -44,6 +45,7 @@ internal final class ProjectHub: Sendable {
                 }
             }
     }
+    @MainActor
     internal func removeNotifier() {
         self.listener?.remove()
         self.listener = nil
