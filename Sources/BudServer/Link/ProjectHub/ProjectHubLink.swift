@@ -58,7 +58,7 @@ package struct ProjectHubLink: Sendable {
         case .test:
             ProjectHubMock.shared.handlers[userId] = notifier.forTest()
         case .real:
-            ProjectHub.shared.setNotifier(userId: userId, notifier: notifier)
+            await ProjectHub.shared.setNotifier(userId: userId, notifier: notifier)
         }
     }
     @BudServer
@@ -67,7 +67,7 @@ package struct ProjectHubLink: Sendable {
         case .test:
             ProjectHubMock.shared.handlers[userId] = nil
         case .real:
-            ProjectHub.shared.removeNotifier()
+            await ProjectHub.shared.removeNotifier()
         }
     }
     
