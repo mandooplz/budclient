@@ -6,14 +6,12 @@
 //
 import Foundation
 import Tools
-import FirebaseFirestore
 
 
 // MARK: Link
 package struct ProjectHubLink: Sendable {
     // MARK: core
     private let mode: SystemMode
-    private var listner: ListenSource?
     init(mode: SystemMode) {
         self.mode = mode
     }
@@ -21,7 +19,7 @@ package struct ProjectHubLink: Sendable {
     
     // MARK: state
     @BudServer
-    package func getMyProjectSource(_ userId: String) async -> [ProjectSourceLink] {
+    package func getMyProjectSource(_ userId: UserID) async -> [ProjectSourceLink] {
         switch mode {
         case .test:
             ProjectHubMock.shared
@@ -42,6 +40,26 @@ package struct ProjectHubLink: Sendable {
     }
     
     
+    @BudServer
+    package func isNotifierExist(userId: UserID) async -> Bool {
+        switch mode {
+        case .test:
+            return ProjectHubMock.shared.notifiers[userId] != nil
+        case .real:
+            return await ProjectHub.shared.isNotifierExist()
+        }
+    }
+    @BudServer
+    package func setNotifier(userId: UserID, notifier: Notifier) async throws {
+        switch mode {
+        case .test:
+            ProjectHubMock.shared.notifiers[userId] = notifier.forTest()
+        case .real:
+            await ProjectHub.shared.setNotifier(userId: userId, notifier: notifier)
+        }
+    }
+    
+    
     // MARK: action
     @BudServer
     package func processTicket() async throws {
@@ -53,19 +71,10 @@ package struct ProjectHubLink: Sendable {
         }
     }
     @BudServer
-    package func setNotifier(userId: UserID, notifier: Notifier) async throws {
-        switch mode {
-        case .test:
-            ProjectHubMock.shared.handlers[userId] = notifier.forTest()
-        case .real:
-            await ProjectHub.shared.setNotifier(userId: userId, notifier: notifier)
-        }
-    }
-    @BudServer
     package func removeNotifier(userId: UserID) async throws {
         switch mode {
         case .test:
-            ProjectHubMock.shared.handlers[userId] = nil
+            ProjectHubMock.shared.notifiers[userId] = nil
         case .real:
             await ProjectHub.shared.removeNotifier()
         }
@@ -117,5 +126,4 @@ package struct ProjectHubLink: Sendable {
             .init(added: added, removed: removed)
         }
     }
-    package typealias UserID = String
 }

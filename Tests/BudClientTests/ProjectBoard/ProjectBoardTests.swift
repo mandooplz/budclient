@@ -7,13 +7,13 @@
 import Testing
 import Tools
 @testable import BudClient
+@testable import BudServer
 
 
 // MARK: Tests
-// 여기에 더 추가할 테스트는 없는가.
 @Suite("ProjectBoard", .timeLimit(.minutes(1)))
 struct ProjectBoardTests {
-    struct SetUp {
+    struct SetUpUpdater {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -64,7 +64,7 @@ struct ProjectBoardTests {
         }
     }
     
-    struct StartObserving {
+    struct SubscribeProjectHub {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -77,7 +77,7 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.startObserving(captureHook: {
+            await projectBoardRef.subscribeProjectHub(captureHook: {
                 await projectBoardRef.delete()
             })
 
@@ -86,72 +86,22 @@ struct ProjectBoardTests {
             #expect(debugIssue.reason == "projectBoardIsDeleted")
         }
         
-        @Test func whenNewProjectSourceIsAdded() async throws {
+        @Test func registerNotifierInProjectHub() async throws {
             // given
-            try await #require(projectBoardRef.projects.isEmpty)
+            let userId = projectBoardRef.userId
+            let budServerLink = try #require(await budClientRef.budServerLink)
+            let projectHubLink = budServerLink.getProjectHub()
+            try await #require(projectHubLink.isNotifierExist(userId: userId) == false)
             
             // when
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.startObserving {
-                            confirm()
-                            continuation.resume()
-                        } removeCallback: {
-                            
-                        }
-                        
-                        await projectBoardRef.createProjectSource()
-                    }
-                }
-            }
-            
+            await projectBoardRef.subscribeProjectHub()
             
             // then
-            await #expect(projectBoardRef.projects.count == 1)
-        }
-        @Test func whenTwoProjectSourceIsAdded() async throws {
-            // given
-            try await #require(projectBoardRef.projects.isEmpty)
-            
-            // when
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.startObserving {
-                            confirm()
-                            continuation.resume()
-                        } removeCallback: {
-                            
-                        }
-                        
-                        await projectBoardRef.createProjectSource()
-                    }
-                }
-            }
-            
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.startObserving {
-                            confirm()
-                            continuation.resume()
-                        } removeCallback: {
-                            
-                        }
-                        
-                        await projectBoardRef.createProjectSource()
-                    }
-                }
-            }
-            
-            
-            // then
-            await #expect(projectBoardRef.projects.count == 2)
+            await #expect(projectHubLink.isNotifierExist(userId: userId) == true)
         }
     }
     
-    struct StopObserving {
+    struct UnsubscribeProjectHub {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -159,29 +109,34 @@ struct ProjectBoardTests {
             self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
         }
         
-        @Test func whenNewProjectSourceIsAdded() async throws {
+        @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
             // given
-            try await #require(projectBoardRef.projects.isEmpty)
-            
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectBoardRef.startObserving {
-                        continuation.resume()
-                    } 
-                    
-                    await projectBoardRef.createProjectSource()
-                }
-            }
-            
-            await #expect(projectBoardRef.projects.count == 1)
+            try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.stopObserving()
+            await projectBoardRef.unsubscribeProjectHub {
+                await projectBoardRef.delete()
+            }
             
             // then
-            await projectBoardRef.createProjectSource()
+            let debugIssue = try #require(await projectBoardRef.debugIssue)
+            #expect(debugIssue.reason == "projectBoardIsDeleted")
+        }
+        
+        @Test func unregisterNotifierInProjectHub() async throws {
+            // given
+            let userId = projectBoardRef.userId
+            let budServerLink = try #require(await budClientRef.budServerLink)
+            let projectHubLink = budServerLink.getProjectHub()
             
-            await #expect(projectBoardRef.projects.count == 1)
+            await projectBoardRef.subscribeProjectHub()
+            try await #require(projectHubLink.isNotifierExist(userId: userId) == true)
+            
+            // when
+            await projectBoardRef.unsubscribeProjectHub()
+            
+            // then
+            await #expect(projectHubLink.isNotifierExist(userId: userId) == false)
         }
     }
     
@@ -192,21 +147,7 @@ struct ProjectBoardTests {
             self.budClientRef = await BudClient()
             self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
             
-            await projectBoardRef.startObserving()
-        }
-
-        // ProjectBoard.startObserving을 구현한 뒤에 테스트 작성
-        @Test(.disabled()) func appendInProjectSourceMap() async throws {
-            // given
-            try await #require(projectBoardRef.projectSourceMap.isEmpty == true)
-            
-            // when
-            await projectBoardRef.createProjectSource()
-            
-            // then
-            let project = try #require(await projectBoardRef.projects.first)
-            let mapValues = await projectBoardRef.projectSourceMap.values
-            #expect(mapValues.contains(project) == true)
+            await projectBoardRef.subscribeProjectHub()
         }
         
         @Test func createProjectSource() async throws {
@@ -225,6 +166,49 @@ struct ProjectBoardTests {
             // then
             let newProjects = await projectHubLink.getMyProjectSource(userId)
             #expect(newProjects.count == 1)
+        }
+        @Test func updateProjectsInProjectBoard() async throws {
+            // given
+            try await #require(projectBoardRef.projects.isEmpty)
+            
+            // when
+            await confirmation(expectedCount: 1) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task.detached {
+                        await projectBoardRef.subscribeProjectHub {
+                            confirm()
+                            continuation.resume()
+                        } removeCallback: {
+                            
+                        }
+                        
+                        await projectBoardRef.createProjectSource()
+                    }
+                }
+            }
+            
+            // then
+            await #expect(projectBoardRef.projects.count == 1)
+            
+            // when
+            await confirmation(expectedCount: 1) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task.detached {
+                        await projectBoardRef.subscribeProjectHub {
+                            confirm()
+                            continuation.resume()
+                        } removeCallback: {
+                            
+                        }
+                        
+                        await projectBoardRef.createProjectSource()
+                    }
+                }
+            }
+            
+            
+            // then
+            await #expect(projectBoardRef.projects.count == 2)
         }
     }
 }

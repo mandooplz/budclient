@@ -8,9 +8,6 @@ import Foundation
 import Tools
 import BudServer
 
-import os
-let logger = Logger()
-
 
 // MARK: Object
 @MainActor @Observable
@@ -63,10 +60,10 @@ public final class ProjectBoard: Sendable {
         self.updater = updaterRef.id
     }
     
-    public func startObserving() async {
-        await self.startObserving(addCallback: nil, removeCallback: nil)
+    public func subscribeProjectHub() async {
+        await self.subscribeProjectHub(addCallback: nil, removeCallback: nil)
     }
-    internal func startObserving(addCallback: Hook? = nil,
+    internal func subscribeProjectHub(addCallback: Hook? = nil,
                                  removeCallback: Hook? = nil,
                                  captureHook: Hook? = nil) async {
         // capture
@@ -82,6 +79,7 @@ public final class ProjectBoard: Sendable {
                 notifier: .init(
                     added: { projectSource in
                         Task { @MainActor in
+                            // 이를 더 간단히 작성할 방법은 없을까.
                             guard let updaterRef = self.updater?.ref else { return }
                             
                             updaterRef.diffs.insert(.added(projectSource: projectSource))
@@ -104,8 +102,13 @@ public final class ProjectBoard: Sendable {
         }
     }
     
-    public func stopObserving() async {
-        // ProjectHubLink을 통해 notifier를 삭제한다.
+    public func unsubscribeProjectHub() async {
+        await unsubscribeProjectHub(captureHook: nil)
+    }
+    internal func unsubscribeProjectHub(captureHook: Hook? = nil) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setDebugIssue(.projectBoardIsDeleted); return}
         let budServerLink = budClient.ref!.budServerLink!
         let projectHubLink = budServerLink.getProjectHub()
         

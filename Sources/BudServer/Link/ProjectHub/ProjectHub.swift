@@ -21,9 +21,12 @@ internal final class ProjectHub: Sendable {
     internal var tickets: Set<Ticket> = []
     internal nonisolated let id: ID = ID(value: UUID())
     @MainActor private let db = Firestore.firestore()
-    @MainActor private var listener: ListenerRegistration?
+    @MainActor internal var listener: ListenerRegistration?
+    @MainActor internal func isNotifierExist() async -> Bool {
+        listener != nil
+    }
     
-    @MainActor internal func setNotifier(userId: ProjectHubLink.UserID,
+    @MainActor internal func setNotifier(userId: UserID,
                               notifier: ProjectHubLink.Notifier) {
         guard listener == nil else { return }
         self.listener = db.collection("projects")

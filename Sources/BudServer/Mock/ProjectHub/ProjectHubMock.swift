@@ -27,7 +27,7 @@ internal final class ProjectHubMock: Sendable {
     
     internal var tickets: Set<Ticket> = []
     
-    internal var handlers: [UserID: Notifier] = [:]
+    internal var notifiers: [UserID: Notifier] = [:]
     
     
     // MARK: action
@@ -39,7 +39,7 @@ internal final class ProjectHubMock: Sendable {
                 let projectSourceRef = ProjectSourceMock(projectHubRef: self, userId: ticket.userId)
                 projectSources.insert(projectSourceRef.id)
                 
-                let addHandler = handlers[ticket.userId]?.added
+                let addHandler = notifiers[ticket.userId]?.added
                 addHandler?(projectSourceRef.id.value.uuidString)
                 
                 tickets.remove(ticket)
