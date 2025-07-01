@@ -26,6 +26,7 @@ internal final class ProjectHub: Sendable {
     @MainActor
     internal func setNotifier(userId: ProjectHubLink.UserID,
                               notifier: ProjectHubLink.Notifier) {
+        guard listener == nil else { return }
         self.listener = db.collection("projects")
             .whereField("userId", isEqualTo: userId)
             .addSnapshotListener { querySnapshot, error in
