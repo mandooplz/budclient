@@ -6,57 +6,68 @@
 //
 import Foundation
 import Tools
+import FirebaseFirestore
 
 
 // MARK: Link
 package struct ProjectHubLink: Sendable {
     // MARK: core
     private let mode: SystemMode
+    private var listner: ListenSource?
     init(mode: SystemMode) {
         self.mode = mode
     }
     
     
     // MARK: state
+    @BudServer
     package func getMyProjectSource(_ userId: String) async -> [ProjectSourceLink] {
         switch mode {
         case .test:
-            await ProjectHubMock.shared
+            ProjectHubMock.shared
                 .getMyProjectSources(userId: userId)
                 .map { ProjectSourceLink(mode: .test(mock: $0)) }
         case .real:
             fatalError()
         }
     }
+    @BudServer
     package func insertTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
-            await BudServer.run {
-                ProjectHubMock.shared.tickets.insert(ticket.forTest())
-            }
+            ProjectHubMock.shared.tickets.insert(ticket.forTest())
         case .real:
-            fatalError()
+            ProjectHub.shared.tickets.insert(ticket.forReal())
         }
     }
     
     
     // MARK: action
+    @BudServer
     package func processTicket() async throws {
         switch mode {
         case .test:
-            await ProjectHubMock.shared.processTickes()
+            await ProjectHubMock.shared.processTickets()
         case .real:
-            fatalError()
+            try await ProjectHub.shared.processTicket()
         }
     }
+    @BudServer
     package func setNotifier(userId: UserID, notifier: Notifier) async throws {
         switch mode {
         case .test:
-            await BudServer.run {
-                ProjectHubMock.shared.handlers[userId] = notifier.forTest()
-            }
+            ProjectHubMock.shared.handlers[userId] = notifier.forTest()
         case .real:
-            fatalError()
+            ProjectHub.shared.setNotifier(userId: userId, notifier: notifier)
+        }
+    }
+    @BudServer
+    package func removeNotifier(userId: UserID) async throws {
+        switch mode {
+        case .test:
+            ProjectHubMock.shared.handlers[userId] = nil
+        case .real:
+            ProjectHub.shared.removeNotifier()
         }
     }
     

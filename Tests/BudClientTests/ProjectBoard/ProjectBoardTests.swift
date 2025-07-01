@@ -67,6 +67,8 @@ struct ProjectBoardTests {
                         await projectBoardRef.startObserving {
                             confirm()
                             continuation.resume()
+                        } removeCallback: {
+                            
                         }
                         
                         await projectBoardRef.createEmptyProject()
@@ -89,6 +91,8 @@ struct ProjectBoardTests {
                         await projectBoardRef.startObserving {
                             confirm()
                             continuation.resume()
+                        } removeCallback: {
+                            
                         }
                         
                         await projectBoardRef.createEmptyProject()
@@ -102,6 +106,8 @@ struct ProjectBoardTests {
                         await projectBoardRef.startObserving {
                             confirm()
                             continuation.resume()
+                        } removeCallback: {
+                            
                         }
                         
                         await projectBoardRef.createEmptyProject()
@@ -127,28 +133,25 @@ struct ProjectBoardTests {
             // given
             try await #require(projectBoardRef.projects.isEmpty)
             
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.startObserving {
-                            confirm()
-                            continuation.resume()
-                        }
-                        
-                        await projectBoardRef.createEmptyProject()
-                    }
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectBoardRef.startObserving {
+                        continuation.resume()
+                    } 
+                    
+                    await projectBoardRef.createEmptyProject()
                 }
             }
             
             await #expect(projectBoardRef.projects.count == 1)
             
-//            // when
-//            await projectBoardRef.stopObserving()
-//            
-//            // then
-//            await projectBoardRef.createEmptyProject()
-//            
-//            await #expect(projectBoardRef.projects.count == 1)
+            // when
+            await projectBoardRef.stopObserving()
+            
+            // then
+            await projectBoardRef.createEmptyProject()
+            
+            await #expect(projectBoardRef.projects.count == 1)
         }
     }
     

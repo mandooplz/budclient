@@ -53,11 +53,11 @@ public final class ProjectBoard: Sendable {
         self.updater = updaterRef.id
     }
     
-    // 이를 어떻게 테스트해야 하는가.
     public func startObserving() async {
-        await self.startObserving(updateHook: nil)
+        await self.startObserving(addCallback: nil, removeCallback: nil)
     }
-    internal func startObserving(updateHook: Hook?) async {
+    internal func startObserving(addCallback: Hook? = nil,
+                                 removeCallback: Hook? = nil) async {
         // capture
         let budServerLink = budClient.ref!.budServerLink!
         let projectHubLink = budServerLink.getProjectHub()
@@ -74,7 +74,7 @@ public final class ProjectBoard: Sendable {
                             updaterRef.diffs.insert(.added(projectSource: projectSource))
                             updaterRef.update()
                             
-                            await updateHook?()
+                            await addCallback?()
                         }
                     },
                     removed: { projectSource in
@@ -82,7 +82,7 @@ public final class ProjectBoard: Sendable {
                             guard let updaterRef = self.updater?.ref else { return }
                             updaterRef.diffs.insert(.removed(projectSource: projectSource))
                             updaterRef.update()
-                            await updateHook?()
+                            await removeCallback?()
                         }
                     }))
         } catch {
@@ -92,8 +92,19 @@ public final class ProjectBoard: Sendable {
     }
     
     public func stopObserving() async {
+        // ProjectHubLink을 통해 notifier를 삭제한다.
+        let budServerLink = budClient.ref!.budServerLink!
+        let projectHubLink = budServerLink.getProjectHub()
         
+        // compute
+        do {
+            try await projectHubLink.removeNotifier(userId: userId)
+        } catch {
+            issue = UnknownIssue(error)
+            return
+        }
     }
+    
     public func createEmptyProject() async {
         // capture
         let budServerLink = budClient.ref!.budServerLink!

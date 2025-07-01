@@ -31,7 +31,7 @@ internal final class ProjectHubMock: Sendable {
     
     
     // MARK: action
-    internal func processTickes() async {
+    internal func processTickets() async {
         // mutate
         for ticket in tickets {
             switch ticket.purpose {

@@ -21,6 +21,33 @@ internal final class ProjectHub: Sendable {
     internal var tickets: Set<Ticket> = []
     internal nonisolated let id: ID = ID(value: UUID())
     private let db = Firestore.firestore()
+    private var listener: ListenerRegistration?
+    
+    internal func setNotifier(userId: ProjectHubLink.UserID,
+                              notifier: ProjectHubLink.Notifier) {
+        self.listener = db.collection("projects")
+            .whereField("userId", isEqualTo: userId)
+            .addSnapshotListener { querySnapshot, error in
+                guard let snapshot = querySnapshot else {
+                    print("Error fetching snapshots: \(error!)")
+                    return
+                }
+                snapshot.documentChanges.forEach { diff in
+                    if (diff.type == .added) {
+                        let projectSource = diff.document.documentID
+                        notifier.added(projectSource)
+                    }
+                    if (diff.type == .removed) {
+                        let projectSource = diff.document.documentID
+                        notifier.removed(projectSource)
+                    }
+                }
+            }
+    }
+    internal func removeNotifier() {
+        self.listener?.remove()
+        self.listener = nil
+    }
     
     
     // MARK: action
