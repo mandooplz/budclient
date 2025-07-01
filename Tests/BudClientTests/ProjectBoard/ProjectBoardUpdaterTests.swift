@@ -72,6 +72,6 @@ private func getUpdater(_ budClientRef: BudClient) async -> ProjectBoardUpdater 
     let projectBoard = await budClientRef.projectBoard!
     let projectBoardRef = await projectBoard.ref!
     
-    await projectBoardRef.setUp()
+    await projectBoardRef.setUpUpdater()
     return await projectBoardRef.updater!.ref!
 }

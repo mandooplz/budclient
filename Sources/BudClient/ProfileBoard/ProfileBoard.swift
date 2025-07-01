@@ -71,6 +71,7 @@ public final class ProfileBoard: Sendable {
         budClientRef.isUserSignedIn = false
         
         projectBoardRef.delete()
+        projectBoardRef.updater?.ref?.delete()
         communityRef.delete()
         self.delete()
     }

@@ -16,7 +16,6 @@ let logger = Logger()
 @MainActor @Observable
 public final class ProjectBoard: Sendable {
     // MARK: core
-    
     init(mode: SystemMode, budClient: BudClient.ID, userId: String) {
         self.id = ID(value: .init())
         self.mode = mode
@@ -43,11 +42,22 @@ public final class ProjectBoard: Sendable {
     
     public var issue: (any Issuable)?
     
+    internal var debugIssue: (any Issuable)?
+    private func setDebugIssue(_ error: Error) {
+        self.debugIssue = KnownIssue(error)
+    }
+    
     
     // MARK: action
-    public func setUp() {
+    public func setUpUpdater() async {
+        await setUpUpdater(mutateHook: nil)
+    }
+    internal func setUpUpdater(mutateHook: Hook?) async {
         // mutate
-        if self.updater != nil { return }
+        await mutateHook?()
+        guard id.isExist else { setDebugIssue(.projectBoardIsDeleted); return }
+        guard self.updater == nil else { return }
+        
         let updaterRef = ProjectBoardUpdater(mode: mode,
                                              projectBoard: self.id)
         self.updater = updaterRef.id
@@ -57,8 +67,11 @@ public final class ProjectBoard: Sendable {
         await self.startObserving(addCallback: nil, removeCallback: nil)
     }
     internal func startObserving(addCallback: Hook? = nil,
-                                 removeCallback: Hook? = nil) async {
+                                 removeCallback: Hook? = nil,
+                                 captureHook: Hook? = nil) async {
         // capture
+        await captureHook?()
+        guard id.isExist else { setDebugIssue(.projectBoardIsDeleted); return}
         let budServerLink = budClient.ref!.budServerLink!
         let projectHubLink = budServerLink.getProjectHub()
         
@@ -105,7 +118,7 @@ public final class ProjectBoard: Sendable {
         }
     }
     
-    public func createEmptyProject() async {
+    public func createProjectSource() async {
         // capture
         let budServerLink = budClient.ref!.budServerLink!
         let projectHubLink = budServerLink.getProjectHub()
@@ -136,6 +149,7 @@ public final class ProjectBoard: Sendable {
     }
     internal typealias ProjectSourceID = String
     public enum Error: String, Swift.Error {
+        case projectBoardIsDeleted
         case updaterIsNotSet
     }
 }

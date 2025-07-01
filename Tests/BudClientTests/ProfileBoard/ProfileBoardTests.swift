@@ -90,6 +90,19 @@ struct ProfileBoardTests {
             // then
             await #expect(projectBoard.isExist == false)
         }
+        @Test func deleteProjectBoardUpdater() async throws {
+            // given
+            let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
+            
+            await projectBoardRef.setUpUpdater()
+            try await #require(projectBoardRef.updater?.isExist == true)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(projectBoardRef.updater?.isExist == false)
+        }
         @Test func deleteProjectsInProjectBoard() async throws {
             // given
             let projectBoard = try #require(await budClientRef.projectBoard)

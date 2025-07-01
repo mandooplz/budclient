@@ -10,6 +10,7 @@ import Tools
 
 
 // MARK: Tests
+// 여기에 더 추가할 테스트는 없는가.
 @Suite("ProjectBoard", .timeLimit(.minutes(1)))
 struct ProjectBoardTests {
     struct SetUp {
@@ -20,12 +21,27 @@ struct ProjectBoardTests {
             self.projectBoardRef = await getProjectBoard(budClientRef)
         }
         
+        @Test func whenProjectBoardIsDeletedBeforeMutate() async throws {
+            // given
+            try await #require(projectBoardRef.id.isExist == true)
+            
+            // when
+            await projectBoardRef.setUpUpdater {
+                await projectBoardRef.delete()
+            }
+            
+            // then
+            try await #require(projectBoardRef.updater == nil)
+            let debugIssue = try #require(await projectBoardRef.debugIssue)
+            #expect(debugIssue.reason == "projectBoardIsDeleted")
+        }
+        
         @Test func createUpdater() async throws {
             // given
             try await #require(projectBoardRef.updater == nil)
             
             // when
-            await projectBoardRef.setUp()
+            await projectBoardRef.setUpUpdater()
             
             // then
             let updater = try #require(await projectBoardRef.updater)
@@ -35,12 +51,12 @@ struct ProjectBoardTests {
             // given
             try await #require(projectBoardRef.updater == nil)
     
-            await projectBoardRef.setUp()
+            await projectBoardRef.setUpUpdater()
             
             let updater = try #require(await projectBoardRef.updater)
             
             // when
-            await projectBoardRef.setUp()
+            await projectBoardRef.setUpUpdater()
             
             // then
             let newUpdater = try #require(await projectBoardRef.updater)
@@ -54,6 +70,20 @@ struct ProjectBoardTests {
         init() async {
             self.budClientRef = await BudClient()
             self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
+        }
+        
+        @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
+            // given
+            try await #require(projectBoardRef.id.isExist == true)
+            
+            // when
+            await projectBoardRef.startObserving(captureHook: {
+                await projectBoardRef.delete()
+            })
+
+            // then
+            let debugIssue = try #require(await projectBoardRef.debugIssue)
+            #expect(debugIssue.reason == "projectBoardIsDeleted")
         }
         
         @Test func whenNewProjectSourceIsAdded() async throws {
@@ -71,7 +101,7 @@ struct ProjectBoardTests {
                             
                         }
                         
-                        await projectBoardRef.createEmptyProject()
+                        await projectBoardRef.createProjectSource()
                     }
                 }
             }
@@ -95,7 +125,7 @@ struct ProjectBoardTests {
                             
                         }
                         
-                        await projectBoardRef.createEmptyProject()
+                        await projectBoardRef.createProjectSource()
                     }
                 }
             }
@@ -110,7 +140,7 @@ struct ProjectBoardTests {
                             
                         }
                         
-                        await projectBoardRef.createEmptyProject()
+                        await projectBoardRef.createProjectSource()
                     }
                 }
             }
@@ -139,7 +169,7 @@ struct ProjectBoardTests {
                         continuation.resume()
                     } 
                     
-                    await projectBoardRef.createEmptyProject()
+                    await projectBoardRef.createProjectSource()
                 }
             }
             
@@ -149,7 +179,7 @@ struct ProjectBoardTests {
             await projectBoardRef.stopObserving()
             
             // then
-            await projectBoardRef.createEmptyProject()
+            await projectBoardRef.createProjectSource()
             
             await #expect(projectBoardRef.projects.count == 1)
         }
@@ -171,7 +201,7 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.projectSourceMap.isEmpty == true)
             
             // when
-            await projectBoardRef.createEmptyProject()
+            await projectBoardRef.createProjectSource()
             
             // then
             let project = try #require(await projectBoardRef.projects.first)
@@ -190,7 +220,7 @@ struct ProjectBoardTests {
             #expect(oldProjects.isEmpty)
             
             // when
-            await projectBoardRef.createEmptyProject()
+            await projectBoardRef.createProjectSource()
             
             // then
             let newProjects = await projectHubLink.getMyProjectSource(userId)
@@ -210,7 +240,7 @@ private func getProjectBoard(_ budClientRef: BudClient) async -> ProjectBoard {
 }
 private func getProjectBoardWithSetUp(_ budClientRef: BudClient) async -> ProjectBoard {
     let projectBoardRef = await getProjectBoard(budClientRef)
-    await projectBoardRef.setUp()
+    await projectBoardRef.setUpUpdater()
     
     try! await #require(projectBoardRef.updater?.isExist == true)
     return projectBoardRef

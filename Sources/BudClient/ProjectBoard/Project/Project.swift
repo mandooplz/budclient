@@ -36,6 +36,7 @@ public final class Project: Sendable {
     
     public nonisolated let userId: String
     public nonisolated let source: String
+    
     public var name: String = "UnknownProject"
     
     
