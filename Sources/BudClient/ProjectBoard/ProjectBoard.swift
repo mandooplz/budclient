@@ -112,6 +112,7 @@ public final class ProjectBoard: Debuggable {
         }
     }
     
+    // 삭제 예정
     public func createProjectSource() async {
         await self.createProjectSource(captureHook: nil)
     }

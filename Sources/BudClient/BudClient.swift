@@ -37,7 +37,7 @@ public final class BudClient: Debuggable {
     public private(set) var budServerLink: BudServerLink?
     private nonisolated let budCacheMockRef: BudCacheMock
     internal nonisolated let budCacheLink: BudCacheLink
-        
+    
     
     internal var user: UserID? = nil
     public var isUserSignedIn: Bool { user != nil }
