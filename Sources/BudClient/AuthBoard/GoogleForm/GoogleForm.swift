@@ -12,13 +12,11 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-public final class GoogleForm: Sendable {
+public final class GoogleForm: Debuggable {
     // MARK: core
-    internal init(authBoard: AuthBoard.ID,
-                  mode: SystemMode) {
+    internal init(tempConfig: TempConfig<AuthBoard.ID>) {
         self.id = ID(value: UUID())
-        self.mode = mode
-        self.authBoard = authBoard
+        self.tempConfig = tempConfig
         
         GoogleFormManager.register(self)
     }
@@ -29,8 +27,7 @@ public final class GoogleForm: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
-    public nonisolated let authBoard: AuthBoard.ID
-    internal nonisolated let mode: SystemMode
+    public nonisolated let tempConfig: TempConfig<AuthBoard.ID>
     
     public var idToken: String?
     public var accessToken: String?
@@ -45,21 +42,20 @@ public final class GoogleForm: Sendable {
     internal func signUpAndSignIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard self.id.isExist else { return }
+        guard self.id.isExist else { setIssue(Error.googleFormIsDeleted); return }
         guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
         
-        let authBoardRef = authBoard.ref!
-        let budClientRef = authBoardRef.budClient.ref!
-        let budServerLink = budClientRef.budServerLink!
-        let budCacheLink = budClientRef.budCacheLink
+        let config = tempConfig
+        let authBoardRef = config.parent.ref!
+        let budClientRef = authBoardRef.tempConfig.parent.ref!
         
         // compute
-        let userId: String
+        let user: UserID
         do {
             // register
             async let result = {
-                let accountHubLink = budServerLink.getAccountHub()
+                let accountHubLink = config.budServerLink.getAccountHub()
                 let ticket = AccountHubLink.Ticket()
                 
                 await accountHubLink.insertGoogleTicket(ticket)
@@ -79,31 +75,34 @@ public final class GoogleForm: Sendable {
                 return try await accountHubLink.getUserId(idToken: idToken, accessToken: accessToken)
             }()
             
-            userId = try await result
+            user = try await result
             
             // save in BudCache
-            await budCacheLink.setUserId(userId)
+            await config.budCacheLink.setUser(user)
         } catch {
             self.issue = UnknownIssue(error)
             return
         }
         
+        // compute
+        let newConfig = config.getConfig(budClientRef.id, user: user)
+        
         // mutate
         await mutateHook?()
-        guard id.isExist else { return }
+        guard id.isExist else { setIssue(Error.googleFormIsDeleted); return }
         
         authBoardRef.signInForm?.ref?.signUpForm?.ref?.delete()
         authBoardRef.signInForm?.ref?.delete()
          
-        let projectBoardRef = ProjectBoard(mode: mode, budClient: budClientRef.id, userId: userId)
-        let profileBoardRef = ProfileBoard(mode: mode, budClient: budClientRef.id, userId: userId)
-        let communityRef = Community(mode: mode, budClient: budClientRef.id, userId: userId)
+        let projectBoardRef = ProjectBoard(config: newConfig)
+        let profileBoardRef = ProfileBoard(config: newConfig)
+        let communityRef = Community(config: newConfig)
         
         budClientRef.projectBoard = projectBoardRef.id
         budClientRef.profileBoard = profileBoardRef.id
         budClientRef.community = communityRef.id
         budClientRef.authBoard = nil
-        budClientRef.isUserSignedIn = true
+        budClientRef.user = user
         
         authBoardRef.signInForm = nil
         authBoardRef.delete()
@@ -126,6 +125,7 @@ public final class GoogleForm: Sendable {
     }
     public enum Error: String, Swift.Error {
         case idTokenIsNil, accessTokenIsNil
+        case googleFormIsDeleted
     }
 }
 

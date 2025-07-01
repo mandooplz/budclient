@@ -21,7 +21,7 @@ struct GoogleFormTests {
         init() async {
             self.budClientRef = await BudClient()
             self.googleFormRef = await getGoogleForm(budClientRef)
-            self.authBoardRef = await googleFormRef.authBoard.ref!
+            self.authBoardRef = await googleFormRef.tempConfig.parent.ref!
         }
         
         @Test func whenGoogleFormIsDeletedBeforeCapture() async throws {
@@ -36,7 +36,9 @@ struct GoogleFormTests {
             }
             
             // then
-            await #expect(googleFormRef.issue == nil)
+            let issue = try #require(await googleFormRef.issue)
+            #expect(issue.reason == "googleFormIsDeleted")
+            
             await #expect(budClientRef.isUserSignedIn == false)
         }
         @Test func whenGoogleFormIsDeletedBeforeMutate() async throws {
@@ -56,7 +58,9 @@ struct GoogleFormTests {
             }
             
             // then
-            await #expect(googleFormRef.issue == nil)
+            let issue = try #require(await googleFormRef.issue)
+            #expect(issue.reason == "googleFormIsDeleted")
+            
             await #expect(budClientRef.isUserSignedIn == false)
         }
         

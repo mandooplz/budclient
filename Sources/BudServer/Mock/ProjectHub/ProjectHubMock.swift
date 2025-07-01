@@ -18,52 +18,36 @@ internal final class ProjectHubMock: Sendable {
     
     // MARK: state
     internal var projectSources: Set<ProjectSourceMock.ID> = []
-    internal func getMyProjectSources(userId: String) -> [ProjectSourceMock.ID] {
+    internal func getProjectSources(user: UserID) -> [ProjectSourceMock.ID] {
         projectSources
             .compactMap { $0.ref }
-            .filter { $0.userId == userId }
+            .filter { $0.userId == user }
             .map { $0.id }
     }
     
     internal var tickets: Set<Ticket> = []
     
-    internal var notifiers: [UserID: Notifier] = [:]
+    internal var notifiers: [SystemID: Notifier] = [:]
     
     
     // MARK: action
-    internal func processTickets() async {
+    internal func createProjectSource() async {
         // mutate
         for ticket in tickets {
-            switch ticket.purpose {
-            case .createProjectSource:
-                let projectSourceRef = ProjectSourceMock(projectHubRef: self, userId: ticket.userId)
-                projectSources.insert(projectSourceRef.id)
-                
-                let addHandler = notifiers[ticket.userId]?.added
-                addHandler?(projectSourceRef.id.value.uuidString)
-                
-                tickets.remove(ticket)
-            }
+            let projectSourceRef = ProjectSourceMock(
+                projectHubRef: self,
+                userId: ticket.user)
+            projectSources.insert(projectSourceRef.id)
+            
+            let addHandler = notifiers[ticket.system]?.added
+            addHandler?(projectSourceRef.id.value.uuidString)
+            
+            tickets.remove(ticket)
         }
     }
     
     
     // MARK: value
-    internal struct Ticket: Sendable, Hashable {
-        let value: UUID
-        let userId: String
-        let purpose: Purpose
-        
-        init(userId: String, for purpose: Purpose) {
-            self.value = UUID()
-            self.userId = userId
-            self.purpose = purpose
-        }
-        
-        enum Purpose {
-            case createProjectSource
-        }
-    }
     internal struct Notifier: Sendable {
         let added: Handler
         let removed: Handler

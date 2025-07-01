@@ -38,7 +38,8 @@ struct SignUpFormTests {
             }
 
             // then
-            await #expect(signUpFormRef.issue == nil)
+            let issue = try #require(await signUpFormRef.issue)
+            #expect(issue.reason == "signUpFormIsDeleted")
         }
         @Test func whenSignUpFormIsDeletedBeforeMutate() async throws {
             // given
@@ -58,7 +59,9 @@ struct SignUpFormTests {
             }
             
             // then
-            await #expect(signUpFormRef.isConsumed == false)
+            let issue = try #require(await signUpFormRef.issue)
+            #expect(issue.reason == "signUpFormIsDeleted")
+            
             await #expect(budClientRef.isUserSignedIn == false)
         }
         
@@ -125,21 +128,6 @@ struct SignUpFormTests {
             #expect(issue.reason == "passwordsDoNotMatch")
         }
         
-        @Test func setIsConsumedToTrue() async throws {
-            // given
-            await MainActor.run {
-                signUpFormRef.email = testEmail
-                signUpFormRef.password = testPassword
-                signUpFormRef.passwordCheck = testPassword
-            }
-            
-            // when
-            await signUpFormRef.signUp()
-            
-            // then
-            try await #require(signUpFormRef.isIssueOccurred == false)
-            await #expect(signUpFormRef.isConsumed == true)
-        }
         @Test func setIsUserSignedIn() async throws {
             // given
             await MainActor.run {
@@ -178,7 +166,7 @@ struct SignUpFormTests {
                 signUpFormRef.passwordCheck = testPassword
             }
             
-            let emailForm = signUpFormRef.emailForm
+            let emailForm = signUpFormRef.tempConfig.parent
             
             // when
             await signUpFormRef.signUp()
@@ -330,7 +318,10 @@ struct SignUpFormTests {
             }
             
             // then
-            let emailFormRef = await signUpFormRef.emailForm.ref!
+            let issue = try #require(await signUpFormRef.issue)
+            #expect(issue.reason == "signUpFormIsDeleted")
+            
+            let emailFormRef = await signUpFormRef.tempConfig.parent.ref!
             await #expect(emailFormRef.signUpForm != nil)
         }
         
@@ -347,7 +338,7 @@ struct SignUpFormTests {
         }
         @Test func setNilToSignUpFormInEmailForm() async throws {
             // given
-            let emailForm = signUpFormRef.emailForm
+            let emailForm = signUpFormRef.tempConfig.parent
             let emailFormRef = try #require(await emailForm.ref)
             
             try #require(await emailFormRef.signUpForm != nil)

@@ -12,10 +12,9 @@ import Tools
 @MainActor
 internal final class ProjectBoardUpdater: Sendable {
     // MARK: core
-    internal init(mode: SystemMode, projectBoard: ProjectBoard.ID) {
+    internal init(config: Config<ProjectBoard.ID>) {
         self.id = ID(value: .init())
-        self.mode = mode
-        self.projectBoard = projectBoard
+        self.config = config
         
         ProjectBoardUpdaterManager.register(self)
     }
@@ -26,25 +25,23 @@ internal final class ProjectBoardUpdater: Sendable {
     
     // MARK: state
     internal nonisolated let id: ID
-    private nonisolated let mode: SystemMode
-    internal nonisolated let projectBoard: ProjectBoard.ID
-    
+    internal nonisolated let config: Config<ProjectBoard.ID>
+   
     internal var diffs: Set<Diff> = []
     
     
     // MARK: action
     internal func update() {
         // mutate
-        guard let projectBoardRef = projectBoard.ref else { return }
-        let map = projectBoardRef.projectSourceMap
-        let userId = projectBoardRef.userId
+        guard let projectBoardRef = config.parent.ref else { return }
+        let map = projectBoardRef.projectMap
         for diff in diffs {
             switch diff {
             case .added(let projectSource):
                 if map[projectSource] != nil { return }
-                let projectRef = Project(mode: mode,
-                                         projectBoard: projectBoard,
-                                         userId: userId,
+                let projectRef = Project(mode: config.mode,
+                                         projectBoard: config.parent,
+                                         userId: config.user,
                                          source: projectSource)
                 projectBoardRef.projects.append(projectRef.id)
                 diffs.remove(diff)

@@ -18,19 +18,20 @@ internal final class ProjectHub: Sendable {
     
     
     // MARK: state
-    internal var tickets: Set<Ticket> = []
     internal nonisolated let id: ID = ID(value: UUID())
     @MainActor private let db = Firestore.firestore()
+    
+    internal var tickets: Set<Ticket> = []
+    
     @MainActor internal var listener: ListenerRegistration?
-    @MainActor internal func isNotifierExist() async -> Bool {
+    @MainActor internal func hasNotifier() async -> Bool {
         listener != nil
     }
     
-    @MainActor internal func setNotifier(userId: UserID,
-                              notifier: ProjectHubLink.Notifier) {
+    @MainActor internal func setNotifier(ticket: Ticket, notifier: ProjectHubLink.Notifier) {
         guard listener == nil else { return }
         self.listener = db.collection("projects")
-            .whereField("userId", isEqualTo: userId)
+            .whereField("user", isEqualTo: ticket.user)
             .addSnapshotListener { querySnapshot, error in
                 guard let snapshot = querySnapshot else {
                     print("Error fetching snapshots: \(error!)")
@@ -55,16 +56,13 @@ internal final class ProjectHub: Sendable {
     
     
     // MARK: action
-    internal func processTicket() async throws {
+    internal func createProjectSource() async throws {
         for ticket in tickets {
-            switch ticket.purpose {
-            case .createProjectSource:
-                let _ = await MainActor.run {
-                    db.collection("projects").addDocument(data: [
-                        "name": "UnknownProject",
-                        "userId": ticket.userId
-                    ])
-                }
+            let _ = await MainActor.run {
+                db.collection("projects").addDocument(data: [
+                    "name": "UnknownProject",
+                    "user": ticket.user
+                ])
             }
         }
     }
@@ -73,20 +71,5 @@ internal final class ProjectHub: Sendable {
     // MARK: value
     internal struct ID: Sendable, Hashable {
         let value: UUID
-    }
-    internal struct Ticket: Sendable, Hashable {
-        let value: UUID
-        let userId: String
-        let purpose: Purpose
-        
-        init(userId: String, for purpose: Purpose) {
-            self.value = .init()
-            self.userId = userId
-            self.purpose = purpose
-        }
-        
-        enum Purpose {
-            case createProjectSource
-        }
     }
 }

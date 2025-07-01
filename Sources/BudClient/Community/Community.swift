@@ -10,13 +10,11 @@ import Tools
 
 // MARK: Object
 @MainActor @Observable
-public final class Community: Sendable {
+public final class Community: Debuggable {
     // MARK: core
-    public init(mode: SystemMode, budClient: BudClient.ID, userId: String) {
+    internal init(config: Config<BudClient.ID>) {
         self.id = ID(value: .init())
-        self.mode = mode
-        self.budCliet = budClient
-        self.userId = userId
+        self.config = config
         
         CommunityManager.register(self)
     }
@@ -27,9 +25,9 @@ public final class Community: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
-    internal nonisolated let mode: SystemMode
-    public nonisolated let budCliet: BudClient.ID
-    internal nonisolated let userId: String
+    internal nonisolated let config: Config<BudClient.ID>
+    
+    public var issue: (any Issuable)?
     
     
     

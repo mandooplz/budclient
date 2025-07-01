@@ -12,13 +12,11 @@ import BudCache
 
 // MARK: Object
 @MainActor @Observable
-public final class SignInForm: Sendable {
+public final class SignInForm: Debuggable {
     // MARK: core
-    internal init(authBoard: AuthBoard.ID,
-                  mode: SystemMode) {
+    internal init(tempConfig: TempConfig<AuthBoard.ID>) {
         self.id = ID(value: UUID())
-        self.authBoard = authBoard
-        self.mode = mode
+        self.tempConfig = tempConfig
         
         EmailFormManager.register(self)
     }
@@ -29,8 +27,7 @@ public final class SignInForm: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
-    public nonisolated let authBoard: AuthBoard.ID
-    private nonisolated let mode: SystemMode
+    public nonisolated let tempConfig: TempConfig<AuthBoard.ID>
 
     public var email: String = ""
     public var password: String = ""
@@ -39,9 +36,6 @@ public final class SignInForm: Sendable {
     public var isSetUpRequired: Bool { signUpForm == nil }
     
     public var issue: (any Issuable)?
-    public var isIssueOccurred: Bool { self.issue != nil }
-    
-    internal var issueForDebug: (any Issuable)?
     
     
     // MARK: action
@@ -52,25 +46,23 @@ public final class SignInForm: Sendable {
     internal func signInByCache(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return }
-        let authBoardRef = self.authBoard.ref!
-        let budClientRef = authBoardRef.budClient.ref!
-        let budCacheLink = budClientRef.budCacheLink
+        guard id.isExist else { setIssue(Error.deleted); return }
+        let authBoardRef = self.tempConfig.parent.ref!
+        let budClientRef = authBoardRef.tempConfig.parent.ref!
         
         // compute
         async let result = {
-            return await budCacheLink.getUserId()
+            return await tempConfig.budCacheLink.getUserId()
         }()
         guard let userId = await result else {
-            issueForDebug = KnownIssue(Error.userIdIsNilInCache)
-            return
+            setIssue(Error.userIdIsNilInCache); return
         }
         
         // mutate
         await mutateHook?()
         mutateForSignIn(budClientRef: budClientRef,
                         authBoardRef: authBoardRef,
-                        userId: userId)
+                        user: userId)
         
     }
     
@@ -80,42 +72,31 @@ public final class SignInForm: Sendable {
     internal func signIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else {
-            issueForDebug = KnownIssue(Error.deleted)
-            return
-        }
-        guard email.isNotEmpty else {
-            self.issue = KnownIssue(Error.emailIsNil)
-            return
-        }
-        guard password.isNotEmpty else {
-            self.issue = KnownIssue(Error.passwordIsNil)
-            return
-        }
+        guard id.isExist else { setIssue(Error.deleted); return }
+        guard email.isNotEmpty else { setIssue(Error.emailIsNil); return }
+        guard password.isNotEmpty else { setIssue(Error.passwordIsNil); return }
         
-        let authBoardRef = self.authBoard.ref!
-        let budClientRef = authBoardRef.budClient.ref!
-        let budServerLink = budClientRef.budServerLink!
-        let budCacheLink = budClientRef.budCacheLink
+        let authBoardRef = self.tempConfig.parent.ref!
+        let budClientRef = authBoardRef.tempConfig.parent.ref!
         
         // compute
-        let userId: String
+        let user: UserID
         do {
-            let accountHubLink = budServerLink.getAccountHub()
+            let accountHubLink = tempConfig.budServerLink.getAccountHub()
             
-            async let userIdFromServer = try await accountHubLink.getUserId(email: email,
+            async let userByServer = try await accountHubLink.getUserId(email: email,
                                                                             password: password)
-            userId = try await userIdFromServer
+            user = try await userByServer
             
-            await budCacheLink.setUserId(userId)
+            await tempConfig.budCacheLink.setUser(user)
         } catch(let error as AccountHubLink.Error) {
             switch error {
-            case .userNotFound: issue = KnownIssue(Error.userNotFound)
-            case .wrongPassword: issue = KnownIssue(Error.wrongPassword)
+            case .userNotFound: setIssue(Error.userNotFound)
+            case .wrongPassword: setIssue(Error.wrongPassword)
             }
             return
         } catch {
-            self.issue = UnknownIssue(error)
+            setUnknownIssue(error)
             return
         }
         
@@ -123,23 +104,24 @@ public final class SignInForm: Sendable {
         await mutateHook?()
         mutateForSignIn(budClientRef: budClientRef,
                         authBoardRef: authBoardRef,
-                        userId: userId)
+                        user: user)
     }
     private func mutateForSignIn(budClientRef: BudClient, authBoardRef: AuthBoard,
-                                 userId: String) {
-        guard id.isExist else { issueForDebug = KnownIssue(Error.deleted); return  }
+                                 user: String) {
+        guard id.isExist else { setIssue(Error.deleted); return  }
         guard budClientRef.isUserSignedIn == false else { return }
         let googleForm = authBoardRef.googleForm
         
-        let projectBoardRef = ProjectBoard(mode: mode, budClient: budClientRef.id, userId: userId)
-        let profileBoardRef = ProfileBoard(mode: mode, budClient: budClientRef.id, userId: userId)
-        let communityRef = Community(mode: mode, budClient: budClientRef.id, userId: userId)
+        let config = tempConfig.getConfig(budClientRef.id, user: user)
+        let projectBoardRef = ProjectBoard(config: config)
+        let profileBoardRef = ProfileBoard(config: config)
+        let communityRef = Community(config: config)
         
         budClientRef.projectBoard = projectBoardRef.id
         budClientRef.profileBoard = profileBoardRef.id
         budClientRef.community = communityRef.id
         budClientRef.authBoard = nil
-        budClientRef.isUserSignedIn = true
+        budClientRef.user = user
         
         authBoardRef.signInForm = nil
         authBoardRef.delete()
@@ -154,10 +136,12 @@ public final class SignInForm: Sendable {
     internal func setUpSignUpForm(mutateHook: Hook?) async {
         // mutate
         await mutateHook?()
-        guard id.isExist else { return }
+        guard id.isExist else { setIssue(Error.deleted); return }
         guard isSetUpRequired else { return }
         
-        let signUpFormRef = SignUpForm(emailForm: self.id, mode: self.mode)
+        let myConfig = tempConfig.setParent(self.id)
+        
+        let signUpFormRef = SignUpForm(tempConfig: myConfig)
         self.signUpForm = signUpFormRef.id
     }
     

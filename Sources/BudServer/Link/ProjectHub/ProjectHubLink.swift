@@ -19,62 +19,51 @@ package struct ProjectHubLink: Sendable {
     
     // MARK: state
     @BudServer
-    package func getMyProjectSource(_ userId: UserID) async -> [ProjectSourceLink] {
-        switch mode {
-        case .test:
-            ProjectHubMock.shared
-                .getMyProjectSources(userId: userId)
-                .map { ProjectSourceLink(mode: .test(mock: $0)) }
-        case .real:
-            fatalError()
-        }
-    }
-    @BudServer
     package func insertTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
-            ProjectHubMock.shared.tickets.insert(ticket.forTest())
+            ProjectHubMock.shared.tickets.insert(ticket)
         case .real:
-            ProjectHub.shared.tickets.insert(ticket.forReal())
+            ProjectHub.shared.tickets.insert(ticket)
         }
     }
     
     
     @BudServer
-    package func isNotifierExist(userId: UserID) async -> Bool {
+    package func hasNotifier(system: SystemID) async -> Bool {
         switch mode {
         case .test:
-            return ProjectHubMock.shared.notifiers[userId] != nil
+            return ProjectHubMock.shared.notifiers[system] != nil
         case .real:
-            return await ProjectHub.shared.isNotifierExist()
+            return await ProjectHub.shared.hasNotifier()
         }
     }
     @BudServer
-    package func setNotifier(userId: UserID, notifier: Notifier) async throws {
+    package func setNotifier(ticket: Ticket, notifier: Notifier) async throws {
         switch mode {
         case .test:
-            ProjectHubMock.shared.notifiers[userId] = notifier.forTest()
+            ProjectHubMock.shared.notifiers[ticket.system] = notifier.forTest()
         case .real:
-            await ProjectHub.shared.setNotifier(userId: userId, notifier: notifier)
+            await ProjectHub.shared.setNotifier(ticket: ticket, notifier: notifier)
         }
     }
     
     
     // MARK: action
     @BudServer
-    package func processTicket() async throws {
+    package func createProjectSource() async throws {
         switch mode {
         case .test:
-            await ProjectHubMock.shared.processTickets()
+            await ProjectHubMock.shared.createProjectSource()
         case .real:
-            try await ProjectHub.shared.processTicket()
+            try await ProjectHub.shared.createProjectSource()
         }
     }
     @BudServer
-    package func removeNotifier(userId: UserID) async throws {
+    package func removeNotifier(system: SystemID) async throws {
         switch mode {
         case .test:
-            ProjectHubMock.shared.notifiers[userId] = nil
+            ProjectHubMock.shared.notifiers[system] = nil
         case .real:
             await ProjectHub.shared.removeNotifier()
         }
@@ -82,34 +71,7 @@ package struct ProjectHubLink: Sendable {
     
     
     // MARK: value
-    package struct Ticket {
-        package let value: UUID
-        package let userId: String
-        package let purpose: Purpose
-        
-        package init(userId: String, for purpose: Purpose) {
-            self.value = .init()
-            self.userId = userId
-            self.purpose = purpose
-        }
-        
-        package enum Purpose {
-            case createProjectSource
-        }
-        
-        internal func forTest() -> ProjectHubMock.Ticket {
-            switch purpose {
-            case .createProjectSource:
-                return .init(userId: userId, for: .createProjectSource)
-            }
-        }
-        internal func forReal() -> ProjectHub.Ticket {
-            switch purpose {
-            case .createProjectSource:
-                return .init(userId: userId, for: .createProjectSource)
-            }
-        }
-    }
+    // Notifier도 수정 대상
     package struct Notifier: Sendable {
         package let added: Handler
         package let removed: Handler

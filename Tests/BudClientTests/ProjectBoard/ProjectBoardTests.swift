@@ -32,7 +32,7 @@ struct ProjectBoardTests {
             
             // then
             try await #require(projectBoardRef.updater == nil)
-            let debugIssue = try #require(await projectBoardRef.debugIssue)
+            let debugIssue = try #require(await projectBoardRef.issue)
             #expect(debugIssue.reason == "projectBoardIsDeleted")
         }
         
@@ -59,6 +59,10 @@ struct ProjectBoardTests {
             await projectBoardRef.setUpUpdater()
             
             // then
+            let debugIssue = try #require(await projectBoardRef.issue)
+            try #require(debugIssue.reason == "alreadySetUp")
+            
+            
             let newUpdater = try #require(await projectBoardRef.updater)
             #expect(newUpdater == updater)
         }
@@ -82,22 +86,22 @@ struct ProjectBoardTests {
             })
 
             // then
-            let debugIssue = try #require(await projectBoardRef.debugIssue)
+            let debugIssue = try #require(await projectBoardRef.issue)
             #expect(debugIssue.reason == "projectBoardIsDeleted")
         }
         
         @Test func registerNotifierInProjectHub() async throws {
             // given
-            let userId = projectBoardRef.userId
-            let budServerLink = try #require(await budClientRef.budServerLink)
-            let projectHubLink = budServerLink.getProjectHub()
-            try await #require(projectHubLink.isNotifierExist(userId: userId) == false)
+            let config = projectBoardRef.config
+            let projectHubLink = config.budServerLink.getProjectHub()
+            
+            try await #require(projectHubLink.hasNotifier(system: config.system) == false)
             
             // when
             await projectBoardRef.subscribeProjectHub()
             
             // then
-            await #expect(projectHubLink.isNotifierExist(userId: userId) == true)
+            await #expect(projectHubLink.hasNotifier(system: config.system) == true)
         }
     }
     
@@ -119,24 +123,23 @@ struct ProjectBoardTests {
             }
             
             // then
-            let debugIssue = try #require(await projectBoardRef.debugIssue)
+            let debugIssue = try #require(await projectBoardRef.issue)
             #expect(debugIssue.reason == "projectBoardIsDeleted")
         }
         
         @Test func unregisterNotifierInProjectHub() async throws {
             // given
-            let userId = projectBoardRef.userId
-            let budServerLink = try #require(await budClientRef.budServerLink)
-            let projectHubLink = budServerLink.getProjectHub()
+            let config = projectBoardRef.config
+            let projectHubLink = config.budServerLink.getProjectHub()
             
             await projectBoardRef.subscribeProjectHub()
-            try await #require(projectHubLink.isNotifierExist(userId: userId) == true)
+            try await #require(projectHubLink.hasNotifier(system: config.system) == true)
             
             // when
             await projectBoardRef.unsubscribeProjectHub()
             
             // then
-            await #expect(projectHubLink.isNotifierExist(userId: userId) == false)
+            await #expect(projectHubLink.hasNotifier(system: config.system) == false)
         }
     }
     
@@ -150,23 +153,6 @@ struct ProjectBoardTests {
             await projectBoardRef.subscribeProjectHub()
         }
         
-        @Test func createProjectSource() async throws {
-            // given
-            let budServerLink = try #require(await budClientRef.budServerLink)
-            let projectHubLink = budServerLink.getProjectHub()
-            
-            let userId = try #require(await budClientRef.profileBoard?.ref?.userId)
-            
-            let oldProjects = await projectHubLink.getMyProjectSource(userId)
-            #expect(oldProjects.isEmpty)
-            
-            // when
-            await projectBoardRef.createProjectSource()
-            
-            // then
-            let newProjects = await projectHubLink.getMyProjectSource(userId)
-            #expect(newProjects.count == 1)
-        }
         @Test func updateProjectsInProjectBoard() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty)

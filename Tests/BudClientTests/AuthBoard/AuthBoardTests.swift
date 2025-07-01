@@ -21,7 +21,7 @@ struct AuthBoardTests {
             self.authBoardRef = await getAuthBoard(self.budClientRef)
         }
         
-        @Test func whenAuthBoardDoesNotExist() async throws {
+        @Test func whenAuthBoardIsDeletedBeforMutate() async throws {
             // given
             try await #require(authBoardRef.id.isExist == true)
                 
@@ -31,6 +31,9 @@ struct AuthBoardTests {
             }
             
             // then
+            let issue = try #require(await authBoardRef.issue)
+            #expect(issue.reason == "authBoardIsDeleted")
+            
             await #expect(authBoardRef.signInForm == nil)
             await #expect(authBoardRef.googleForm == nil)
         }

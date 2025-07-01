@@ -11,13 +11,11 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectBoard: Sendable {
+public final class ProjectBoard: Debuggable {
     // MARK: core
-    init(mode: SystemMode, budClient: BudClient.ID, userId: String) {
+    init(config: Config<BudClient.ID>) {
         self.id = ID(value: .init())
-        self.mode = mode
-        self.budClient = budClient
-        self.userId = userId
+        self.config = config
         
         ProjectBoardManager.register(self)
     }
@@ -28,21 +26,14 @@ public final class ProjectBoard: Sendable {
     
     // MARK: state
     internal nonisolated let id: ID
-    internal nonisolated let mode: SystemMode
-    public nonisolated let budClient: BudClient.ID
+    internal nonisolated let config: Config<BudClient.ID>
     
-    public nonisolated let userId: String
     internal var updater: ProjectBoardUpdater.ID?
     
     public internal(set) var projects: [Project.ID] = []
-    internal var projectSourceMap: [ProjectSourceID: Project.ID] = [:]
+    internal var projectMap: [ProjectSourceID: Project.ID] = [:]
     
     public var issue: (any Issuable)?
-    
-    internal var debugIssue: (any Issuable)?
-    private func setDebugIssue(_ error: Error) {
-        self.debugIssue = KnownIssue(error)
-    }
     
     
     // MARK: action
@@ -52,11 +43,11 @@ public final class ProjectBoard: Sendable {
     internal func setUpUpdater(mutateHook: Hook?) async {
         // mutate
         await mutateHook?()
-        guard id.isExist else { setDebugIssue(.projectBoardIsDeleted); return }
-        guard self.updater == nil else { return }
+        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
+        guard self.updater == nil else { setIssue(Error.alreadySetUp); return }
         
-        let updaterRef = ProjectBoardUpdater(mode: mode,
-                                             projectBoard: self.id)
+        let myConfig = config.setParent(self.id)
+        let updaterRef = ProjectBoardUpdater(config: myConfig)
         self.updater = updaterRef.id
     }
     
@@ -64,22 +55,22 @@ public final class ProjectBoard: Sendable {
         await self.subscribeProjectHub(addCallback: nil, removeCallback: nil)
     }
     internal func subscribeProjectHub(addCallback: Hook? = nil,
-                                 removeCallback: Hook? = nil,
-                                 captureHook: Hook? = nil) async {
+                                      removeCallback: Hook? = nil,
+                                      captureHook: Hook? = nil) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setDebugIssue(.projectBoardIsDeleted); return}
-        let budServerLink = budClient.ref!.budServerLink!
-        let projectHubLink = budServerLink.getProjectHub()
+        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
+        let config = self.config
         
         // compute
+        async let projectHubLink = config.budServerLink.getProjectHub()
+        async let ticket = Ticket(system: config.system, user: config.user)
         do {
             try await projectHubLink.setNotifier(
-                userId: userId,
+                ticket: ticket,
                 notifier: .init(
                     added: { projectSource in
                         Task { @MainActor in
-                            // 이를 더 간단히 작성할 방법은 없을까.
                             guard let updaterRef = self.updater?.ref else { return }
                             
                             updaterRef.diffs.insert(.added(projectSource: projectSource))
@@ -108,13 +99,13 @@ public final class ProjectBoard: Sendable {
     internal func unsubscribeProjectHub(captureHook: Hook? = nil) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setDebugIssue(.projectBoardIsDeleted); return}
-        let budServerLink = budClient.ref!.budServerLink!
-        let projectHubLink = budServerLink.getProjectHub()
+        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
+        let config = config
+        let projectHubLink = config.budServerLink.getProjectHub()
         
         // compute
         do {
-            try await projectHubLink.removeNotifier(userId: userId)
+            try await projectHubLink.removeNotifier(system: config.system)
         } catch {
             issue = UnknownIssue(error)
             return
@@ -123,14 +114,14 @@ public final class ProjectBoard: Sendable {
     
     public func createProjectSource() async {
         // capture
-        let budServerLink = budClient.ref!.budServerLink!
+        let budServerLink = config.budServerLink
         let projectHubLink = budServerLink.getProjectHub()
         
         // compute
         do {
-            let ticket = ProjectHubLink.Ticket(userId: userId, for: .createProjectSource)
+            let ticket = Ticket(system: config.system, user: config.user)
             await projectHubLink.insertTicket(ticket)
-            try await projectHubLink.processTicket()
+            try await projectHubLink.createProjectSource()
         } catch {
             issue = UnknownIssue(error)
             return
@@ -153,7 +144,7 @@ public final class ProjectBoard: Sendable {
     internal typealias ProjectSourceID = String
     public enum Error: String, Swift.Error {
         case projectBoardIsDeleted
-        case updaterIsNotSet
+        case updaterIsNotSet, alreadySetUp
     }
 }
 

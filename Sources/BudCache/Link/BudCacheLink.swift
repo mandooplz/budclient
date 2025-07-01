@@ -28,7 +28,7 @@ package struct BudCacheLink: Sendable {
             return Auth.auth().currentUser?.uid
         }
     }
-    package func setUserId(_ value: String) async {
+    package func setUser(_ value: String) async {
         switch mode {
         case .test(let mockRef):
             await MainActor.run {

@@ -33,6 +33,9 @@ struct SignInFormTests {
             }
             
             // then
+            let issue = try #require(await signInFormRef.issue)
+            #expect(issue.reason == "deleted")
+            
             try await #require(signInFormRef.id.isExist == false)
             await #expect(signInFormRef.signUpForm == nil)
         }
@@ -95,9 +98,9 @@ struct SignInFormTests {
             }
 
             // then
-            let issueForDebug = try #require(await signInFormRef.issueForDebug)
-            #expect(issueForDebug.isKnown == true)
-            #expect(issueForDebug.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "deleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -113,9 +116,9 @@ struct SignInFormTests {
             }
             
             // then
-            let issueForDebug = try #require(await signInFormRef.issueForDebug)
-            #expect(issueForDebug.isKnown == true)
-            #expect(issueForDebug.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "deleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -212,7 +215,7 @@ struct SignInFormTests {
         
         @Test func deleteGoogleForm() async throws {
             // given
-            let authBoardRef = await signInFormRef.authBoard.ref!
+            let authBoardRef = await signInFormRef.tempConfig.parent.ref!
             let googleForm = await authBoardRef.googleForm!
             
             // when
@@ -233,9 +236,9 @@ struct SignInFormTests {
             await emailFormRef.signInByCache()
             
             // then
-            let issueForDebug = try #require(await emailFormRef.issueForDebug)
-            #expect(issueForDebug.isKnown == true)
-            #expect(issueForDebug.reason == "userIdIsNilInCache")
+            let issue = try #require(await emailFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "userIdIsNilInCache")
         }
     }
     
@@ -266,9 +269,9 @@ struct SignInFormTests {
             }
 
             // then
-            let issueForDebug = try #require(await signInFormRef.issueForDebug)
-            #expect(issueForDebug.isKnown == true)
-            #expect(issueForDebug.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "deleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -289,9 +292,9 @@ struct SignInFormTests {
             }
             
             // then
-            let issueForDebug = try #require(await signInFormRef.issueForDebug)
-            #expect(issueForDebug.isKnown == true)
-            #expect(issueForDebug.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue)
+            #expect(issue.isKnown == true)
+            #expect(issue.reason == "deleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -406,7 +409,7 @@ struct SignInFormTests {
         }
         @Test func deleteGoogleForm() async throws {
             // given
-            let authBoardRef = await signInFormRef.authBoard.ref!
+            let authBoardRef = await signInFormRef.tempConfig.parent.ref!
             let googleForm = await authBoardRef.googleForm!
             
             await MainActor.run {
@@ -498,7 +501,7 @@ struct SignInFormTests {
         @Test func setUserInBudCache() async throws {
             // given
             try await #require(signInFormRef.issue == nil)
-            try await #require(signInFormRef.issueForDebug == nil)
+            try await #require(signInFormRef.issue == nil)
             
             await MainActor.run {
                 signInFormRef.email = validEmail
@@ -506,7 +509,7 @@ struct SignInFormTests {
             }
             
             await signInFormRef.signInByCache()
-            try await #require(signInFormRef.issueForDebug != nil)
+            try await #require(signInFormRef.issue != nil)
             
             // when
             await signInFormRef.signIn()
@@ -568,5 +571,5 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     
     // setUserId
     let budCacheLink = budClientRef.budCacheLink
-    await budCacheLink.setUserId(userId)
+    await budCacheLink.setUser(userId)
 }

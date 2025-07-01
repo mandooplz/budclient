@@ -11,13 +11,11 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-public final class ProfileBoard: Sendable {
+public final class ProfileBoard: Debuggable {
     // MARK: core
-    internal init(mode: SystemMode, budClient: BudClient.ID, userId: String) {
+    internal init(config: Config<BudClient.ID>) {
         self.id = ID(value: UUID())
-        self.userId = userId
-        self.budClient = budClient
-        self.mode = mode
+        self.config = config
 
         ProfileBoardManager.register(self)
     }
@@ -28,11 +26,9 @@ public final class ProfileBoard: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
-    private nonisolated let mode: SystemMode
-    public nonisolated let userId: String
-    public nonisolated let budClient: BudClient.ID
+    internal nonisolated let config: Config<BudClient.ID>
     
-    public internal(set) var issue: (any Issuable)?
+    public var issue: (any Issuable)?
     
     
     // MARK: action
@@ -43,32 +39,34 @@ public final class ProfileBoard: Sendable {
         // capture
         await captureHook?()
         guard self.id.isExist else { return }
-        let budClient = self.budClient
+        let config = self.config
+        let budClient = config.parent
         let projectBoard = budClient.ref!.projectBoard
         let community = budClient.ref!.community
-        let budCacheLink = budClient.ref!.budCacheLink
         
         
         // compute
+        let tempConfig = config.getTempConfig(config.parent)
         do {
-            try await budCacheLink.resetUserId()
+            try await config.budCacheLink.resetUserId()
         } catch {
             self.issue = UnknownIssue(error)
             return
         }
+
         
         // mutate
         await mutateHook?()
         guard self.id.isExist else { return }
-        let budClientRef = self.budClient.ref!
+        let budClientRef = self.config.parent.ref!
         let projectBoardRef = projectBoard!.ref!
         let communityRef = community!.ref!
-        let authBoardRef = AuthBoard(budClient: self.budClient,
-                                     mode: self.mode)
+        let authBoardRef = AuthBoard(tempConfig: tempConfig)
+        
         budClientRef.authBoard = authBoardRef.id
         budClientRef.projectBoard = nil
         budClientRef.profileBoard = nil
-        budClientRef.isUserSignedIn = false
+        budClientRef.user = nil
         
         projectBoardRef.delete()
         projectBoardRef.updater?.ref?.delete()

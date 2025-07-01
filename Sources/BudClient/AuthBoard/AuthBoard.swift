@@ -10,13 +10,11 @@ import Tools
 
 // MARK: Object
 @MainActor @Observable
-public final class AuthBoard {
+public final class AuthBoard: Debuggable {
     // MARK: core
-    internal init(budClient: BudClient.ID,
-                  mode: SystemMode) {
+    internal init(tempConfig: TempConfig<BudClient.ID>) {
         self.id = ID(value: UUID())
-        self.budClient = budClient
-        self.mode = mode
+        self.tempConfig = tempConfig
         
         AuthBoardManager.register(self)
     }
@@ -27,8 +25,7 @@ public final class AuthBoard {
     
     // MARK: state
     public nonisolated let id: ID
-    public nonisolated let budClient: BudClient.ID
-    private nonisolated let mode: SystemMode
+    internal nonisolated let tempConfig: TempConfig<BudClient.ID>
     
     public internal(set) var signInForm: SignInForm.ID?
     public internal(set) var googleForm: GoogleForm.ID?
@@ -41,13 +38,16 @@ public final class AuthBoard {
         await setUpForms(beforeMutate: nil)
     }
     internal func setUpForms(beforeMutate: Hook?) async {
+        // compute
+        let myConfig = tempConfig.setParent(self.id)
+        
         // mutate
         await beforeMutate?()
-        guard id.isExist else { return }
-        guard signInForm == nil && googleForm == nil else { return }
+        guard id.isExist else { setIssue(Error.authBoardIsDeleted); return }
+        guard signInForm == nil && googleForm == nil else { setIssue(Error.alreadySetUp); return }
         
-        let emailFormRef = SignInForm(authBoard: id, mode: mode)
-        let googleFormRef = GoogleForm(authBoard: id, mode: mode)
+        let emailFormRef = SignInForm(tempConfig: myConfig)
+        let googleFormRef = GoogleForm(tempConfig: myConfig)
         
         self.signInForm = emailFormRef.id
         self.googleForm = googleFormRef.id
@@ -66,8 +66,9 @@ public final class AuthBoard {
             AuthBoardManager.container[self]
         }
     }
-    public typealias UserID = String
     public enum Error: String, Swift.Error {
+        case authBoardIsDeleted
+        case alreadySetUp
         case userIsNotSignedIn
     }
 }

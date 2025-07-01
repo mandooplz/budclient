@@ -20,7 +20,7 @@ struct ProjectBoardUpdaterTests {
         init() async {
             self.budClientRef = await BudClient()
             self.updaterRef = await getUpdater(budClientRef)
-            self.projectBoardRef = await updaterRef.projectBoard.ref!
+            self.projectBoardRef = await updaterRef.config.parent.ref!
         }
         
         @Test func createProjectWhenSourceAdded() async throws {

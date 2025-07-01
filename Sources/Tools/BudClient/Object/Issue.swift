@@ -7,6 +7,7 @@
 import Foundation
 
 
+
 // MARK: Issuable
 public protocol Issuable: Swift.Error, Hashable, Sendable, Identifiable {
     var id: UUID { get }
@@ -51,3 +52,24 @@ public struct UnknownIssue: Issuable {
         self.reason = reason.localizedDescription
     }
 }
+
+
+
+// MARK: Debuggable
+@MainActor
+public protocol Debuggable: AnyObject, Sendable {
+    var issue: (any Issuable)? { get set }
+}
+
+@MainActor
+public extension Debuggable {
+    var isIssueOccurred: Bool { self.issue != nil }
+    
+    func setIssue<E: RawRepresentable<String>>(_ error: E) {
+        self.issue = KnownIssue(error)
+    }
+    func setUnknownIssue(_ error: Error) {
+        self.issue = UnknownIssue(error)
+    }
+}
+
