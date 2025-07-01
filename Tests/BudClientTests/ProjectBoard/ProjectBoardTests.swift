@@ -53,12 +53,10 @@ struct ProjectBoardTests {
         let projectBoardRef: ProjectBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoard(budClientRef)
-            
-            await projectBoardRef.setUp()
+            self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
         }
         
-        @Test func getEventOfProjectCreation() async throws {
+        @Test func whenNewProjectSourceIsAdded() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty)
             
@@ -80,6 +78,41 @@ struct ProjectBoardTests {
             // then
             await #expect(projectBoardRef.projects.count == 1)
         }
+        @Test func whenTwoProjectSourceIsAdded() async throws {
+            // given
+            try await #require(projectBoardRef.projects.isEmpty)
+            
+            // when
+            await confirmation(expectedCount: 1) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task.detached {
+                        await projectBoardRef.startObserving {
+                            confirm()
+                            continuation.resume()
+                        }
+                        
+                        await projectBoardRef.createEmptyProject()
+                    }
+                }
+            }
+            
+            await confirmation(expectedCount: 1) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task.detached {
+                        await projectBoardRef.startObserving {
+                            confirm()
+                            continuation.resume()
+                        }
+                        
+                        await projectBoardRef.createEmptyProject()
+                    }
+                }
+            }
+            
+            
+            // then
+            await #expect(projectBoardRef.projects.count == 2)
+        }
     }
     
     struct StopObserving {
@@ -87,7 +120,35 @@ struct ProjectBoardTests {
         let projectBoardRef: ProjectBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoard(budClientRef)
+            self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
+        }
+        
+        @Test func whenNewProjectSourceIsAdded() async throws {
+            // given
+            try await #require(projectBoardRef.projects.isEmpty)
+            
+            await confirmation(expectedCount: 1) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task.detached {
+                        await projectBoardRef.startObserving {
+                            confirm()
+                            continuation.resume()
+                        }
+                        
+                        await projectBoardRef.createEmptyProject()
+                    }
+                }
+            }
+            
+            await #expect(projectBoardRef.projects.count == 1)
+            
+//            // when
+//            await projectBoardRef.stopObserving()
+//            
+//            // then
+//            await projectBoardRef.createEmptyProject()
+//            
+//            await #expect(projectBoardRef.projects.count == 1)
         }
     }
     
@@ -96,7 +157,7 @@ struct ProjectBoardTests {
         let projectBoardRef: ProjectBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoard(budClientRef)
+            self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
             
             await projectBoardRef.startObserving()
         }
@@ -143,4 +204,11 @@ private func getProjectBoard(_ budClientRef: BudClient) async -> ProjectBoard {
     
     let projectBoard = await budClientRef.projectBoard!
     return await projectBoard.ref!
+}
+private func getProjectBoardWithSetUp(_ budClientRef: BudClient) async -> ProjectBoard {
+    let projectBoardRef = await getProjectBoard(budClientRef)
+    await projectBoardRef.setUp()
+    
+    try! await #require(projectBoardRef.updater?.isExist == true)
+    return projectBoardRef
 }

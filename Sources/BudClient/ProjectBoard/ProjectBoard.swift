@@ -53,6 +53,7 @@ public final class ProjectBoard: Sendable {
         self.updater = updaterRef.id
     }
     
+    // 이를 어떻게 테스트해야 하는가.
     public func startObserving() async {
         await self.startObserving(updateHook: nil)
     }
@@ -90,7 +91,9 @@ public final class ProjectBoard: Sendable {
         }
     }
     
-    public func stopObserving() async { }
+    public func stopObserving() async {
+        
+    }
     public func createEmptyProject() async {
         // capture
         let budServerLink = budClient.ref!.budServerLink!
@@ -101,8 +104,6 @@ public final class ProjectBoard: Sendable {
             let ticket = ProjectHubLink.Ticket(userId: userId, for: .createProjectSource)
             await projectHubLink.insertTicket(ticket)
             try await projectHubLink.processTicket()
-            
-            
         } catch {
             issue = UnknownIssue(error)
             return
