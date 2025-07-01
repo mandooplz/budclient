@@ -58,7 +58,6 @@ internal final class AccountMock: Sendable {
             AccountMockManager.container[self]
         }
     }
-    internal typealias UserID = String
 }
 
 

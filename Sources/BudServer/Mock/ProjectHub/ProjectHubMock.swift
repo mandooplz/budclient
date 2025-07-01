@@ -55,6 +55,5 @@ internal final class ProjectHubMock: Sendable {
         typealias Handler = @Sendable (ProjectSourceID) -> Void
         typealias ProjectSourceID = String
     }
-    internal typealias UserID = String
 }
 

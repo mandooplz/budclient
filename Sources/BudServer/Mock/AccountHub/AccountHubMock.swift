@@ -30,7 +30,7 @@ internal final class AccountHubMock: Sendable {
             .compactMap { $0.ref }
             .contains { $0.idToken == idToken && $0.accessToken == accessToken }
     }
-    internal func getUserId(email: String, password: String) throws -> AccountMock.UserID {
+    internal func getUserId(email: String, password: String) throws -> UserID {
         let filtered = self.accounts.lazy
             .compactMap { $0.ref }
             .filter { $0.email == email }
@@ -45,7 +45,7 @@ internal final class AccountHubMock: Sendable {
         
         return userId
     }
-    internal func getUserId(googleIdToken: String, googleAccessToken: String) -> AccountMock.UserID? {
+    internal func getUserId(googleIdToken: String, googleAccessToken: String) -> UserID? {
         accounts.lazy
             .compactMap { $0.ref }
             .first { $0.idToken == googleIdToken && $0.accessToken == googleAccessToken }?.userId

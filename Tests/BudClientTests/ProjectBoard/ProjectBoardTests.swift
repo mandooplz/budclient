@@ -153,6 +153,22 @@ struct ProjectBoardTests {
             await projectBoardRef.subscribeProjectHub()
         }
         
+        @Test func whenProjectBoardIsDeletedBeforeCompute() async throws {
+            // given
+            try await #require(projectBoardRef.id.isExist == true)
+            
+            // when
+            await projectBoardRef.createProjectSource {
+                await projectBoardRef.delete()
+            }
+            
+            // then
+            try await #require(projectBoardRef.id.isExist == false)
+            
+            let issue = try #require(await projectBoardRef.issue)
+            #expect(issue.reason == "projectBoardIsDeleted")
+        }
+        
         @Test func updateProjectsInProjectBoard() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty)

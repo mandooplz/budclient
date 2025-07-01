@@ -113,7 +113,12 @@ public final class ProjectBoard: Debuggable {
     }
     
     public func createProjectSource() async {
+        await self.createProjectSource(captureHook: nil)
+    }
+    internal func createProjectSource(captureHook: Hook? = nil) async {
         // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
         let budServerLink = config.budServerLink
         let projectHubLink = budServerLink.getProjectHub()
         
@@ -123,7 +128,7 @@ public final class ProjectBoard: Debuggable {
             await projectHubLink.insertTicket(ticket)
             try await projectHubLink.createProjectSource()
         } catch {
-            issue = UnknownIssue(error)
+            setUnknownIssue(error)
             return
         }
     }
