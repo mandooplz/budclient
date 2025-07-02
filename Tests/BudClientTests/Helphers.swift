@@ -61,3 +61,31 @@ func signIn(_ budClietRef: BudClient) async {
         return
     }
 }
+
+
+func createAndGetProject(_ budClientRef: BudClient) async -> Project {
+    await signIn(budClientRef)
+    
+    let projectBoard = await budClientRef.projectBoard!
+    let projectBoardRef = await projectBoard.ref!
+    
+    await projectBoardRef.setUpUpdater()
+    try! await #require(projectBoardRef.updater != nil)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectBoardRef.setCallbacK {
+                continuation.resume()
+            }
+            
+            await projectBoardRef.subscribeProjectHub()
+            
+            await projectBoardRef.createProjectSource()
+        }
+    }
+    
+    try! await #require(projectBoardRef.projects.count == 1)
+    
+    let project = await projectBoardRef.projects.first!
+    return await project.ref!
+}

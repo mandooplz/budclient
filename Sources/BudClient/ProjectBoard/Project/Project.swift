@@ -6,21 +6,19 @@
 //
 import Foundation
 import Tools
+import BudServer
 
 
 // MARK: Object
 @MainActor @Observable
-public final class Project: Sendable {
+public final class Project: Debuggable {
+    
     // MARK: core
-    public init(mode: SystemMode,
-                projectBoard: ProjectBoard.ID,
-                userId: String,
-                source: String) {
+    public init(config: Config<ProjectBoard.ID>,
+                sourceLink: ProjectSourceLink) {
         self.id = ID(value: .init())
-        self.mode = mode
-        self.projectBoard = projectBoard
-        self.userId = userId
-        self.source = source
+        self.config = config
+        self.sourceLink = sourceLink
         
         ProjectManager.register(self)
     }
@@ -31,16 +29,33 @@ public final class Project: Sendable {
     
     // MARK: state
     public nonisolated let id: ID
-    internal nonisolated let mode: SystemMode
-    internal nonisolated let projectBoard: ProjectBoard.ID
+    internal nonisolated let config: Config<ProjectBoard.ID>
     
-    public nonisolated let userId: String
-    public nonisolated let source: String
+    nonisolated let sourceLink: ProjectSourceLink
     
-    public var name: String = "UnknownProject"
+    public var name: String?
+    
+    public var issue: (any Issuable)?
     
     
     // MARK: action
+    public func push() async {
+        await self.push(captureHook: nil)
+    }
+    internal func push(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+    }
+    
+    public func removeSource() async {
+        await self.removeSource(captureHook: nil)
+    }
+    internal func removeSource(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+    }
     
     
     // MARK: value
@@ -54,6 +69,9 @@ public final class Project: Sendable {
         public var ref: Project? {
             ProjectManager.container[self]
         }
+    }
+    public enum Error: String, Swift.Error {
+        case projectIsDeleted
     }
 }
 

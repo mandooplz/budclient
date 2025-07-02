@@ -6,6 +6,7 @@
 //
 import Foundation
 import Tools
+import BudServer
 
 
 // MARK: Object
@@ -39,15 +40,16 @@ internal final class ProjectBoardUpdater: Sendable {
             switch diff {
             case .added(let projectSource):
                 if map[projectSource] != nil { return }
-                let projectRef = Project(mode: config.mode,
-                                         projectBoard: config.parent,
-                                         userId: config.user,
-                                         source: projectSource)
+                let projectSourceLink = ProjectSourceLink(
+                    mode: config.mode,
+                    id: projectSource)
+                let projectRef = Project(config: config,
+                                         sourceLink: projectSourceLink)
                 projectBoardRef.projects.append(projectRef.id)
                 diffs.remove(diff)
             case .removed(let projectSource):
-                if map[projectSource] == nil { return }
                 // diff를 이용해 프로젝트 제거
+                if map[projectSource] == nil { return }
                 diffs.remove(diff)
                 fatalError()
             }

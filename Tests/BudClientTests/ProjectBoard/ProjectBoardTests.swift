@@ -173,14 +173,13 @@ struct ProjectBoardTests {
             // when
             await confirmation(expectedCount: 1) { confirm in
                 await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.subscribeProjectHub {
+                    Task {
+                        await projectBoardRef.setCallbacK {
                             confirm()
                             continuation.resume()
-                        } removeCallback: {
-                            
                         }
                         
+                        await projectBoardRef.subscribeProjectHub()
                         await projectBoardRef.createProjectSource()
                     }
                 }
@@ -193,13 +192,12 @@ struct ProjectBoardTests {
             await confirmation(expectedCount: 1) { confirm in
                 await withCheckedContinuation { continuation in
                     Task.detached {
-                        await projectBoardRef.subscribeProjectHub {
+                        await projectBoardRef.setCallbacK {
                             confirm()
                             continuation.resume()
-                        } removeCallback: {
-                            
                         }
                         
+                        await projectBoardRef.subscribeProjectHub()
                         await projectBoardRef.createProjectSource()
                     }
                 }

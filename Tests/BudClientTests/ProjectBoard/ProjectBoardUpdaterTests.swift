@@ -8,6 +8,7 @@ import Foundation
 import Testing
 import Tools
 @testable import BudClient
+import BudServer
 
 
 // MARK: Tests
@@ -41,7 +42,8 @@ struct ProjectBoardUpdaterTests {
             let project = try #require(await projectBoardRef.projects.first)
             let projectRef = try #require(await project.ref)
             
-            #expect(projectRef.source == randomProjectSource)
+            let link = ProjectSourceLink(mode: .test, id: randomProjectSource)
+            #expect(projectRef.sourceLink == link)
         }
         @Test func deleteProjectWhenSourceRemoved() async throws {
             // given

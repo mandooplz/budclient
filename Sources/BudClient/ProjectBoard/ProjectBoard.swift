@@ -11,7 +11,7 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectBoard: Debuggable {
+public final class ProjectBoard: Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<BudClient.ID>) {
         self.id = ID(value: .init())
@@ -34,6 +34,7 @@ public final class ProjectBoard: Debuggable {
     internal var projectMap: [ProjectSourceID: Project.ID] = [:]
     
     public var issue: (any Issuable)?
+    package var callback: Callback?
     
     
     // MARK: action
@@ -52,11 +53,9 @@ public final class ProjectBoard: Debuggable {
     }
     
     public func subscribeProjectHub() async {
-        await self.subscribeProjectHub(addCallback: nil, removeCallback: nil)
+        await self.subscribeProjectHub(captureHook: nil)
     }
-    internal func subscribeProjectHub(addCallback: Hook? = nil,
-                                      removeCallback: Hook? = nil,
-                                      captureHook: Hook? = nil) async {
+    internal func subscribeProjectHub(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
@@ -76,7 +75,7 @@ public final class ProjectBoard: Debuggable {
                             updaterRef.diffs.insert(.added(projectSource: projectSource))
                             updaterRef.update()
                             
-                            await addCallback?()
+                            await self.callback?()
                         }
                     },
                     removed: { projectSource in
@@ -84,7 +83,8 @@ public final class ProjectBoard: Debuggable {
                             guard let updaterRef = self.updater?.ref else { return }
                             updaterRef.diffs.insert(.removed(projectSource: projectSource))
                             updaterRef.update()
-                            await removeCallback?()
+                            
+                            await self.callback?()
                         }
                     }))
         } catch {

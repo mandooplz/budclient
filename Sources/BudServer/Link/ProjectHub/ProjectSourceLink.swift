@@ -9,38 +9,35 @@ import Tools
 
 
 // MARK: Link
-public struct ProjectSourceLink: Sendable {
+public struct ProjectSourceLink: Sendable, Hashable {
     // MARK: core
-    private let mode: Mode
-    internal init(mode: Mode) {
+    private let mode: SystemMode
+    private let id: String
+    public init(mode: SystemMode, id: String) {
         self.mode = mode
+        self.id = id
     }
     
     
     // MARK: state
+    @Server
     public func getName() async -> String {
         switch mode {
-        case .test(let mock):
-            return await mock.ref!.name
+        case .test:
+            let mock = ProjectSourceMock.ID(id)
+            return mock.ref!.name
         case .real:
             fatalError()
         }
     }
+    @Server
     public func setName(_ value: String) async {
         switch mode {
-        case .test(let mock):
-            await Server.run {
-                mock.ref?.name = value
-            }
+        case .test:
+            let mock = ProjectSourceMock.ID(id)
+            mock.ref?.name = value
         case .real:
             fatalError()
         }
-    }
-    
-    
-    // MARK: mode
-    internal enum Mode: Sendable {
-        case test(mock: ProjectSourceMock.ID)
-        case real
     }
 }

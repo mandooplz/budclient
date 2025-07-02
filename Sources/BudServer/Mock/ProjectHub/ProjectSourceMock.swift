@@ -15,7 +15,7 @@ final class ProjectSourceMock: ServerObject {
     init(projectHubRef: ProjectHubMock,
          user: String,
          name: String) {
-        self.id = ID(value: .init())
+        self.id = ID()
         self.projectHubRef = projectHubRef
         self.user = user
         self.name = name
@@ -31,9 +31,9 @@ final class ProjectSourceMock: ServerObject {
     // MARK: state
     nonisolated let id: ID
     nonisolated let projectHubRef: ProjectHubMock
+    var user: String // user
     
     var name: String
-    var user: String
     
     
     // MARK: action
@@ -43,6 +43,12 @@ final class ProjectSourceMock: ServerObject {
     @Server
     struct ID: ServerObjectID {
         let value: UUID
+        init(value: UUID = UUID()) {
+            self.value = value
+        }
+        init(_ stringValue: String) {
+            self.value = UUID(uuidString: stringValue)!
+        }
         typealias Object = ProjectSourceMock
         typealias Manager = ProjectSourceMockManager
     }
