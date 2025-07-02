@@ -11,7 +11,7 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-public final class Project: Debuggable {
+public final class Project: Debuggable, EventDebuggable {
     
     // MARK: core
     public init(config: Config<ProjectBoard.ID>,
@@ -36,6 +36,7 @@ public final class Project: Debuggable {
     public var name: String?
     
     public var issue: (any Issuable)?
+    package var callback: Callback?
     
     
     // MARK: action
@@ -46,6 +47,15 @@ public final class Project: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard let name else { setIssue(Error.nameIsNil); return}
+        
+        // compute
+        do {
+            try await sourceLink.setName(name)
+        } catch {
+            setUnknownIssue(error)
+            return
+        }
     }
     
     public func removeSource() async {
@@ -72,6 +82,7 @@ public final class Project: Debuggable {
     }
     public enum Error: String, Swift.Error {
         case projectIsDeleted
+        case nameIsNil
     }
 }
 

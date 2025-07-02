@@ -8,6 +8,7 @@ import Foundation
 import Tools
 
 
+
 // MARK: Link
 public struct ProjectSourceLink: Sendable, Hashable {
     // MARK: core
@@ -31,7 +32,7 @@ public struct ProjectSourceLink: Sendable, Hashable {
         }
     }
     @Server
-    public func setName(_ value: String) async {
+    public func setName(_ value: String) async throws {
         switch mode {
         case .test:
             let mock = ProjectSourceMock.ID(id)

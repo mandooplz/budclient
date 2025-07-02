@@ -7,6 +7,7 @@
 import Foundation
 import Testing
 @testable import BudClient
+import BudServer
 
 
 // MARK: Tests
@@ -33,9 +34,23 @@ struct ProjectTests {
             let issue = try #require(await projectRef.issue)
             #expect(issue.reason == "projectIsDeleted")
         }
+        @Test func whenNameIsNil() async throws {
+            // given
+            await MainActor.run {
+                projectRef.name = nil
+            }
+            
+            // when
+            await projectRef.push()
+            
+            // then
+            let issue = try #require(await projectRef.issue)
+            #expect(issue.reason == "nameIsNil")
+        }
         
         @Test func updateNameInProjectSource() async throws {
             // given
+            
         }
     }
     
