@@ -27,22 +27,32 @@ public final class ProjectForm: Debuggable {
     internal nonisolated let id: ID
     internal nonisolated let config: Config<ProjectBoard.ID>
     
+    public var name: String?
     
     public var issue: (any Issuable)?
     
     
-    
-    
     // MARK: action
     public func submit() async {
-        await self.submit(mutateHook: nil)
+        await self.submit(computeHook: nil)
     }
-    internal func submit(mutateHook: Hook? = nil) async {
+    internal func submit(computeHook: Hook? = nil) async {
         // capture
         
-        // mutate
-        await mutateHook?()
+        // compute
+        await computeHook?()
         guard id.isExist else { setIssue(Error.projectFormIsDeleted); return }
+        let budServerLink = config.budServerLink
+        let projectHubLink = budServerLink.getProjectHub()
+        
+        do {
+            let ticket = Ticket(system: config.system, user: config.user)
+            await projectHubLink.insertTicket(ticket)
+            try await projectHubLink.createProjectSource()
+        } catch {
+            setUnknownIssue(error)
+            return
+        }
     }
     
     
@@ -60,6 +70,7 @@ public final class ProjectForm: Debuggable {
     }
     public enum Error: String, Swift.Error {
         case projectFormIsDeleted
+        case projectNameIsNil
     }
 }
 

@@ -21,7 +21,7 @@ internal final class ProjectHubMock: Sendable {
     internal func getProjectSources(user: UserID) -> [ProjectSourceMock.ID] {
         projectSources
             .compactMap { $0.ref }
-            .filter { $0.userId == user }
+            .filter { $0.user == user }
             .map { $0.id }
     }
     

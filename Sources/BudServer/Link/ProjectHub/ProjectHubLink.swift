@@ -71,7 +71,7 @@ package struct ProjectHubLink: Sendable {
     
     
     // MARK: value
-    // Notifier도 수정 대상
+    // Notifier를 어떻게 수정할 것인가. 
     package struct Notifier: Sendable {
         package let added: Handler
         package let removed: Handler

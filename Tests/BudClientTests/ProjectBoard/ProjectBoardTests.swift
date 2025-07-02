@@ -143,22 +143,47 @@ struct ProjectBoardTests {
         }
     }
     
-    struct CreateEmptyProject {
-        let budClientRef: BudClient
+    struct CreateProjectForm {
+        let budClietRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
-            self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
-            
-            await projectBoardRef.subscribeProjectHub()
+            self.budClietRef = await BudClient()
+            self.projectBoardRef = await getProjectBoard(budClietRef)
         }
         
-        @Test func whenProjectBoardIsDeletedBeforeCompute() async throws {
+        @Test func createProjectForm() async throws {
+            // given
+            try await #require(projectBoardRef.projectForm == nil)
+            
+            // when
+            await projectBoardRef.createProjectForm()
+            
+            // then
+            
+        }
+        @Test func whenProjectFormAlreadyExist() async throws {
+            // given
+            try await #require(projectBoardRef.projectForm == nil)
+            await projectBoardRef.createProjectForm()
+            
+            let oldProjectForm = try #require(await projectBoardRef.projectForm)
+            
+            // when
+            await projectBoardRef.createProjectForm()
+            
+            // then
+            let issue = try #require(await projectBoardRef.issue)
+            #expect(issue.reason == "projectFormAlreadyExist")
+            
+            let newProjectForm = try #require(await projectBoardRef.projectForm)
+            #expect(newProjectForm == oldProjectForm)
+        }
+        @Test func whenProjectBoardIsDeletedBeforeMutate() async throws {
             // given
             try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.createProjectSource {
+            await projectBoardRef.createProjectForm {
                 await projectBoardRef.delete()
             }
             
@@ -167,50 +192,6 @@ struct ProjectBoardTests {
             
             let issue = try #require(await projectBoardRef.issue)
             #expect(issue.reason == "projectBoardIsDeleted")
-        }
-        
-        @Test func updateProjectsInProjectBoard() async throws {
-            // given
-            try await #require(projectBoardRef.projects.isEmpty)
-            
-            // when
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.subscribeProjectHub {
-                            confirm()
-                            continuation.resume()
-                        } removeCallback: {
-                            
-                        }
-                        
-                        await projectBoardRef.createProjectSource()
-                    }
-                }
-            }
-            
-            // then
-            await #expect(projectBoardRef.projects.count == 1)
-            
-            // when
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.subscribeProjectHub {
-                            confirm()
-                            continuation.resume()
-                        } removeCallback: {
-                            
-                        }
-                        
-                        await projectBoardRef.createProjectSource()
-                    }
-                }
-            }
-            
-            
-            // then
-            await #expect(projectBoardRef.projects.count == 2)
         }
     }
 }

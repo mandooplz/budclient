@@ -29,6 +29,7 @@ public final class ProjectBoard: Debuggable {
     internal nonisolated let config: Config<BudClient.ID>
     
     internal var updater: ProjectBoardUpdater.ID?
+    public var projectForm: ProjectForm.ID?
     
     public internal(set) var projects: [Project.ID] = []
     internal var projectMap: [ProjectSourceID: Project.ID] = [:]
@@ -112,26 +113,19 @@ public final class ProjectBoard: Debuggable {
         }
     }
     
-    // 삭제 예정
-    public func createProjectSource() async {
-        await self.createProjectSource(captureHook: nil)
+    
+    public func createProjectForm() async {
+        await self.createProjectForm(mutateHook: nil)
     }
-    internal func createProjectSource(captureHook: Hook? = nil) async {
-        // capture
-        await captureHook?()
+    internal func createProjectForm(mutateHook: Hook?) async {
+        // mutate
+        await mutateHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        let budServerLink = config.budServerLink
-        let projectHubLink = budServerLink.getProjectHub()
+        guard projectForm == nil else { setIssue(Error.projectFormAlreadyExist); return }
         
-        // compute
-        do {
-            let ticket = Ticket(system: config.system, user: config.user)
-            await projectHubLink.insertTicket(ticket)
-            try await projectHubLink.createProjectSource()
-        } catch {
-            setUnknownIssue(error)
-            return
-        }
+        let myCofig = config.setParent(self.id)
+        let projectFormRef = ProjectForm(config: myCofig)
+        self.projectForm = projectFormRef.id
     }
     
     
@@ -151,6 +145,7 @@ public final class ProjectBoard: Debuggable {
     public enum Error: String, Swift.Error {
         case projectBoardIsDeleted
         case updaterIsNotSet, alreadySetUp
+        case projectFormAlreadyExist
     }
 }
 

@@ -10,13 +10,13 @@ import Tools
 
 // MARK: Object
 @BudServer
-internal final class ProjectSourceMock: Sendable {
+internal final class ProjectSourceMock: BudServerObject {
     // MARK: core
     internal init(projectHubRef: ProjectHubMock,
                   userId: String) {
         self.id = ID(value: .init())
         self.projectHubRef = projectHubRef
-        self.userId = userId
+        self.user = userId
         
         ProjectSourceMockManager.register(self)
     }
@@ -31,7 +31,7 @@ internal final class ProjectSourceMock: Sendable {
     internal nonisolated let projectHubRef: ProjectHubMock
     
     internal var name: String = "UnknownProject"
-    internal var userId: String
+    internal var user: String
     
     
     // MARK: action
@@ -39,28 +39,17 @@ internal final class ProjectSourceMock: Sendable {
     
     // MARK: value
     @BudServer
-    internal struct ID: Sendable, Hashable {
+    internal struct ID: BudServerObjectID {
         let value: UUID
-        
-        var isExist: Bool {
-            ProjectSourceMockManager.container[self] != nil
-        }
-        var ref: ProjectSourceMock? {
-            ProjectSourceMockManager.container[self]
-        }
+        typealias Object = ProjectSourceMock
+        typealias Manager = ProjectSourceMockManager
     }
 }
 
 
 // MARK: Object Manager
 @BudServer
-fileprivate final class ProjectSourceMockManager: Sendable {
+internal final class ProjectSourceMockManager: BudServerObjectManager {
     // MARK: state
-    fileprivate static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
-    fileprivate static func register(_ object: ProjectSourceMock) {
-        container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: ProjectSourceMock.ID) {
-        container[id] = nil
-    }
+    internal static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
 }
