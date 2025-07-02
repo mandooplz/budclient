@@ -19,7 +19,7 @@ package struct ProjectHubLink: Sendable {
     
     // MARK: state
     @Server
-    package func insertTicket(_ ticket: Ticket) async {
+    package func insertTicket(_ ticket: ProjectTicket) async {
         switch mode {
         case .test:
             ProjectHubMock.shared.tickets.insert(ticket)

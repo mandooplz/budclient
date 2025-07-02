@@ -21,7 +21,7 @@ internal final class ProjectHub: Sendable {
     internal nonisolated let id: ID = ID(value: UUID())
     @MainActor private let db = Firestore.firestore()
     
-    internal var tickets: Set<Ticket> = []
+    internal var tickets: Set<ProjectTicket> = []
     
     @MainActor internal var listener: ListenerRegistration?
     @MainActor internal func hasNotifier() async -> Bool {
@@ -60,7 +60,7 @@ internal final class ProjectHub: Sendable {
         for ticket in tickets {
             let _ = await MainActor.run {
                 db.collection("projects").addDocument(data: [
-                    "name": "UnknownProject",
+                    "name": ticket.projectName,
                     "user": ticket.user
                 ])
             }

@@ -29,7 +29,6 @@ public final class ProjectBoard: Debuggable {
     internal nonisolated let config: Config<BudClient.ID>
     
     internal var updater: ProjectBoardUpdater.ID?
-    public var projectForm: ProjectForm.ID?
     
     public internal(set) var projects: [Project.ID] = []
     internal var projectMap: [ProjectSourceID: Project.ID] = [:]
@@ -123,10 +122,14 @@ public final class ProjectBoard: Debuggable {
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         let budServerLink = config.budServerLink
         let projectHubLink = budServerLink.getProjectHub()
+        let newProjectNumber = self.projects.count
         
         do {
-            let ticket = Ticket(system: config.system, user: config.user)
-            await projectHubLink.insertTicket(ticket)
+            let projectTicket = ProjectTicket(
+                system: config.system,
+                user: config.user,
+                projectName: "\(newProjectNumber)")
+            await projectHubLink.insertTicket(projectTicket)
             try await projectHubLink.createProjectSource()
         } catch {
             setUnknownIssue(error)

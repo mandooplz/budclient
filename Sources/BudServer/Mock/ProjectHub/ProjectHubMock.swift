@@ -27,7 +27,7 @@ final class ProjectHubMock: ServerObject {
             .map { $0.id }
     }
     
-    var tickets: Set<Ticket> = []
+    var tickets: Set<ProjectTicket> = []
     
     var notifiers: [SystemID: Notifier] = [:]
     
@@ -38,7 +38,8 @@ final class ProjectHubMock: ServerObject {
         for ticket in tickets {
             let projectSourceRef = ProjectSourceMock(
                 projectHubRef: self,
-                userId: ticket.user)
+                user: ticket.user,
+                name: ticket.projectName)
             projectSources.insert(projectSourceRef.id)
             
             let addHandler = notifiers[ticket.system]?.added

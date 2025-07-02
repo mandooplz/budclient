@@ -13,10 +13,12 @@ import Tools
 final class ProjectSourceMock: ServerObject {
     // MARK: core
     init(projectHubRef: ProjectHubMock,
-                  userId: String) {
+         user: String,
+         name: String) {
         self.id = ID(value: .init())
         self.projectHubRef = projectHubRef
-        self.user = userId
+        self.user = user
+        self.name = name
         
         ProjectSourceMockManager.register(self)
     }
@@ -30,7 +32,7 @@ final class ProjectSourceMock: ServerObject {
     nonisolated let id: ID
     nonisolated let projectHubRef: ProjectHubMock
     
-    var name: String = "UnknownProject"
+    var name: String
     var user: String
     
     
