@@ -9,22 +9,22 @@ import Foundation
 
 // MARK: BudServerObject
 @BudServer
-package protocol BudServerObject: AnyObject, Sendable {
-    associatedtype ID: BudServerObjectID where ID.Object == Self
+package protocol ServerObject: AnyObject, Sendable {
+    associatedtype ID: ServerObjectID where ID.Object == Self
     nonisolated var id: ID { get }
 }
 
 
 // MARK: BudObjectID
 @BudServer
-package protocol BudServerObjectID: Sendable, Hashable {
-    associatedtype Object: BudServerObject where Object.ID == Self
-    associatedtype Manager: BudServerObjectManager where Manager.Object == Object
+package protocol ServerObjectID: Sendable, Hashable {
+    associatedtype Object: ServerObject where Object.ID == Self
+    associatedtype Manager: ServerObjectManager where Manager.Object == Object
     var value: UUID { get }
 }
 
 @BudServer
-package extension BudServerObjectID {
+package extension ServerObjectID {
     var isExist: Bool {
         Manager.container[self] != nil
     }
@@ -37,13 +37,13 @@ package extension BudServerObjectID {
 
 // MARK: BudServerObjectManager
 @BudServer
-package protocol BudServerObjectManager: AnyObject, Sendable {
-    associatedtype Object: BudServerObject
+package protocol ServerObjectManager: AnyObject, Sendable {
+    associatedtype Object: ServerObject
     static var container: [Object.ID: Object] { get set }
 }
 
 @BudServer
-package extension BudServerObjectManager {
+package extension ServerObjectManager {
     static func register(_ object: Object) {
         container[object.id] = object
     }

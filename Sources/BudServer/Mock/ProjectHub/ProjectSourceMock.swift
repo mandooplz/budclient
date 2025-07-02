@@ -10,7 +10,7 @@ import Tools
 
 // MARK: Object
 @BudServer
-internal final class ProjectSourceMock: BudServerObject {
+internal final class ProjectSourceMock: ServerObject {
     // MARK: core
     internal init(projectHubRef: ProjectHubMock,
                   userId: String) {
@@ -39,7 +39,7 @@ internal final class ProjectSourceMock: BudServerObject {
     
     // MARK: value
     @BudServer
-    internal struct ID: BudServerObjectID {
+    internal struct ID: ServerObjectID {
         let value: UUID
         typealias Object = ProjectSourceMock
         typealias Manager = ProjectSourceMockManager
@@ -49,7 +49,7 @@ internal final class ProjectSourceMock: BudServerObject {
 
 // MARK: Object Manager
 @BudServer
-internal final class ProjectSourceMockManager: BudServerObjectManager {
+internal final class ProjectSourceMockManager: ServerObjectManager {
     // MARK: state
     internal static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
 }
