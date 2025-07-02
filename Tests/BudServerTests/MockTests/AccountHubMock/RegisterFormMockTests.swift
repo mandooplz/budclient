@@ -23,7 +23,7 @@ struct EmailRegisterFormMockTests {
             // given
             let testEmail = "test@test.com"
             let testPassword = "123456"
-            await BudServer.run {
+            await Server.run {
                 emailRegisterFormRef.email = testEmail
                 emailRegisterFormRef.password = testPassword
             }
@@ -38,7 +38,7 @@ struct EmailRegisterFormMockTests {
         
         @Test func whenEmailIsNil() async throws {
             // given
-            await BudServer.run {
+            await Server.run {
                 emailRegisterFormRef.email = nil
                 emailRegisterFormRef.password = nil
             }
@@ -54,7 +54,7 @@ struct EmailRegisterFormMockTests {
         @Test func whenPasswordIsNil() async throws {
             // given
             let testEmail = "test@test.com"
-            await BudServer.run {
+            await Server.run {
                 emailRegisterFormRef.email = testEmail
                 emailRegisterFormRef.password = nil
             }
@@ -105,7 +105,7 @@ func getRegisterFormMock() async -> EmailRegisterFormMock {
     let accountHubRef = await AccountHubMock.shared
     let newTicket = AccountHubMock.Ticket()
     
-    return await BudServer.run {
+    return await Server.run {
         accountHubRef.emailTickets.insert(newTicket)
         accountHubRef.updateEmailForms()
         

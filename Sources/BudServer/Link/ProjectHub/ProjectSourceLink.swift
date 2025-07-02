@@ -29,7 +29,7 @@ public struct ProjectSourceLink: Sendable {
     public func setName(_ value: String) async {
         switch mode {
         case .test(let mock):
-            await BudServer.run {
+            await Server.run {
                 mock.ref?.name = value
             }
         case .real:

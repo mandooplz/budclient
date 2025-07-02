@@ -18,7 +18,7 @@ package struct ProjectHubLink: Sendable {
     
     
     // MARK: state
-    @BudServer
+    @Server
     package func insertTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
@@ -29,7 +29,7 @@ package struct ProjectHubLink: Sendable {
     }
     
     
-    @BudServer
+    @Server
     package func hasNotifier(system: SystemID) async -> Bool {
         switch mode {
         case .test:
@@ -38,7 +38,7 @@ package struct ProjectHubLink: Sendable {
             return await ProjectHub.shared.hasNotifier()
         }
     }
-    @BudServer
+    @Server
     package func setNotifier(ticket: Ticket, notifier: Notifier) async throws {
         switch mode {
         case .test:
@@ -50,7 +50,7 @@ package struct ProjectHubLink: Sendable {
     
     
     // MARK: action
-    @BudServer
+    @Server
     package func createProjectSource() async throws {
         switch mode {
         case .test:
@@ -59,7 +59,7 @@ package struct ProjectHubLink: Sendable {
             try await ProjectHub.shared.createProjectSource()
         }
     }
-    @BudServer
+    @Server
     package func removeNotifier(system: SystemID) async throws {
         switch mode {
         case .test:

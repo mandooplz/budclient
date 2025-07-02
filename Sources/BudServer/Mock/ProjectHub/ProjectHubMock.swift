@@ -9,29 +9,31 @@ import Tools
 
 
 // MARK: Object
-@BudServer
-internal final class ProjectHubMock: Sendable {
+@Server
+final class ProjectHubMock: ServerObject {
     // MARK: core
-    internal static let shared = ProjectHubMock()
-    internal init() { }
+    static let shared = ProjectHubMock()
+    init() { }
     
     
     // MARK: state
-    internal var projectSources: Set<ProjectSourceMock.ID> = []
-    internal func getProjectSources(user: UserID) -> [ProjectSourceMock.ID] {
+    nonisolated let id: ID = ID(value: UUID())
+    
+    var projectSources: Set<ProjectSourceMock.ID> = []
+    func getProjectSources(user: UserID) -> [ProjectSourceMock.ID] {
         projectSources
             .compactMap { $0.ref }
             .filter { $0.user == user }
             .map { $0.id }
     }
     
-    internal var tickets: Set<Ticket> = []
+    var tickets: Set<Ticket> = []
     
-    internal var notifiers: [SystemID: Notifier] = [:]
+    var notifiers: [SystemID: Notifier] = [:]
     
     
     // MARK: action
-    internal func createProjectSource() async {
+    func createProjectSource() async {
         // mutate
         for ticket in tickets {
             let projectSourceRef = ProjectSourceMock(
@@ -48,6 +50,11 @@ internal final class ProjectHubMock: Sendable {
     
     
     // MARK: value
+    struct ID: ServerObjectID {
+        let value: UUID
+        typealias Object = ProjectHubMock
+        typealias Manager = ProjectHubMockManager
+    }
     internal struct Notifier: Sendable {
         let added: Handler
         let removed: Handler
@@ -57,3 +64,9 @@ internal final class ProjectHubMock: Sendable {
     }
 }
 
+
+// MARK: ObjectManager
+@Server
+final class ProjectHubMockManager: ServerObjectManager {
+    static var container: [ProjectHubMock.ID : ProjectHubMock] = [:]
+}

@@ -9,10 +9,10 @@ import Tools
 
 
 // MARK: Object
-@BudServer
-internal final class ProjectSourceMock: ServerObject {
+@Server
+final class ProjectSourceMock: ServerObject {
     // MARK: core
-    internal init(projectHubRef: ProjectHubMock,
+    init(projectHubRef: ProjectHubMock,
                   userId: String) {
         self.id = ID(value: .init())
         self.projectHubRef = projectHubRef
@@ -20,26 +20,26 @@ internal final class ProjectSourceMock: ServerObject {
         
         ProjectSourceMockManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         ProjectSourceMockManager.unregister(self.id)
     }
     
     
     
     // MARK: state
-    internal nonisolated let id: ID
-    internal nonisolated let projectHubRef: ProjectHubMock
+    nonisolated let id: ID
+    nonisolated let projectHubRef: ProjectHubMock
     
-    internal var name: String = "UnknownProject"
-    internal var user: String
+    var name: String = "UnknownProject"
+    var user: String
     
     
     // MARK: action
     
     
     // MARK: value
-    @BudServer
-    internal struct ID: ServerObjectID {
+    @Server
+    struct ID: ServerObjectID {
         let value: UUID
         typealias Object = ProjectSourceMock
         typealias Manager = ProjectSourceMockManager
@@ -48,8 +48,8 @@ internal final class ProjectSourceMock: ServerObject {
 
 
 // MARK: Object Manager
-@BudServer
-internal final class ProjectSourceMockManager: ServerObjectManager {
+@Server
+final class ProjectSourceMockManager: ServerObjectManager {
     // MARK: state
-    internal static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
+    static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
 }

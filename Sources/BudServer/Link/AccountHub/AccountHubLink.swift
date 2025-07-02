@@ -69,11 +69,11 @@ package struct AccountHubLink: Sendable {
     package func insertEmailTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 AccountHubMock.shared.emailTickets.insert(ticket.forMock)
             }
         case .real:
-            await BudServer.run {
+            await Server.run {
                 AccountHub.shared.emailTickets.insert(ticket.forReal)
             }
         }
@@ -81,14 +81,14 @@ package struct AccountHubLink: Sendable {
     package func getEmailRegisterForm(_ ticket: Ticket) async -> EmailRegisterFormLink? {
         switch mode {
         case .test:
-            let emailRegisterForm = await BudServer.run {
+            let emailRegisterForm = await Server.run {
                 AccountHubMock.shared.emailRegisterForms[ticket.forMock]
             }
             guard let emailRegisterForm else { return nil }
             return .init(mode: .test(mock: emailRegisterForm))
             
         case .real:
-            let emailRegisterForm = await BudServer.run {
+            let emailRegisterForm = await Server.run {
                 AccountHub.shared.emailRegisterForms[ticket.forReal]
             }
             guard let emailRegisterForm else { return nil }
@@ -99,11 +99,11 @@ package struct AccountHubLink: Sendable {
     package func insertGoogleTicket(_ ticket: Ticket) async {
         switch mode {
         case .test:
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 AccountHubMock.shared.googleTickets.insert(ticket.forMock)
             }
         case .real:
-            await BudServer.run {
+            await Server.run {
                 AccountHub.shared.googleTickets.insert(ticket.forReal)
             }
         }
@@ -111,14 +111,14 @@ package struct AccountHubLink: Sendable {
     package func getGoogleRegisterForm(_ ticket: Ticket) async -> GoogleRegisterFormLink? {
         switch mode {
         case .test:
-            return await BudServer.run {
+            return await Server.run {
                 guard let googleRegisterForm = AccountHubMock.shared.googleRegisterForms[ticket.forMock] else {
                     return nil
                 }
                 return .init(mode: .test(mock: googleRegisterForm))
             }
         case .real:
-            return await BudServer.run {
+            return await Server.run {
                 guard let googleRegisterForm = AccountHub.shared.googleRegisterForms[ticket.forReal] else {
                     return nil
                 }

@@ -21,11 +21,11 @@ package struct EmailRegisterFormLink: Sendable {
     package func setEmail(_ value: String) async {
         switch mode {
         case .test(let mock):
-            await BudServer.run {
+            await Server.run {
                 mock.ref?.email = value
             }
         case .real(let object):
-            await BudServer.run {
+            await Server.run {
                 object.ref?.email = value
             }
         }
@@ -33,11 +33,11 @@ package struct EmailRegisterFormLink: Sendable {
     package func setPassword(_ value: String) async {
         switch mode {
         case .test(let mock):
-            await BudServer.run {
+            await Server.run {
                 mock.ref?.password = value
             }
         case .real(let object):
-            await BudServer.run {
+            await Server.run {
                 object.ref?.password = value
             }
         }

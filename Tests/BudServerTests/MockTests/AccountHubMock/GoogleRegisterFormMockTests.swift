@@ -23,7 +23,7 @@ struct GoogleRegisterFormMockTests {
         
         @Test func whenIdTokenIsNil() async throws {
             // given
-            await BudServer.run {
+            await Server.run {
                 googleRegisterFormRef.idToken = nil
             }
             
@@ -37,7 +37,7 @@ struct GoogleRegisterFormMockTests {
         }
         @Test func whenAccessTokenIsNil() async throws {
             // given
-            await BudServer.run {
+            await Server.run {
                 googleRegisterFormRef.idToken = "sampleIdToken"
                 googleRegisterFormRef.accessToken = nil
             }
@@ -55,7 +55,7 @@ struct GoogleRegisterFormMockTests {
             // given
             let idToken = Token.random().value
             let accessToken = Token.random().value
-            await BudServer.run {
+            await Server.run {
                 googleRegisterFormRef.idToken = idToken
                 googleRegisterFormRef.accessToken = accessToken
             }
@@ -73,7 +73,7 @@ struct GoogleRegisterFormMockTests {
             // given
             let idToken = Token.random().value
             let accessToken = Token.random().value
-            await BudServer.run {
+            await Server.run {
                 googleRegisterFormRef.idToken = idToken
                 googleRegisterFormRef.accessToken = accessToken
             }
@@ -84,7 +84,7 @@ struct GoogleRegisterFormMockTests {
             // then
             try await #require(googleRegisterFormRef.issue == nil)
             
-            let accountRef = await BudServer.run {
+            let accountRef = await Server.run {
                 accountHubRef.accounts.lazy
                     .compactMap { $0.ref }
                     .first { $0.idToken == idToken && $0.accessToken == accessToken }
@@ -107,7 +107,7 @@ struct GoogleRegisterFormMockTests {
 private func getGoogleRegisterForm(_ accountHubRef: AccountHubMock) async -> GoogleRegisterFormMock {
     let ticket = AccountHubMock.Ticket()
     
-    await BudServer.run {
+    await Server.run {
         accountHubRef.googleTickets.insert(ticket)
         accountHubRef.updateGoogleForms()
     }

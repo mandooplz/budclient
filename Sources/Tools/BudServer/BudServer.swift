@@ -7,12 +7,12 @@
 
 
 // MARK: Server
-@globalActor public final actor BudServer {
-    public static let shared = BudServer()
+@globalActor public final actor Server {
+    public static let shared = Server()
     
     @discardableResult
-    @BudServer public static func run<T>(resultType: T.Type = T.self,
-                                                  body: @BudServer () async throws -> T)
+    @Server public static func run<T>(resultType: T.Type = T.self,
+                                                  body: @Server () async throws -> T)
     async rethrows -> T where T:Sendable {
         try await body()
     }

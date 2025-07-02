@@ -37,7 +37,7 @@ struct AccountHubMockTests {
             let testPasssword = UUID().uuidString
             let accountRef = await AccountMock(email: testEmail,
                                            password: testPasssword)
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.accounts.insert(accountRef.id)
             }
             
@@ -61,7 +61,7 @@ struct AccountHubMockTests {
             let testPasssword = UUID().uuidString
             let accountRef = await AccountMock(email: testEmail,
                                            password: testPasssword)
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.accounts.insert(accountRef.id)
             }
             
@@ -89,7 +89,7 @@ struct AccountHubMockTests {
             let testPasssword = UUID().uuidString
             let accountRef = await AccountMock(email: testEmail,
                                            password: testPasssword)
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.accounts.insert(accountRef.id)
             }
             
@@ -119,7 +119,7 @@ struct AccountHubMockTests {
         @Test func removeTicket() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.emailTickets.insert(ticket)
             }
             
@@ -132,7 +132,7 @@ struct AccountHubMockTests {
         @Test func appendEmailRegisterForm() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.emailTickets.insert(ticket)
             }
             
@@ -145,7 +145,7 @@ struct AccountHubMockTests {
         @Test func createEmailRegisterForm() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.emailTickets.insert(ticket)
             }
             
@@ -167,7 +167,7 @@ struct AccountHubMockTests {
         @Test func removeTicket() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.googleTickets.insert(ticket)
             }
             
@@ -180,7 +180,7 @@ struct AccountHubMockTests {
         @Test func appendGoogleRegisterForm() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.googleTickets.insert(ticket)
             }
             
@@ -193,7 +193,7 @@ struct AccountHubMockTests {
         @Test func createGoogleRegisterForm() async throws {
             // given
             let ticket = AccountHubMock.Ticket()
-            let _ = await BudServer.run {
+            let _ = await Server.run {
                 accountHubRef.googleTickets.insert(ticket)
             }
             

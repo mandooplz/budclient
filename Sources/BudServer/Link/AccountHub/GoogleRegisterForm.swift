@@ -10,7 +10,7 @@ import FirebaseAuth
 
 
 // MARK: Object
-@BudServer
+@Server
 internal final class GoogleRegisterForm: Sendable {
     // MARK: core
     internal init(accountHubRef: AccountHub,
@@ -60,7 +60,7 @@ internal final class GoogleRegisterForm: Sendable {
     
     
     // MARK: value
-    @BudServer
+    @Server
     internal struct ID: Sendable, Hashable {
         internal let value: UUID
         
@@ -79,7 +79,7 @@ internal final class GoogleRegisterForm: Sendable {
 
 
 // MARK: Object Manager
-@BudServer
+@Server
 fileprivate final class GoogleRegisterFormManager: Sendable {
     // MARK: state
     fileprivate static var container: [GoogleRegisterForm.ID: GoogleRegisterForm] = [:]

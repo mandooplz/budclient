@@ -22,11 +22,11 @@ package struct GoogleRegisterFormLink: Sendable {
     package func setIdToken(_ value: String) async {
         switch mode {
         case .test(let mock):
-            await BudServer.run {
+            await Server.run {
                 mock.ref?.idToken = value
             }
         case .real(let object):
-            await BudServer.run {
+            await Server.run {
                 object.ref?.idToken = value
             }
         }
@@ -34,11 +34,11 @@ package struct GoogleRegisterFormLink: Sendable {
     package func setAccessToken(_ value: String) async {
         switch mode {
         case .test(let mock):
-            await BudServer.run {
+            await Server.run {
                 mock.ref?.accessToken = value
             }
         case .real(let object):
-            await BudServer.run {
+            await Server.run {
                 object.ref?.accessToken = value
             }
         }

@@ -10,7 +10,7 @@ import FirebaseFirestore
 
 
 // MARK: Object
-@BudServer
+@Server
 internal final class ProjectHub: Sendable {
     // MARK: core
     internal static let shared = ProjectHub()

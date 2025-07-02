@@ -10,7 +10,7 @@ import FirebaseAuth
 
 
 // MARK: Object
-@BudServer
+@Server
 internal final class AccountHub {
     // MARK: core
     internal static let shared = AccountHub()

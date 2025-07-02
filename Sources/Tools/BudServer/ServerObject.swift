@@ -8,7 +8,7 @@ import Foundation
 
 
 // MARK: BudServerObject
-@BudServer
+@Server
 package protocol ServerObject: AnyObject, Sendable {
     associatedtype ID: ServerObjectID where ID.Object == Self
     nonisolated var id: ID { get }
@@ -16,14 +16,14 @@ package protocol ServerObject: AnyObject, Sendable {
 
 
 // MARK: BudObjectID
-@BudServer
+@Server
 package protocol ServerObjectID: Sendable, Hashable {
     associatedtype Object: ServerObject where Object.ID == Self
     associatedtype Manager: ServerObjectManager where Manager.Object == Object
     var value: UUID { get }
 }
 
-@BudServer
+@Server
 package extension ServerObjectID {
     var isExist: Bool {
         Manager.container[self] != nil
@@ -36,13 +36,13 @@ package extension ServerObjectID {
 
 
 // MARK: BudServerObjectManager
-@BudServer
+@Server
 package protocol ServerObjectManager: AnyObject, Sendable {
     associatedtype Object: ServerObject
     static var container: [Object.ID: Object] { get set }
 }
 
-@BudServer
+@Server
 package extension ServerObjectManager {
     static func register(_ object: Object) {
         container[object.id] = object

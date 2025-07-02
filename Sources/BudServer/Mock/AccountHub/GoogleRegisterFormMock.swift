@@ -10,7 +10,7 @@ import CryptoKit
 
 
 // MARK: Object
-@BudServer
+@Server
 internal final class GoogleRegisterFormMock: Sendable {
     // MARK: core
     internal init(accountHub: AccountHubMock,
@@ -56,7 +56,7 @@ internal final class GoogleRegisterFormMock: Sendable {
     
     
     // MARK: value
-    @BudServer
+    @Server
     internal struct ID: Sendable, Hashable {
         let value: UUID
         
@@ -88,7 +88,7 @@ internal final class GoogleRegisterFormMock: Sendable {
 
 
 // MARK: Object Manager
-@BudServer
+@Server
 fileprivate final class GoogleRegisterFormMockManager: Sendable {
     fileprivate static var container: [GoogleRegisterFormMock.ID: GoogleRegisterFormMock] = [:]
     fileprivate static func register(_ object: GoogleRegisterFormMock) {
