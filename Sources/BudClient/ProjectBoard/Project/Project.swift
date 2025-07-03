@@ -29,7 +29,7 @@ public final class Project: Debuggable, EventDebuggable {
     
     // MARK: state
     public nonisolated let id: ID
-    internal nonisolated let config: Config<ProjectBoard.ID>
+    public nonisolated let config: Config<ProjectBoard.ID>
     
     nonisolated let sourceLink: ProjectSourceLink
     

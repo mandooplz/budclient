@@ -25,7 +25,7 @@ public final class AuthBoard: Debuggable {
     
     // MARK: state
     public nonisolated let id: ID
-    internal nonisolated let tempConfig: TempConfig<BudClient.ID>
+    public nonisolated let tempConfig: TempConfig<BudClient.ID>
     
     public internal(set) var signInForm: SignInForm.ID?
     public internal(set) var googleForm: GoogleForm.ID?

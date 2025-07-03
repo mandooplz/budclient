@@ -25,8 +25,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     
     // MARK: state
-    internal nonisolated let id: ID
-    internal nonisolated let config: Config<BudClient.ID>
+    public nonisolated let id: ID
+    public nonisolated let config: Config<BudClient.ID>
     
     internal var updater: ProjectBoardUpdater.ID?
     

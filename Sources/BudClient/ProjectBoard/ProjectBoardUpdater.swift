@@ -12,7 +12,7 @@ import Collections
 
 // MARK: Object
 @MainActor @Observable
-internal final class ProjectBoardUpdater: Debuggable {
+public final class ProjectBoardUpdater: Debuggable {
     // MARK: core
     init(config: Config<ProjectBoard.ID>) {
         self.id = ID(value: .init())
@@ -26,12 +26,12 @@ internal final class ProjectBoardUpdater: Debuggable {
     
     
     // MARK: state
-    nonisolated let id: ID
-    nonisolated let config: Config<ProjectBoard.ID>
+    public nonisolated let id: ID
+    public nonisolated let config: Config<ProjectBoard.ID>
    
     var eventQueue: Deque<ProjectHubEvent> = []
     
-    var issue: (any Issuable)?
+    public var issue: (any Issuable)?
     
     
     // MARK: action
@@ -78,12 +78,12 @@ internal final class ProjectBoardUpdater: Debuggable {
     
     // MARK: value
     @MainActor
-    internal struct ID: Sendable, Hashable {
-        let value: UUID
+    public struct ID: Sendable, Hashable {
+        public let value: UUID
         var isExist: Bool {
             ProjectBoardUpdaterManager.container[self] != nil
         }
-        var ref: ProjectBoardUpdater? {
+        public var ref: ProjectBoardUpdater? {
             ProjectBoardUpdaterManager.container[self]
         }
     }

@@ -25,7 +25,7 @@ public final class Community: Debuggable {
     
     // MARK: state
     public nonisolated let id: ID
-    internal nonisolated let config: Config<BudClient.ID>
+    public nonisolated let config: Config<BudClient.ID>
     
     public var issue: (any Issuable)?
     
