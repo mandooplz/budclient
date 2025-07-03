@@ -29,7 +29,7 @@ final class ProjectHubMock: ServerObject {
     
     var tickets: Set<ProjectTicket> = []
     
-    var eventHandlers: [SystemID: EventHandler] = [:]
+    var eventHandlers: [SystemID: Handler<ProjectHubEvent>] = [:]
     
     
     // MARK: action
@@ -40,10 +40,11 @@ final class ProjectHubMock: ServerObject {
                 projectHubRef: self,
                 user: ticket.user,
                 name: ticket.projectName)
+            let projectSource = projectSourceRef.id.value.uuidString
             projectSources.insert(projectSourceRef.id)
             
             let eventHandler = eventHandlers[ticket.system]
-            let event = Event.addProjectSource(projectSourceRef.id.value.uuidString)
+            let event = ProjectHubEvent.added(projectSource)
             
             eventHandler?(event)
             
@@ -58,11 +59,6 @@ final class ProjectHubMock: ServerObject {
         typealias Object = ProjectHubMock
         typealias Manager = ProjectHubMockManager
     }
-    enum Event: Sendable {
-        case addProjectSource(ProjectSourceID)
-        case removeProjectSource(ProjectSourceID)
-    }
-    typealias EventHandler = @Sendable (Event) -> Void
 }
 
 

@@ -95,13 +95,13 @@ struct ProjectBoardTests {
             let config = projectBoardRef.config
             let projectHubLink = config.budServerLink.getProjectHub()
             
-            try await #require(projectHubLink.hasNotifier(system: config.system) == false)
+            try await #require(projectHubLink.hasHandler(system: config.system) == false)
             
             // when
             await projectBoardRef.subscribeProjectHub()
             
             // then
-            await #expect(projectHubLink.hasNotifier(system: config.system) == true)
+            await #expect(projectHubLink.hasHandler(system: config.system) == true)
         }
     }
     
@@ -133,13 +133,13 @@ struct ProjectBoardTests {
             let projectHubLink = config.budServerLink.getProjectHub()
             
             await projectBoardRef.subscribeProjectHub()
-            try await #require(projectHubLink.hasNotifier(system: config.system) == true)
+            try await #require(projectHubLink.hasHandler(system: config.system) == true)
             
             // when
             await projectBoardRef.unsubscribeProjectHub()
             
             // then
-            await #expect(projectHubLink.hasNotifier(system: config.system) == false)
+            await #expect(projectHubLink.hasHandler(system: config.system) == false)
         }
     }
     

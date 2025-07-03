@@ -28,7 +28,8 @@ internal final class ProjectHub: Sendable {
         listener != nil
     }
     
-    @MainActor internal func setNotifier(ticket: Ticket, notifier: ProjectHubLink.Notifier) {
+    @MainActor internal func setNotifier(ticket: Ticket,
+                                         handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         self.listener = db.collection("projects")
             .whereField("user", isEqualTo: ticket.user)
@@ -40,11 +41,13 @@ internal final class ProjectHub: Sendable {
                 snapshot.documentChanges.forEach { diff in
                     if (diff.type == .added) {
                         let projectSource = diff.document.documentID
-                        notifier.added(projectSource)
+                        let event = ProjectHubEvent.added(projectSource)
+                        handler(event)
                     }
                     if (diff.type == .removed) {
                         let projectSource = diff.document.documentID
-                        notifier.removed(projectSource)
+                        let event = ProjectHubEvent.removed(projectSource)
+                        handler(event)
                     }
                 }
             }

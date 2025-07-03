@@ -30,7 +30,7 @@ package struct ProjectHubLink: Sendable {
     
     
     @Server
-    package func hasNotifier(system: SystemID) async -> Bool {
+    package func hasHandler(system: SystemID) async -> Bool {
         switch mode {
         case .test:
             return ProjectHubMock.shared.eventHandlers[system] != nil
@@ -39,12 +39,12 @@ package struct ProjectHubLink: Sendable {
         }
     }
     @Server
-    package func setNotifier(ticket: Ticket, notifier: Notifier) async throws {
+    package func setHandler(ticket: Ticket, handler: Handler<ProjectHubEvent>) async throws {
         switch mode {
         case .test:
-            ProjectHubMock.shared.eventHandlers[ticket.system] = notifier.forTest()
+            ProjectHubMock.shared.eventHandlers[ticket.system] = handler
         case .real:
-            await ProjectHub.shared.setNotifier(ticket: ticket, notifier: notifier)
+            await ProjectHub.shared.setNotifier(ticket: ticket, handler: handler)
         }
     }
     
@@ -67,30 +67,5 @@ package struct ProjectHubLink: Sendable {
         case .real:
             await ProjectHub.shared.removeNotifier()
         }
-    }
-    
-    
-    // MARK: value
-    // Notifier를 어떻게 수정할 것인가. 
-    package struct Notifier: Sendable {
-        package let added: Handler
-        package let removed: Handler
-        
-        package init(added: @escaping Handler, removed: @escaping Handler) {
-            self.added = added
-            self.removed = removed
-        }
-        
-        package typealias Handler = @Sendable (ProjectSourceID) -> Void
-        package typealias ProjectSourceID = String
-        
-        internal func forTest() -> ProjectHubMock.Notifier {
-            .init(added: added, removed: removed)
-        }
-    }
-    
-    package enum Event: Sendable {
-        case addProjectSource(object: ProjectSourceID)
-        case removeProjectSource
     }
 }

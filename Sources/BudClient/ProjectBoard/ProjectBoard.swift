@@ -65,29 +65,28 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         async let projectHubLink = config.budServerLink.getProjectHub()
         async let ticket = Ticket(system: config.system, user: config.user)
         do {
-            try await projectHubLink.setNotifier(
+            try await projectHubLink.setHandler(
                 ticket: ticket,
-                notifier: .init(
-                    added: { projectSource in
-                        Task { @MainActor in
-                            // 만약 Updater가 없다면? 
+                handler: .init({ event in
+                    Task { @MainActor in
+                        switch event {
+                        case .added(let projectSource):
                             guard let updaterRef = self.updater?.ref else { return }
                             
                             updaterRef.diffs.insert(.added(projectSource: projectSource))
                             updaterRef.update()
                             
                             await self.callback?()
-                        }
-                    },
-                    removed: { projectSource in
-                        Task { @MainActor in
+                        case .removed(let projectSource):
                             guard let updaterRef = self.updater?.ref else { return }
                             updaterRef.diffs.insert(.removed(projectSource: projectSource))
                             updaterRef.update()
                             
                             await self.callback?()
                         }
-                    }))
+                    }
+                })
+            )
         } catch {
             issue = UnknownIssue(error)
             return
