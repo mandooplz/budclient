@@ -193,7 +193,7 @@ struct ProjectBoardTests {
             #expect(issue.reason == "updaterIsNotSet")
         }
         
-        @Test func updateProjects() async throws {
+        @Test func appendProject() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty)
             
@@ -233,6 +233,25 @@ struct ProjectBoardTests {
             
             // then
             await #expect(projectBoardRef.projects.count == 2)
+        }
+        @Test func updateSourceMap() async throws {
+            // given
+            try await #require(projectBoardRef.projectSourceMap.isEmpty)
+            
+            // when
+            await withCheckedContinuation { con in
+                Task {
+                    await projectBoardRef.setCallbacK {
+                        con.resume()
+                    }
+                    
+                    await projectBoardRef.subscribeProjectHub()
+                    await projectBoardRef.createProjectSource()
+                }
+            }
+            
+            // then
+            await #expect(projectBoardRef.projectSourceMap.count == 1)
         }
     }
 }

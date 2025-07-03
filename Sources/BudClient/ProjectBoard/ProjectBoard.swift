@@ -31,7 +31,12 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     internal var updater: ProjectBoardUpdater.ID?
     
     public internal(set) var projects: [Project.ID] = []
-    internal var sourceMap: [ProjectSourceID: Project.ID] = [:]
+    internal var projectSourceMap: [ProjectSourceID: Project.ID] = [:]
+    internal func getProjectSource(_ project: Project.ID) -> ProjectSourceID? {
+        self.projectSourceMap
+            .first { $0.value == project }?
+            .key
+    }
     
     public var issue: (any Issuable)?
     package var callback: Callback?
@@ -58,40 +63,41 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     internal func subscribeProjectHub(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
+        guard self.id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
+        guard let updater else { setIssue(Error.updaterIsNotSet); return }
         let config = self.config
+        let callback = self.callback
         
         // compute
         async let projectHubLink = config.budServerLink.getProjectHub()
         async let ticket = Ticket(system: config.system, user: config.user)
         do {
+            
             try await projectHubLink.setHandler(
                 ticket: ticket,
                 handler: .init({ event in
                     Task { @MainActor in
                         switch event {
                         case .added:
-                            guard let updaterRef = self.updater?.ref else { return }
+                            guard let updaterRef = updater.ref else { return }
                             
                             updaterRef.eventQueue.append(event)
-                            updaterRef.update()
+                            await updaterRef.update()
                             
-                            await self.callback?()
+                            await callback?()
                         case .removed:
-                            guard let updaterRef = self.updater?.ref else { return }
+                            guard let updaterRef = updater.ref else { return }
                             
                             updaterRef.eventQueue.append(event)
-                            updaterRef.update()
+                            await updaterRef.update()
                             
-                            await self.callback?()
+                            await callback?()
                         }
                     }
                 })
             )
         } catch {
-            issue = UnknownIssue(error)
-            return
+            setUnknownIssue(error); return
         }
     }
     
@@ -109,8 +115,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         do {
             try await projectHubLink.removeNotifier(system: config.system)
         } catch {
-            issue = UnknownIssue(error)
-            return
+            setUnknownIssue(error); return
         }
     }
     

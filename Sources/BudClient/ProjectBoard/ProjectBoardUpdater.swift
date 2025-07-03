@@ -11,47 +11,60 @@ import Collections
 
 
 // MARK: Object
-@MainActor
-internal final class ProjectBoardUpdater: Sendable {
+@MainActor @Observable
+internal final class ProjectBoardUpdater: Debuggable {
     // MARK: core
-    internal init(config: Config<ProjectBoard.ID>) {
+    init(config: Config<ProjectBoard.ID>) {
         self.id = ID(value: .init())
         self.config = config
         
         ProjectBoardUpdaterManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         ProjectBoardUpdaterManager.unregister(self.id)
     }
     
     
     // MARK: state
-    internal nonisolated let id: ID
-    internal nonisolated let config: Config<ProjectBoard.ID>
+    nonisolated let id: ID
+    nonisolated let config: Config<ProjectBoard.ID>
    
-    internal var eventQueue: Deque<ProjectHubEvent> = []
+    var eventQueue: Deque<ProjectHubEvent> = []
+    
+    var issue: (any Issuable)?
     
     
     // MARK: action
-    internal func update() {
+    func update() async {
+        await update(mutateHook: nil)
+    }
+    func update(mutateHook: Hook?) async {
         // mutate
+        await mutateHook?()
         guard let projectBoardRef = config.parent.ref else { return }
-        let map = projectBoardRef.sourceMap
+        guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
+        let map = projectBoardRef.projectSourceMap
         
         while eventQueue.isEmpty == false {
             let event = eventQueue.removeFirst()
             switch event {
             case .added(let projectSource):
-                if map[projectSource] != nil { return }
+                if map[projectSource] != nil {
+                    setIssue(Error.alreadyAdded)
+                    return
+                }
                 let projectSourceLink = ProjectSourceLink(
                     mode: config.mode,
                     id: projectSource)
                 let projectRef = Project(config: config,
                                          sourceLink: projectSourceLink)
                 projectBoardRef.projects.append(projectRef.id)
-                projectBoardRef.sourceMap[projectSource] = projectRef.id
+                projectBoardRef.projectSourceMap[projectSource] = projectRef.id
             case .removed(let projectSource):
-                guard let project = map[projectSource] else { return }
+                guard let project = map[projectSource] else {
+                    setIssue(Error.alreadyRemoved)
+                    return
+                }
                 
                 projectBoardRef.projects.removeAll { $0 == project }
                 project.ref?.delete()
@@ -70,6 +83,10 @@ internal final class ProjectBoardUpdater: Sendable {
         var ref: ProjectBoardUpdater? {
             ProjectBoardUpdaterManager.container[self]
         }
+    }
+    internal enum Error: String, Swift.Error {
+        case updaterIsDeleted
+        case alreadyAdded, alreadyRemoved
     }
 }
 
