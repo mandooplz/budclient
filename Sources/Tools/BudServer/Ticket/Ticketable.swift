@@ -7,14 +7,14 @@
 import Collections
 
 
-@Server
+@MainActor
 package protocol Ticketable: AnyObject {
     associatedtype ObjectTicket
     var tickets: Deque<ObjectTicket> { get set }
 }
 
 
-@Server
+@MainActor
 package extension Ticketable {
     func insert(_ ticket: ObjectTicket) {
         self.tickets.append(ticket)

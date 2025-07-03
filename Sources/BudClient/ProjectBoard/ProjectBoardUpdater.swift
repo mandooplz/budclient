@@ -54,6 +54,11 @@ public final class ProjectBoardUpdater: Debuggable {
                     setIssue(Error.alreadyAdded)
                     return
                 }
+                
+                // 기존의 ProjectSource를 생성해야 한다.
+                // 그런데 어디에서 생성해야 하는가.
+                
+                
                 let projectSourceLink = ProjectSourceLink(
                     mode: config.mode,
                     id: projectSource)

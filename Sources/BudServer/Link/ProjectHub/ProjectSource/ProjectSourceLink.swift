@@ -28,11 +28,13 @@ public struct ProjectSourceLink: Sendable, Hashable {
             let projectSource = ProjectSourceMock.ID(documentId)
             projectSource.ref?.ticket = ticket
         case .real:
-            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
-                  let projectSourceRef = projectSource.ref else {
-                throw Error.projectSourceDoesNotExist
+           try await MainActor.run {
+                guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                      let projectSourceRef = projectSource.ref else {
+                    throw Error.projectSourceDoesNotExist
+                }
+                projectSourceRef.insert(ticket)
             }
-            projectSourceRef.insert(ticket)
         }
     }
     
@@ -48,11 +50,13 @@ public struct ProjectSourceLink: Sendable, Hashable {
             
             return projectSourceRef.eventHandlers[system] != nil
         case .real:
-            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
-                  let projectSourceRef = projectSource.ref else {
-                throw Error.projectSourceDoesNotExist
+            return try await MainActor.run {
+                guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                      let projectSourceRef = projectSource.ref else {
+                    throw Error.projectSourceDoesNotExist
+                }
+                return projectSourceRef.hasHandler(system: system)
             }
-            return try await projectSourceRef.hasHandler(system: system)
         }
     }
     @Server
@@ -67,12 +71,13 @@ public struct ProjectSourceLink: Sendable, Hashable {
             
             projectSourceRef.eventHandlers[ticket.system] = handler
         case .real:
-            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
-                  let projectSourceRef = projectSource.ref else {
-                fatalError()
-                throw Error.projectSourceDoesNotExist
+            try await MainActor.run {            
+                guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                      let projectSourceRef = projectSource.ref else {
+                    throw Error.projectSourceDoesNotExist
+                }
+                projectSourceRef.setHandler(ticket: ticket, handler: handler)
             }
-            await projectSourceRef.setHandler(ticket: ticket, handler: handler)
         }
     }
     @Server
@@ -88,12 +93,14 @@ public struct ProjectSourceLink: Sendable, Hashable {
             projectSourceRef.eventHandlers[system] = nil
             
         case .real:
-            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
-                  let projectSourceRef = projectSource.ref else {
-                throw Error.projectSourceDoesNotExist
+            try await MainActor.run {
+                guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                      let projectSourceRef = projectSource.ref else {
+                    throw Error.projectSourceDoesNotExist
+                }
+                
+                projectSourceRef.removeHandler(system: system)
             }
-            
-            try await projectSourceRef.removeHandler(system: system)
         }
     }
     
@@ -111,12 +118,14 @@ public struct ProjectSourceLink: Sendable, Hashable {
             
             projectSourceRef.processTicket()
         case .real:
-            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
-                  let projectSourceRef = projectSource.ref else {
-                throw Error.projectSourceDoesNotExist
+            try await MainActor.run {
+                guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                      let projectSourceRef = projectSource.ref else {
+                    throw Error.projectSourceDoesNotExist
+                }
+                
+                projectSourceRef.processTicket()
             }
-            
-            try await projectSourceRef.processTicket()
         }
     }
     
@@ -131,12 +140,14 @@ public struct ProjectSourceLink: Sendable, Hashable {
             
             projectSourceRef.remove()
         case .real:
-            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
-                  let projectSourceRef = projectSource.ref else {
-                throw Error.projectSourceDoesNotExist
+            try await MainActor.run {            
+                guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                      let projectSourceRef = projectSource.ref else {
+                    throw Error.projectSourceDoesNotExist
+                }
+                
+                projectSourceRef.remove()
             }
-            
-            try await projectSourceRef.remove()
         }
     }
     

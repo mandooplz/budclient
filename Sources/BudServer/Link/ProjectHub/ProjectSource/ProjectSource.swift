@@ -12,8 +12,8 @@ import os
 
 
 // MARK: Object
-@Server
-package final class ProjectSource: ServerObject, Ticketable {
+@MainActor
+package final class ProjectSource: Sendable, Ticketable {
     // MARK: core
     init(documentId: ProjectSourceID) {
         self.documentId = documentId
@@ -27,16 +27,15 @@ package final class ProjectSource: ServerObject, Ticketable {
     // MARK: state
     package nonisolated let id: ID = ID(value: UUID())
     package nonisolated let documentId: ProjectSourceID
-    @MainActor private let db = Firestore.firestore()
+    private let db = Firestore.firestore()
     
     package var tickets: Deque<ProjectTicket> = []
     
-    @MainActor internal var listener: ListenerRegistration?
-    @MainActor package func hasHandler(system: SystemID) async throws -> Bool {
+    internal var listener: ListenerRegistration?
+    package func hasHandler(system: SystemID) -> Bool {
         listener != nil
     }
-    @MainActor package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
-        // 등록된 listner가 있다면 리턴
+    package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
         guard listener == nil else { return }
         self.listener = db.collection("projects").document(documentId)
             .addSnapshotListener { documentSnapshot, error in
@@ -55,64 +54,61 @@ package final class ProjectSource: ServerObject, Ticketable {
                 handler.execute(event)
             }
     }
-    @MainActor package func removeHandler(system: SystemID) async throws {
+    package func removeHandler(system: SystemID) {
         self.listener?.remove()
         self.listener = nil
     }
     
     
     // MARK: action
-    package func processTicket() async throws {
+    package func processTicket() {
         guard id.isExist else { return }
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             let newName = ticket.name
             
             // Firebase로 projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-            Task { @MainActor in
-                let document = db.collection("projects").document(documentId)
-                
-                do {
-                    try await document.updateData([
-                        "name": newName
-                    ])
-                } catch {
-                    Logger().error("\(self.documentId) 문서를 수정하는 데 실패했습니다.")
-                }
-            }
+            let document = db.collection("projects").document(documentId)
+            document.updateData([
+                "name": newName
+            ])
         }
     }
-    package func remove() async throws {
+    package func remove() {
         guard id.isExist else { return }
         // ProjectSource 인스턴스 제거
         ProjectHub.shared.projectSources.remove(self.id)
         self.delete()
         
         // Firebase로 ProjectSource 문서 삭제
-        Task { @MainActor in
-            do {
-                try await db.collection("projects").document(documentId).delete()
-            } catch {
-                Logger().error("\(self.documentId) 문서를 삭제하는 데 실패했습니다.")
-            }
-        }
+        db.collection("projects").document(documentId).delete()
     }
     
     
     // MARK: value
-    @Server
-    package struct ID: ServerObjectID {
+    @MainActor
+    package struct ID: Sendable, Hashable {
         package let value: UUID
-        package typealias Object = ProjectSource
-        package typealias Manager = ProjectSourceManager
+        var isExist: Bool {
+            ProjectSourceManager.container[self] != nil
+        }
+        var ref: ProjectSource? {
+            ProjectSourceManager.container[self]
+        }
     }
     
 }
 
 
 // MARK: Object Manager
-@Server
-package final class ProjectSourceManager: ServerObjectManager {
-    package static var container: [ProjectSource.ID : ProjectSource] = [:]
+@MainActor
+fileprivate final class ProjectSourceManager: Sendable {
+    fileprivate static var container: [ProjectSource.ID : ProjectSource] = [:]
+    fileprivate static func register(_ object: ProjectSource) {
+        container[object.id] = object
+    }
+    fileprivate static func unregister(_ id: ProjectSource.ID) {
+        container[id] = nil
+    }
 }
 

@@ -24,7 +24,9 @@ package struct ProjectHubLink: Sendable {
         case .test(let projectHubRef):
             projectHubRef.tickets.append(ticket)
         case .real:
-            ProjectHub.shared.tickets.append(ticket)
+            await MainActor.run {
+                ProjectHub.shared.tickets.append(ticket)
+            }
         }
     }
     
@@ -65,7 +67,7 @@ package struct ProjectHubLink: Sendable {
         case .test(let projectHubRef):
             await projectHubRef.createProjectSource()
         case .real:
-            try await ProjectHub.shared.createProjectSource()
+            await ProjectHub.shared.createProjectSource()
         }
     }
     

@@ -11,7 +11,7 @@ import FirebaseFirestore
 
 
 // MARK: Object
-@Server
+@MainActor
 internal final class ProjectHub: Sendable, Ticketable {
     // MARK: core
     static let shared = ProjectHub()
@@ -20,7 +20,7 @@ internal final class ProjectHub: Sendable, Ticketable {
     
     // MARK: state
     nonisolated let id: ID = ID(value: UUID())
-    @MainActor private let db = Firestore.firestore()
+    private let db = Firestore.firestore()
     
     var projectSources: Set<ProjectSource.ID> = []
     func getProjectSource(_ documentId: String) -> ProjectSource.ID? {
@@ -32,11 +32,11 @@ internal final class ProjectHub: Sendable, Ticketable {
     
     internal var tickets: Deque<ProjectTicket> = []
     
-    @MainActor internal var listener: ListenerRegistration?
-    @MainActor internal func hasHandler() async -> Bool {
+    internal var listener: ListenerRegistration?
+    internal func hasHandler() async -> Bool {
         listener != nil
     }
-    @MainActor internal func setHandler(ticket: Ticket,
+    internal func setHandler(ticket: Ticket,
                                         handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         self.listener = db.collection("projects")
@@ -46,9 +46,14 @@ internal final class ProjectHub: Sendable, Ticketable {
                     print("Error fetching snapshots: \(error!)")
                     return
                 }
+                
                 snapshot.documentChanges.forEach { diff in
                     if (diff.type == .added) {
                         let projectSource = diff.document.documentID
+                        
+                        let projectSourceRef = ProjectSource(documentId: projectSource)
+                        self.projectSources.insert(projectSourceRef.id)
+                        
                         let event = ProjectHubEvent.added(projectSource)
                         handler.execute(event)
                     }
@@ -60,22 +65,20 @@ internal final class ProjectHub: Sendable, Ticketable {
                 }
             }
     }
-    @MainActor internal func removeHandler() {
+    internal func removeHandler() {
         self.listener?.remove()
         self.listener = nil
     }
     
     
     // MARK: action
-    internal func createProjectSource() async throws {
+    internal func createProjectSource() {
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
-            let documentID = await MainActor.run {
-                db.collection("projects").addDocument(data: [
-                    "name": ticket.name,
-                    "user": ticket.user
-                ]).documentID
-            }
+            let documentID = db.collection("projects").addDocument(data: [
+                "name": ticket.name,
+                "user": ticket.user
+            ]).documentID
             
             let projectSourceRef = ProjectSource(documentId: documentID)
             projectSources.insert(projectSourceRef.id)
