@@ -8,6 +8,7 @@ import Foundation
 import Tools
 import Collections
 import FirebaseFirestore
+import os
 
 
 // MARK: Object
@@ -32,15 +33,33 @@ package final class ProjectSource: ServerObject, Ticketable {
     
     @MainActor internal var listener: ListenerRegistration?
     @MainActor package func hasHandler(system: SystemID) async throws -> Bool {
-        
-        fatalError()
+        listener != nil
     }
     @MainActor package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
-        // Firebase에 ProjectSource 문서에 대한 리스너 등록
-        fatalError()
+        // 등록된 lister가 있다면 리턴
+        guard listener == nil else { return }
+        
+        let options = SnapshotListenOptions()
+            .withSource(ListenSource.cache)
+            .withIncludeMetadataChanges(true)
+        
+        self.listener = db.collection("projects").document(documentId)
+            .addSnapshotListener(options: options) { documentSnapshot, error in
+                guard let document = documentSnapshot else {
+                    print("Error fetching document: \(error!)")
+                    return
+                }
+                
+                let data = document.data() ?? [:]
+                let newName = data["name"] as! String
+                let event = ProjectSourceEvent.modified(newName)
+                
+                handler.execute(event)
+            }
     }
     @MainActor package func removeHandler(system: SystemID) async throws {
-        fatalError()
+        self.listener?.remove()
+        self.listener = nil
     }
     
     
@@ -49,9 +68,20 @@ package final class ProjectSource: ServerObject, Ticketable {
         guard id.isExist else { return }
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
-            let _ = ticket.name
+            let newName = ticket.name
             
             // Firebase로 projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
+            Task { @MainActor in
+                let document = db.collection("projects").document(documentId)
+                
+                do {
+                    try await document.updateData([
+                        "name": newName
+                    ])
+                } catch {
+                    Logger().error("\(self.documentId) 문서를 수정하는 데 실패했습니다.")
+                }
+            }
         }
     }
     package func remove() async throws {
@@ -60,7 +90,14 @@ package final class ProjectSource: ServerObject, Ticketable {
         ProjectHub.shared.projectSources.remove(self.id)
         self.delete()
         
-        // Firebase로 ProjectSource 문서를 삭제한다.
+        // Firebase로 ProjectSource 문서 삭제
+        Task { @MainActor in
+            do {
+                try await db.collection("projects").document(documentId).delete()
+            } catch {
+                Logger().error("\(self.documentId) 문서를 삭제하는 데 실패했습니다.")
+            }
+        }
     }
     
     

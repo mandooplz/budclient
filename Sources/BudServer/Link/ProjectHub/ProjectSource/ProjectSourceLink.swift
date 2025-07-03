@@ -48,7 +48,11 @@ public struct ProjectSourceLink: Sendable, Hashable {
             
             return projectSourceRef.eventHandlers[system] != nil
         case .real:
-            fatalError()
+            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                  let projectSourceRef = projectSource.ref else {
+                throw Error.projectSourceDoesNotExist
+            }
+            return try await projectSourceRef.hasHandler(system: system)
         }
     }
     @Server
@@ -63,7 +67,11 @@ public struct ProjectSourceLink: Sendable, Hashable {
             
             projectSourceRef.eventHandlers[ticket.system] = handler
         case .real:
-            fatalError()
+            guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
+                  let projectSourceRef = projectSource.ref else {
+                throw Error.projectSourceDoesNotExist
+            }
+            await projectSourceRef.setHandler(ticket: ticket, handler: handler)
         }
     }
     @Server

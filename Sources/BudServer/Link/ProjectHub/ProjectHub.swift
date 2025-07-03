@@ -37,7 +37,7 @@ internal final class ProjectHub: Sendable, Ticketable {
         listener != nil
     }
     @MainActor internal func setHandler(ticket: Ticket,
-                                         handler: Handler<ProjectHubEvent>) {
+                                        handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         self.listener = db.collection("projects")
             .whereField("user", isEqualTo: ticket.user)
