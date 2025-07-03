@@ -69,6 +69,7 @@ public struct ProjectSourceLink: Sendable, Hashable {
         case .real:
             guard let projectSource = ProjectHub.shared.getProjectSource(documentId),
                   let projectSourceRef = projectSource.ref else {
+                fatalError()
                 throw Error.projectSourceDoesNotExist
             }
             await projectSourceRef.setHandler(ticket: ticket, handler: handler)
