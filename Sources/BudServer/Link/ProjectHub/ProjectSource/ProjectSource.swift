@@ -38,20 +38,18 @@ package final class ProjectSource: ServerObject, Ticketable {
     @MainActor package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
         // 등록된 listner가 있다면 리턴
         guard listener == nil else { return }
-        
-        let options = SnapshotListenOptions()
-            .withSource(ListenSource.cache)
-            .withIncludeMetadataChanges(true)
-        
         self.listener = db.collection("projects").document(documentId)
-            .addSnapshotListener(options: options) { documentSnapshot, error in
+            .addSnapshotListener { documentSnapshot, error in
                 guard let document = documentSnapshot else {
-                    print("Error fetching document: \(error!)")
+                    Logger().error("Error fetching document: \(error!)")
                     return
                 }
                 
                 let data = document.data() ?? [:]
-                let newName = data["name"] as! String
+                guard let newName = data["name"] as? String else {
+                    Logger().error("Invalid or missing 'name' field in document: \(document.documentID)")
+                    return
+                }
                 let event = ProjectSourceEvent.modified(newName)
                 
                 handler.execute(event)
