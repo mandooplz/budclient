@@ -36,7 +36,7 @@ package final class ProjectSource: ServerObject, Ticketable {
         listener != nil
     }
     @MainActor package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
-        // 등록된 lister가 있다면 리턴
+        // 등록된 listner가 있다면 리턴
         guard listener == nil else { return }
         
         let options = SnapshotListenOptions()

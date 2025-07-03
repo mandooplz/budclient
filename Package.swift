@@ -38,7 +38,7 @@ let package = Package(
         ),
         .package(
           url: "https://github.com/apple/swift-collections.git",
-          .upToNextMinor(from: "1.2.0")
+          .upToNextMinor(from: "1.0.4")
         )
     ],
     targets: [
@@ -83,7 +83,11 @@ let package = Package(
         
         // MARK: Tools
         .target(
-            name: "Tools")
+            name: "Tools",
+            dependencies: [
+                .product(name: "Collections", package: "swift-collections")
+            ]
+        )
     ]
 )
 
