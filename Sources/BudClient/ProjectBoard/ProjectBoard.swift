@@ -72,7 +72,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         async let projectHubLink = config.budServerLink.getProjectHub()
         async let ticket = Ticket(system: config.system, user: config.user)
         do {
-            
             try await projectHubLink.setHandler(
                 ticket: ticket,
                 handler: .init({ event in

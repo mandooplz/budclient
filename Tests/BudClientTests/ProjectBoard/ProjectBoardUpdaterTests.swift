@@ -109,6 +109,19 @@ struct ProjectBoardUpdaterTests {
             // then
             await #expect(projectBoardRef.projectSourceMap[projectSource] != nil)
         }
+        @Test func removeEventWhenAdded() async throws {
+            // given
+            await MainActor.run {
+                let event = ProjectHubEvent.added("RANDOM_PROJECT")
+                updaterRef.eventQueue.append(event)
+            }
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(updaterRef.eventQueue.isEmpty)
+        }
         
         @Test func whenAlreadyRemoved() async throws {
             // given

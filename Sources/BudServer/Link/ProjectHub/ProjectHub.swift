@@ -67,6 +67,8 @@ internal final class ProjectHub: Sendable {
                     "user": ticket.user
                 ])
             }
+            
+            tickets.remove(ticket)
         }
     }
     
