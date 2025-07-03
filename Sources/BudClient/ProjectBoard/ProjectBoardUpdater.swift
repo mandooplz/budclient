@@ -41,13 +41,14 @@ internal final class ProjectBoardUpdater: Debuggable {
     func update(mutateHook: Hook?) async {
         // mutate
         await mutateHook?()
-        guard let projectBoardRef = config.parent.ref else { return }
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
+        let projectBoardRef = config.parent.ref!
         let map = projectBoardRef.projectSourceMap
         
         while eventQueue.isEmpty == false {
             let event = eventQueue.removeFirst()
             switch event {
+            // when projectSource added
             case .added(let projectSource):
                 if map[projectSource] != nil {
                     setIssue(Error.alreadyAdded)
@@ -60,6 +61,8 @@ internal final class ProjectBoardUpdater: Debuggable {
                                          sourceLink: projectSourceLink)
                 projectBoardRef.projects.append(projectRef.id)
                 projectBoardRef.projectSourceMap[projectSource] = projectRef.id
+            
+            // when projectSource removed
             case .removed(let projectSource):
                 guard let project = map[projectSource] else {
                     setIssue(Error.alreadyRemoved)
