@@ -16,16 +16,19 @@ import FirebaseFirestore
 public struct BudServerLink: Sendable {
     // MARK: core
     private let mode: Mode
-    package init(mode: Mode) throws(Error) {
+    package init(mode: Mode) async throws(Error) {
         self.mode = mode
         
         if case .real(let plistPath) = mode {
             if FirebaseApp.app() != nil { return }
             
+            
             guard let options = FirebaseOptions(contentsOfFile: plistPath) else {
                 throw Error.plistPathIsWrong
             }
-            FirebaseApp.configure(options: options)
+            await MainActor.run {
+                FirebaseApp.configure(options: options)
+            }
         }
     }
     

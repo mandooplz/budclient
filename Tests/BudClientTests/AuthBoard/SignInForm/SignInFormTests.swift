@@ -554,7 +554,7 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     let budServerRef = await BudServerMock()
     await budServerRef.setUp()
     
-    let budServerLink = try! BudServerLink(mode: .test(budServerRef))
+    let budServerLink = try! await BudServerLink(mode: .test(budServerRef))
     let accountHubLink = await budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
