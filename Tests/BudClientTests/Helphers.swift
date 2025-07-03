@@ -91,8 +91,6 @@ func createAndGetProject(_ budClientRef: BudClient) async -> Project {
     await projectBoardRef.subscribeProjectHub()
     
     
-    
-    
     try! await #require(projectBoardRef.projects.count == 1)
     
     let project = await projectBoardRef.projects.first!

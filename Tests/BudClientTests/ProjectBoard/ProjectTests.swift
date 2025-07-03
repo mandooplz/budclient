@@ -321,6 +321,22 @@ struct ProjectTests {
         }
         @Test func deleteProject() async throws {
             // given
+            let projectBoardRef = try #require(await projectRef.config.parent.ref)
+            
+            // when
+            await withCheckedContinuation { con in
+                Task {
+                    await projectBoardRef.setCallback {
+                        con.resume()
+                    }
+                    
+                    await projectBoardRef.subscribeProjectHub()
+                    await projectRef.removeSource()
+                }
+            }
+            
+            // then
+            await #expect(projectRef.id.isExist == false)
         }
     }
 }

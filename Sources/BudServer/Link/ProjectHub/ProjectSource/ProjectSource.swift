@@ -12,7 +12,7 @@ import FirebaseFirestore
 
 // MARK: Object
 @Server
-package final class ProjectSource: ServerObject {
+package final class ProjectSource: ServerObject, Ticketable {
     // MARK: core
     init(documentId: ProjectSourceID) {
         self.documentId = documentId
@@ -26,23 +26,23 @@ package final class ProjectSource: ServerObject {
     // MARK: state
     package nonisolated let id: ID = ID(value: UUID())
     package nonisolated let documentId: ProjectSourceID
+    @MainActor private let db = Firestore.firestore()
     
     package var tickets: Deque<ProjectTicket> = []
-    package func insert(_ ticket: ProjectTicket) {
-        self.tickets.append(ticket)
-    }
     
-    package func hasHandler(system: SystemID) async throws -> Bool {
+    @MainActor internal var listener: ListenerRegistration?
+    @MainActor package func hasHandler(system: SystemID) async throws -> Bool {
         
         fatalError()
     }
-    package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
+    @MainActor package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
         // Firebase에 ProjectSource 문서에 대한 리스너 등록
         fatalError()
     }
-    package func removeHandler(system: SystemID) async throws {
+    @MainActor package func removeHandler(system: SystemID) async throws {
         fatalError()
     }
+    
     
     // MARK: action
     package func processTicket() async throws {
@@ -54,7 +54,6 @@ package final class ProjectSource: ServerObject {
             // Firebase로 projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
         }
     }
-    
     package func remove() async throws {
         guard id.isExist else { return }
         // ProjectSource 인스턴스 제거

@@ -12,7 +12,7 @@ import FirebaseFirestore
 
 // MARK: Object
 @Server
-internal final class ProjectHub: Sendable {
+internal final class ProjectHub: Sendable, Ticketable {
     // MARK: core
     static let shared = ProjectHub()
     private init() { }
@@ -31,9 +31,6 @@ internal final class ProjectHub: Sendable {
     }
     
     internal var tickets: Deque<ProjectTicket> = []
-    func insert(_ ticket: ProjectTicket) {
-        self.tickets.append(ticket)
-    }
     
     @MainActor internal var listener: ListenerRegistration?
     @MainActor internal func hasHandler() async -> Bool {
