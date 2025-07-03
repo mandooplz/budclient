@@ -254,7 +254,7 @@ struct SignInFormTests {
             self.validEmail = Email.random().value
             self.validPassword = Password.random().value
             
-            await register(email: validEmail, password: validPassword)
+            await register(budClientRef: budClientRef, email: validEmail, password: validPassword)
         }
         
         @Test func whenSignInFormIsDeletedBeforeCapture() async throws {
@@ -530,9 +530,9 @@ internal func getEmailForm(_ budClientRef: BudClient) async -> SignInForm {
     let emailForm = await authBoardRef.signInForm!
     return await emailForm.ref!
 }
-private func register(email: String, password: String) async {
-    let budServerLink = try! BudServerLink(mode: .test)
-    let accountHubLink = budServerLink.getAccountHub()
+private func register(budClientRef: BudClient, email: String, password: String) async {
+    let budServerLink = await budClientRef.budServerLink!
+    let accountHubLink = await budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
     await accountHubLink.insertEmailTicket(newTicket)
@@ -551,8 +551,11 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     let testPassword = Password.random().value
     
     // register
-    let budServerLink = try! BudServerLink(mode: .test)
-    let accountHubLink = budServerLink.getAccountHub()
+    let budServerRef = await BudServerMock()
+    await budServerRef.setUp()
+    
+    let budServerLink = try! BudServerLink(mode: .test(budServerRef))
+    let accountHubLink = await budServerLink.getAccountHub()
     
     let newTicket = AccountHubLink.Ticket()
     await accountHubLink.insertEmailTicket(newTicket)

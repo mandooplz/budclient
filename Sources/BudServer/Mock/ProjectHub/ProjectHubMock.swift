@@ -6,13 +6,13 @@
 //
 import Foundation
 import Tools
+import Collections
 
 
 // MARK: Object
 @Server
-final class ProjectHubMock: ServerObject {
+final class ProjectHubMock: ServerObject, Subscribable {
     // MARK: core
-    static let shared = ProjectHubMock()
     init() { }
     
     
@@ -27,28 +27,27 @@ final class ProjectHubMock: ServerObject {
             .map { $0.id }
     }
     
-    var tickets: Set<ProjectTicket> = []
-    
+    var tickets: Deque<ProjectTicket> = []
     var eventHandlers: [SystemID: Handler<ProjectHubEvent>] = [:]
     
     
     // MARK: action
     func createProjectSource() async {
         // mutate
-        for ticket in tickets {
+        while tickets.isEmpty == false {
+            let ticket = tickets.removeFirst()
             let projectSourceRef = ProjectSourceMock(
                 projectHubRef: self,
                 user: ticket.user,
-                name: ticket.projectName)
+                name: ticket.name)
             let projectSource = projectSourceRef.id.value.uuidString
             projectSources.insert(projectSourceRef.id)
             
             let eventHandler = eventHandlers[ticket.system]
             let event = ProjectHubEvent.added(projectSource)
             
+            // 직접 이벤트핸들러 호출
             eventHandler?.execute(event)
-            
-            tickets.remove(ticket)
         }
     }
     

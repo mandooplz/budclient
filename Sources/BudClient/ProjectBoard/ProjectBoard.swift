@@ -108,11 +108,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         let config = config
-        let projectHubLink = config.budServerLink.getProjectHub()
         
         // compute
         do {
-            try await projectHubLink.removeNotifier(system: config.system)
+            let projectHubLink = await config.budServerLink.getProjectHub()
+            try await projectHubLink.removeHandler(system: config.system)
         } catch {
             setUnknownIssue(error); return
         }
@@ -128,14 +128,15 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
         let budServerLink = config.budServerLink
-        let projectHubLink = budServerLink.getProjectHub()
         let newProjectNumber = self.projects.count
         
+        // compute
         do {
+            let projectHubLink = await budServerLink.getProjectHub()
             let projectTicket = ProjectTicket(
                 system: config.system,
                 user: config.user,
-                projectName: "\(newProjectNumber)")
+                name: "\(newProjectNumber)")
             await projectHubLink.insertTicket(projectTicket)
             try await projectHubLink.createProjectSource()
         } catch {

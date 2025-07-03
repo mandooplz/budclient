@@ -12,6 +12,7 @@ import FirebaseFirestore
 
 
 // MARK: Link
+// BudServerMock을 외부로부터 주입받는다.
 public struct BudServerLink: Sendable {
     // MARK: core
     private let mode: Mode
@@ -34,12 +35,13 @@ public struct BudServerLink: Sendable {
         FirebaseApp.app()?.options.clientID
     }
     
-    package func getAccountHub() -> AccountHubLink {
-        AccountHubLink(mode: mode.toSystemMode)
+    package func getAccountHub() async -> AccountHubLink {
+        await AccountHubLink(mode: mode.forAccountHub)
     }
-    package func getProjectHub() -> ProjectHubLink {
-        ProjectHubLink(mode: mode.toSystemMode)
+    package func getProjectHub() async -> ProjectHubLink {
+        await ProjectHubLink(mode: mode.forProjectHub)
     }
+    
     
     
     // MARK: value
@@ -47,15 +49,26 @@ public struct BudServerLink: Sendable {
         case plistPathIsWrong
     }
     package enum Mode: Sendable {
-        case test
+        case test(BudServerMock)
         case real(plistPath: String)
         
-        var toSystemMode: SystemMode {
+        @Server
+        var forAccountHub: AccountHubLink.Mode {
             switch self {
-            case .test:
-                return .test
+            case .test(let budServerMock):
+                .test(budServerMock.accountHubRef!)
             case .real:
-                return .real
+                    .real
+            }
+        }
+        
+        @Server
+        var forProjectHub: ProjectHubLink.Mode {
+            switch self {
+            case .test(let budServerMock):
+                    .test(budServerMock.projectHubRef!)
+            case .real:
+                    .real
             }
         }
     }

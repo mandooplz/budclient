@@ -14,13 +14,17 @@ import Tools
 @Suite("EmailRegisterFormMock")
 struct EmailRegisterFormMockTests {
     struct Submit {
+        let budServerRef: BudServerMock
         let emailRegisterFormRef: EmailRegisterFormMock
         init() async throws {
-            self.emailRegisterFormRef = await getRegisterFormMock()
+            self.budServerRef = await BudServerMock()
+            self.emailRegisterFormRef = await getRegisterFormMock(budServerRef)
         }
         
         @Test func appendAccountInAccountHub() async throws {
             // given
+            let accountHubRef = await budServerRef.accountHubRef!
+            
             let testEmail = "test@test.com"
             let testPassword = "123456"
             await Server.run {
@@ -32,7 +36,7 @@ struct EmailRegisterFormMockTests {
             await emailRegisterFormRef.submit()
             
             // then
-            await #expect(AccountHubMock.shared.isExist(email: testEmail,
+            await #expect(accountHubRef.isExist(email: testEmail,
                                                         password: testPassword) == true)
         }
         
@@ -70,39 +74,45 @@ struct EmailRegisterFormMockTests {
     }
     
     struct Remove {
-        let registerFormRef: EmailRegisterFormMock
+        let budServerRef: BudServerMock
+        let emailRegisterFormRef: EmailRegisterFormMock
         init() async throws {
-            self.registerFormRef = await getRegisterFormMock()
+            self.budServerRef = await BudServerMock()
+            self.emailRegisterFormRef = await getRegisterFormMock(budServerRef)
         }
         @Test func deleteEmailRegisterForm() async throws {
             // given
-            try await #require(registerFormRef.id.isExist == true)
+            try await #require(emailRegisterFormRef.id.isExist == true)
             
             // when
-            await registerFormRef.remove()
+            await emailRegisterFormRef.remove()
             
             // then
-            await #expect(registerFormRef.id.isExist == false)
+            await #expect(emailRegisterFormRef.id.isExist == false)
         }
         @Test func removeInAccountHub() async throws {
             // given
-            let form = await AccountHubMock.shared.emailRegisterForms.values
-            #expect(form.contains(registerFormRef.id) == true)
+            let accountHubRef = await budServerRef.accountHubRef!
+            
+            let form = await accountHubRef.emailRegisterForms.values
+            #expect(form.contains(emailRegisterFormRef.id) == true)
             
             // when
-            await registerFormRef.remove()
+            await emailRegisterFormRef.remove()
             
             // then
-            let updatedForms = await AccountHubMock.shared.emailRegisterForms.values
-            #expect(updatedForms.contains(registerFormRef.id) == false)
+            let updatedForms = await accountHubRef.emailRegisterForms.values
+            #expect(updatedForms.contains(emailRegisterFormRef.id) == false)
         }
     }
 }
 
 
 // MARK: Helphers
-func getRegisterFormMock() async -> EmailRegisterFormMock {
-    let accountHubRef = await AccountHubMock.shared
+func getRegisterFormMock(_ budServerMockRef: BudServerMock) async -> EmailRegisterFormMock {
+    await budServerMockRef.setUp()
+    
+    let accountHubRef = await budServerMockRef.accountHubRef!
     let newTicket = AccountHubMock.Ticket()
     
     return await Server.run {

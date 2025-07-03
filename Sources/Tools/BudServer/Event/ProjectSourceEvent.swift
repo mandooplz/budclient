@@ -6,7 +6,8 @@
 //
 
 
-package enum ProjectEvent: Sendable {
+// MARK: ProjectEvent
+package enum ProjectSourceEvent: Sendable {
     case modified(Name)
     
     package typealias Name = String

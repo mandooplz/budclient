@@ -16,6 +16,7 @@ public final class BudClient: Debuggable {
     // MARK: core
     public init(plistPath: String) {
         self.mode = .real(plistPath: plistPath)
+        self.budServerMockRef = .shared
         self.budCacheMockRef = .shared
         self.budCacheLink = BudCacheLink(mode: .real)
         
@@ -23,6 +24,7 @@ public final class BudClient: Debuggable {
     }
     public init() {
         self.mode = .test
+        self.budServerMockRef = BudServerMock()
         self.budCacheMockRef = BudCacheMock()
         self.budCacheLink = BudCacheLink(mode: .test(mockRef: budCacheMockRef))
         
@@ -35,6 +37,7 @@ public final class BudClient: Debuggable {
     internal nonisolated let mode: Mode
     internal nonisolated let system: SystemID = .init()
     public private(set) var budServerLink: BudServerLink?
+    private nonisolated let budServerMockRef: BudServerMock
     private nonisolated let budCacheMockRef: BudCacheMock
     internal nonisolated let budCacheLink: BudCacheLink
     
@@ -57,7 +60,7 @@ public final class BudClient: Debuggable {
         // compute
         let budServerLink: BudServerLink
         do {
-            async let result = try BudServerLink(mode: mode.forBudServerLink)
+            async let result = try await BudServerLink(mode: mode.forBudServerLink(budServerMockRef))
             budServerLink = try await result
         } catch {
             issue = UnknownIssue(error)
@@ -85,10 +88,11 @@ public final class BudClient: Debuggable {
         case test
         case real(plistPath: String)
         
-        var forBudServerLink: BudServerLink.Mode {
+        func forBudServerLink(_ budServerMockRef: BudServerMock) async -> BudServerLink.Mode {
             switch self {
             case .test:
-                return .test
+                await budServerMockRef.setUp()
+                return .test(budServerMockRef)
             case .real(let plistPath):
                 return .real(plistPath: plistPath)
             }

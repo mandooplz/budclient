@@ -11,8 +11,8 @@ import Tools
 // MARK: Link
 package struct AccountHubLink: Sendable {
     // MARK: core
-    private let mode: SystemMode
-    internal init(mode: SystemMode) {
+    private let mode: Mode
+    internal init(mode: Mode) {
         self.mode = mode
     }
     
@@ -20,17 +20,17 @@ package struct AccountHubLink: Sendable {
     // MARK: state
     package func isExist(email: String, password: String) async throws -> Bool {
         switch mode {
-        case .test:
-            await AccountHubMock.shared.isExist(email: email, password: password)
+        case .test(let accountHubRef):
+            await accountHubRef.isExist(email: email, password: password)
         case .real:
             try await AccountHub.shared.isExist(email: email, password: password)
         }
     }
     package func getUserId(email: String, password: String) async throws -> String {
         switch mode {
-        case .test:
+        case .test(let accountHubRef):
             do {
-                return try await AccountHubMock.shared.getUserId(email: email, password: password)
+                return try await accountHubRef.getUserId(email: email, password: password)
             } catch(let error as AccountHubMock.Error) {
                 switch error {
                 case .userNotFound: throw Error.userNotFound;
@@ -54,8 +54,8 @@ package struct AccountHubLink: Sendable {
     }
     package func getUserId(idToken: String, accessToken: String) async throws -> String {
         switch mode {
-        case .test:
-            guard let userId = await AccountHubMock.shared.getUserId(googleIdToken: idToken,
+        case .test(let accountHubRef):
+            guard let userId = await accountHubRef.getUserId(googleIdToken: idToken,
                                                                      googleAccessToken: accessToken) else {
                 throw Error.userNotFound
             }
@@ -68,9 +68,9 @@ package struct AccountHubLink: Sendable {
     
     package func insertEmailTicket(_ ticket: Ticket) async {
         switch mode {
-        case .test:
+        case .test(let accountHubRef):
             let _ = await Server.run {
-                AccountHubMock.shared.emailTickets.insert(ticket.forMock)
+                accountHubRef.emailTickets.insert(ticket.forMock)
             }
         case .real:
             await Server.run {
@@ -80,9 +80,9 @@ package struct AccountHubLink: Sendable {
     }
     package func getEmailRegisterForm(_ ticket: Ticket) async -> EmailRegisterFormLink? {
         switch mode {
-        case .test:
+        case .test(let accountHubRef):
             let emailRegisterForm = await Server.run {
-                AccountHubMock.shared.emailRegisterForms[ticket.forMock]
+                accountHubRef.emailRegisterForms[ticket.forMock]
             }
             guard let emailRegisterForm else { return nil }
             return .init(mode: .test(mock: emailRegisterForm))
@@ -98,9 +98,9 @@ package struct AccountHubLink: Sendable {
     
     package func insertGoogleTicket(_ ticket: Ticket) async {
         switch mode {
-        case .test:
+        case .test(let accountHubRef):
             let _ = await Server.run {
-                AccountHubMock.shared.googleTickets.insert(ticket.forMock)
+                accountHubRef.googleTickets.insert(ticket.forMock)
             }
         case .real:
             await Server.run {
@@ -110,9 +110,9 @@ package struct AccountHubLink: Sendable {
     }
     package func getGoogleRegisterForm(_ ticket: Ticket) async -> GoogleRegisterFormLink? {
         switch mode {
-        case .test:
+        case .test(let accountHubRef):
             return await Server.run {
-                guard let googleRegisterForm = AccountHubMock.shared.googleRegisterForms[ticket.forMock] else {
+                guard let googleRegisterForm = accountHubRef.googleRegisterForms[ticket.forMock] else {
                     return nil
                 }
                 return .init(mode: .test(mock: googleRegisterForm))
@@ -131,16 +131,16 @@ package struct AccountHubLink: Sendable {
     // MARK: action
     package func updateEmailForms() async {
         switch mode {
-        case .test:
-            await AccountHubMock.shared.updateEmailForms()
+        case .test(let accountHubRef):
+            await accountHubRef.updateEmailForms()
         case .real:
             await AccountHub.shared.updateEmailForms()
         }
     }
     package func updateGoogleForms() async {
         switch mode {
-        case .test:
-            await AccountHubMock.shared.updateGoogleForms()
+        case .test(let accountHubRef):
+            await accountHubRef.updateGoogleForms()
         case .real:
             await AccountHub.shared.updateGoogleForms()
         }
@@ -163,5 +163,9 @@ package struct AccountHubLink: Sendable {
     }
     package enum Error: String, Swift.Error {
         case userNotFound, wrongPassword
+    }
+    enum Mode: Sendable {
+        case test(AccountHubMock)
+        case real
     }
 }

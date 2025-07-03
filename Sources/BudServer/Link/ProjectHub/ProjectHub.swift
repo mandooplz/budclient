@@ -6,6 +6,7 @@
 //
 import Foundation
 import Tools
+import Collections
 import FirebaseFirestore
 
 
@@ -13,22 +14,32 @@ import FirebaseFirestore
 @Server
 internal final class ProjectHub: Sendable {
     // MARK: core
-    internal static let shared = ProjectHub()
+    static let shared = ProjectHub()
     private init() { }
     
     
     // MARK: state
-    internal nonisolated let id: ID = ID(value: UUID())
+    nonisolated let id: ID = ID(value: UUID())
     @MainActor private let db = Firestore.firestore()
     
-    internal var tickets: Set<ProjectTicket> = []
-    
-    @MainActor internal var listener: ListenerRegistration?
-    @MainActor internal func hasNotifier() async -> Bool {
-        listener != nil
+    var projectSources: Set<ProjectSource.ID> = []
+    func getProjectSource(_ documentId: String) -> ProjectSource.ID? {
+        self.projectSources.lazy
+            .compactMap { $0.ref }
+            .first { $0.documentId == documentId }?
+            .id
     }
     
-    @MainActor internal func setNotifier(ticket: Ticket,
+    internal var tickets: Deque<ProjectTicket> = []
+    func insert(_ ticket: ProjectTicket) {
+        self.tickets.append(ticket)
+    }
+    
+    @MainActor internal var listener: ListenerRegistration?
+    @MainActor internal func hasHandler() async -> Bool {
+        listener != nil
+    }
+    @MainActor internal func setHandler(ticket: Ticket,
                                          handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         self.listener = db.collection("projects")
@@ -52,7 +63,7 @@ internal final class ProjectHub: Sendable {
                 }
             }
     }
-    @MainActor internal func removeNotifier() {
+    @MainActor internal func removeHandler() {
         self.listener?.remove()
         self.listener = nil
     }
@@ -60,18 +71,19 @@ internal final class ProjectHub: Sendable {
     
     // MARK: action
     internal func createProjectSource() async throws {
-        for ticket in tickets {
-            let _ = await MainActor.run {
+        while tickets.isEmpty == false {
+            let ticket = tickets.removeFirst()
+            let documentID = await MainActor.run {
                 db.collection("projects").addDocument(data: [
-                    "name": ticket.projectName,
+                    "name": ticket.name,
                     "user": ticket.user
-                ])
+                ]).documentID
             }
             
-            tickets.remove(ticket)
+            let projectSourceRef = ProjectSource(documentId: documentID)
+            projectSources.insert(projectSourceRef.id)
         }
     }
-    
     
     // MARK: value
     internal struct ID: Sendable, Hashable {

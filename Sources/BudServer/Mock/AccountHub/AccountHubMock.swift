@@ -12,7 +12,6 @@ import Tools
 @Server
 internal final class AccountHubMock: Sendable {
     // MARK: core
-    internal static let shared = AccountHubMock()
     internal init() { }
     
     

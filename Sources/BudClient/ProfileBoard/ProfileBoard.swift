@@ -60,6 +60,7 @@ public final class ProfileBoard: Debuggable {
         guard self.id.isExist else { return }
         let budClientRef = self.config.parent.ref!
         let projectBoardRef = projectBoard!.ref!
+        let projects = projectBoardRef.projects
         let communityRef = community!.ref!
         let authBoardRef = AuthBoard(tempConfig: tempConfig)
         
@@ -67,6 +68,11 @@ public final class ProfileBoard: Debuggable {
         budClientRef.projectBoard = nil
         budClientRef.profileBoard = nil
         budClientRef.user = nil
+        
+        for project in projects {
+            project.ref?.updater?.ref?.delete()
+            project.ref?.delete()
+        }
         
         projectBoardRef.delete()
         projectBoardRef.updater?.ref?.delete()

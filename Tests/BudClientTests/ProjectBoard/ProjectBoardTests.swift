@@ -106,7 +106,7 @@ struct ProjectBoardTests {
         @Test func registerNotifierInProjectHub() async throws {
             // given
             let config = projectBoardRef.config
-            let projectHubLink = config.budServerLink.getProjectHub()
+            let projectHubLink = await config.budServerLink.getProjectHub()
             
             try await #require(projectHubLink.hasHandler(system: config.system) == false)
             
@@ -143,7 +143,7 @@ struct ProjectBoardTests {
         @Test func unregisterNotifierInProjectHub() async throws {
             // given
             let config = projectBoardRef.config
-            let projectHubLink = config.budServerLink.getProjectHub()
+            let projectHubLink = await config.budServerLink.getProjectHub()
             
             await projectBoardRef.subscribeProjectHub()
             try await #require(projectHubLink.hasHandler(system: config.system) == true)
@@ -201,7 +201,7 @@ struct ProjectBoardTests {
             await confirmation(expectedCount: 1) { confirm in
                 await withCheckedContinuation { continuation in
                     Task {
-                        await projectBoardRef.setCallbacK {
+                        await projectBoardRef.setCallback {
                             confirm()
                             continuation.resume()
                         }
@@ -219,7 +219,7 @@ struct ProjectBoardTests {
             await confirmation(expectedCount: 1) { confirm in
                 await withCheckedContinuation { continuation in
                     Task.detached {
-                        await projectBoardRef.setCallbacK {
+                        await projectBoardRef.setCallback {
                             confirm()
                             continuation.resume()
                         }
@@ -241,7 +241,7 @@ struct ProjectBoardTests {
             // when
             await withCheckedContinuation { con in
                 Task {
-                    await projectBoardRef.setCallbacK {
+                    await projectBoardRef.setCallback {
                         con.resume()
                     }
                     

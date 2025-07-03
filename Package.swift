@@ -38,7 +38,7 @@ let package = Package(
         ),
         .package(
           url: "https://github.com/apple/swift-collections.git",
-          .upToNextMinor(from: "1.2.0") // or `.upToNextMajor
+          .upToNextMinor(from: "1.2.0")
         )
     ],
     targets: [
@@ -62,7 +62,8 @@ let package = Package(
             dependencies: [
                 "Tools",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk")
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                .product(name: "Collections", package: "swift-collections")
             ]
         ),
         .testTarget(

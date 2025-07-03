@@ -59,6 +59,7 @@ struct ProfileBoardTests {
             await #expect(budClientRef.isUserSignedIn == true)
         }
         
+        // TODO: 하위 객체들을 계속해서 추가해야 함
         @Test func setIsUserSignedInAtBudClient() async throws {
             // given
             try await #require(budClientRef.isUserSignedIn == true)
@@ -103,19 +104,75 @@ struct ProfileBoardTests {
             // then
             await #expect(projectBoardRef.updater?.isExist == false)
         }
-        @Test func deleteProjectsInProjectBoard() async throws {
+        @Test func deleteProjects() async throws {
             // given
             let projectBoard = try #require(await budClientRef.projectBoard)
             let projectBoardRef = try #require(await projectBoard.ref)
-            let projects = await projectBoardRef.projects
+            
+            await withCheckedContinuation { con in
+                Task {
+                    await projectBoardRef.setCallback {
+                        con.resume()
+                    }
+                    await projectBoardRef.setUpUpdater()
+                    await projectBoardRef.subscribeProjectHub()
+                    
+                    await projectBoardRef.createProjectSource()
+                }
+            }
+            
+            await withCheckedContinuation { con in
+                Task {
+                    await projectBoardRef.setCallback {
+                        con.resume()
+                    }
+                    await projectBoardRef.setUpUpdater()
+                    await projectBoardRef.subscribeProjectHub()
+                    
+                    await projectBoardRef.createProjectSource()
+                }
+            }
+            
+            
+            try await #require(projectBoardRef.projects.count == 2)
+        
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            for project in await projectBoardRef.projects {
+                await #expect(project.isExist == false)
+            }
+        }
+        @Test func deleteProjectUpdater() async throws {
+            // given
+            let projectBoard = try #require(await budClientRef.projectBoard)
+            let projectBoardRef = try #require(await projectBoard.ref)
+            
+            await withCheckedContinuation { con in
+                Task {
+                    await projectBoardRef.setCallback {
+                        con.resume()
+                    }
+                    await projectBoardRef.setUpUpdater()
+                    await projectBoardRef.subscribeProjectHub()
+                    
+                    await projectBoardRef.createProjectSource()
+                }
+            }
+            
+            try await #require(projectBoardRef.projects.count == 1)
+            
+            let projectRef = await projectBoardRef.projects.first!.ref!
+            await projectRef.setUpUpdater()
+            
+            let updater = try #require(await projectRef.updater)
             
             // when
             await profileBoardRef.signOut()
             
             // then
-            for project in projects {
-                await #expect(project.isExist == false)
-            }
+            await #expect(updater.isExist == false)
         }
         @Test func deleteProfileBoard() async throws {
             // given

@@ -11,8 +11,8 @@ import Tools
 // MARK: Link
 package struct ProjectHubLink: Sendable {
     // MARK: core
-    private let mode: SystemMode
-    init(mode: SystemMode) {
+    private let mode: Mode
+    init(mode: Mode) {
         self.mode = mode
     }
     
@@ -21,10 +21,10 @@ package struct ProjectHubLink: Sendable {
     @Server
     package func insertTicket(_ ticket: ProjectTicket) async {
         switch mode {
-        case .test:
-            ProjectHubMock.shared.tickets.insert(ticket)
+        case .test(let projectHubRef):
+            projectHubRef.tickets.append(ticket)
         case .real:
-            ProjectHub.shared.tickets.insert(ticket)
+            ProjectHub.shared.tickets.append(ticket)
         }
     }
     
@@ -32,19 +32,28 @@ package struct ProjectHubLink: Sendable {
     @Server
     package func hasHandler(system: SystemID) async -> Bool {
         switch mode {
-        case .test:
-            return ProjectHubMock.shared.eventHandlers[system] != nil
+        case .test(let projectHubRef):
+            return projectHubRef.eventHandlers[system] != nil
         case .real:
-            return await ProjectHub.shared.hasNotifier()
+            return await ProjectHub.shared.hasHandler()
         }
     }
     @Server
     package func setHandler(ticket: Ticket, handler: Handler<ProjectHubEvent>) async throws {
         switch mode {
-        case .test:
-            ProjectHubMock.shared.eventHandlers[ticket.system] = handler
+        case .test(let projectHubRef):
+            projectHubRef.eventHandlers[ticket.system] = handler
         case .real:
-            await ProjectHub.shared.setNotifier(ticket: ticket, handler: handler)
+            await ProjectHub.shared.setHandler(ticket: ticket, handler: handler)
+        }
+    }
+    @Server
+    package func removeHandler(system: SystemID) async throws {
+        switch mode {
+        case .test(let projectHubRef):
+            projectHubRef.eventHandlers[system] = nil
+        case .real:
+            await ProjectHub.shared.removeHandler()
         }
     }
     
@@ -53,19 +62,17 @@ package struct ProjectHubLink: Sendable {
     @Server
     package func createProjectSource() async throws {
         switch mode {
-        case .test:
-            await ProjectHubMock.shared.createProjectSource()
+        case .test(let projectHubRef):
+            await projectHubRef.createProjectSource()
         case .real:
             try await ProjectHub.shared.createProjectSource()
         }
     }
-    @Server
-    package func removeNotifier(system: SystemID) async throws {
-        switch mode {
-        case .test:
-            ProjectHubMock.shared.eventHandlers[system] = nil
-        case .real:
-            await ProjectHub.shared.removeNotifier()
-        }
+    
+    
+    // MARK: value
+    enum Mode: Sendable {
+        case test(ProjectHubMock)
+        case real
     }
 }

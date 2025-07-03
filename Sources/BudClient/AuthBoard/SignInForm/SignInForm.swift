@@ -82,7 +82,7 @@ public final class SignInForm: Debuggable {
         // compute
         let user: UserID
         do {
-            let accountHubLink = tempConfig.budServerLink.getAccountHub()
+            let accountHubLink = await tempConfig.budServerLink.getAccountHub()
             
             async let userByServer = try await accountHubLink.getUserId(email: email,
                                                                             password: password)

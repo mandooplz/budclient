@@ -33,6 +33,8 @@ public final class Project: Debuggable, EventDebuggable {
     
     nonisolated let sourceLink: ProjectSourceLink
     
+    var updater: ProjectUpdater.ID?
+    
     public var name: String?
     
     public var issue: (any Issuable)?
@@ -40,19 +42,54 @@ public final class Project: Debuggable, EventDebuggable {
     
     
     // MARK: action
+    public func setUpUpdater() async {
+        await setUpUpdater(mutateHook: nil)
+    }
+    internal func setUpUpdater(mutateHook:Hook?) async {
+        // mutate
+        await mutateHook?()
+        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard updater == nil else { setIssue(Error.updaterAlreadyExist); return}
+        let myConfig = self.config.setParent(id)
+        
+        let updaterRef = ProjectUpdater(config: myConfig)
+        self.updater = updaterRef.id
+    }
+    
     public func subscribeSource() async {
         await subscribeSource(captureHook: nil)
     }
     internal func subscribeSource(captureHook: Hook? = nil) async {
         // capture
-        // 굳이 Updater를 따로 정의해야 하는가.
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard let updater else { setIssue(Error.updaterIsNil); return }
+        let config = self.config
+        let callback = self.callback
+        
+        // compute
         do {
-            // projectSourceLink.setNotifier { }
-            // whenModified
+            let ticket = Ticket(system: config.system, user: config.user)
+            try await sourceLink.setHandler(
+                ticket: ticket,
+                handler: .init({ event in
+                    Task { @MainActor in
+                        switch event {
+                        case .modified:
+                            guard let updaterRef = updater.ref else { return }
+                            
+                            updaterRef.queue.append(event)
+                            await updaterRef.apply()
+                            
+                            await callback?()
+                        }
+                    }
+                }))
         } catch {
             setUnknownIssue(error)
             return
         }
+        
     }
     
     public func push() async {
@@ -66,7 +103,30 @@ public final class Project: Debuggable, EventDebuggable {
         
         // compute
         do {
-            try await sourceLink.setName(name)
+            let projectTicket = ProjectTicket(system: config.system,
+                                              user: config.user,
+                                              name: name)
+            
+            try await sourceLink.insert(projectTicket)
+            try await sourceLink.processTicket()
+        } catch {
+            setUnknownIssue(error)
+            return
+        }
+    }
+    
+    public func unsubscribeSource() async {
+        await unsubscribeSource(captureHook: nil)
+    }
+    internal func unsubscribeSource(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        let system = config.system
+        
+        // compute
+        do {
+            try await sourceLink.removeHandler(system: system)
         } catch {
             setUnknownIssue(error)
             return
@@ -80,6 +140,14 @@ public final class Project: Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        
+        // compute
+        do {
+            try await sourceLink.remove()
+        } catch {
+            setUnknownIssue(error)
+            return
+        }
     }
     
     
@@ -97,6 +165,8 @@ public final class Project: Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case projectIsDeleted
+        case updaterAlreadyExist
+        case updaterIsNil
         case nameIsNil
     }
 }

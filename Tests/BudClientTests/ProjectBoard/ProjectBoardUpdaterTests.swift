@@ -42,7 +42,7 @@ struct ProjectBoardUpdaterTests {
             // given
             await withCheckedContinuation { con in
                 Task {
-                    await projectBoardRef.setCallbacK {
+                    await projectBoardRef.setCallback {
                         con.resume()
                     }
                     
@@ -179,7 +179,7 @@ struct ProjectBoardUpdaterTests {
             try await #require(projectBoardRef.projects.isEmpty == true)
             await withCheckedContinuation { con in
                 Task {
-                    await projectBoardRef.setCallbacK {
+                    await projectBoardRef.setCallback {
                         con.resume()
                     }
                     

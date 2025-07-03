@@ -59,7 +59,7 @@ public final class SignUpForm: Debuggable {
         let user: UserID
         do {
             async let result = {
-                let accountHubLink = tempConfig.budServerLink.getAccountHub()
+                let accountHubLink = await tempConfig.budServerLink.getAccountHub()
                 
                 let newTicket = AccountHubLink.Ticket()
                 await accountHubLink.insertEmailTicket(newTicket)

@@ -19,14 +19,4 @@ public struct Ticket: Sendable, Hashable {
 }
 
 
-public struct ProjectTicket: Sendable, Hashable {
-    public let system: SystemID
-    public let user: UserID
-    public let projectName: String
-    
-    public init(system: SystemID, user: UserID, projectName: String) {
-        self.system = system
-        self.user = user
-        self.projectName = projectName
-    }
-}
+

@@ -18,7 +18,8 @@ package protocol EventDebuggable: AnyObject {
 }
 
 package extension EventDebuggable {
-    func setCallbacK(_ handler: @escaping Callback) {
+    func setCallback(_ handler: @escaping Callback) {
+        self.callback = nil
         self.callback = handler
     }
 }
