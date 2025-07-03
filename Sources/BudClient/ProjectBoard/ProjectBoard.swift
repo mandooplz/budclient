@@ -70,6 +70,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 notifier: .init(
                     added: { projectSource in
                         Task { @MainActor in
+                            // 만약 Updater가 없다면? 
                             guard let updaterRef = self.updater?.ref else { return }
                             
                             updaterRef.diffs.insert(.added(projectSource: projectSource))

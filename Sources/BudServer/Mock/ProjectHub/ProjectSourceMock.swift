@@ -34,9 +34,23 @@ final class ProjectSourceMock: ServerObject {
     var user: String // user
     
     var name: String
+    var nameTicket: NameTicket?
+    
+    var notifiers: [SystemID: Notifier] = [:]
     
     
     // MARK: action
+    func processNameTicket() async {
+        // mutate
+        guard let nameTicket else { return }
+        let system = nameTicket.ticket.system
+        
+        for (target, notifier) in notifiers where target != system {
+            notifier.whenModifier()
+        }
+        
+        self.nameTicket = nil
+    }
     
     
     // MARK: value
@@ -51,6 +65,22 @@ final class ProjectSourceMock: ServerObject {
         }
         typealias Object = ProjectSourceMock
         typealias Manager = ProjectSourceMockManager
+    }
+    struct NameTicket: Sendable, Hashable {
+        let ticket: Ticket
+        let name: String
+        
+        init(ticket: Ticket, name: String) {
+            self.ticket = ticket
+            self.name = name
+        }
+    }
+    struct Notifier: Sendable {
+        let whenModifier: @Sendable () -> Void
+        
+        init(whenModifier: @Sendable @escaping () -> Void) {
+            self.whenModifier = whenModifier
+        }
     }
 }
 

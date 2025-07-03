@@ -40,6 +40,21 @@ public final class Project: Debuggable, EventDebuggable {
     
     
     // MARK: action
+    public func subscribeSource() async {
+        await subscribeSource(captureHook: nil)
+    }
+    internal func subscribeSource(captureHook: Hook? = nil) async {
+        // capture
+        // 굳이 Updater를 따로 정의해야 하는가.
+        do {
+            // projectSourceLink.setNotifier { }
+            // whenModified
+        } catch {
+            setUnknownIssue(error)
+            return
+        }
+    }
+    
     public func push() async {
         await self.push(captureHook: nil)
     }

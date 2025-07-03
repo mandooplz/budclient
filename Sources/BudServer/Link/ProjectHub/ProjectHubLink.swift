@@ -33,7 +33,7 @@ package struct ProjectHubLink: Sendable {
     package func hasNotifier(system: SystemID) async -> Bool {
         switch mode {
         case .test:
-            return ProjectHubMock.shared.notifiers[system] != nil
+            return ProjectHubMock.shared.eventHandlers[system] != nil
         case .real:
             return await ProjectHub.shared.hasNotifier()
         }
@@ -42,7 +42,7 @@ package struct ProjectHubLink: Sendable {
     package func setNotifier(ticket: Ticket, notifier: Notifier) async throws {
         switch mode {
         case .test:
-            ProjectHubMock.shared.notifiers[ticket.system] = notifier.forTest()
+            ProjectHubMock.shared.eventHandlers[ticket.system] = notifier.forTest()
         case .real:
             await ProjectHub.shared.setNotifier(ticket: ticket, notifier: notifier)
         }
@@ -63,7 +63,7 @@ package struct ProjectHubLink: Sendable {
     package func removeNotifier(system: SystemID) async throws {
         switch mode {
         case .test:
-            ProjectHubMock.shared.notifiers[system] = nil
+            ProjectHubMock.shared.eventHandlers[system] = nil
         case .real:
             await ProjectHub.shared.removeNotifier()
         }
@@ -87,5 +87,10 @@ package struct ProjectHubLink: Sendable {
         internal func forTest() -> ProjectHubMock.Notifier {
             .init(added: added, removed: removed)
         }
+    }
+    
+    package enum Event: Sendable {
+        case addProjectSource(object: ProjectSourceID)
+        case removeProjectSource
     }
 }

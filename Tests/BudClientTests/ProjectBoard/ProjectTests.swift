@@ -7,7 +7,7 @@
 import Foundation
 import Testing
 @testable import BudClient
-import BudServer
+@testable import BudServer
 
 
 // MARK: Tests
@@ -50,6 +50,32 @@ struct ProjectTests {
         
         @Test func updateNameInProjectSource() async throws {
             // given
+            let projectSourceLink = projectRef.sourceLink
+            let testName = "TEST_PROJECT_NAME"
+            
+            try await #require(projectSourceLink.getName() != testName)
+            
+            await MainActor.run {
+                projectRef.name = testName
+            }
+            
+            // when
+            await projectRef.push()
+            
+            // then
+            await #expect(projectSourceLink.getName() == testName)
+        }
+        @Test func updateNameByCallback() async throws {
+            // given
+            let testName = "TEST_PROJECT_NAME"
+            try await #require(projectRef.name != testName)
+            
+            // when
+            // projectSourceLink.setNameTicket(다른시스템)
+            // projectSourceLink.processNameTicket()
+            
+            // then
+            await #expect(projectRef.name == testName)
             
         }
     }
@@ -74,6 +100,12 @@ struct ProjectTests {
             // then
             let issue = try #require(await projectRef.issue)
             #expect(issue.reason == "projectIsDeleted")
+        }
+        
+        @Test func removeProject() async throws {
+            // ProjectSource를 삭제하면
+            // 누구에게 피드백이 가는가.
+            // ProjectHub의 Notifier를 통해 전달된다. 
         }
     }
 }
