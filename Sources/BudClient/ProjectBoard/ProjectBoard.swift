@@ -31,7 +31,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     internal var updater: ProjectBoardUpdater.ID?
     
     public internal(set) var projects: [Project.ID] = []
-    internal var projectMap: [ProjectSourceID: Project.ID] = [:]
+    internal var sourceMap: [ProjectSourceID: Project.ID] = [:]
     
     public var issue: (any Issuable)?
     package var callback: Callback?
@@ -58,7 +58,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     internal func subscribeProjectHub(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
+        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
+        guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
         let config = self.config
         
         // compute
@@ -70,16 +71,17 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 handler: .init({ event in
                     Task { @MainActor in
                         switch event {
-                        case .added(let projectSource):
+                        case .added:
                             guard let updaterRef = self.updater?.ref else { return }
                             
-                            updaterRef.diffs.insert(.added(projectSource: projectSource))
+                            updaterRef.eventQueue.append(event)
                             updaterRef.update()
                             
                             await self.callback?()
-                        case .removed(let projectSource):
+                        case .removed:
                             guard let updaterRef = self.updater?.ref else { return }
-                            updaterRef.diffs.insert(.removed(projectSource: projectSource))
+                            
+                            updaterRef.eventQueue.append(event)
                             updaterRef.update()
                             
                             await self.callback?()
@@ -120,6 +122,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
+        guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
         let budServerLink = config.budServerLink
         let projectHubLink = budServerLink.getProjectHub()
         let newProjectNumber = self.projects.count
@@ -150,7 +153,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
             ProjectBoardManager.container[self]
         }
     }
-    internal typealias ProjectSourceID = String
     public enum Error: String, Swift.Error {
         case projectBoardIsDeleted
         case updaterIsNotSet, alreadySetUp

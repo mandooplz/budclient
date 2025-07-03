@@ -89,6 +89,19 @@ struct ProjectBoardTests {
             let debugIssue = try #require(await projectBoardRef.issue)
             #expect(debugIssue.reason == "projectBoardIsDeleted")
         }
+        @Test func whenUpdaterIsNil() async throws {
+            // given
+            await MainActor.run {
+                projectBoardRef.updater = nil
+            }
+            
+            // when
+            await projectBoardRef.subscribeProjectHub()
+            
+            // then
+            let issue = try #require(await projectBoardRef.issue)
+            #expect(issue.reason == "updaterIsNotSet")
+        }
         
         @Test func registerNotifierInProjectHub() async throws {
             // given
@@ -166,6 +179,20 @@ struct ProjectBoardTests {
             let issue = try #require(await projectBoardRef.issue)
             #expect(issue.reason == "projectBoardIsDeleted")
         }
+        @Test func whenUpdaterIsNil() async throws {
+            // given
+            await MainActor.run {
+                projectBoardRef.updater = nil
+            }
+            
+            // when
+            await projectBoardRef.createProjectSource()
+            
+            // then
+            let issue = try #require(await projectBoardRef.issue)
+            #expect(issue.reason == "updaterIsNotSet")
+        }
+        
         @Test func updateProjects() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty)

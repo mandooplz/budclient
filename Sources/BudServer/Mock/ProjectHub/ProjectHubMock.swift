@@ -46,7 +46,7 @@ final class ProjectHubMock: ServerObject {
             let eventHandler = eventHandlers[ticket.system]
             let event = ProjectHubEvent.added(projectSource)
             
-            eventHandler?(event)
+            eventHandler?.execute(event)
             
             tickets.remove(ticket)
         }

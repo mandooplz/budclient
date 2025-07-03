@@ -29,18 +29,6 @@
       },
       "target" : {
         "containerPath" : "container:",
-        "identifier" : "BudCacheTests",
-        "name" : "BudCacheTests"
-      }
-    },
-    {
-      "skippedTags" : {
-        "tags" : [
-          ".real"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:",
         "identifier" : "BudClientTests",
         "name" : "BudClientTests"
       }

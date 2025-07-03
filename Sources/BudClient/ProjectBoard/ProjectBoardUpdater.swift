@@ -7,6 +7,7 @@
 import Foundation
 import Tools
 import BudServer
+import Collections
 
 
 // MARK: Object
@@ -28,16 +29,18 @@ internal final class ProjectBoardUpdater: Sendable {
     internal nonisolated let id: ID
     internal nonisolated let config: Config<ProjectBoard.ID>
    
-    internal var diffs: Set<Diff> = []
+    internal var eventQueue: Deque<ProjectHubEvent> = []
     
     
     // MARK: action
     internal func update() {
         // mutate
         guard let projectBoardRef = config.parent.ref else { return }
-        let map = projectBoardRef.projectMap
-        for diff in diffs {
-            switch diff {
+        let map = projectBoardRef.sourceMap
+        
+        while eventQueue.isEmpty == false {
+            let event = eventQueue.removeFirst()
+            switch event {
             case .added(let projectSource):
                 if map[projectSource] != nil { return }
                 let projectSourceLink = ProjectSourceLink(
@@ -46,12 +49,12 @@ internal final class ProjectBoardUpdater: Sendable {
                 let projectRef = Project(config: config,
                                          sourceLink: projectSourceLink)
                 projectBoardRef.projects.append(projectRef.id)
-                diffs.remove(diff)
+                projectBoardRef.sourceMap[projectSource] = projectRef.id
             case .removed(let projectSource):
-                // diff를 이용해 프로젝트 제거
-                if map[projectSource] == nil { return }
-                diffs.remove(diff)
-                fatalError()
+                guard let project = map[projectSource] else { return }
+                
+                projectBoardRef.projects.removeAll { $0 == project }
+                project.ref?.delete()
             }
         }
     }
@@ -67,10 +70,6 @@ internal final class ProjectBoardUpdater: Sendable {
         var ref: ProjectBoardUpdater? {
             ProjectBoardUpdaterManager.container[self]
         }
-    }
-    internal enum Diff: Sendable, Hashable {
-        case added(projectSource: String)
-        case removed(projectSource: String)
     }
 }
 

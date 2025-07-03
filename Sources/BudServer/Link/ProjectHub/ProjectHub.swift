@@ -42,12 +42,12 @@ internal final class ProjectHub: Sendable {
                     if (diff.type == .added) {
                         let projectSource = diff.document.documentID
                         let event = ProjectHubEvent.added(projectSource)
-                        handler(event)
+                        handler.execute(event)
                     }
                     if (diff.type == .removed) {
                         let projectSource = diff.document.documentID
                         let event = ProjectHubEvent.removed(projectSource)
-                        handler(event)
+                        handler.execute(event)
                     }
                 }
             }

@@ -24,14 +24,19 @@ struct ProjectBoardUpdaterTests {
             self.projectBoardRef = await updaterRef.config.parent.ref!
         }
         
-        @Test func createProjectWhenSourceAdded() async throws {
+        @Test(.disabled()) func whenAlreadyAdded() async throws {
+            // given
+            
+        }
+        @Test func createProject() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty == true)
             
-            let randomProjectSource = UUID().uuidString
+            let projectSource = UUID().uuidString
             
             let _ = await MainActor.run {
-                updaterRef.diffs.insert(.added(projectSource: randomProjectSource))
+                let event = ProjectHubEvent.added(projectSource)
+                updaterRef.eventQueue.append(event)
             }
             
             // when
@@ -42,8 +47,29 @@ struct ProjectBoardUpdaterTests {
             let project = try #require(await projectBoardRef.projects.first)
             let projectRef = try #require(await project.ref)
             
-            let link = ProjectSourceLink(mode: .test, id: randomProjectSource)
+            let link = ProjectSourceLink(mode: .test, id: projectSource)
             #expect(projectRef.sourceLink == link)
+        }
+        @Test func insertProjectSource() async throws {
+            // given
+            try await #require(projectBoardRef.sourceMap.isEmpty == true)
+            
+            let projectSource = UUID().uuidString
+            
+            let _ = await MainActor.run {
+                let event = ProjectHubEvent.added(projectSource)
+                updaterRef.eventQueue.append(event)
+            }
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(projectBoardRef.sourceMap[projectSource] != nil)
+        }
+        
+        @Test(.disabled()) func whenAlreadyRemoved() async throws {
+            
         }
         @Test func deleteProjectWhenSourceRemoved() async throws {
             // given
@@ -51,16 +77,40 @@ struct ProjectBoardUpdaterTests {
             
             let randomProjectSource = UUID().uuidString
             
-            let _ = await MainActor.run {
-                updaterRef.diffs.insert(.added(projectSource: randomProjectSource))
+            await MainActor.run {
+                let event = ProjectHubEvent.added(randomProjectSource)
+                
+                updaterRef.eventQueue.append(event)
+                updaterRef.update()
             }
             
-            await updaterRef.update()
             try await #require(projectBoardRef.projects.count == 1)
+            try await #require(updaterRef.eventQueue.isEmpty == true)
+            
+            let project = try #require(await projectBoardRef.projects.first)
+            
+            
+            // given
+            await MainActor.run {
+                let event = ProjectHubEvent.removed(randomProjectSource)
+                
+                updaterRef.eventQueue.append(event)
+            }
             
             // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(projectBoardRef.projects.isEmpty == true)
+            await #expect(project.isExist == false)
         }
-        @Test func handleAddedAndRemoved() async throws {
+        @Test(.disabled()) func removeProjectSource() async throws {
+            // given
+            
+            
+            // when
+            
+            // then
             
         }
     }

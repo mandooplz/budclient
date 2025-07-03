@@ -92,13 +92,6 @@ struct GoogleRegisterFormMockTests {
             #expect(accountRef != nil)
             
         }
-        @Test(.disabled()) func whenAccountAlreadyExists() async throws {
-            // given
-            
-            // when
-            
-            // then
-        }
     }
 }
 
