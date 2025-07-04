@@ -75,13 +75,12 @@ internal final class ProjectHub: Sendable, Ticketable {
     internal func createProjectSource() {
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
-            let documentID = db.collection("projects").addDocument(data: [
+            
+            // 새로운 FireStore Document 생성
+            db.collection("projects").addDocument(data: [
                 "name": ticket.name,
                 "user": ticket.user
-            ]).documentID
-            
-            let projectSourceRef = ProjectSource(documentId: documentID)
-            projectSources.insert(projectSourceRef.id)
+            ])
         }
     }
     
