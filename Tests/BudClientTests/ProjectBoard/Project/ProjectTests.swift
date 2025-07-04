@@ -279,7 +279,6 @@ struct ProjectTests {
             #expect(issue.reason == "projectIsDeleted")
         }
         
-        
         @Test func removeProjectSource() async throws {
             // given
             let projectSourceLink = projectRef.sourceLink
@@ -318,6 +317,27 @@ struct ProjectTests {
             // then
             await #expect(projectBoardRef.projects.contains(projectRef.id) == false)
             
+        }
+        @Test func updateProjectSourceMapInProjectBoard() async throws {
+            // given
+            let projectBoardRef = try #require(await projectRef.config.parent.ref)
+            try await #require(projectBoardRef.projectSourceMap.count == 1)
+            
+            // when
+            await withCheckedContinuation { con in
+                Task {
+                    await projectBoardRef.setCallback {
+                        con.resume()
+                    }
+                    
+                    await projectBoardRef.subscribeProjectHub()
+                    
+                    await projectRef.removeSource()
+                }
+            }
+            
+            // then
+            await #expect(projectBoardRef.projectSourceMap.count == 0)
         }
         @Test func deleteProject() async throws {
             // given

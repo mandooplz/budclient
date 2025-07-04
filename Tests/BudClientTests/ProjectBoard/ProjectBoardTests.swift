@@ -32,8 +32,8 @@ struct ProjectBoardTests {
             
             // then
             try await #require(projectBoardRef.updater == nil)
-            let debugIssue = try #require(await projectBoardRef.issue)
-            #expect(debugIssue.reason == "projectBoardIsDeleted")
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectBoardIsDeleted")
         }
         
         @Test func createUpdater() async throws {
@@ -47,7 +47,7 @@ struct ProjectBoardTests {
             let updater = try #require(await projectBoardRef.updater)
             await #expect(updater.isExist == true)
         }
-        @Test func whenAlreadySetUp() async throws {
+        @Test func whenUpdaterAlreadySetUp() async throws {
             // given
             try await #require(projectBoardRef.updater == nil)
     
@@ -59,8 +59,8 @@ struct ProjectBoardTests {
             await projectBoardRef.setUpUpdater()
             
             // then
-            let debugIssue = try #require(await projectBoardRef.issue)
-            try #require(debugIssue.reason == "alreadySetUp")
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
+            try #require(issue.reason == "alreadySetUp")
             
             
             let newUpdater = try #require(await projectBoardRef.updater)
@@ -86,8 +86,8 @@ struct ProjectBoardTests {
             })
 
             // then
-            let debugIssue = try #require(await projectBoardRef.issue)
-            #expect(debugIssue.reason == "projectBoardIsDeleted")
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectBoardIsDeleted")
         }
         @Test func whenUpdaterIsNil() async throws {
             // given
@@ -99,7 +99,7 @@ struct ProjectBoardTests {
             await projectBoardRef.subscribeProjectHub()
             
             // then
-            let issue = try #require(await projectBoardRef.issue)
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "updaterIsNotSet")
         }
         
@@ -136,8 +136,8 @@ struct ProjectBoardTests {
             }
             
             // then
-            let debugIssue = try #require(await projectBoardRef.issue)
-            #expect(debugIssue.reason == "projectBoardIsDeleted")
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectBoardIsDeleted")
         }
         
         @Test func unregisterNotifierInProjectHub() async throws {
@@ -176,7 +176,7 @@ struct ProjectBoardTests {
             // then
             try await #require(projectBoardRef.id.isExist == false)
             
-            let issue = try #require(await projectBoardRef.issue)
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "projectBoardIsDeleted")
         }
         @Test func whenUpdaterIsNil() async throws {
@@ -189,7 +189,7 @@ struct ProjectBoardTests {
             await projectBoardRef.createProjectSource()
             
             // then
-            let issue = try #require(await projectBoardRef.issue)
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "updaterIsNotSet")
         }
         
@@ -198,35 +198,31 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.projects.isEmpty)
             
             // when
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task {
-                        await projectBoardRef.setCallback {
-                            confirm()
-                            continuation.resume()
-                        }
-                        
-                        await projectBoardRef.subscribeProjectHub()
-                        await projectBoardRef.createProjectSource()
+            await withCheckedContinuation { con in
+                Task {
+                    await projectBoardRef.setCallback {
+                        con.resume()
                     }
+                    
+                    await projectBoardRef.subscribeProjectHub()
+                    await projectBoardRef.createProjectSource()
                 }
             }
+
             
             // then
+            await projectBoardRef.unsubscribeProjectHub()
             await #expect(projectBoardRef.projects.count == 1)
             
             // when
-            await confirmation(expectedCount: 1) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task.detached {
-                        await projectBoardRef.setCallback {
-                            confirm()
-                            continuation.resume()
-                        }
-                        
-                        await projectBoardRef.subscribeProjectHub()
-                        await projectBoardRef.createProjectSource()
+            await withCheckedContinuation { con in
+                Task.detached {
+                    await projectBoardRef.setCallback {
+                        con.resume()
                     }
+                    
+                    await projectBoardRef.subscribeProjectHub()
+                    await projectBoardRef.createProjectSource()
                 }
             }
             

@@ -75,18 +75,21 @@ func createAndGetProject(_ budClientRef: BudClient) async -> Project {
     await withCheckedContinuation { continuation in
         Task {
             await projectBoardRef.setCallback {
-                print(#function)
                 continuation.resume()
             }
             
             await projectBoardRef.subscribeProjectHub()
-            
             await projectBoardRef.createProjectSource()
         }
     }
     
-    // continuation이 다시 호출되지 않도록 재설정
+    try! await #require(projectBoardRef.projects.count == 1)
+    try! await #require(projectBoardRef.projectSourceMap.count == 1)
+    
+    // contunuation의 참조 제거
     await projectBoardRef.unsubscribeProjectHub()
+    
+    // 다시 구독
     await projectBoardRef.setCallback({ })
     await projectBoardRef.subscribeProjectHub()
     

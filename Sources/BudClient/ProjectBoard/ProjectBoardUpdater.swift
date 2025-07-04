@@ -15,7 +15,6 @@ import Collections
 public final class ProjectBoardUpdater: Debuggable {
     // MARK: core
     init(config: Config<ProjectBoard.ID>) {
-        self.id = ID(value: .init())
         self.config = config
         
         ProjectBoardUpdaterManager.register(self)
@@ -26,10 +25,10 @@ public final class ProjectBoardUpdater: Debuggable {
     
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let config: Config<ProjectBoard.ID>
    
-    var eventQueue: Deque<ProjectHubEvent> = []
+    var queue: Deque<ProjectHubEvent> = []
     
     public var issue: (any Issuable)?
     
@@ -43,10 +42,11 @@ public final class ProjectBoardUpdater: Debuggable {
         await mutateHook?()
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
         let projectBoardRef = config.parent.ref!
+        let config = self.config
         let map = projectBoardRef.projectSourceMap
         
-        while eventQueue.isEmpty == false {
-            let event = eventQueue.removeFirst()
+        while queue.isEmpty == false {
+            let event = queue.removeFirst()
             switch event {
             // when projectSource added
             case .added(let projectSource):
@@ -54,10 +54,6 @@ public final class ProjectBoardUpdater: Debuggable {
                     setIssue(Error.alreadyAdded)
                     return
                 }
-                
-                // 기존의 ProjectSource를 생성해야 한다.
-                // 그런데 어디에서 생성해야 하는가.
-                
                 
                 let projectSourceLink = ProjectSourceLink(
                     mode: config.mode,
@@ -75,6 +71,7 @@ public final class ProjectBoardUpdater: Debuggable {
                 }
                 
                 projectBoardRef.projects.removeAll { $0 == project }
+                projectBoardRef.projectSourceMap[projectSource] = nil
                 project.ref?.delete()
             }
         }
@@ -85,6 +82,10 @@ public final class ProjectBoardUpdater: Debuggable {
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
+        
         var isExist: Bool {
             ProjectBoardUpdaterManager.container[self] != nil
         }
@@ -92,7 +93,7 @@ public final class ProjectBoardUpdater: Debuggable {
             ProjectBoardUpdaterManager.container[self]
         }
     }
-    internal enum Error: String, Swift.Error {
+    public enum Error: String, Swift.Error {
         case updaterIsDeleted
         case alreadyAdded, alreadyRemoved
     }

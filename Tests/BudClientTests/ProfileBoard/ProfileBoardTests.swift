@@ -36,6 +36,9 @@ struct ProfileBoardTests {
             }
 
             // then
+            let issue = try #require(await profileBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "profileBoardIsDeleted")
+            
             try await #require(budClientRef.profileBoard?.isExist == false)
             await #expect(budCacheLink.getUser() != nil)
         }
@@ -54,8 +57,10 @@ struct ProfileBoardTests {
             }
 
             // then
-            try await #require(budClientRef.profileBoard?.isExist == false)
+            let issue = try #require(await profileBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "profileBoardIsDeleted")
             
+            try await #require(budClientRef.profileBoard?.isExist == false)
             await #expect(budClientRef.isUserSignedIn == true)
         }
         

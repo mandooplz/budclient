@@ -5,6 +5,7 @@
 //  Created by 김민우 on 7/3/25.
 //
 import Foundation
+import os
 
 
 // MARK: Debuggable
@@ -20,7 +21,8 @@ public extension Debuggable {
     func setIssue<E: RawRepresentable<String>>(_ error: E) {
         self.issue = KnownIssue(error)
     }
-    func setUnknownIssue(_ error: Error) {
+    func setUnknownIssue(_ error: Error, location: String = #function) {
+        Logger().error("UnknownIssue is occurred(location)\n \(String(reflecting: error))")
         self.issue = UnknownIssue(error)
     }
 }

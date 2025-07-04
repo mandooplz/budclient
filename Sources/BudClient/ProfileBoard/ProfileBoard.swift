@@ -13,19 +13,18 @@ import BudServer
 @MainActor @Observable
 public final class ProfileBoard: Debuggable {
     // MARK: core
-    internal init(config: Config<BudClient.ID>) {
-        self.id = ID(value: UUID())
+    init(config: Config<BudClient.ID>) {
         self.config = config
 
         ProfileBoardManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         ProfileBoardManager.unregister(self.id)
     }
 
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
     
     public var issue: (any Issuable)?
@@ -35,10 +34,10 @@ public final class ProfileBoard: Debuggable {
     public func signOut() async {
         await signOut(captureHook: nil, mutateHook: nil)
     }
-    internal func signOut(captureHook: Hook?, mutateHook: Hook?) async {
+    func signOut(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard self.id.isExist else { return }
+        guard self.id.isExist else { setIssue(Error.profileBoardIsDeleted); return }
         let config = self.config
         let budClient = config.parent
         let projectBoard = budClient.ref!.projectBoard
@@ -48,16 +47,15 @@ public final class ProfileBoard: Debuggable {
         // compute
         let tempConfig = config.getTempConfig(config.parent)
         do {
-            try await config.budCacheLink.resetUserId()
+            try await config.budCacheLink.resetUser()
         } catch {
-            self.issue = UnknownIssue(error)
-            return
+            setUnknownIssue(error); return
         }
 
         
         // mutate
         await mutateHook?()
-        guard self.id.isExist else { return }
+        guard self.id.isExist else { setIssue(Error.profileBoardIsDeleted); return }
         let budClientRef = self.config.parent.ref!
         let projectBoardRef = projectBoard!.ref!
         let projects = projectBoardRef.projects
@@ -82,15 +80,22 @@ public final class ProfileBoard: Debuggable {
 
 
     // MARK: value
-    @MainActor public struct ID: Sendable, Hashable {
+    @MainActor
+    public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             ProfileBoardManager.container[self] != nil
         }
         public var ref: ProfileBoard? {
             ProfileBoardManager.container[self]
         }
+    }
+    public enum Error: String, Swift.Error {
+        case profileBoardIsDeleted
     }
 }
 

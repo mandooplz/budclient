@@ -41,7 +41,7 @@ package struct ProjectHubLink: Sendable {
         }
     }
     @Server
-    package func setHandler(ticket: Ticket, handler: Handler<ProjectHubEvent>) async throws {
+    package func setHandler(ticket: Ticket, handler: Handler<ProjectHubEvent>) async {
         switch mode {
         case .test(let projectHubRef):
             projectHubRef.eventHandlers[ticket.system] = handler
@@ -50,7 +50,7 @@ package struct ProjectHubLink: Sendable {
         }
     }
     @Server
-    package func removeHandler(system: SystemID) async throws {
+    package func removeHandler(system: SystemID) async {
         switch mode {
         case .test(let projectHubRef):
             projectHubRef.eventHandlers[system] = nil
@@ -62,7 +62,7 @@ package struct ProjectHubLink: Sendable {
     
     // MARK: action
     @Server
-    package func createProjectSource() async throws {
+    package func createProjectSource() async {
         switch mode {
         case .test(let projectHubRef):
             await projectHubRef.createProjectSource()

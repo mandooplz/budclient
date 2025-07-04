@@ -14,25 +14,24 @@ import BudServer
 public final class ProjectBoard: Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<BudClient.ID>) {
-        self.id = ID(value: .init())
         self.config = config
         
         ProjectBoardManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         ProjectBoardManager.unregister(self.id)
     }
     
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
     
-    internal var updater: ProjectBoardUpdater.ID?
+    var updater: ProjectBoardUpdater.ID?
     
     public internal(set) var projects: [Project.ID] = []
-    internal var projectSourceMap: [ProjectSourceID: Project.ID] = [:]
-    internal func getProjectSource(_ project: Project.ID) -> ProjectSourceID? {
+    var projectSourceMap: [ProjectSourceID: Project.ID] = [:]
+    func getProjectSource(_ project: Project.ID) -> ProjectSourceID? {
         self.projectSourceMap
             .first { $0.value == project }?
             .key
@@ -46,11 +45,12 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     public func setUpUpdater() async {
         await setUpUpdater(mutateHook: nil)
     }
-    internal func setUpUpdater(mutateHook: Hook?) async {
+    func setUpUpdater(mutateHook: Hook?) async {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
         guard self.updater == nil else { setIssue(Error.alreadySetUp); return }
+        let config = self.config
         
         let myConfig = config.setParent(self.id)
         let updaterRef = ProjectBoardUpdater(config: myConfig)
@@ -60,61 +60,60 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     public func subscribeProjectHub() async {
         await self.subscribeProjectHub(captureHook: nil)
     }
-    internal func subscribeProjectHub(captureHook: Hook?) async {
-        // capture
+    func subscribeProjectHub(captureHook: Hook?) async {
+        // capture & compute
         await captureHook?()
         guard self.id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
         guard let updater else { setIssue(Error.updaterIsNotSet); return }
         let config = self.config
         let callback = self.callback
         
-        // compute
-        async let projectHubLink = config.budServerLink.getProjectHub()
-        async let ticket = Ticket(system: config.system, user: config.user)
-        do {
-            try await projectHubLink.setHandler(
-                ticket: ticket,
-                handler: .init({ event in
-                    Task { @MainActor in
-                        switch event {
-                        case .added:
-                            guard let updaterRef = updater.ref else { return }
-                            
-                            updaterRef.eventQueue.append(event)
-                            await updaterRef.update()
-                            
-                            await callback?()
-                        case .removed:
-                            guard let updaterRef = updater.ref else { return }
-                            
-                            updaterRef.eventQueue.append(event)
-                            await updaterRef.update()
-                            
-                            await callback?()
+        
+        let projectHubLink = await config.budServerLink.getProjectHub()
+        let ticket = Ticket(system: config.system, user: config.user)
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await projectHubLink.setHandler(
+                    ticket: ticket,
+                    handler: .init({ event in
+                        Task { @MainActor in
+                            switch event {
+                            case .added:
+                                guard let updaterRef = updater.ref else { return }
+                                
+                                updaterRef.queue.append(event)
+                                await updaterRef.update()
+                                
+                                await callback?()
+                            case .removed:
+                                guard let updaterRef = updater.ref else { return }
+                                
+                                updaterRef.queue.append(event)
+                                await updaterRef.update()
+                                
+                                await callback?()
+                            }
                         }
-                    }
-                })
-            )
-        } catch {
-            setUnknownIssue(error); return
+                    })
+                )
+            }
         }
     }
     
     public func unsubscribeProjectHub() async {
         await unsubscribeProjectHub(captureHook: nil)
     }
-    internal func unsubscribeProjectHub(captureHook: Hook? = nil) async {
-        // capture
+    func unsubscribeProjectHub(captureHook: Hook? = nil) async {
+        // capture & compute
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         let config = config
         
-        // compute
-        do {
-            let projectHubLink = await config.budServerLink.getProjectHub()
-            try await projectHubLink.removeHandler(system: config.system)
-        } catch {
-            setUnknownIssue(error); return
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                let projectHubLink = await config.budServerLink.getProjectHub()
+                await projectHubLink.removeHandler(system: config.system)
+            }
         }
     }
     
@@ -122,26 +121,25 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     public func createProjectSource() async {
         await self.createProjectSource(captureHook: nil)
     }
-    internal func createProjectSource(captureHook: Hook?) async {
-        // capture
+    func createProjectSource(captureHook: Hook?) async {
+        // capture & compute
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
+        let config = self.config
         let budServerLink = config.budServerLink
-        let newProjectNumber = self.projects.count
+        let newProjectName = "Project\(self.projects.count + 1)"
         
-        // compute
-        do {
-            let projectHubLink = await budServerLink.getProjectHub()
-            let projectTicket = ProjectTicket(
-                system: config.system,
-                user: config.user,
-                name: "\(newProjectNumber)")
-            await projectHubLink.insertTicket(projectTicket)
-            try await projectHubLink.createProjectSource()
-        } catch {
-            setUnknownIssue(error)
-            return
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                let projectHubLink = await budServerLink.getProjectHub()
+                let projectTicket = ProjectTicket(
+                    system: config.system,
+                    user: config.user,
+                    name: newProjectName)
+                await projectHubLink.insertTicket(projectTicket)
+                await projectHubLink.createProjectSource()
+            }
         }
     }
     
@@ -150,8 +148,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             ProjectBoardManager.container[self] != nil
         }
         public var ref: ProjectBoard? {

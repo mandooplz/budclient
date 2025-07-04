@@ -12,19 +12,18 @@ import Tools
 @MainActor @Observable
 public final class Community: Debuggable {
     // MARK: core
-    internal init(config: Config<BudClient.ID>) {
-        self.id = ID(value: .init())
+    init(config: Config<BudClient.ID>) {
         self.config = config
         
         CommunityManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         CommunityManager.unregister(self.id)
     }
     
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
     
     public var issue: (any Issuable)?
@@ -39,8 +38,11 @@ public final class Community: Debuggable {
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             CommunityManager.container[self] != nil
         }
         public var ref: Community? {

@@ -38,7 +38,7 @@ package struct BudCacheLink: Sendable {
             return
         }
     }
-    package func resetUserId() async throws {
+    package func resetUser() async throws {
         switch mode {
         case .test(let mockRef):
             await MainActor.run {
