@@ -14,19 +14,18 @@ import BudServer
 @MainActor @Observable
 public final class GoogleForm: Debuggable {
     // MARK: core
-    internal init(tempConfig: TempConfig<AuthBoard.ID>) {
-        self.id = ID(value: UUID())
+    init(tempConfig: TempConfig<AuthBoard.ID>) {
         self.tempConfig = tempConfig
         
         GoogleFormManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         GoogleFormManager.unregister(self.id)
     }
     
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let tempConfig: TempConfig<AuthBoard.ID>
     
     public var idToken: String?
@@ -39,7 +38,7 @@ public final class GoogleForm: Debuggable {
     public func signUpAndSignIn() async {
         await signUpAndSignIn(captureHook: nil, mutateHook: nil)
     }
-    internal func signUpAndSignIn(captureHook: Hook?, mutateHook: Hook?) async {
+    func signUpAndSignIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
         guard self.id.isExist else { setIssue(Error.googleFormIsDeleted); return }
@@ -65,14 +64,14 @@ public final class GoogleForm: Debuggable {
                     throw UnknownIssue(reason: "GoogleRegisterFormLink.updateGoogleForms() failed")
                 }
                 
-                await googleRegisterFormLink.setIdToken(idToken)
-                await googleRegisterFormLink.setAccessToken(accessToken)
+                let googleToken = GoogleToken(idToken: idToken, accessToken: accessToken)
+                await googleRegisterFormLink.setToken(googleToken)
                 
                 await googleRegisterFormLink.submit()
                 await googleRegisterFormLink.remove()
                 
                 // signIn
-                return try await accountHubLink.getUserId(idToken: idToken, accessToken: accessToken)
+                return try await accountHubLink.getUser(token: googleToken)
             }()
             
             user = try await result
@@ -80,8 +79,7 @@ public final class GoogleForm: Debuggable {
             // save in BudCache
             await config.budCacheLink.setUser(user)
         } catch {
-            self.issue = UnknownIssue(error)
-            return
+            setUnknownIssue(error); return
         }
         
         // compute
@@ -115,8 +113,11 @@ public final class GoogleForm: Debuggable {
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             GoogleFormManager.container[self] != nil
         }
         public var ref: GoogleForm? {

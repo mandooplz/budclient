@@ -10,34 +10,33 @@ import Tools
 
 // MARK: Object
 @Server
-internal final class EmailRegisterFormMock: Sendable {
+final class EmailRegisterFormMock: Sendable {
     // MARK: core
-    internal init(accountHub: AccountHubMock,
-                  ticket: AccountHubMock.Ticket) {
-        self.id = ID(value: .init())
+    init(accountHub: AccountHubMock,
+         ticket: AccountHubMock.Ticket) {
         self.accountHub = accountHub
         self.ticket = ticket
 
         EmailRegisterFormMockManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         EmailRegisterFormMockManager.unregister(self.id)
     }
     
 
     // MARK: state
-    internal nonisolated let id: ID
-    internal nonisolated let ticket: AccountHubMock.Ticket
-    internal nonisolated let accountHub: AccountHubMock
+    nonisolated let id = ID()
+    nonisolated let ticket: AccountHubMock.Ticket
+    nonisolated let accountHub: AccountHubMock
     
-    internal var email: String?
-    internal var password: String?
+    var email: String?
+    var password: String?
     
-    internal var issue: (any Issuable)?
+    var issue: (any Issuable)?
 
     
     // MARK: action
-    internal func submit() {
+    func submit() {
         // capture
         guard let email else {
             self.issue = KnownIssue(Error.emailIsNil)
@@ -62,7 +61,7 @@ internal final class EmailRegisterFormMock: Sendable {
         let account = AccountMock(email: email, password: password)
         accountHub.accounts.insert(account.id)
     }
-    internal func remove() {
+    func remove() {
         // mutate
         accountHub.emailRegisterForms[ticket] = nil
         self.delete()
@@ -71,17 +70,20 @@ internal final class EmailRegisterFormMock: Sendable {
     
     // MARK: value
     @Server
-    internal struct ID: Sendable, Hashable {
-        internal let value: UUID
+    struct ID: Sendable, Hashable {
+        let value: UUID
+        nonisolated init(_ value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             EmailRegisterFormMockManager.container[self] != nil
         }
-        internal var ref: EmailRegisterFormMock? {
+        var ref: EmailRegisterFormMock? {
             EmailRegisterFormMockManager.container[self]
         }
     }
-    internal enum Error: String, Swift.Error {
+    enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case emailDuplicate
     }

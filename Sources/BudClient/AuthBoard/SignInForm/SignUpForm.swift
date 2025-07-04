@@ -14,19 +14,18 @@ import BudCache
 @MainActor @Observable
 public final class SignUpForm: Debuggable {
     // MARK: core
-    internal init(tempConfig: TempConfig<SignInForm.ID>) {
-        self.id = ID(value: UUID())
+    init(tempConfig: TempConfig<SignInForm.ID>) {
         self.tempConfig = tempConfig
         
         SignUpFormManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         SignUpFormManager.unregister(self.id)
     }
     
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let tempConfig: TempConfig<SignInForm.ID>
     
     public var email: String?
@@ -40,12 +39,12 @@ public final class SignUpForm: Debuggable {
     public func signUp() async {
         await signUp(captureHook: nil, mutateHook: nil)
     }
-    internal func signUp(captureHook: Hook?, mutateHook: Hook?) async {
+    func signUp(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
         guard let email else { setIssue(Error.emailIsNil); return }
-        guard let password else { setIssue(Error.passwordIsNil); return}
+        guard let password else { setIssue(Error.passwordIsNil); return }
         guard let passwordCheck else { setIssue(Error.passwordCheckIsNil); return }
         if password != passwordCheck { setIssue(Error.passwordsDoNotMatch); return }
         
@@ -61,11 +60,11 @@ public final class SignUpForm: Debuggable {
             async let result = {
                 let accountHubLink = await tempConfig.budServerLink.getAccountHub()
                 
-                let newTicket = AccountHubLink.Ticket()
-                await accountHubLink.insertEmailTicket(newTicket)
+                let ticket = AccountHubLink.Ticket()
+                await accountHubLink.insertEmailTicket(ticket)
                 await accountHubLink.updateEmailForms()
                 
-                guard let emailRegisterFormLink = await accountHubLink.getEmailRegisterForm(newTicket) else {
+                guard let emailRegisterFormLink = await accountHubLink.getEmailRegisterForm(ticket) else {
                     throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
                 }
                 await emailRegisterFormLink.setEmail(email)
@@ -74,9 +73,9 @@ public final class SignUpForm: Debuggable {
                 await emailRegisterFormLink.submit()
                 await emailRegisterFormLink.remove()
                 
-                // getUserId
-                return try await accountHubLink.getUserId(email: email,
-                                                          password: password)
+                // getUser
+                return try await accountHubLink.getUser(email: email,
+                                                        password: password)
             }()
             
             user = try await result
@@ -84,8 +83,7 @@ public final class SignUpForm: Debuggable {
             // setUserId
             await tempConfig.budCacheLink.setUser(user)
         } catch {
-            setUnknownIssue(error)
-            return
+            setUnknownIssue(error); return
         }
         
         // compute
@@ -104,7 +102,6 @@ public final class SignUpForm: Debuggable {
         budClientRef.profileBoard = profileBoardRef.id
         budClientRef.community = communityRef.id
         budClientRef.user = user
-        
 
         self.delete()
         googleFormRef.delete()
@@ -133,8 +130,11 @@ public final class SignUpForm: Debuggable {
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             SignUpFormManager.container[self] != nil
         }
         public var ref: SignUpForm? {
@@ -143,7 +143,6 @@ public final class SignUpForm: Debuggable {
     }
     public enum Error: String, Swift.Error {
         case signUpFormIsDeleted
-        case budClientIsNotSetUp
         case emailIsNil, passwordIsNil, passwordCheckIsNil
         case passwordsDoNotMatch
     }

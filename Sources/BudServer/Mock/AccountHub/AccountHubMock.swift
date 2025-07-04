@@ -12,24 +12,24 @@ import Tools
 @Server
 internal final class AccountHubMock: Sendable {
     // MARK: core
-    internal init() { }
+    init() { }
     
     
     // MARK: state
-    internal var accounts: Set<AccountMock.ID> = [
+    var accounts: Set<AccountMock.ID> = [
         AccountMock(email: "test@test.com", password: "123456").id
     ]
-    internal func isExist(email: String, password: String) -> Bool {
+    func isExist(email: String, password: String) -> Bool {
         accounts.lazy
             .compactMap { $0.ref }
             .contains { $0.email == email && $0.password == password }
     }
-    internal func isExist(idToken: String, accessToken: String) -> Bool {
+    func isExist(token: GoogleToken) -> Bool {
         accounts.lazy
             .compactMap { $0.ref }
-            .contains { $0.idToken == idToken && $0.accessToken == accessToken }
+            .contains { $0.token == token }
     }
-    internal func getUserId(email: String, password: String) throws -> UserID {
+    func getUser(email: String, password: String) throws -> UserID {
         let filtered = self.accounts.lazy
             .compactMap { $0.ref }
             .filter { $0.email == email }
@@ -44,18 +44,18 @@ internal final class AccountHubMock: Sendable {
         
         return user
     }
-    internal func getUserId(googleIdToken: String, googleAccessToken: String) -> UserID? {
+    func getUser(token: GoogleToken) -> UserID? {
         accounts.lazy
             .compactMap { $0.ref }
-            .first { $0.idToken == googleIdToken && $0.accessToken == googleAccessToken }?
+            .first { $0.token == token }?
             .user
     }
     
-    internal var emailTickets: Set<Ticket> = []
-    internal var emailRegisterForms: [Ticket:EmailRegisterFormMock.ID] = [:]
+    var emailTickets: Set<Ticket> = []
+    var emailRegisterForms: [Ticket:EmailRegisterFormMock.ID] = [:]
     
-    internal var googleTickets: Set<Ticket> = []
-    internal var googleRegisterForms: [Ticket: GoogleRegisterFormMock.ID] = [:]
+    var googleTickets: Set<Ticket> = []
+    var googleRegisterForms: [Ticket: GoogleRegisterFormMock.ID] = [:]
     
     
     // MARK: action

@@ -19,28 +19,13 @@ package struct GoogleRegisterFormLink: Sendable {
     
     
     // MARK: state
-    package func setIdToken(_ value: String) async {
+    @Server
+    package func setToken(_ token: GoogleToken) async {
         switch mode {
         case .test(let mock):
-            await Server.run {
-                mock.ref?.idToken = value
-            }
+            mock.ref?.token = token
         case .real(let object):
-            await Server.run {
-                object.ref?.idToken = value
-            }
-        }
-    }
-    package func setAccessToken(_ value: String) async {
-        switch mode {
-        case .test(let mock):
-            await Server.run {
-                mock.ref?.accessToken = value
-            }
-        case .real(let object):
-            await Server.run {
-                object.ref?.accessToken = value
-            }
+            object.ref?.token = token
         }
     }
     

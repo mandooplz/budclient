@@ -33,21 +33,21 @@ public final class BudClient: Debuggable {
     
     
     // MARK: state
-    internal nonisolated let id: ID = ID(value: UUID())
-    internal nonisolated let mode: Mode
-    internal nonisolated let system: SystemID = .init()
+    nonisolated let id = ID()
+    nonisolated let mode: Mode
+    nonisolated let system = SystemID()
+    
     public private(set) var budServerLink: BudServerLink?
     private nonisolated let budServerMockRef: BudServerMock
     private nonisolated let budCacheMockRef: BudCacheMock
     internal nonisolated let budCacheLink: BudCacheLink
     
-    
-    internal var user: UserID? = nil
-    public var isUserSignedIn: Bool { user != nil }
     public internal(set) var authBoard: AuthBoard.ID?
     public internal(set) var projectBoard: ProjectBoard.ID?
     public internal(set) var profileBoard: ProfileBoard.ID?
     public internal(set) var community: Community.ID?
+    var user: UserID? = nil
+    public var isUserSignedIn: Bool { user != nil }
     
     public var issue: (any Issuable)?
     
@@ -79,6 +79,9 @@ public final class BudClient: Debuggable {
     // MARK: value
     @MainActor public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(_ value: UUID = UUID()) {
+            self.value = value
+        }
         
         public var ref: BudClient? {
             BudClientManager.container[self]

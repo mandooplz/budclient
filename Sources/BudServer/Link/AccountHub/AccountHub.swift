@@ -13,12 +13,12 @@ import FirebaseAuth
 @Server
 internal final class AccountHub {
     // MARK: core
-    internal static let shared = AccountHub()
+    static let shared = AccountHub()
     private init() { }
     
     
     // MARK: state
-    internal func isExist(email: String, password: String) async throws -> Bool {
+    func isExist(email: String, password: String) async throws -> Bool {
         do {
             let _ = try await Auth.auth().signIn(withEmail: email, password: password)
         } catch let error as NSError {
@@ -38,7 +38,7 @@ internal final class AccountHub {
         
         return true
     }
-    internal func getUserId(email: String, password: String) async throws -> UserID {
+    func getUser(email: String, password: String) async throws -> UserID {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             return result.user.uid.toUserID()
@@ -57,26 +57,26 @@ internal final class AccountHub {
             }
         }
     }
-    internal func getUserId(googleIdToken: String, googleAccessToken: String) async throws -> UserID {
+    func getUser(token: GoogleToken) async throws -> UserID {
         if let user = Auth.auth().currentUser {
             return user.uid.toUserID()
         }
         
-        let credential = GoogleAuthProvider.credential(withIDToken: googleIdToken,
-                                                       accessToken: googleAccessToken)
-        let result = try await Auth.auth().signIn(with: credential)
+        let googleCredential  = GoogleAuthProvider.credential(withIDToken: token.idToken,
+                                                       accessToken: token.accessToken)
+        let result = try await Auth.auth().signIn(with: googleCredential )
         return result.user.uid.toUserID()
     }
     
-    internal var emailTickets: Set<Ticket> = []
-    internal var emailRegisterForms: [Ticket:EmailRegisterForm.ID] = [:]
+    var emailTickets: Set<Ticket> = []
+    var emailRegisterForms: [Ticket:EmailRegisterForm.ID] = [:]
     
-    internal var googleTickets: Set<Ticket> = []
-    internal var googleRegisterForms: [Ticket: GoogleRegisterForm.ID] = [:]
+    var googleTickets: Set<Ticket> = []
+    var googleRegisterForms: [Ticket: GoogleRegisterForm.ID] = [:]
     
     
     // MARK: action
-    internal func updateEmailForms() {
+    func updateEmailForms() {
         // mutate
         for ticket in emailTickets {
             let registerFormRef = EmailRegisterForm(accountHubRef: self,
@@ -85,7 +85,7 @@ internal final class AccountHub {
             emailTickets.remove(ticket)
         }
     }
-    internal func updateGoogleForms() {
+    func updateGoogleForms() {
         // mutate
         for ticket in googleTickets {
             let googleRegisterFormRef = GoogleRegisterForm(accountHubRef: self,
@@ -97,10 +97,10 @@ internal final class AccountHub {
     
     
     // MARK: value
-    internal struct Ticket: Sendable, Hashable {
-        internal let value: UUID
+    struct Ticket: Sendable, Hashable {
+        let value: UUID
         
-        internal init(value: UUID = UUID()) {
+        init(value: UUID = UUID()) {
             self.value = value
         }
     }

@@ -33,8 +33,8 @@ struct SignInFormTests {
             }
             
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
             
             try await #require(signInFormRef.id.isExist == false)
             await #expect(signInFormRef.signUpForm == nil)
@@ -66,13 +66,13 @@ struct SignInFormTests {
             try await #require(signInFormRef.signUpForm == nil)
             
             await signInFormRef.setUpSignUpForm()
-            let registerForm = try #require(await signInFormRef.signUpForm)
+            let signUpForm = try #require(await signInFormRef.signUpForm)
             
             // when
             await signInFormRef.setUpSignUpForm()
             
             // then
-            await #expect(signInFormRef.signUpForm == registerForm)
+            await #expect(signInFormRef.signUpForm == signUpForm)
         }
     }
     
@@ -98,9 +98,8 @@ struct SignInFormTests {
             }
 
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.isKnown == true)
-            #expect(issue.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -116,9 +115,8 @@ struct SignInFormTests {
             }
             
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.isKnown == true)
-            #expect(issue.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -236,9 +234,8 @@ struct SignInFormTests {
             await emailFormRef.signInByCache()
             
             // then
-            let issue = try #require(await emailFormRef.issue)
-            #expect(issue.isKnown == true)
-            #expect(issue.reason == "userIdIsNilInCache")
+            let issue = try #require(await emailFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "userIsNilInCache")
         }
     }
     
@@ -269,9 +266,8 @@ struct SignInFormTests {
             }
 
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.isKnown == true)
-            #expect(issue.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -292,9 +288,8 @@ struct SignInFormTests {
             }
             
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.isKnown == true)
-            #expect(issue.reason == "deleted")
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
         }
@@ -309,8 +304,7 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.isKnown == true)
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "emailIsNil")
         }
         @Test func whenPasswordIsNil() async throws {
@@ -323,8 +317,7 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.isKnown == true)
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "passwordIsNil")
         }
         @Test func whenUserNotFound() async throws {
@@ -338,9 +331,7 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            try await #require(signInFormRef.isIssueOccurred == true)
-            let issue = await signInFormRef.issue!
-            #expect(issue.isKnown == true)
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "userNotFound")
         }
         @Test func whenPasswordIsWrong() async throws {
@@ -354,8 +345,7 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            let issue = try #require(await signInFormRef.issue)
-            #expect(issue.isKnown == true)
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "wrongPassword")
         }
         
@@ -409,8 +399,8 @@ struct SignInFormTests {
         }
         @Test func deleteGoogleForm() async throws {
             // given
-            let authBoardRef = await signInFormRef.tempConfig.parent.ref!
-            let googleForm = await authBoardRef.googleForm!
+            let authBoardRef = try #require(await signInFormRef.tempConfig.parent.ref)
+            let googleForm = try #require(await authBoardRef.googleForm)
             
             await MainActor.run {
                 signInFormRef.email = validEmail
@@ -527,8 +517,8 @@ internal func getEmailForm(_ budClientRef: BudClient) async -> SignInForm {
     let authBoardRef = await getAuthBoard(budClientRef)
     
     await authBoardRef.setUpForms()
-    let emailForm = await authBoardRef.signInForm!
-    return await emailForm.ref!
+    let signInForm = await authBoardRef.signInForm!
+    return await signInForm.ref!
 }
 private func register(budClientRef: BudClient, email: String, password: String) async {
     let budServerLink = await budClientRef.budServerLink!
@@ -568,11 +558,11 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     await emailRegisterFormLink.submit()
     await emailRegisterFormLink.remove()
     
-    // getUserId
-    let user = try! await accountHubLink.getUserId(email: testEmail, password: testPassword)
+    // getUser
+    let user = try! await accountHubLink.getUser(email: testEmail, password: testPassword)
     
     
-    // setUserId
+    // setUser
     let budCacheLink = budClientRef.budCacheLink
     await budCacheLink.setUser(user)
 }

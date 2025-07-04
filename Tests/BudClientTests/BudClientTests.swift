@@ -6,6 +6,7 @@
 //
 import Testing
 import Foundation
+import Tools
 @testable import BudClient
 
 
@@ -75,8 +76,7 @@ struct BudClientTests {
             
             // then
             try await #require(budClientRef.isIssueOccurred == true)
-            let issue = try #require(await budClientRef.issue)
-            #expect(issue.isKnown == true)
+            let issue = try #require(await budClientRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadySetUp")
             
             await #expect(budClientRef.authBoard == authBoard)

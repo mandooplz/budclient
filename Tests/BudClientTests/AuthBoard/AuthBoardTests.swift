@@ -31,7 +31,7 @@ struct AuthBoardTests {
             }
             
             // then
-            let issue = try #require(await authBoardRef.issue)
+            let issue = try #require(await authBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "authBoardIsDeleted")
             
             await #expect(authBoardRef.signInForm == nil)

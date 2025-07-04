@@ -12,21 +12,14 @@ import Tools
 @Server
 internal final class AccountMock: Sendable {
     // MARK: core
-    internal init(email: String, password: String) {
-        self.id = ID(value: UUID())
-        self.user = UserID()
-        
+    internal init(email: String, password: String) {        
         self.email = email
         self.password = password
         
         AccountMockManager.register(self)
     }
-    internal init(idToken: String, accessToken: String) {
-        self.id = ID(value: .init())
-        self.user = UserID()
-        
-        self.idToken = idToken
-        self.accessToken = accessToken
+    internal init(token: GoogleToken) {
+        self.token = token
         
         AccountMockManager.register(self)
     }
@@ -36,20 +29,22 @@ internal final class AccountMock: Sendable {
     
     
     // MARK: state
-    internal nonisolated let id: ID
-    internal nonisolated let user: UserID
+    nonisolated let id = ID()
+    nonisolated let user = UserID()
     
-    internal var email: String?
-    internal var password: String?
+    var email: String?
+    var password: String?
     
-    internal var idToken: String?
-    internal var accessToken: String?
+    var token: GoogleToken?
     
     
     // MARK: value
     @Server
-    internal struct ID: Sendable, Hashable {
+    struct ID: Sendable, Hashable {
         let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
         var isExist: Bool {
             AccountMockManager.container[self] != nil

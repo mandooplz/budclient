@@ -6,49 +6,45 @@
 //
 import Foundation
 import Tools
-import CryptoKit
 
 
 // MARK: Object
 @Server
-internal final class GoogleRegisterFormMock: Sendable {
+final class GoogleRegisterFormMock: Sendable {
     // MARK: core
-    internal init(accountHub: AccountHubMock,
+    init(accountHub: AccountHubMock,
                   ticket: AccountHubMock.Ticket) {
-        self.id = ID(value: UUID())
         self.ticket = ticket
         self.accountHub = accountHub
         
         GoogleRegisterFormMockManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         GoogleRegisterFormMockManager.unregister(self.id)
     }
     
     
     // MARK: state
-    internal nonisolated let id: ID
+    nonisolated let id = ID()
     private nonisolated let ticket: AccountHubMock.Ticket
     private nonisolated let accountHub: AccountHubMock
     
-    internal var idToken: String?
-    internal var accessToken: String?
+    var token: GoogleToken?
     
-    internal var issue: (any Issuable)?
+    var issue: (any Issuable)?
     
     
     // MARK: action
-    internal func submit() {
+    func submit() {
         // capture
-        guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
-        guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return}
-        if accountHub.isExist(idToken: idToken, accessToken: accessToken) == true { return }
+        guard let token else { issue = KnownIssue(Error.tokenIsNil); return }
+        if accountHub.isExist(token: token) == true { return }
         
         // mutate
-        let accountRef = AccountMock(idToken: idToken, accessToken: accessToken)
+        let accountRef = AccountMock(token: token)
         accountHub.accounts.insert(accountRef.id)
     }
-    internal func remove() {
+    func remove() {
         // mutate
         accountHub.googleRegisterForms[ticket] = nil
         self.delete()
@@ -57,8 +53,11 @@ internal final class GoogleRegisterFormMock: Sendable {
     
     // MARK: value
     @Server
-    internal struct ID: Sendable, Hashable {
+    struct ID: Sendable, Hashable {
         let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
         var isExist: Bool {
             GoogleRegisterFormMockManager.container[self] != nil
@@ -67,22 +66,9 @@ internal final class GoogleRegisterFormMock: Sendable {
             GoogleRegisterFormMockManager.container[self]
         }
     }
-    internal enum Error: String, Swift.Error {
-        case idTokenIsNil, accessTokenIsNil
+    enum Error: String, Swift.Error {
+        case tokenIsNil
         case googleUserIdIsNil
-    }
-    internal struct GoogleUserID: Sendable, Hashable {
-        let idToken: String
-        let accessToken: String
-        
-        func getValue() -> String {
-            let combined = idToken + ":" + accessToken
-            
-            // SHA256 해시를 사용한 결정론적 user id 생성
-            let data = combined.data(using: .utf8)!
-            let hash = SHA256.hash(data: data)
-            return hash.compactMap { String(format: "%02x", $0) }.joined()
-        }
     }
 }
 

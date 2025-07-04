@@ -12,19 +12,18 @@ import Tools
 @MainActor @Observable
 public final class AuthBoard: Debuggable {
     // MARK: core
-    internal init(tempConfig: TempConfig<BudClient.ID>) {
-        self.id = ID(value: UUID())
+    init(tempConfig: TempConfig<BudClient.ID>) {
         self.tempConfig = tempConfig
         
         AuthBoardManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         AuthBoardManager.unregister(self.id)
     }
     
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let tempConfig: TempConfig<BudClient.ID>
     
     public internal(set) var signInForm: SignInForm.ID?
@@ -37,7 +36,7 @@ public final class AuthBoard: Debuggable {
     public func setUpForms() async {
         await setUpForms(beforeMutate: nil)
     }
-    internal func setUpForms(beforeMutate: Hook?) async {
+    func setUpForms(beforeMutate: Hook?) async {
         // compute
         let myConfig = tempConfig.setParent(self.id)
         
@@ -58,8 +57,11 @@ public final class AuthBoard: Debuggable {
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             AuthBoardManager.container[self] != nil
         }
         public var ref: AuthBoard? {
@@ -69,7 +71,6 @@ public final class AuthBoard: Debuggable {
     public enum Error: String, Swift.Error {
         case authBoardIsDeleted
         case alreadySetUp
-        case userIsNotSignedIn
     }
 }
 

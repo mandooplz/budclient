@@ -36,7 +36,7 @@ struct GoogleFormTests {
             }
             
             // then
-            let issue = try #require(await googleFormRef.issue)
+            let issue = try #require(await googleFormRef.issue as? KnownIssue)
             #expect(issue.reason == "googleFormIsDeleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
@@ -58,7 +58,7 @@ struct GoogleFormTests {
             }
             
             // then
-            let issue = try #require(await googleFormRef.issue)
+            let issue = try #require(await googleFormRef.issue as? KnownIssue)
             #expect(issue.reason == "googleFormIsDeleted")
             
             await #expect(budClientRef.isUserSignedIn == false)
@@ -74,8 +74,7 @@ struct GoogleFormTests {
             await googleFormRef.signUpAndSignIn()
             
             // then
-            let issue = try #require(await googleFormRef.issue)
-            #expect(issue.isKnown == true)
+            let issue = try #require(await googleFormRef.issue as? KnownIssue)
             #expect(issue.reason == "idTokenIsNil")
         }
         @Test func whenAccessTokenIsNil() async throws {
@@ -89,8 +88,7 @@ struct GoogleFormTests {
             await googleFormRef.signUpAndSignIn()
             
             // then
-            let issue = try #require(await googleFormRef.issue)
-            #expect(issue.isKnown == true)
+            let issue = try #require(await googleFormRef.issue as? KnownIssue)
             #expect(issue.reason == "accessTokenIsNil")
         }
         

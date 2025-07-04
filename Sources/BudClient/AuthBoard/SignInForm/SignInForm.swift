@@ -14,26 +14,24 @@ import BudCache
 @MainActor @Observable
 public final class SignInForm: Debuggable {
     // MARK: core
-    internal init(tempConfig: TempConfig<AuthBoard.ID>) {
-        self.id = ID(value: UUID())
+    init(tempConfig: TempConfig<AuthBoard.ID>) {
         self.tempConfig = tempConfig
         
         EmailFormManager.register(self)
     }
-    internal func delete() {
+    func delete() {
         EmailFormManager.unregister(self.id)
     }
     
     
     // MARK: state
-    public nonisolated let id: ID
+    public nonisolated let id = ID()
     public nonisolated let tempConfig: TempConfig<AuthBoard.ID>
 
     public var email: String = ""
     public var password: String = ""
     
     public internal(set) var signUpForm: SignUpForm.ID?
-    public var isSetUpRequired: Bool { signUpForm == nil }
     
     public var issue: (any Issuable)?
     
@@ -43,10 +41,10 @@ public final class SignInForm: Debuggable {
         await signInByCache(captureHook: nil,
                             mutateHook: nil)
     }
-    internal func signInByCache(captureHook: Hook?, mutateHook: Hook?) async {
+    func signInByCache(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.deleted); return }
+        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
         let authBoardRef = self.tempConfig.parent.ref!
         let budClientRef = authBoardRef.tempConfig.parent.ref!
         
@@ -54,25 +52,25 @@ public final class SignInForm: Debuggable {
         async let result = {
             return await tempConfig.budCacheLink.getUser()
         }()
-        guard let userId = await result else {
-            setIssue(Error.userIdIsNilInCache); return
+        guard let user = await result else {
+            setIssue(Error.userIsNilInCache); return
         }
         
         // mutate
         await mutateHook?()
         mutateForSignIn(budClientRef: budClientRef,
                         authBoardRef: authBoardRef,
-                        user: userId)
+                        user: user)
         
     }
     
     public func signIn() async {
         await self.signIn(captureHook: nil, mutateHook: nil)
     }
-    internal func signIn(captureHook: Hook?, mutateHook: Hook?) async {
+    func signIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.deleted); return }
+        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
         guard email.isEmpty == false else { setIssue(Error.emailIsNil); return }
         guard password.isEmpty == false else { setIssue(Error.passwordIsNil); return }
         
@@ -84,9 +82,9 @@ public final class SignInForm: Debuggable {
         do {
             let accountHubLink = await tempConfig.budServerLink.getAccountHub()
             
-            async let userByServer = try await accountHubLink.getUserId(email: email,
-                                                                            password: password)
-            user = try await userByServer
+            async let userFromServer = try await accountHubLink.getUser(email: email,
+                                                                        password: password)
+            user = try await userFromServer
             
             await tempConfig.budCacheLink.setUser(user)
         } catch(let error as AccountHubLink.Error) {
@@ -96,8 +94,7 @@ public final class SignInForm: Debuggable {
             }
             return
         } catch {
-            setUnknownIssue(error)
-            return
+            setUnknownIssue(error); return
         }
         
         // mutate
@@ -109,7 +106,7 @@ public final class SignInForm: Debuggable {
     private func mutateForSignIn(budClientRef: BudClient,
                                  authBoardRef: AuthBoard,
                                  user: UserID) {
-        guard id.isExist else { setIssue(Error.deleted); return  }
+        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return  }
         guard budClientRef.isUserSignedIn == false else { return }
         let googleForm = authBoardRef.googleForm
         
@@ -134,11 +131,11 @@ public final class SignInForm: Debuggable {
     public func setUpSignUpForm() async {
         await setUpSignUpForm(mutateHook: nil)
     }
-    internal func setUpSignUpForm(mutateHook: Hook?) async {
+    func setUpSignUpForm(mutateHook: Hook?) async {
         // mutate
         await mutateHook?()
-        guard id.isExist else { setIssue(Error.deleted); return }
-        guard isSetUpRequired else { return }
+        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
+        guard signUpForm == nil else { return }
         
         let myConfig = tempConfig.setParent(self.id)
         
@@ -152,6 +149,9 @@ public final class SignInForm: Debuggable {
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
         internal var isExist: Bool {
             EmailFormManager.container[self] != nil
@@ -161,11 +161,10 @@ public final class SignInForm: Debuggable {
         }
     }
     public enum Error: String, Swift.Error {
-        case deleted
+        case signInFormIsDeleted
         case emailIsNil, passwordIsNil
         case userNotFound, wrongPassword
-        case missingEmailCredentialInCache
-        case userIdIsNilInCache
+        case userIsNilInCache
     }
 }
 

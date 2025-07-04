@@ -12,7 +12,6 @@ import FirebaseFirestore
 
 
 // MARK: Link
-// BudServerMock을 외부로부터 주입받는다.
 public struct BudServerLink: Sendable {
     // MARK: core
     private let mode: Mode

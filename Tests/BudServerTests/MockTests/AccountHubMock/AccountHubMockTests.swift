@@ -66,7 +66,7 @@ struct AccountHubMockTests {
             }
             
             // when
-            let user = try await accountHubRef.getUserId(email: testEmail,
+            let user = try await accountHubRef.getUser(email: testEmail,
                                                        password: testPasssword)
             
             // then
@@ -79,7 +79,7 @@ struct AccountHubMockTests {
             
             // when
             await #expect(throws: AccountHubMock.Error.userNotFound) {
-                let _ = try await accountHubRef.getUserId(email: testEmail,
+                let _ = try await accountHubRef.getUser(email: testEmail,
                                                                password: testPasssword)
             }
         }
@@ -95,7 +95,7 @@ struct AccountHubMockTests {
             
             // when
             await #expect(throws: AccountHubMock.Error.wrongPassword) {
-                let _ = try await accountHubRef.getUserId(email: testEmail,
+                let _ = try await accountHubRef.getUser(email: testEmail,
                                                           password: "wrongPassword")
             }
             

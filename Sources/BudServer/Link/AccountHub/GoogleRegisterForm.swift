@@ -11,11 +11,10 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-internal final class GoogleRegisterForm: Sendable {
+final class GoogleRegisterForm: Sendable {
     // MARK: core
-    internal init(accountHubRef: AccountHub,
+    init(accountHubRef: AccountHub,
                   ticket: AccountHub.Ticket) {
-        self.id = ID(value: .init())
         self.accountHubRef = accountHubRef
         self.ticket = ticket
         
@@ -27,30 +26,28 @@ internal final class GoogleRegisterForm: Sendable {
     
     
     // MARK: state
-    internal nonisolated let id: ID
-    internal nonisolated let accountHubRef: AccountHub
-    internal nonisolated let ticket: AccountHub.Ticket
+    nonisolated let id = ID()
+    nonisolated let accountHubRef: AccountHub
+    nonisolated let ticket: AccountHub.Ticket
     
-    internal var idToken: String?
-    internal var accessToken: String?
+    var token: GoogleToken?
     
-    internal var issue: (any Issuable)?
+    var issue: (any Issuable)?
     
     
     // MARK: action
-    internal func submit() async {
+    func submit() async {
         // capture
-        guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
-        guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return}
-        
+        guard let token else { issue = KnownIssue(Error.tokenIsNil); return }
+        guard id.isExist else { issue = KnownIssue(Error.googleRegisterFormIsDeleted); return }
+
         // compute
-        let credential = GoogleAuthProvider.credential(withIDToken: idToken,
-                                                       accessToken: accessToken)
+        let googleCredential = GoogleAuthProvider.credential(withIDToken: token.idToken,
+                                                       accessToken: token.accessToken)
         do {
-            try await Auth.auth().signIn(with: credential)
+            try await Auth.auth().signIn(with: googleCredential)
         } catch {
-            self.issue = UnknownIssue(error)
-            return
+            self.issue = UnknownIssue(error); return
         }
     }
     internal func remove() {
@@ -61,19 +58,22 @@ internal final class GoogleRegisterForm: Sendable {
     
     // MARK: value
     @Server
-    internal struct ID: Sendable, Hashable {
-        internal let value: UUID
+    struct ID: Sendable, Hashable {
+        let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         
-        internal var isExist: Bool {
+        var isExist: Bool {
             GoogleRegisterFormManager.container[self] != nil
         }
-        internal var ref: GoogleRegisterForm? {
+        var ref: GoogleRegisterForm? {
             GoogleRegisterFormManager.container[self]
         }
     }
-    internal enum Error: String, Swift.Error {
-        case idTokenIsNil, accessTokenIsNil
-        case googleUserIdIsNil
+    enum Error: String, Swift.Error {
+        case tokenIsNil
+        case googleRegisterFormIsDeleted
     }
 }
 

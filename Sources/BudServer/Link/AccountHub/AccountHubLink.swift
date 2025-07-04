@@ -12,7 +12,7 @@ import Tools
 package struct AccountHubLink: Sendable {
     // MARK: core
     private let mode: Mode
-    internal init(mode: Mode) {
+    init(mode: Mode) {
         self.mode = mode
     }
     
@@ -26,12 +26,12 @@ package struct AccountHubLink: Sendable {
             try await AccountHub.shared.isExist(email: email, password: password)
         }
     }
-    package func getUserId(email: String, password: String) async throws -> UserID {
+    package func getUser(email: String, password: String) async throws -> UserID {
         switch mode {
         case .test(let accountHubRef):
             do {
-                return try await accountHubRef.getUserId(email: email,
-                                                         password: password)
+                return try await accountHubRef.getUser(email: email,
+                                                       password: password)
             } catch(let error as AccountHubMock.Error) {
                 switch error {
                 case .userNotFound: throw Error.userNotFound;
@@ -42,8 +42,8 @@ package struct AccountHubLink: Sendable {
             }
         case .real:
             do {
-                return try await AccountHub.shared.getUserId(email: email,
-                                                             password: password)
+                return try await AccountHub.shared.getUser(email: email,
+                                                           password: password)
             } catch(let error as AccountHubMock.Error) {
                 switch error {
                 case .userNotFound: throw Error.userNotFound;
@@ -54,16 +54,15 @@ package struct AccountHubLink: Sendable {
             }
         }
     }
-    package func getUserId(idToken: String, accessToken: String) async throws -> UserID {
+    package func getUser(token: GoogleToken) async throws -> UserID {
         switch mode {
         case .test(let accountHubRef):
-            guard let userId = await accountHubRef.getUserId(googleIdToken: idToken,
-                                                                     googleAccessToken: accessToken) else {
+            guard let userId = await accountHubRef.getUser(token: token) else {
                 throw Error.userNotFound
             }
             return userId
         case .real:
-            let userId = try await AccountHub.shared.getUserId(googleIdToken: idToken,googleAccessToken: accessToken)
+            let userId = try await AccountHub.shared.getUser(token: token)
             return userId
         }
     }
