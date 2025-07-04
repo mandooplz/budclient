@@ -17,7 +17,7 @@ final class ProjectHubMock: ServerObject, Subscribable {
     
     
     // MARK: state
-    nonisolated let id: ID = ID(value: UUID())
+    nonisolated let id: ID = ID()
     
     var projectSources: Set<ProjectSourceMock.ID> = []
     func getProjectSources(user: UserID) -> [ProjectSourceMock.ID] {
@@ -55,6 +55,9 @@ final class ProjectHubMock: ServerObject, Subscribable {
     // MARK: value
     struct ID: ServerObjectID {
         let value: UUID
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
+        }
         typealias Object = ProjectHubMock
         typealias Manager = ProjectHubMockManager
     }

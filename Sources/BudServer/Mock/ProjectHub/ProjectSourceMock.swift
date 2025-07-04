@@ -31,11 +31,11 @@ final class ProjectSourceMock: ServerObject {
     // MARK: state
     nonisolated let id: ID
     nonisolated let projectHubRef: ProjectHubMock
-    var user: UserID // user
     
+    var user: UserID
     var name: String
-    var ticket: ProjectTicket?
     
+    var ticket: ProjectTicket?
     var eventHandlers: [SystemID: Handler<ProjectSourceEvent>] = [:]
     
     
@@ -48,10 +48,8 @@ final class ProjectSourceMock: ServerObject {
         }
         self.ticket = nil
     }
-    
     func remove() {
         // mutate
-        // Notifier
         let event = ProjectHubEvent.removed(id.value.uuidString)
         for (_, eventHandler) in projectHubRef.eventHandlers {
             eventHandler.execute(event)
@@ -69,6 +67,7 @@ final class ProjectSourceMock: ServerObject {
             self.value = value
         }
         init(_ stringValue: String) {
+            // ProjectSourceMock, ProjectSourceID -> ProjectSourceID
             self.value = UUID(uuidString: stringValue)!
         }
         typealias Object = ProjectSourceMock

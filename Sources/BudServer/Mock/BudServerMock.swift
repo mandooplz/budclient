@@ -10,7 +10,7 @@ import Tools
 
 // MARK: Object
 @MainActor
-package final class BudServerMock: Sendable {
+package final class BudServerMock {
     // MARK: core
     package static let shared = BudServerMock()
     package init() { }
@@ -23,6 +23,8 @@ package final class BudServerMock: Sendable {
     
     // MARK: action
     @Server package func setUp() {
+        guard accountHubRef == nil || projectHubRef == nil else { return }
+                
         self.accountHubRef = AccountHubMock()
         self.projectHubRef = ProjectHubMock()
     }

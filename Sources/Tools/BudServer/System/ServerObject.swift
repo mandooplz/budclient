@@ -14,6 +14,12 @@ package protocol ServerObject: AnyObject, Sendable {
     nonisolated var id: ID { get }
 }
 
+package extension ServerObject {
+    func delete() {
+        ID.Manager.unregister(self.id)
+    }
+}
+
 
 // MARK: BudObjectID
 @Server
