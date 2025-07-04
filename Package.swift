@@ -46,13 +46,19 @@ let package = Package(
         .target(
             name: "BudClient",
             dependencies: [
-                "BudServer", "Tools", "BudCache",
+                "Tools",
+                "BudServer", "BudServerMock",
+                "BudCache",
                 .product(name: "Collections", package: "swift-collections")
             ]
         ),
         .testTarget(
             name: "BudClientTests",
-            dependencies: ["BudClient", "BudServer", "Tools", "BudCache"]
+            dependencies: [
+                "BudClient",
+                "BudServer", "BudServerMock",
+                "Tools",
+                "BudCache"]
         ),
         
         
@@ -61,14 +67,25 @@ let package = Package(
             name: "BudServer",
             dependencies: [
                 "Tools",
+                "BudServerMock",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
                 .product(name: "Collections", package: "swift-collections")
             ]
         ),
+        
+        
+        // MARK: BudServerMock
+        .target(
+            name: "BudServerMock",
+            dependencies: [
+                "Tools",
+                .product(name: "Collections", package: "swift-collections")
+            ]
+        ),
         .testTarget(
-            name: "BudServerTests",
-            dependencies: ["Tools", "BudServer"]
+            name: "BudServerMockTests",
+            dependencies: ["Tools", "BudServerMock"]
         ),
         
         

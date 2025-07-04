@@ -14,6 +14,5 @@ package struct DB: Sendable {
         func callAsFunction() -> String {
             return "projects"
         }
-        
     }
 }

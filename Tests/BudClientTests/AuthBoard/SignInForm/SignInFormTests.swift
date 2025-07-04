@@ -9,6 +9,7 @@ import Foundation
 import Tools
 @testable import BudClient
 @testable import BudServer
+import BudServerMock
 @testable import BudCache
 
 
