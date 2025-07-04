@@ -79,7 +79,7 @@ public final class Project: Debuggable, EventDebuggable {
                             guard let updaterRef = updater.ref else { return }
                             
                             updaterRef.queue.append(event)
-                            await updaterRef.apply()
+                            await updaterRef.update()
                             
                             await callback?()
                         }

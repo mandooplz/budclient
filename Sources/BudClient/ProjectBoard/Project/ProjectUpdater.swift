@@ -33,13 +33,13 @@ final class ProjectUpdater: Debuggable {
     
     
     // MARK: action
-    func apply() async {
-        await apply(mutateHook: nil)
+    func update() async {
+        await update(mutateHook: nil)
     }
-    func apply(mutateHook:Hook?) async {
+    func update(mutateHook:Hook?) async {
         // mutate
         await mutateHook?()
-        guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
+        guard id.isExist else { setIssue(Error.projectUpdaterIsDeleted); return }
         let projectRef = config.parent.ref!
         
         while queue.isEmpty == false {
@@ -66,7 +66,7 @@ final class ProjectUpdater: Debuggable {
         }
     }
     enum Error: String, Swift.Error {
-        case updaterIsDeleted
+        case projectUpdaterIsDeleted
     }
 }
 
