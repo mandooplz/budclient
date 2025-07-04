@@ -20,19 +20,19 @@ package struct BudCacheLink: Sendable {
     
     
     // MARK: state
-    package func getUserId() async -> String? {
+    package func getUser() async -> UserID? {
         switch mode {
         case .test(let mockRef):
-            return await mockRef.userId
+            return await mockRef.user
         case .real:
-            return Auth.auth().currentUser?.uid
+            return Auth.auth().currentUser?.uid.toUserID()
         }
     }
-    package func setUser(_ value: String) async {
+    package func setUser(_ value: UserID) async {
         switch mode {
         case .test(let mockRef):
             await MainActor.run {
-                mockRef.userId = value
+                mockRef.user = value
             }
         case .real:
             return
@@ -42,7 +42,7 @@ package struct BudCacheLink: Sendable {
         switch mode {
         case .test(let mockRef):
             await MainActor.run {
-                mockRef.userId = nil
+                mockRef.user = nil
             }
         case .real:
             await withThrowingTaskGroup { group in

@@ -36,18 +36,19 @@ internal final class AccountHubMock: Sendable {
         
         if filtered.isEmpty { throw Error.userNotFound }
         
-        guard let userId = filtered.lazy
+        guard let user = filtered.lazy
             .first(where: { $0.password == password })?
-            .userId else {
+            .user else {
                 throw Error.wrongPassword
             }
         
-        return userId
+        return user
     }
     internal func getUserId(googleIdToken: String, googleAccessToken: String) -> UserID? {
         accounts.lazy
             .compactMap { $0.ref }
-            .first { $0.idToken == googleIdToken && $0.accessToken == googleAccessToken }?.userId
+            .first { $0.idToken == googleIdToken && $0.accessToken == googleAccessToken }?
+            .user
     }
     
     internal var emailTickets: Set<Ticket> = []

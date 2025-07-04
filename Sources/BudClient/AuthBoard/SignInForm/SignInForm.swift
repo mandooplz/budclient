@@ -52,7 +52,7 @@ public final class SignInForm: Debuggable {
         
         // compute
         async let result = {
-            return await tempConfig.budCacheLink.getUserId()
+            return await tempConfig.budCacheLink.getUser()
         }()
         guard let userId = await result else {
             setIssue(Error.userIdIsNilInCache); return
@@ -73,8 +73,8 @@ public final class SignInForm: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.deleted); return }
-        guard email.isNotEmpty else { setIssue(Error.emailIsNil); return }
-        guard password.isNotEmpty else { setIssue(Error.passwordIsNil); return }
+        guard email.isEmpty == false else { setIssue(Error.emailIsNil); return }
+        guard password.isEmpty == false else { setIssue(Error.passwordIsNil); return }
         
         let authBoardRef = self.tempConfig.parent.ref!
         let budClientRef = authBoardRef.tempConfig.parent.ref!
@@ -106,8 +106,9 @@ public final class SignInForm: Debuggable {
                         authBoardRef: authBoardRef,
                         user: user)
     }
-    private func mutateForSignIn(budClientRef: BudClient, authBoardRef: AuthBoard,
-                                 user: String) {
+    private func mutateForSignIn(budClientRef: BudClient,
+                                 authBoardRef: AuthBoard,
+                                 user: UserID) {
         guard id.isExist else { setIssue(Error.deleted); return  }
         guard budClientRef.isUserSignedIn == false else { return }
         let googleForm = authBoardRef.googleForm

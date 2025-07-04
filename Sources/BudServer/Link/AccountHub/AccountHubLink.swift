@@ -26,11 +26,12 @@ package struct AccountHubLink: Sendable {
             try await AccountHub.shared.isExist(email: email, password: password)
         }
     }
-    package func getUserId(email: String, password: String) async throws -> String {
+    package func getUserId(email: String, password: String) async throws -> UserID {
         switch mode {
         case .test(let accountHubRef):
             do {
-                return try await accountHubRef.getUserId(email: email, password: password)
+                return try await accountHubRef.getUserId(email: email,
+                                                         password: password)
             } catch(let error as AccountHubMock.Error) {
                 switch error {
                 case .userNotFound: throw Error.userNotFound;
@@ -41,7 +42,8 @@ package struct AccountHubLink: Sendable {
             }
         case .real:
             do {
-                return try await AccountHub.shared.getUserId(email: email, password: password)
+                return try await AccountHub.shared.getUserId(email: email,
+                                                             password: password)
             } catch(let error as AccountHubMock.Error) {
                 switch error {
                 case .userNotFound: throw Error.userNotFound;
@@ -52,7 +54,7 @@ package struct AccountHubLink: Sendable {
             }
         }
     }
-    package func getUserId(idToken: String, accessToken: String) async throws -> String {
+    package func getUserId(idToken: String, accessToken: String) async throws -> UserID {
         switch mode {
         case .test(let accountHubRef):
             guard let userId = await accountHubRef.getUserId(googleIdToken: idToken,

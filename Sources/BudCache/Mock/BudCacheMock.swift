@@ -18,5 +18,5 @@ package final class BudCacheMock: Sendable {
     
     
     // MARK: state
-    package var userId: String?
+    package var user: UserID?
 }

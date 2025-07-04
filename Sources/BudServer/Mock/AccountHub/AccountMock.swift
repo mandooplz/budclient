@@ -14,7 +14,7 @@ internal final class AccountMock: Sendable {
     // MARK: core
     internal init(email: String, password: String) {
         self.id = ID(value: UUID())
-        self.userId = UUID().uuidString
+        self.user = UserID()
         
         self.email = email
         self.password = password
@@ -23,7 +23,7 @@ internal final class AccountMock: Sendable {
     }
     internal init(idToken: String, accessToken: String) {
         self.id = ID(value: .init())
-        self.userId = UUID().uuidString
+        self.user = UserID()
         
         self.idToken = idToken
         self.accessToken = accessToken
@@ -37,7 +37,7 @@ internal final class AccountMock: Sendable {
     
     // MARK: state
     internal nonisolated let id: ID
-    internal nonisolated let userId: String
+    internal nonisolated let user: UserID
     
     internal var email: String?
     internal var password: String?

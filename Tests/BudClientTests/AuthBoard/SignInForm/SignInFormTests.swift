@@ -516,7 +516,7 @@ struct SignInFormTests {
             
             // then
             let budCacheLink = budClientRef.budCacheLink
-            await #expect(budCacheLink.getUserId() != nil)
+            await #expect(budCacheLink.getUser() != nil)
         }
     }
 }
@@ -569,10 +569,10 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     await emailRegisterFormLink.remove()
     
     // getUserId
-    let userId = try! await accountHubLink.getUserId(email: testEmail, password: testPassword)
+    let user = try! await accountHubLink.getUserId(email: testEmail, password: testPassword)
     
     
     // setUserId
     let budCacheLink = budClientRef.budCacheLink
-    await budCacheLink.setUser(userId)
+    await budCacheLink.setUser(user)
 }

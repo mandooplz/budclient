@@ -66,11 +66,11 @@ struct AccountHubMockTests {
             }
             
             // when
-            let userId = try await accountHubRef.getUserId(email: testEmail,
+            let user = try await accountHubRef.getUserId(email: testEmail,
                                                        password: testPasssword)
             
             // then
-            #expect(userId == accountRef.userId)
+            #expect(user == accountRef.user)
         }
         @Test func whenUserNotFound() async throws {
             // given

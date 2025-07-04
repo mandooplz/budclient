@@ -38,10 +38,10 @@ internal final class AccountHub {
         
         return true
     }
-    internal func getUserId(email: String, password: String) async throws -> String {
+    internal func getUserId(email: String, password: String) async throws -> UserID {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
-            return result.user.uid
+            return result.user.uid.toUserID()
         } catch let error as NSError {
             if let errorCode = AuthErrorCode(rawValue: error.code) {
                 switch errorCode {
@@ -57,15 +57,15 @@ internal final class AccountHub {
             }
         }
     }
-    internal func getUserId(googleIdToken: String, googleAccessToken: String) async throws -> String {
+    internal func getUserId(googleIdToken: String, googleAccessToken: String) async throws -> UserID {
         if let user = Auth.auth().currentUser {
-            return user.uid
+            return user.uid.toUserID()
         }
         
         let credential = GoogleAuthProvider.credential(withIDToken: googleIdToken,
                                                        accessToken: googleAccessToken)
         let result = try await Auth.auth().signIn(with: credential)
-        return result.user.uid
+        return result.user.uid.toUserID()
     }
     
     internal var emailTickets: Set<Ticket> = []

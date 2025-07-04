@@ -26,7 +26,7 @@ struct ProfileBoardTests {
             try await #require(budClientRef.profileBoard?.isExist == true)
             
             let budCacheLink = budClientRef.budCacheLink
-            try await #require(budCacheLink.getUserId() != nil)
+            try await #require(budCacheLink.getUser() != nil)
             
             // when
             await profileBoardRef.signOut {
@@ -37,14 +37,14 @@ struct ProfileBoardTests {
 
             // then
             try await #require(budClientRef.profileBoard?.isExist == false)
-            await #expect(budCacheLink.getUserId() != nil)
+            await #expect(budCacheLink.getUser() != nil)
         }
         @Test func whenProfileBoardIsDeletedBeforeMutate() async throws {
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
             let budCacheLink = budClientRef.budCacheLink
-            try await #require(budCacheLink.getUserId() != nil)
+            try await #require(budCacheLink.getUser() != nil)
             
             // when
             await profileBoardRef.signOut {
@@ -200,13 +200,13 @@ struct ProfileBoardTests {
         @Test func setNilUserIdInBudCache() async throws {
             // given
             let budCacheLink = budClientRef.budCacheLink
-            try await #require(budCacheLink.getUserId() != nil)
+            try await #require(budCacheLink.getUser() != nil)
             
             // when
             await profileBoardRef.signOut()
             
             // then
-            await #expect(budCacheLink.getUserId() == nil)
+            await #expect(budCacheLink.getUser() == nil)
         }
     }
 }
