@@ -22,13 +22,7 @@ internal final class ProjectHub: Sendable, Ticketable {
     nonisolated let id: ID = ID(value: UUID())
     private let db = Firestore.firestore()
     
-    var projectSources: Set<ProjectSource.ID> = []
-    func getProjectSource(_ documentId: String) -> ProjectSource.ID? {
-        self.projectSources.lazy
-            .compactMap { $0.ref }
-            .first { $0.documentId == documentId }?
-            .id
-    }
+    var projectSources: Set<ProjectSourceID> = []
     
     internal var tickets: Deque<ProjectTicket> = []
     
@@ -49,16 +43,19 @@ internal final class ProjectHub: Sendable, Ticketable {
                 
                 snapshot.documentChanges.forEach { diff in
                     if (diff.type == .added) {
-                        let projectSource = diff.document.documentID
+                        let documentId = diff.document.documentID
+                        let projectSource = ProjectSourceID(documentId)
                         
-                        let projectSourceRef = ProjectSource(documentId: projectSource)
+                        let projectSourceRef = ProjectSource(id: projectSource)
                         self.projectSources.insert(projectSourceRef.id)
                         
                         let event = ProjectHubEvent.added(projectSource)
                         handler.execute(event)
                     }
                     if (diff.type == .removed) {
-                        let projectSource = diff.document.documentID
+                        let documentId = diff.document.documentID
+                        let projectSource = ProjectSourceID(documentId)
+                        
                         let event = ProjectHubEvent.removed(projectSource)
                         handler.execute(event)
                     }

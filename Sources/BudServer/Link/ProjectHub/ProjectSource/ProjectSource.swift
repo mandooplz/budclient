@@ -15,8 +15,8 @@ import os
 @MainActor
 package final class ProjectSource: Sendable, Ticketable {
     // MARK: core
-    init(documentId: ProjectSourceID) {
-        self.documentId = documentId
+    init(id: ProjectSourceID = ProjectSourceID()) {
+        self.id = id
         
         ProjectSourceManager.register(self)
     }
@@ -25,8 +25,8 @@ package final class ProjectSource: Sendable, Ticketable {
     }
     
     // MARK: state
-    package nonisolated let id: ID = ID(value: UUID())
-    package nonisolated let documentId: ProjectSourceID
+    package nonisolated let id: ProjectSourceID
+    private typealias Manager = ProjectSourceManager
     private let db = Firestore.firestore()
     
     package var tickets: Deque<ProjectTicket> = []
@@ -37,7 +37,7 @@ package final class ProjectSource: Sendable, Ticketable {
     }
     package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
         guard listener == nil else { return }
-        self.listener = db.collection("projects").document(documentId)
+        self.listener = db.collection("projects").document(id.toString)
             .addSnapshotListener { documentSnapshot, error in
                 guard let document = documentSnapshot else {
                     Logger().error("Error fetching document: \(error!)")
@@ -62,53 +62,45 @@ package final class ProjectSource: Sendable, Ticketable {
     
     // MARK: action
     package func processTicket() {
-        guard id.isExist else { return }
+        guard Manager.isExist(id) else { return }
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             let newName = ticket.name
             
             // Firebase로 projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-            let document = db.collection("projects").document(documentId)
+            let document = db.collection("projects").document(id.toString)
             document.updateData([
                 "name": newName
             ])
         }
     }
     package func remove() {
-        guard id.isExist else { return }
+        guard Manager.isExist(id) else { return }
         // ProjectSource 인스턴스 제거
         ProjectHub.shared.projectSources.remove(self.id)
         self.delete()
         
         // Firebase로 ProjectSource 문서 삭제
-        db.collection("projects").document(documentId).delete()
+        db.collection("projects").document(id.toString).delete()
     }
-    
-    
-    // MARK: value
-    @MainActor
-    package struct ID: Sendable, Hashable {
-        package let value: UUID
-        var isExist: Bool {
-            ProjectSourceManager.container[self] != nil
-        }
-        var ref: ProjectSource? {
-            ProjectSourceManager.container[self]
-        }
-    }
-    
 }
 
 
 // MARK: Object Manager
 @MainActor
-fileprivate final class ProjectSourceManager: Sendable {
-    fileprivate static var container: [ProjectSource.ID : ProjectSource] = [:]
+package final class ProjectSourceManager: Sendable {
+    fileprivate static var container: [ProjectSourceID : ProjectSource] = [:]
     fileprivate static func register(_ object: ProjectSource) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ProjectSource.ID) {
+    fileprivate static func unregister(_ id: ProjectSourceID) {
         container[id] = nil
+    }
+    package static func get(_ id: ProjectSourceID) -> ProjectSource? {
+        container[id]
+    }
+    package static func isExist(_ id: ProjectSourceID) -> Bool {
+        container[id] != nil
     }
 }
 

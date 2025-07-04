@@ -74,7 +74,7 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.projects.isEmpty == true)
             
-            let projectSource = UUID().uuidString
+            let projectSource = ProjectSourceID()
             
             let _ = await MainActor.run {
                 let event = ProjectHubEvent.added(projectSource)
@@ -96,7 +96,7 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.projectSourceMap.isEmpty == true)
             
-            let projectSource = UUID().uuidString
+            let projectSource = ProjectSourceID()
             
             let _ = await MainActor.run {
                 let event = ProjectHubEvent.added(projectSource)
@@ -111,8 +111,10 @@ struct ProjectBoardUpdaterTests {
         }
         @Test func removeEventWhenAdded() async throws {
             // given
+            let projectSource = ProjectSourceID()
+            
             await MainActor.run {
-                let event = ProjectHubEvent.added("RANDOM_PROJECT")
+                let event = ProjectHubEvent.added(projectSource)
                 updaterRef.queue.append(event)
             }
             
@@ -127,7 +129,7 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.projects.isEmpty == true)
             
-            let projectSource = "RANDOM_ID"
+            let projectSource = ProjectSourceID()
             
             // when
             await MainActor.run {
@@ -145,10 +147,10 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.projects.isEmpty == true)
             
-            let randomProjectSource = UUID().uuidString
+            let projectSource = ProjectSourceID()
             
             await MainActor.run {
-                let event = ProjectHubEvent.added(randomProjectSource)
+                let event = ProjectHubEvent.added(projectSource)
                 
                 updaterRef.queue.append(event)
             }
@@ -162,7 +164,7 @@ struct ProjectBoardUpdaterTests {
             
             // given
             await MainActor.run {
-                let event = ProjectHubEvent.removed(randomProjectSource)
+                let event = ProjectHubEvent.removed(projectSource)
                 
                 updaterRef.queue.append(event)
             }

@@ -9,6 +9,4 @@
 package enum ProjectHubEvent: Sendable {
     case added(ProjectSourceID)
     case removed(ProjectSourceID)
-    
-    package typealias ProjectSourceID = String
 }

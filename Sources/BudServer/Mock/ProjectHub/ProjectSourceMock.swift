@@ -10,12 +10,11 @@ import Tools
 
 // MARK: Object
 @Server
-final class ProjectSourceMock: ServerObject {
+final class ProjectSourceMock: Sendable {
     // MARK: core
     init(projectHubRef: ProjectHubMock,
          user: UserID,
          name: String) {
-        self.id = ID()
         self.projectHubRef = projectHubRef
         self.user = user
         self.name = name
@@ -29,8 +28,9 @@ final class ProjectSourceMock: ServerObject {
     
     
     // MARK: state
-    nonisolated let id: ID
+    nonisolated let id = ProjectSourceID()
     nonisolated let projectHubRef: ProjectHubMock
+    private typealias Manager = ProjectSourceMockManager
     
     var user: UserID
     var name: String
@@ -42,6 +42,7 @@ final class ProjectSourceMock: ServerObject {
     // MARK: action
     func processTicket() {
         // mutate
+        guard Manager.isExist(id) else { return }
         guard let ticket else { return }
         for (_, handler) in eventHandlers {
             handler.execute(.modified(ticket.name))
@@ -50,35 +51,33 @@ final class ProjectSourceMock: ServerObject {
     }
     func remove() {
         // mutate
-        let event = ProjectHubEvent.removed(id.value.uuidString)
+        guard Manager.isExist(id) else { return }
+        let event = ProjectHubEvent.removed(id)
         for (_, eventHandler) in projectHubRef.eventHandlers {
             eventHandler.execute(event)
         }
+        
         projectHubRef.projectSources.remove(self.id)
         self.delete()
-    }
-    
-    
-    // MARK: value
-    @Server
-    struct ID: ServerObjectID {
-        let value: UUID
-        init(value: UUID = UUID()) {
-            self.value = value
-        }
-        init(_ stringValue: String) {
-            // ProjectSourceMock, ProjectSourceID -> ProjectSourceID
-            self.value = UUID(uuidString: stringValue)!
-        }
-        typealias Object = ProjectSourceMock
-        typealias Manager = ProjectSourceMockManager
     }
 }
 
 
 // MARK: Object Manager
 @Server
-final class ProjectSourceMockManager: ServerObjectManager {
+final class ProjectSourceMockManager: Sendable {
     // MARK: state
-    static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
+    static var container: [ProjectSourceID: ProjectSourceMock] = [:]
+    static func register(_ object: ProjectSourceMock) {
+        container[object.id] = object
+    }
+    static func unregister(_ id: ProjectSourceID) {
+        container[id] = nil
+    }
+    static func get(_ id: ProjectSourceID) -> ProjectSourceMock? {
+        container[id]
+    }
+    static func isExist(_ id: ProjectSourceID) -> Bool {
+        container[id] != nil
+    }
 }

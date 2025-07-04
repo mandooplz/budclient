@@ -9,12 +9,19 @@ import Foundation
 
 // MARK: Identity
 public protocol Identity: Sendable, Hashable {
-    var value: UUID { get }
+    associatedtype IDValue: Sendable, Hashable
+    var value: IDValue { get }
 }
 
 
-public extension Identity {
+public extension Identity where IDValue == UUID {
     var toString: String {
         value.uuidString
+    }
+}
+
+public extension Identity where IDValue == String {
+    var toString: String {
+        value
     }
 }

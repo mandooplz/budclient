@@ -19,13 +19,7 @@ final class ProjectHubMock: ServerObject, Subscribable {
     // MARK: state
     nonisolated let id: ID = ID()
     
-    var projectSources: Set<ProjectSourceMock.ID> = []
-    func getProjectSources(user: UserID) -> [ProjectSourceMock.ID] {
-        projectSources
-            .compactMap { $0.ref }
-            .filter { $0.user == user }
-            .map { $0.id }
-    }
+    var projectSources: Set<ProjectSourceID> = []
     
     var tickets: Deque<ProjectTicket> = []
     var eventHandlers: [SystemID: Handler<ProjectHubEvent>] = [:]
@@ -40,11 +34,11 @@ final class ProjectHubMock: ServerObject, Subscribable {
                 projectHubRef: self,
                 user: ticket.user,
                 name: ticket.name)
-            let projectSource = projectSourceRef.id.value.uuidString
+
             projectSources.insert(projectSourceRef.id)
             
             let eventHandler = eventHandlers[ticket.system]
-            let event = ProjectHubEvent.added(projectSource)
+            let event = ProjectHubEvent.added(projectSourceRef.id)
             
             // 직접 이벤트핸들러 호출
             eventHandler?.execute(event)
