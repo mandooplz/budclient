@@ -86,6 +86,7 @@ struct ProfileBoardTests {
             let authBoard = try #require(await budClientRef.authBoard)
             await #expect(authBoard.isExist == true)
         }
+        
         @Test func deleteProjectBoard() async throws {
             // given
             let projectBoard = try #require(await budClientRef.projectBoard)
@@ -179,6 +180,35 @@ struct ProfileBoardTests {
             // then
             await #expect(updater.isExist == false)
         }
+        @Test func deleteSystemBoard() async throws {
+            // given
+            let projectRef = try await getProject(budClientRef)
+            await projectRef.setUp()
+            
+            let systemBoard = try #require(await projectRef.systemBoard)
+            try await #require(systemBoard.isExist == true)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(systemBoard.isExist == false)
+        }
+        @Test func deleteFlowBoard() async throws {
+            // given
+            let projectRef = try await getProject(budClientRef)
+            await projectRef.setUp()
+            
+            let flowBoard = try #require(await projectRef.flowBoard)
+            try await #require(flowBoard.isExist == true)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(flowBoard.isExist == false)
+        }
+        
         @Test func deleteProfileBoard() async throws {
             // given
             let profileBoard = try #require(await budClientRef.profileBoard)
@@ -223,4 +253,33 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileB
     
     let profileBoard = await budClientRef.profileBoard!
     return await profileBoard.ref!
+}
+
+private func getProject(_ budClientRef: BudClient) async throws -> Project {
+    let projectBoard = try #require(await budClientRef.projectBoard)
+    let projectBoardRef = try #require(await projectBoard.ref)
+    
+    // createProject
+    await withCheckedContinuation { con in
+        Task {
+            await projectBoardRef.setCallback {
+                con.resume()
+            }
+            await projectBoardRef.setUpUpdater()
+            await projectBoardRef.subscribeProjectHub()
+            
+            await projectBoardRef.createProjectSource()
+        }
+    }
+    
+    await projectBoardRef.unsubscribeProjectHub()
+    await projectBoardRef.setCallback { }
+    await projectBoardRef.subscribeProjectHub()
+    
+    try await #require(projectBoardRef.projects.count == 1)
+    
+    
+    let project = try await #require(projectBoardRef.projects.first)
+    let projectRef = try #require(await project.ref)
+    return projectRef
 }

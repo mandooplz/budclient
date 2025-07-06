@@ -12,7 +12,10 @@ import Tools
 @MainActor @Observable
 public final class SystemModel: Sendable {
     // MARK: core
-    public init() {
+    public init(location: GridLocation, target: SystemID) {
+        self.location = location
+        self.target = target
+        
         SystemModelManager.register(self)
     }
     public func delete() {
@@ -20,14 +23,23 @@ public final class SystemModel: Sendable {
     }
     
     // MARK: state
-    public nonisolated let id = ID()
+    nonisolated let id = ID()
+    nonisolated let target: SystemID
+    
+    public var location: GridLocation
+    
+    public var name: String? // ex) BudClient-iOS, BudClient-MacOS 처럼 시스템의 이름
     
     
     // MARK: action
-    public func addRight() { }
-    public func addLeft() { }
-    public func addUp() { }
-    public func addDown() { }
+    public func addSystemRight() { }
+    public func addSystemLeft() { }
+    public func addSystemTop() { }
+    public func addSystemBottom() { }
+    
+    public func createNewObjectModel() { }
+    
+    public func remove() { }
     
     
     // MARK: value

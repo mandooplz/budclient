@@ -99,3 +99,16 @@ func createAndGetProject(_ budClientRef: BudClient) async -> Project {
     let project = await projectBoardRef.projects.first!
     return await project.ref!
 }
+
+
+func createAndGetSystemBoard(_ budClientRef: BudClient) async -> SystemBoard {
+    let projectRef = await createAndGetProject(budClientRef)
+    
+    await projectRef.setUp()
+    guard let systemBoardRef = await projectRef.systemBoard?.ref else {
+        logger.error(": systemBoardRef is nil")
+        fatalError()
+    }
+    
+    return systemBoardRef
+}

@@ -6,6 +6,7 @@
 //
 
 
+// MARK: ProjectHubEvent
 package enum ProjectHubEvent: Sendable {
     case added(ProjectSourceID)
     case removed(ProjectSourceID)

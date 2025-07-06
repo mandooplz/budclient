@@ -12,8 +12,8 @@ import Tools
 @MainActor @Observable
 public final class ObjectModel: Sendable {
     // MARK: core
-    init(object: ObjectID) {
-        self.object = object
+    init(target: ObjectID) {
+        self.target = target
         
         ObjectModelManager.register(self)
     }
@@ -24,12 +24,21 @@ public final class ObjectModel: Sendable {
     
     // MARK: state
     nonisolated let id = ID()
-    nonisolated let object: ObjectID
+    nonisolated let target: ObjectID // 어떤 Object인지를 표현하는 ID
+    
+    public var type: ObjectModelType = .oneToOne // Object가 상위 Object와 어떻게 연결되어있는지를 표현
     
     
     // MARK: action
     public func appendChild() { }
+    public func appendParent() { }
     
+    public func newState() { }
+    public func newAction() { }
+    
+    public func makeFlow() { }
+    
+    public func remove() { }
     
     
     // MARK: value

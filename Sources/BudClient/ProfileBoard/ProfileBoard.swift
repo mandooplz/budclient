@@ -68,6 +68,8 @@ public final class ProfileBoard: Debuggable {
         budClientRef.user = nil
         
         for project in projects {
+            project.ref?.systemBoard?.ref?.delete()
+            project.ref?.flowBoard?.ref?.delete()
             project.ref?.updater?.ref?.delete()
             project.ref?.delete()
         }
