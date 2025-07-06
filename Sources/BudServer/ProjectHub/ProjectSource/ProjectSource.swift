@@ -15,8 +15,8 @@ import os
 @MainActor
 package final class ProjectSource: Sendable, Ticketable {
     // MARK: core
-    init(id: ProjectSourceID = ProjectSourceID()) {
-        self.id = id
+    init(idValue: String) {
+        self.id = ID(value: idValue)
         
         ProjectSourceManager.register(self)
     }
@@ -25,8 +25,9 @@ package final class ProjectSource: Sendable, Ticketable {
     }
     
     // MARK: state
-    package nonisolated let id: ProjectSourceID
-    private typealias Manager = ProjectSourceManager
+    nonisolated let id: ID
+    nonisolated let target: ProjectID
+    
     private let db = Firestore.firestore()
     
     package var tickets: Deque<ProjectTicket> = []
@@ -37,7 +38,7 @@ package final class ProjectSource: Sendable, Ticketable {
     }
     package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
         guard listener == nil else { return }
-        self.listener = db.collection(DB.ProjectSources).document(id.toString)
+        self.listener = db.collection(DB.ProjectSources).document(id.value)
             .addSnapshotListener { documentSnapshot, error in
                 guard let document = documentSnapshot else {
                     Logger().error("Error fetching document: \(error!)")
@@ -61,49 +62,66 @@ package final class ProjectSource: Sendable, Ticketable {
     
     
     // MARK: action
-    package func processTicket() {
-        guard Manager.isExist(id) else { return }
+    package func processTicket() throws {
+        guard id.isExist else { return }
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             let newName = ticket.name
             
-            // Firebase로 projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-            let document = db.collection(DB.ProjectSources).document(id.toString)
-            document.updateData([
-                "name": newName
-            ])
+            // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
+            let updateData = Data(name: newName, target: target)
+            
+            let document = db.collection(DB.ProjectSources).document(id.value)
+            try document.setData(from: updateData)
         }
     }
     package func remove() {
-        guard Manager.isExist(id) else { return }
+        guard id.isExist else { return }
+        
         // ProjectSource 인스턴스 제거
         ProjectHub.shared.projectSources.remove(self.id)
         self.delete()
         
-        // Firebase로 ProjectSource 문서 삭제
-        db.collection(DB.ProjectSources).document(id.toString).delete()
+        // FireStore에서 문서 삭제
+        db.collection(DB.ProjectSources).document(id.value).delete()
     }
     
     
     // MARK: value
+    @MainActor
+    package struct ID: Sendable, Hashable {
+        let value: String
+        
+        var isExist: Bool {
+            ProjectSourceManager.container[self] != nil
+        }
+        package var ref: ProjectSource? {
+            ProjectSourceManager.container[self]
+        }
+    }
+    package struct Data: Hashable, Codable {
+        @DocumentID var id: String?
+        package var name: String
+        package var target: ProjectID
+        
+        init(id: String? = nil, name: String, target: ProjectID) {
+            self.id = id
+            self.name = name
+            self.target = target
+        }
+    }
 }
 
 
 // MARK: Object Manager
 @MainActor
-package final class ProjectSourceManager: Sendable {
-    fileprivate static var container: [ProjectSourceID : ProjectSource] = [:]
+fileprivate final class ProjectSourceManager: Sendable {
+    fileprivate static var container: [ProjectSource.ID : ProjectSource] = [:]
     fileprivate static func register(_ object: ProjectSource) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ProjectSourceID) {
+    fileprivate static func unregister(_ id: ProjectSource.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: ProjectSourceID) -> ProjectSource? {
-        container[id]
-    }
-    package static func isExist(_ id: ProjectSourceID) -> Bool {
-        container[id] != nil
     }
 }
 

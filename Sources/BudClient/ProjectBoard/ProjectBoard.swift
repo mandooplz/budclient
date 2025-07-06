@@ -30,12 +30,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     var updater: ProjectBoardUpdater.ID?
     
     public internal(set) var projects: [Project.ID] = []
-    var projectSourceMap: [ProjectSourceID: Project.ID] = [:]
-    func getProjectSource(_ project: Project.ID) -> ProjectSourceID? {
-        self.projectSourceMap
-            .first { $0.value == project }?
-            .key
-    }
+    var projectSourceMap: [ProjectID: Project.ID] = [:]
     
     public var issue: (any Issuable)?
     package var callback: Callback?

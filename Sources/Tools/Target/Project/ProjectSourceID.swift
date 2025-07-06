@@ -8,14 +8,14 @@ import Foundation
 
 
 // MARK: ProjectSourceID
-package struct ProjectSourceID: Identity {
-    package let value: String
-    
-    package init(_ value: String) {
-        self.value = value
-    }
-    
-    package init(uuid: UUID = UUID()) {
-        self.value = uuid.uuidString
-    }
-}
+//package struct ProjectSourceID: Identity {
+//    package let value: String
+//    
+//    package init(_ value: String) {
+//        self.value = value
+//    }
+//    
+//    package init(uuid: UUID = UUID()) {
+//        self.value = uuid.uuidString
+//    }
+//}

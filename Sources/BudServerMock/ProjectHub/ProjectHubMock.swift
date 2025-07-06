@@ -24,7 +24,7 @@ package final class ProjectHubMock: Sendable, Subscribable {
     // MARK: state
     package nonisolated let id: ID = ID()
     
-    package var projectSources: Set<ProjectSourceID> = []
+    package var projectSources: Set<ProjectSourceMock.ID> = []
     
     package var tickets: Deque<ProjectTicket> = []
     package var eventHandlers: [SystemID: Handler<ProjectHubEvent>] = [:]
@@ -35,15 +35,18 @@ package final class ProjectHubMock: Sendable, Subscribable {
         // mutate
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
+            
+            let project = ProjectID()
             let projectSourceRef = ProjectSourceMock(
                 projectHubRef: self,
+                target: project,
                 user: ticket.user,
                 name: ticket.name)
 
             projectSources.insert(projectSourceRef.id)
             
             let eventHandler = eventHandlers[ticket.system]
-            let event = ProjectHubEvent.added(projectSourceRef.id)
+            let event = ProjectHubEvent.added(project)
             
             // 직접 이벤트핸들러 호출
             eventHandler?.execute(event)

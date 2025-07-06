@@ -10,4 +10,8 @@ import Foundation
 // MARK: ProjectID
 public struct ProjectID: Identity, Codable {
     public let value: UUID
+    
+    public init(value: UUID = UUID()) {
+        self.value = value
+    }
 }

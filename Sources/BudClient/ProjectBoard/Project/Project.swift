@@ -14,8 +14,11 @@ import BudServer
 public final class Project: Debuggable, EventDebuggable {
     
     // MARK: core
-    init(config: Config<ProjectBoard.ID>, sourceLink: ProjectSourceLink) {
+    init(config: Config<ProjectBoard.ID>,
+         target: ProjectID,
+         sourceLink: ProjectSourceLink) {
         self.config = config
+        self.target = target
         self.sourceLink = sourceLink
         
         ProjectManager.register(self)
@@ -28,6 +31,7 @@ public final class Project: Debuggable, EventDebuggable {
     // MARK: state
     public nonisolated let id = ID()
     public nonisolated let config: Config<ProjectBoard.ID>
+    nonisolated let target: ProjectID
     nonisolated let sourceLink: ProjectSourceLink
     
     public var name: String?

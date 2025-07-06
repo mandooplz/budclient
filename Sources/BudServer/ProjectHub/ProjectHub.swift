@@ -8,6 +8,7 @@ import Foundation
 import Tools
 import Collections
 import FirebaseFirestore
+import os
 
 
 // MARK: Object
@@ -22,7 +23,8 @@ final class ProjectHub: Sendable, Ticketable {
     nonisolated let id: ID = ID()
     private let db = Firestore.firestore()
     
-    var projectSources: Set<ProjectSourceID> = []
+    var projectSources: Set<ProjectSource.ID> = []
+    var projectSourceMap: [ProjectID: ProjectSource.ID] = [:]
     
     var tickets: Deque<ProjectTicket> = []
     
@@ -30,8 +32,7 @@ final class ProjectHub: Sendable, Ticketable {
     func hasHandler() async -> Bool {
         listener != nil
     }
-    func setHandler(ticket: Ticket,
-                                        handler: Handler<ProjectHubEvent>) {
+    func setHandler(ticket: Ticket, handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         self.listener = db.collection(DB.ProjectSources)
             .whereField("user", isEqualTo: ticket.user)
@@ -42,21 +43,22 @@ final class ProjectHub: Sendable, Ticketable {
                 }
                 
                 snapshot.documentChanges.forEach { diff in
+                    let documentId = diff.document.documentID
+                    guard let data = try? diff.document.data(as: ProjectSource.Data.self) else {
+                        Logger().error("Failed to decode ProjectSource.Data for document: \(documentId)")
+                        return
+                    }
+                    
                     if (diff.type == .added) {
-                        let documentId = diff.document.documentID
-                        let projectSource = ProjectSourceID(documentId)
-                        
-                        let projectSourceRef = ProjectSource(id: projectSource)
+                        let projectSourceRef = ProjectSource(idValue: documentId)
                         self.projectSources.insert(projectSourceRef.id)
                         
-                        let event = ProjectHubEvent.added(projectSource)
+                        let event = ProjectHubEvent.added(data.target)
                         handler.execute(event)
                     }
+                    
                     if (diff.type == .removed) {
-                        let documentId = diff.document.documentID
-                        let projectSource = ProjectSourceID(documentId)
-                        
-                        let event = ProjectHubEvent.removed(projectSource)
+                        let event = ProjectHubEvent.removed(data.target)
                         handler.execute(event)
                     }
                 }
@@ -80,6 +82,7 @@ final class ProjectHub: Sendable, Ticketable {
             ])
         }
     }
+    
     
     // MARK: value
     struct ID: Sendable, Hashable {

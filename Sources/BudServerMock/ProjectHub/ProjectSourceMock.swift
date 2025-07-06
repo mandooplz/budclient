@@ -13,8 +13,9 @@ import Tools
 package final class ProjectSourceMock: Sendable {
     // MARK: core
     package init(projectHubRef: ProjectHubMock,
-         user: UserID,
-         name: String) {
+                 target: ProjectID,
+                 user: UserID,
+                 name: String) {
         self.projectHubRef = projectHubRef
         self.user = user
         self.name = name
@@ -28,7 +29,8 @@ package final class ProjectSourceMock: Sendable {
     
     
     // MARK: state
-    package nonisolated let id = ProjectSourceID()
+    package nonisolated let id = ID()
+    package nonisolated let target: ProjectID
     package nonisolated let projectHubRef: ProjectHubMock
     private typealias Manager = ProjectSourceMockManager
     
@@ -42,7 +44,7 @@ package final class ProjectSourceMock: Sendable {
     // MARK: action
     package func processTicket() {
         // mutate
-        guard Manager.isExist(id) else { return }
+        guard id.isExist else { return }
         guard let ticket else { return }
         for (_, handler) in eventHandlers {
             handler.execute(.modified(ticket.name))
@@ -51,8 +53,8 @@ package final class ProjectSourceMock: Sendable {
     }
     package func remove() {
         // mutate
-        guard Manager.isExist(id) else { return }
-        let event = ProjectHubEvent.removed(id)
+        guard id.isExist else { return }
+        let event = ProjectHubEvent.removed(target)
         for (_, eventHandler) in projectHubRef.eventHandlers {
             eventHandler.execute(event)
         }
@@ -60,24 +62,32 @@ package final class ProjectSourceMock: Sendable {
         projectHubRef.projectSources.remove(self.id)
         self.delete()
     }
+    
+    
+    // MARK: value
+    @Server
+    package struct ID: Sendable, Hashable {
+        let value: UUID = UUID()
+        
+        var isExist: Bool {
+            ProjectSourceMockManager.container[self] != nil
+        }
+        package var ref: ProjectSourceMock? {
+            ProjectSourceMockManager.container[self]
+        }
+    }
 }
 
 
 // MARK: Object Manager
 @Server
-package final class ProjectSourceMockManager: Sendable {
+fileprivate final class ProjectSourceMockManager: Sendable {
     // MARK: state
-    static var container: [ProjectSourceID: ProjectSourceMock] = [:]
-    static func register(_ object: ProjectSourceMock) {
+    fileprivate static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
+    fileprivate static func register(_ object: ProjectSourceMock) {
         container[object.id] = object
     }
-    static func unregister(_ id: ProjectSourceID) {
+    fileprivate static func unregister(_ id: ProjectSourceMock.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: ProjectSourceID) -> ProjectSourceMock? {
-        container[id]
-    }
-    package static func isExist(_ id: ProjectSourceID) -> Bool {
-        container[id] != nil
     }
 }
