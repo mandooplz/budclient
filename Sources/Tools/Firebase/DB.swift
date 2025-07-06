@@ -1,12 +1,12 @@
 //
-//  FirebaseDB.swift
+//  DB.swift
 //  BudClient
 //
 //  Created by 김민우 on 7/3/25.
 //
 
 
-// MARK: FirebaseDB
+// MARK: DB
 package enum DB: Sendable {
     package static let ProjectSources = "ProjectSources"
     package static let FlowSources = "FlowBoardSources"

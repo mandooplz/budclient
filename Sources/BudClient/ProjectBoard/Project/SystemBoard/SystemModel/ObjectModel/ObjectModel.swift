@@ -30,6 +30,9 @@ public final class ObjectModel: Sendable {
     
     
     // MARK: action
+    public func subscribe() { }
+    public func unsubscribe() { }
+    
     public func appendChild() { }
     public func appendParent() { }
     
