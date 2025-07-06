@@ -7,12 +7,9 @@
 
 
 // MARK: FirebaseDB
-package struct DB: Sendable {
-    package static let projects = Projects()
-    
-    package struct Projects: Sendable {
-        func callAsFunction() -> String {
-            return "projects"
-        }
-    }
+package enum DB: Sendable {
+    package static let ProjectSources = "ProjectSources"
+    package static let FlowSources = "FlowBoardSources"
+    package static let SystemModelSources = "SystemModelSources"
 }
+

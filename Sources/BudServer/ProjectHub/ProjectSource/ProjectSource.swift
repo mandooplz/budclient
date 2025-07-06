@@ -31,13 +31,13 @@ package final class ProjectSource: Sendable, Ticketable {
     
     package var tickets: Deque<ProjectTicket> = []
     
-    internal var listener: ListenerRegistration?
+    var listener: ListenerRegistration?
     package func hasHandler(system: SystemID) -> Bool {
         listener != nil
     }
     package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
         guard listener == nil else { return }
-        self.listener = db.collection("projects").document(id.toString)
+        self.listener = db.collection(DB.ProjectSources).document(id.toString)
             .addSnapshotListener { documentSnapshot, error in
                 guard let document = documentSnapshot else {
                     Logger().error("Error fetching document: \(error!)")
@@ -68,7 +68,7 @@ package final class ProjectSource: Sendable, Ticketable {
             let newName = ticket.name
             
             // Firebase로 projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-            let document = db.collection("projects").document(id.toString)
+            let document = db.collection(DB.ProjectSources).document(id.toString)
             document.updateData([
                 "name": newName
             ])
@@ -81,7 +81,7 @@ package final class ProjectSource: Sendable, Ticketable {
         self.delete()
         
         // Firebase로 ProjectSource 문서 삭제
-        db.collection("projects").document(id.toString).delete()
+        db.collection(DB.ProjectSources).document(id.toString).delete()
     }
 }
 

@@ -24,6 +24,10 @@ public final class SystemModel: Sendable {
     
     
     // MARK: action
+    public func addRight() { }
+    public func addLeft() { }
+    public func addUp() { }
+    public func addDown() { }
     
     
     // MARK: value

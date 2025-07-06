@@ -169,7 +169,7 @@ struct ProfileBoardTests {
             try await #require(projectBoardRef.projects.count == 1)
             
             let projectRef = await projectBoardRef.projects.first!.ref!
-            await projectRef.setUpUpdater()
+            await projectRef.setUp()
             
             let updater = try #require(await projectRef.updater)
             

@@ -28,6 +28,8 @@ public final class ObjectModel: Sendable {
     
     
     // MARK: action
+    public func appendChild() { }
+    
     
     
     // MARK: value

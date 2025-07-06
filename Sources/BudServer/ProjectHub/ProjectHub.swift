@@ -12,28 +12,28 @@ import FirebaseFirestore
 
 // MARK: Object
 @MainActor
-internal final class ProjectHub: Sendable, Ticketable {
+final class ProjectHub: Sendable, Ticketable {
     // MARK: core
     static let shared = ProjectHub()
     private init() { }
     
     
     // MARK: state
-    nonisolated let id: ID = ID(value: UUID())
+    nonisolated let id: ID = ID()
     private let db = Firestore.firestore()
     
     var projectSources: Set<ProjectSourceID> = []
     
-    internal var tickets: Deque<ProjectTicket> = []
+    var tickets: Deque<ProjectTicket> = []
     
-    internal var listener: ListenerRegistration?
-    internal func hasHandler() async -> Bool {
+    var listener: ListenerRegistration?
+    func hasHandler() async -> Bool {
         listener != nil
     }
-    internal func setHandler(ticket: Ticket,
+    func setHandler(ticket: Ticket,
                                         handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
-        self.listener = db.collection("projects")
+        self.listener = db.collection(DB.ProjectSources)
             .whereField("user", isEqualTo: ticket.user)
             .addSnapshotListener { querySnapshot, error in
                 guard let snapshot = querySnapshot else {
@@ -62,19 +62,19 @@ internal final class ProjectHub: Sendable, Ticketable {
                 }
             }
     }
-    internal func removeHandler() {
+    func removeHandler() {
         self.listener?.remove()
         self.listener = nil
     }
     
     
     // MARK: action
-    internal func createProjectSource() {
+    func createProjectSource() {
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             
             // 새로운 FireStore Document 생성
-            db.collection("projects").addDocument(data: [
+            db.collection(DB.ProjectSources).addDocument(data: [
                 "name": ticket.name,
                 "user": ticket.user
             ])
@@ -82,7 +82,11 @@ internal final class ProjectHub: Sendable, Ticketable {
     }
     
     // MARK: value
-    internal struct ID: Sendable, Hashable {
+    struct ID: Sendable, Hashable {
         let value: UUID
+        
+        init(value: UUID = UUID()) {
+            self.value = value
+        }
     }
 }

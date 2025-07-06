@@ -30,27 +30,34 @@ public final class Project: Debuggable, EventDebuggable {
     public nonisolated let config: Config<ProjectBoard.ID>
     nonisolated let sourceLink: ProjectSourceLink
     
-    var updater: ProjectUpdater.ID?
-    
     public var name: String?
+    public var systemBoard: SystemBoard.ID?
+    public var flowBoard: FlowBoard.ID?
+    
+    var updater: ProjectUpdater.ID?
     
     public var issue: (any Issuable)?
     package var callback: Callback?
     
     
     // MARK: action
-    public func setUpUpdater() async {
-        await setUpUpdater(mutateHook: nil)
+    public func setUp() async {
+        await setUp(mutateHook: nil)
     }
-    func setUpUpdater(mutateHook:Hook?) async {
+    func setUp(mutateHook:Hook?) async {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.projectIsDeleted); return }
-        guard updater == nil else { setIssue(Error.updaterAlreadyExist); return}
+        guard updater == nil, systemBoard == nil, flowBoard == nil else { setIssue(Error.alreadySetUp); return }
         let myConfig = self.config.setParent(id)
         
         let updaterRef = ProjectUpdater(config: myConfig)
+        let systemBoardRef = SystemBoard()
+        let flowBoardRef = FlowBoard()
+        
         self.updater = updaterRef.id
+        self.systemBoard = systemBoardRef.id
+        self.flowBoard = flowBoardRef.id
     }
     
     public func subscribeSource() async {
@@ -184,7 +191,7 @@ public final class Project: Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case projectIsDeleted
-        case updaterAlreadyExist
+        case alreadySetUp
         case updaterIsNil
         case nameIsNil
     }

@@ -14,7 +14,7 @@ import Tools
 // MARK: Tests
 @Suite("Project", .timeLimit(.minutes(1)))
 struct ProjectTests {
-    struct SetUpUpdater {
+    struct SetUp {
         let budClientRef: BudClient
         let projectRef: Project
         init() async {
@@ -22,27 +22,35 @@ struct ProjectTests {
             self.projectRef = await createAndGetProject(budClientRef)
         }
         
-        @Test func whenUpdaterAlreadyExist() async throws {
+        @Test func wnenAlreadtSetUp() async throws {
             // given
-            await projectRef.setUpUpdater()
+            await projectRef.setUp()
             let updater = try #require(await projectRef.updater)
+            let systemBoard = try #require(await projectRef.systemBoard)
+            let flowBoard = try #require(await projectRef.flowBoard)
             
             // when
-            await projectRef.setUpUpdater()
+            await projectRef.setUp()
             
             // then
+            let issue = try #require(await projectRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadySetUp")
+            
             let newUpdater = try #require(await projectRef.updater)
             #expect(newUpdater == updater)
             
-            let issue = try #require(await projectRef.issue as? KnownIssue)
-            #expect(issue.reason == "updaterAlreadyExist")
+            let newSystemBoard = try #require(await projectRef.systemBoard)
+            #expect(newSystemBoard == systemBoard)
+            
+            let newFlowBoard = try #require(await projectRef.flowBoard)
+            #expect(newFlowBoard == flowBoard)
         }
         @Test func whenProjectIsDeletedBeforeMutate() async throws {
             // given
             try await #require(projectRef.id.isExist == true)
             
             // when
-            await projectRef.setUpUpdater {
+            await projectRef.setUp {
                 await projectRef.delete()
             }
             
@@ -51,27 +59,38 @@ struct ProjectTests {
             #expect(issue.reason == "projectIsDeleted")
         }
         
-        @Test func setProjectUpdater() async throws {
-            // given
-            try await #require(projectRef.updater == nil)
-            
-            // when
-            await projectRef.setUpUpdater()
-            
-            // then
-            await #expect(projectRef.updater != nil)
-            
-        }
         @Test func createProjectUpdater() async throws {
             // given
             try await #require(projectRef.updater == nil)
             
             // when
-            await projectRef.setUpUpdater()
+            await projectRef.setUp()
             
             // then
             let updater = try #require(await projectRef.updater)
             await #expect(updater.isExist == true)
+        }
+        @Test func createSystemBoard() async throws {
+            // given
+            try await #require(projectRef.systemBoard == nil)
+            
+            // when
+            await projectRef.setUp()
+            
+            // then
+            let systemBoard = try #require(await projectRef.systemBoard)
+            await #expect(systemBoard.isExist == true)
+        }
+        @Test func createFlowBoard() async throws {
+            // given
+            try await #require(projectRef.flowBoard == nil)
+            
+            // when
+            await projectRef.setUp()
+            
+            // then
+            let flowBoard = try #require(await projectRef.flowBoard)
+            await #expect(flowBoard.isExist == true)
         }
     }
     
@@ -114,7 +133,7 @@ struct ProjectTests {
             let system = budClientRef.system
             try await #require(sourceLink.hasHandler(system: system) == false)
             
-            await projectRef.setUpUpdater()
+            await projectRef.setUp()
             
             // when
             await projectRef.subscribeSource()
@@ -128,7 +147,7 @@ struct ProjectTests {
             let testName = "JUST_TEST_NAME"
             
             try await #require(projectRef.name != testName)
-            await projectRef.setUpUpdater()
+            await projectRef.setUp()
             
             // when
             await withCheckedContinuation { con in
@@ -223,7 +242,7 @@ struct ProjectTests {
             self.budClientRef = await BudClient()
             self.projectRef = await createAndGetProject(budClientRef)
             
-            await projectRef.setUpUpdater()
+            await projectRef.setUp()
             await projectRef.subscribeSource()
             
             try! await #require(projectRef.isIssueOccurred == false)

@@ -76,6 +76,6 @@ struct ProjectUpdaterTests {
 private func getProjectUpdater(_ budClientRef: BudClient) async -> ProjectUpdater {
     let projectRef = await createAndGetProject(budClientRef)
     
-    await projectRef.setUpUpdater()
+    await projectRef.setUp()
     return try! #require(await projectRef.updater?.ref)
 }
