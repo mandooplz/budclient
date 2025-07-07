@@ -75,12 +75,14 @@ public final class Project: Debuggable, EventDebuggable {
         let config = self.config
         let callback = self.callback
         let sourceLink = self.sourceLink
+        let (me, target) = (ObjectID(self.id.value), self.target)
         
         // compute
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    let ticket = Ticket(system: config.system, user: config.user)
+                    let ticket = SetHandlerTicket(object: me,
+                                                  target: target)
                     try await sourceLink.setHandler(
                         ticket: ticket,
                         handler: .init({ event in
@@ -121,11 +123,9 @@ public final class Project: Debuggable, EventDebuggable {
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    let projectTicket = ProjectTicket(system: config.system,
-                                                      user: config.user,
-                                                      name: name)
+                    let editTicket = EditProjectNameTicket(name)
                     
-                    try await sourceLink.insert(projectTicket)
+                    try await sourceLink.insert(editTicket)
                     try await sourceLink.processTicket()
                 }
             }
@@ -143,12 +143,13 @@ public final class Project: Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.projectIsDeleted); return }
         let system = config.system
         let sourceLink = self.sourceLink
+        let me = ObjectID(id.value)
         
         // compute
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    try await sourceLink.removeHandler(system: system)
+                    try await sourceLink.removeHandler(object: me)
                 }
             }
         } catch {

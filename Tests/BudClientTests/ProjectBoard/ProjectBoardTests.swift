@@ -107,14 +107,15 @@ struct ProjectBoardTests {
             // given
             let config = projectBoardRef.config
             let projectHubLink = await config.budServerLink.getProjectHub()
+            let object = await ObjectID(projectBoardRef.id.value)
             
-            try await #require(projectHubLink.hasHandler(system: config.system) == false)
+            try await #require(projectHubLink.hasHandler(object: object) == false)
             
             // when
             await projectBoardRef.subscribeProjectHub()
             
             // then
-            await #expect(projectHubLink.hasHandler(system: config.system) == true)
+            await #expect(projectHubLink.hasHandler(object: object) == true)
         }
     }
     
@@ -144,15 +145,16 @@ struct ProjectBoardTests {
             // given
             let config = projectBoardRef.config
             let projectHubLink = await config.budServerLink.getProjectHub()
+            let object = await ObjectID(projectBoardRef.id.value)
             
             await projectBoardRef.subscribeProjectHub()
-            try await #require(projectHubLink.hasHandler(system: config.system) == true)
+            try await #require(projectHubLink.hasHandler(object: object) == true)
             
             // when
             await projectBoardRef.unsubscribeProjectHub()
             
             // then
-            await #expect(projectHubLink.hasHandler(system: config.system) == false)
+            await #expect(projectHubLink.hasHandler(object: object) == false)
         }
     }
     

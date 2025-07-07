@@ -8,7 +8,7 @@ import Foundation
 
 
 // MARK: Identity
-public protocol Identity: Sendable, Hashable {
+public protocol Identity: Sendable, Hashable, Codable {
     associatedtype RawValue: Sendable, Hashable
     var value: RawValue { get }
 }

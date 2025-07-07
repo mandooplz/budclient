@@ -131,7 +131,8 @@ struct ProjectTests {
             // given
             let sourceLink = projectRef.sourceLink
             let system = budClientRef.system
-            try await #require(sourceLink.hasHandler(system: system) == false)
+            let object = await ObjectID(projectRef.id.value)
+            try await #require(sourceLink.hasHandler(object: object) == false)
             
             await projectRef.setUp()
             
@@ -139,7 +140,7 @@ struct ProjectTests {
             await projectRef.subscribeSource()
             
             // then
-            try await #expect(sourceLink.hasHandler(system: system) == true)
+            try await #expect(sourceLink.hasHandler(object: object) == true)
         }
         @Test func getUpdateFromProjectSource() async throws {
             // given
@@ -158,9 +159,8 @@ struct ProjectTests {
                     
                     await projectRef.subscribeSource()
                     
-                    try! await sourceLink.insert(.init(system: .init(),
-                                            user: .init(),
-                                            name: testName))
+                    let editTicket = EditProjectNameTicket(testName)
+                    try! await sourceLink.insert(editTicket)
                     try! await sourceLink.processTicket()
                 }
             }
@@ -209,17 +209,19 @@ struct ProjectTests {
             // given
             let testName = "TEST_PROJECT_NAME"
             let sourceLink = projectRef.sourceLink
+            let randomObject = ObjectID()
+            let target = projectRef.target
             
             await MainActor.run {
                 projectRef.name = testName
             }
             
             // then
-            let newTicket = Ticket(system: .init(),
-                                   user: .init())
+            let subscribeTicket = SetHandlerTicket(object: randomObject, target: target)
+  
             await withCheckedContinuation { con in
                 Task {
-                    try! await sourceLink.setHandler(ticket: newTicket,
+                    try! await sourceLink.setHandler(ticket: subscribeTicket,
                                           handler: .init({ event in
                         switch event {
                         case .modified(let newName):
@@ -264,14 +266,15 @@ struct ProjectTests {
         @Test func removeHandlerInProjectSource() async throws {
             // given
             let sourceLink = projectRef.sourceLink
-            let system = budClientRef.system
-            try await #require(sourceLink.hasHandler(system: system) == true)
+            let me = await ObjectID(projectRef.id.value)
+            
+            try await #require(sourceLink.hasHandler(object: me) == true)
             
             // when
             await projectRef.unsubscribeSource()
             
             // then
-            try await #expect(sourceLink.hasHandler(system: system) == false)
+            try await #expect(sourceLink.hasHandler(object: me) == false)
         }
     }
     

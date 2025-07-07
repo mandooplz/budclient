@@ -11,17 +11,17 @@
 package protocol Subscribable: AnyObject, Sendable {
     associatedtype Event: Sendable
     
-    var eventHandlers: [SystemID: Handler<Event>] { get set }
-    func hasHandler(system: SystemID) -> Bool
-    func setHandler(ticket: Ticket, handler: Handler<Event>)
+    var eventHandlers: [ObjectID: Handler<Event>] { get set }
+    func hasHandler(object: ObjectID) -> Bool
+    func setHandler(ticket: SetHandlerTicket, handler: Handler<Event>)
 }
 
 @Server
 package extension Subscribable {
-    func hasHandler(system: SystemID) -> Bool {
-        self.eventHandlers[system] != nil
+    func hasHandler(object: ObjectID) -> Bool {
+        self.eventHandlers[object] != nil
     }
-    func setHandler(ticket: Ticket, handler: Handler<Event>) {
-        self.eventHandlers[ticket.system] = handler
+    func setHandler(ticket: SetHandlerTicket, handler: Handler<Event>) {
+        self.eventHandlers[ticket.object] = handler
     }
 }

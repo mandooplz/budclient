@@ -13,7 +13,7 @@ import os
 
 // MARK: Object
 @MainActor
-final class ProjectHub: Sendable, Ticketable {
+final class ProjectHub: Sendable {
     // MARK: core
     static let shared = ProjectHub()
     private init() { }
@@ -26,16 +26,20 @@ final class ProjectHub: Sendable, Ticketable {
     var projectSources: Set<ProjectSource.ID> = []
     var projectSourceMap: [ProjectID: ProjectSource.ID] = [:]
     
-    var tickets: Deque<ProjectTicket> = []
+    var tickets: Deque<CreateProjectTicket> = []
     
     var listener: ListenerRegistration?
     func hasHandler() async -> Bool {
         listener != nil
     }
-    func setHandler(ticket: Ticket, handler: Handler<ProjectHubEvent>) {
+    func setHandler(ticket: SubscribeProjectHub,
+                    handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
+        
+        let state = ProjectSource.State.creator
+        
         self.listener = db.collection(DB.ProjectSources)
-            .whereField("user", isEqualTo: ticket.user)
+            .whereField(state.rawValue, isEqualTo: ticket.user)
             .addSnapshotListener { querySnapshot, error in
                 guard let snapshot = querySnapshot else {
                     print("Error fetching snapshots: \(error!)")
@@ -50,7 +54,7 @@ final class ProjectHub: Sendable, Ticketable {
                     }
                     
                     if (diff.type == .added) {
-                        let projectSourceRef = ProjectSource(idValue: documentId)
+                        let projectSourceRef = ProjectSource(idValue: documentId, target: data.target)
                         self.projectSources.insert(projectSourceRef.id)
                         
                         let event = ProjectHubEvent.added(data.target)
@@ -71,15 +75,15 @@ final class ProjectHub: Sendable, Ticketable {
     
     
     // MARK: action
-    func createProjectSource() {
+    func createProjectSource() throws {
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             
             // 새로운 FireStore Document 생성
-            db.collection(DB.ProjectSources).addDocument(data: [
-                "name": ticket.name,
-                "user": ticket.user
-            ])
+            let data = ProjectSource.Data(name: ticket.name,
+                                          creator: ticket.creator,
+                                          target: ticket.target)
+            try db.collection(DB.ProjectSources).addDocument(from: data)
         }
     }
     

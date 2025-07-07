@@ -8,7 +8,7 @@ import Foundation
 import Testing
 import Tools
 @testable import BudClient
-import BudServer
+@testable import BudServer
 
 
 // MARK: Tests
@@ -85,6 +85,8 @@ struct ProjectBoardUpdaterTests {
             await updaterRef.update()
             
             // then
+            try await #require(updaterRef.issue == nil)
+            
             try await #require(projectBoardRef.projects.count == 1)
             let project = try #require(await projectBoardRef.projects.first)
             let projectRef = try #require(await project.ref)
@@ -192,11 +194,11 @@ struct ProjectBoardUpdaterTests {
             try await #require(projectBoardRef.projects.count == 1)
             
             let project = try #require(await projectBoardRef.projects.first)
-            let projectSource = try #require(await projectBoardRef.getProjectSource(project))
+            let target = try #require(await project.ref?.target)
             
             // when
             await MainActor.run {
-                let event = ProjectHubEvent.removed(projectSource)
+                let event = ProjectHubEvent.removed(target)
                 updaterRef.queue.append(event)
             }
             await updaterRef.update()
@@ -215,7 +217,7 @@ struct ProjectBoardUpdaterTests {
             try await #require(projectBoardRef.projectSourceMap.count == 1)
             
             let project = try #require(await projectBoardRef.projects.first)
-            let projectSource = try #require(await projectBoardRef.getProjectSource(project))
+            let projectSource = try #require(await project.ref?.target)
             
             // when
             await MainActor.run {

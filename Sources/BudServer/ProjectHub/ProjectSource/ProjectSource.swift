@@ -13,10 +13,11 @@ import os
 
 // MARK: Object
 @MainActor
-package final class ProjectSource: Sendable, Ticketable {
+package final class ProjectSource: Sendable {
     // MARK: core
-    init(idValue: String) {
+    init(idValue: String, target: ProjectID) {
         self.id = ID(value: idValue)
+        self.target = target
         
         ProjectSourceManager.register(self)
     }
@@ -30,15 +31,16 @@ package final class ProjectSource: Sendable, Ticketable {
     
     private let db = Firestore.firestore()
     
-    package var tickets: Deque<ProjectTicket> = []
+    package var editTicket: EditProjectNameTicket?
     
-    var listener: ListenerRegistration?
-    package func hasHandler(system: SystemID) -> Bool {
-        listener != nil
+    var listeners: [ObjectID: ListenerRegistration] = [:]
+    package func hasHandler(object: ObjectID) -> Bool {
+        listeners[object] != nil
     }
-    package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) {
-        guard listener == nil else { return }
-        self.listener = db.collection(DB.ProjectSources).document(id.value)
+    package func setHandler(ticket: SetHandlerTicket,
+                            handler: Handler<ProjectSourceEvent>) {
+        guard listeners[ticket.object] == nil else { return }
+        listeners[ticket.object] = db.collection(DB.ProjectSources).document(id.value)
             .addSnapshotListener { documentSnapshot, error in
                 guard let document = documentSnapshot else {
                     Logger().error("Error fetching document: \(error!)")
@@ -55,25 +57,21 @@ package final class ProjectSource: Sendable, Ticketable {
                 handler.execute(event)
             }
     }
-    package func removeHandler(system: SystemID) {
-        self.listener?.remove()
-        self.listener = nil
+    package func removeHandler(object: ObjectID) {
+        self.listeners[object]?.remove()
+        self.listeners[object] = nil
     }
     
     
     // MARK: action
     package func processTicket() throws {
         guard id.isExist else { return }
-        while tickets.isEmpty == false {
-            let ticket = tickets.removeFirst()
-            let newName = ticket.name
-            
-            // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-            let updateData = Data(name: newName, target: target)
-            
-            let document = db.collection(DB.ProjectSources).document(id.value)
-            try document.setData(from: updateData)
-        }
+        guard let newName = editTicket?.name else { return }
+        
+        // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
+        let update = State.name.update(newName)
+        let document = db.collection(DB.ProjectSources).document(id.value)
+        document.setData(update)
     }
     package func remove() {
         guard id.isExist else { return }
@@ -102,12 +100,22 @@ package final class ProjectSource: Sendable, Ticketable {
     package struct Data: Hashable, Codable {
         @DocumentID var id: String?
         package var name: String
+        package var creator: UserID
         package var target: ProjectID
         
-        init(id: String? = nil, name: String, target: ProjectID) {
-            self.id = id
+        init(name: String, creator: UserID, target: ProjectID) {
             self.name = name
+            self.creator = creator
             self.target = target
+        }
+    }
+    package enum State: String, Sendable {
+        case name
+        case creator
+        case target
+        
+        func update(_ value: Any) -> [String: Any] {
+            return [self.rawValue: value]
         }
     }
 }

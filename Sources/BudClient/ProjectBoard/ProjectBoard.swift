@@ -31,6 +31,9 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     public internal(set) var projects: [Project.ID] = []
     var projectSourceMap: [ProjectID: Project.ID] = [:]
+    func getProject(_ target: ProjectID) -> Project.ID? {
+        projectSourceMap[target]
+    }
     
     public var issue: (any Issuable)?
     package var callback: Callback?
@@ -62,14 +65,16 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         guard let updater else { setIssue(Error.updaterIsNotSet); return }
         let config = self.config
         let callback = self.callback
+        let me = ObjectID(id.value)
         
         
         let projectHubLink = await config.budServerLink.getProjectHub()
-        let ticket = Ticket(system: config.system, user: config.user)
+        let subscribeTicket = SubscribeProjectHub(object: me, user: config.user)
+        
         await withDiscardingTaskGroup { group in
             group.addTask {
                 await projectHubLink.setHandler(
-                    ticket: ticket,
+                    ticket: subscribeTicket,
                     handler: .init({ event in
                         Task { @MainActor in
                             switch event {
@@ -103,11 +108,12 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         let config = config
+        let me = ObjectID(id.value)
         
         await withDiscardingTaskGroup { group in
             group.addTask {
                 let projectHubLink = await config.budServerLink.getProjectHub()
-                await projectHubLink.removeHandler(system: config.system)
+                await projectHubLink.removeHandler(object: me)
             }
         }
     }
@@ -125,16 +131,23 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         let budServerLink = config.budServerLink
         let newProjectName = "Project\(self.projects.count + 1)"
         
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                let projectHubLink = await budServerLink.getProjectHub()
-                let projectTicket = ProjectTicket(
-                    system: config.system,
-                    user: config.user,
-                    name: newProjectName)
-                await projectHubLink.insertTicket(projectTicket)
-                await projectHubLink.createProjectSource()
+        do {
+            try await withThrowingDiscardingTaskGroup { group in
+                group.addTask {
+                    let projectHubLink = await budServerLink.getProjectHub()
+                    
+                    let createTicket = CreateProjectTicket(
+                        creator: config.user,
+                        target: ProjectID(),
+                        name: newProjectName)
+                    
+                    await projectHubLink.insertTicket(createTicket)
+                    try await projectHubLink.createProjectSource()
+                }
             }
+        } catch {
+            setUnknownIssue(error)
+            return
         }
     }
     

@@ -20,7 +20,20 @@ package struct ProjectHubLink: Sendable {
     
     // MARK: state
     @Server
-    package func insertTicket(_ ticket: ProjectTicket) async {
+    package func getProjectSource(_ target: ProjectID) -> ProjectSourceLink? {
+        switch mode {
+        case .test(let projectHubRef):
+            guard let projectSourceMock = projectHubRef.getProjectSource(target) else {
+                return nil
+            }
+            
+            return ProjectSourceLink(mode: .test(projectSourceMock))
+        case .real:
+            fatalError()
+        }
+    }
+    @Server
+    package func insertTicket(_ ticket: CreateProjectTicket) async {
         switch mode {
         case .test(let projectHubRef):
             projectHubRef.tickets.append(ticket)
@@ -33,28 +46,28 @@ package struct ProjectHubLink: Sendable {
     
     
     @Server
-    package func hasHandler(system: SystemID) async -> Bool {
+    package func hasHandler(object: ObjectID) async -> Bool {
         switch mode {
         case .test(let projectHubRef):
-            return projectHubRef.eventHandlers[system] != nil
+            return projectHubRef.eventHandlers[object] != nil
         case .real:
             return await ProjectHub.shared.hasHandler()
         }
     }
     @Server
-    package func setHandler(ticket: Ticket, handler: Handler<ProjectHubEvent>) async {
+    package func setHandler(ticket: SubscribeProjectHub, handler: Handler<ProjectHubEvent>) async {
         switch mode {
         case .test(let projectHubRef):
-            projectHubRef.eventHandlers[ticket.system] = handler
+            projectHubRef.eventHandlers[ticket.object] = handler
         case .real:
             await ProjectHub.shared.setHandler(ticket: ticket, handler: handler)
         }
     }
     @Server
-    package func removeHandler(system: SystemID) async {
+    package func removeHandler(object: ObjectID) async {
         switch mode {
         case .test(let projectHubRef):
-            projectHubRef.eventHandlers[system] = nil
+            projectHubRef.eventHandlers[object] = nil
         case .real:
             await ProjectHub.shared.removeHandler()
         }
@@ -63,12 +76,12 @@ package struct ProjectHubLink: Sendable {
     
     // MARK: action
     @Server
-    package func createProjectSource() async {
+    package func createProjectSource() async throws {
         switch mode {
         case .test(let projectHubRef):
             await projectHubRef.createProjectSource()
         case .real:
-            await ProjectHub.shared.createProjectSource()
+            try await ProjectHub.shared.createProjectSource()
         }
     }
     

@@ -41,6 +41,7 @@ public final class ProjectBoardUpdater: Debuggable {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
+        let projectHubLink = await config.budServerLink.getProjectHub()
         let projectBoardRef = config.parent.ref!
         let config = self.config
         let map = projectBoardRef.projectSourceMap
@@ -49,19 +50,22 @@ public final class ProjectBoardUpdater: Debuggable {
             let event = queue.removeFirst()
             switch event {
             // when projectSource added
-            case .added(let projectSource):
-                if map[projectSource] != nil {
+            case .added(let project):
+                if map[project] != nil {
                     setIssue(Error.alreadyAdded)
                     return
                 }
                 
-                let projectSourceLink = ProjectSourceLink(
-                    mode: config.mode,
-                    id: projectSource)
+                guard let projectSourceLink = await projectHubLink.getProjectSource(project) else {
+                    setIssue(Error.projectSourceDoesNotExist)
+                    return
+                }
                 let projectRef = Project(config: config,
+                                         target: project,
                                          sourceLink: projectSourceLink)
+                
                 projectBoardRef.projects.append(projectRef.id)
-                projectBoardRef.projectSourceMap[projectSource] = projectRef.id
+                projectBoardRef.projectSourceMap[project] = projectRef.id
             
             // when projectSource removed
             case .removed(let projectSource):
@@ -96,6 +100,7 @@ public final class ProjectBoardUpdater: Debuggable {
     public enum Error: String, Swift.Error {
         case updaterIsDeleted
         case alreadyAdded, alreadyRemoved
+        case projectSourceDoesNotExist
     }
 }
 

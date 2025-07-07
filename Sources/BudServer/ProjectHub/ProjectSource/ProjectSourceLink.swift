@@ -21,52 +21,52 @@ public struct ProjectSourceLink: Sendable, Hashable {
     
     // MARK: state
     @Server
-    public func insert(_ ticket: ProjectTicket) async throws {
+    public func insert(_ ticket: EditProjectNameTicket) async throws {
         switch mode {
         case .test(let mock):
             guard let projectSourceRef = mock.ref else {
                 throw Error.projectSourceDoesNotExist
             }
             
-            projectSourceRef.ticket = ticket
+            projectSourceRef.editTicket = ticket
         case .real(let object):
            try await MainActor.run {
                guard let projectSourceRef = object.ref else {
                     throw Error.projectSourceDoesNotExist
                 }
                
-                projectSourceRef.insert(ticket)
+               projectSourceRef.editTicket = ticket
             }
         }
     }
     
     @Server
-    public func hasHandler(system: SystemID) async throws -> Bool {
+    public func hasHandler(object: ObjectID) async throws -> Bool {
         switch mode {
         case .test(let mock):
             guard let projectSourceRef = mock.ref else {
                 throw Error.projectSourceDoesNotExist
             }
             
-            return projectSourceRef.eventHandlers[system] != nil
-        case .real(let object):
+            return projectSourceRef.eventHandlers[object] != nil
+        case .real(let real):
             return try await MainActor.run {
-                guard let projectSourceRef = object.ref else {
+                guard let projectSourceRef = real.ref else {
                     throw Error.projectSourceDoesNotExist
                 }
-                return projectSourceRef.hasHandler(system: system)
+                return projectSourceRef.hasHandler(object: object)
             }
         }
     }
     @Server
-    package func setHandler(ticket: Ticket, handler: Handler<ProjectSourceEvent>) async throws {
+    package func setHandler(ticket: SetHandlerTicket, handler: Handler<ProjectSourceEvent>) async throws {
         switch mode {
         case .test(let mock):
             guard let projectSourceRef = mock.ref else {
                 throw Error.projectSourceDoesNotExist
             }
             
-            projectSourceRef.eventHandlers[ticket.system] = handler
+            projectSourceRef.eventHandlers[ticket.object] = handler
         case .real(let object):
             try await MainActor.run {
                 guard let projectSourceRef = object.ref else {
@@ -77,22 +77,22 @@ public struct ProjectSourceLink: Sendable, Hashable {
         }
     }
     @Server
-    package func removeHandler(system: SystemID) async throws {
+    package func removeHandler(object: ObjectID) async throws {
         switch mode {
         case .test(let mock):
             guard let projectSourceRef = mock.ref else {
                 throw Error.projectSourceDoesNotExist
             }
             
-            projectSourceRef.eventHandlers[system] = nil
+            projectSourceRef.eventHandlers[object] = nil
             
-        case .real(let object):
+        case .real(let real):
             try await MainActor.run {
-                guard let projectSourceRef = object.ref else {
+                guard let projectSourceRef = real.ref else {
                     throw Error.projectSourceDoesNotExist
                 }
                 
-                projectSourceRef.removeHandler(system: system)
+                projectSourceRef.removeHandler(object: object)
             }
         }
     }

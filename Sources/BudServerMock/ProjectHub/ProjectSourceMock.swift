@@ -14,10 +14,11 @@ package final class ProjectSourceMock: Sendable {
     // MARK: core
     package init(projectHubRef: ProjectHubMock,
                  target: ProjectID,
-                 user: UserID,
+                 creator: UserID,
                  name: String) {
+        self.target = target
         self.projectHubRef = projectHubRef
-        self.user = user
+        self.creator = creator
         self.name = name
         
         ProjectSourceMockManager.register(self)
@@ -34,22 +35,22 @@ package final class ProjectSourceMock: Sendable {
     package nonisolated let projectHubRef: ProjectHubMock
     private typealias Manager = ProjectSourceMockManager
     
-    package var user: UserID
+    package var creator: UserID
     package var name: String
     
-    package var ticket: ProjectTicket?
-    package var eventHandlers: [SystemID: Handler<ProjectSourceEvent>] = [:]
+    package var editTicket: EditProjectNameTicket?
+    package var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
     
     
     // MARK: action
     package func processTicket() {
         // mutate
         guard id.isExist else { return }
-        guard let ticket else { return }
+        guard let editTicket else { return }
         for (_, handler) in eventHandlers {
-            handler.execute(.modified(ticket.name))
+            handler.execute(.modified(editTicket.name))
         }
-        self.ticket = nil
+        self.editTicket = nil
     }
     package func remove() {
         // mutate
