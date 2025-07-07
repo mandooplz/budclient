@@ -77,7 +77,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                         Task { @MainActor in
                             switch event {
                             case .added(let projectSource):
-                                fatalError()
                                 guard let updaterRef = updater.ref else { return }
                                 
                                 updaterRef.queue.append(event)
