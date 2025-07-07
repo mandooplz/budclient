@@ -75,25 +75,22 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
         guard let updater else { setIssue(Error.updaterIsNil); return }
         let callback = self.callback
         let sourceLink = self.sourceLink
-        let (me, target) = (ObjectID(self.id.value), self.target)
+        let (me, project) = (ObjectID(self.id.value), self.target)
         
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                let ticket = SubscrieProjectSource(object: me, target: target)
+                let ticket = SubscrieProjectSource(object: me, target: project)
                 await sourceLink.setHandler(
                     ticket: ticket,
                     handler: .init({ event in
                         Task { @MainActor in
-                            switch event {
-                            case .modified:
-                                guard let updaterRef = updater.ref else { return }
-                                
-                                updaterRef.queue.append(event)
-                                await updaterRef.update()
-                                
-                                await callback?()
-                            }
+                            guard let updaterRef = updater.ref else { return }
+                            
+                            updaterRef.queue.append(event)
+                            await updaterRef.update()
+                            
+                            await callback?()
                         }
                     }
                                   )

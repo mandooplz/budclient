@@ -26,7 +26,7 @@ public final class ObjectModel: Sendable {
     nonisolated let id = ID()
     nonisolated let target: ObjectID // 어떤 Object인지를 표현하는 ID
     
-    public var type: ObjectModelType = .oneToOne // Object가 상위 Object와 어떻게 연결되어있는지를 표현
+    public var type: Relationship = .oneToOne // Object가 상위 Object와 어떻게 연결되어있는지를 표현
     
     
     // MARK: action

@@ -6,32 +6,41 @@
 //
 import Foundation
 import Values
+import BudServer
 
 
 // MARK: Object
 @MainActor @Observable
-public final class SystemModel: Sendable {
+public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     // MARK: core
-    public init(location: GridLocation, target: SystemID) {
-        self.location = location
+    init(target: SystemID, sourceLink: SystemSourceLink) {
         self.target = target
+        self.sourceLink = sourceLink
         
         SystemModelManager.register(self)
     }
-    public func delete() {
+    func delete() {
         SystemModelManager.unregister(self.id)
     }
     
     // MARK: state
     nonisolated let id = ID()
     nonisolated let target: SystemID
+    nonisolated let sourceLink: SystemSourceLink
     
-    public var location: GridLocation
+    public var location: Location?
     
     public var name: String? // ex) BudClient-iOS, BudClient-MacOS 처럼 시스템의 이름
     
+    public var issue: (any Issuable)?
+    package var callback: Callback?
+    
     
     // MARK: action
+    public func subscribe() { }
+    public func unsubscribe() { }
+    
+    
     public func addSystemRight() { }
     public func addSystemLeft() { }
     public func addSystemTop() { }

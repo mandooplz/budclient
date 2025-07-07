@@ -11,8 +11,8 @@ import Values
 
 
 // MARK: Tests
-@Suite("ProjectEditorUpdater")
-struct ProjectEditorUpdaterTests {
+@Suite("ProjectUpdater")
+struct ProjectUpdaterTests {
     struct Update {
         let budClientRef: BudClient
         let updaterRef: ProjectUpdater
@@ -35,7 +35,8 @@ struct ProjectEditorUpdaterTests {
             #expect(issue.reason == "projectUpdaterIsDeleted")
         }
         
-        @Test func removeEvent() async throws {
+        // modified
+        @Test func dequeModifiedEvent() async throws {
             // given
             try await #require(updaterRef.queue.isEmpty == true)
             
@@ -68,6 +69,14 @@ struct ProjectEditorUpdaterTests {
             // then
             await #expect(projectRef.name == testName)
         }
+        
+        // added
+        @Test func dequeAddedEvent() async throws { }
+        @Test func createSystemModel() async throws { }
+        
+        // removed
+        @Test func dequeRemovedEvent() async throws { }
+        @Test func deleteSystemModel() async throws { }
     }
 }
 

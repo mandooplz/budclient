@@ -8,6 +8,7 @@ import Foundation
 import Values
 
 
+
 // MARK: Object
 @MainActor @Observable
 public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
@@ -29,22 +30,32 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     public var isModelsEmpty: Bool {
         models.isEmpty
     }
+    func isExist(_ target: SystemID) -> Bool {
+        self.models.lazy
+            .compactMap { $0.ref }
+            .contains { $0.target == target }
+    }
+    
+    
+    var updater: SystemUpdater.ID?
     
     public var issue: (any Issuable)?
     public var callback: Callback?
     
     
     // MARK: action
-    public func subscribe() async {
-        await subscribe(captureHook: nil)
+    public func setUp() async {
+        await setUp(mutateHook: nil)
     }
-    func subscribe(captureHook: Hook?) async {
-        // capture
-        await captureHook?()
+    func setUp(mutateHook: Hook?) async {
+        // mutate
+        await mutateHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        guard updater == nil else { setIssue(Error.alreadySetUp); return }
         
-        // compute
-        // projectSourceLink.setHandler
+        let myconfig = config.setParent(id)
+        let systemUpdaterRef = SystemUpdater(config: myconfig)
+        self.updater = systemUpdaterRef.id
     }
     
     public func createFirstSystem() async {
@@ -54,18 +65,20 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        guard models.isEmpty else { setIssue(Error.systemAlreadyExist); return }
+        let project = config.parent
+        let projectSourceLink = project.ref!.sourceLink
         
         // compute
-        // projectSourceLink.createFirstSystem()
-    }
-    
-    public func unsubscribe() async {
-        
-    }
-    func unsubscribe(captureHook: Hook?) async {
-        // capture
-        await captureHook?()
-        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        do {
+            try await withThrowingDiscardingTaskGroup { group in
+                group.addTask {
+                    try await projectSourceLink.createFirstSystem()
+                }
+            }
+        } catch {
+            setUnknownIssue(error); return
+        }
     }
     
 
@@ -85,7 +98,9 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         }
     }
     public enum Error: String, Swift.Error {
+        case alreadySetUp
         case systemBoardIsDeleted
+        case systemAlreadyExist
     }
 }
 

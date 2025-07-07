@@ -9,10 +9,14 @@ import Values
 
 
 // MARK: Link
-public struct SystemSourceLink: Sendable {
+package struct SystemSourceLink: Sendable {
     // MARK: core
     private let mode: SystemMode
-    private let target: SystemSourceID
+    private let object: SystemSourceID
+    package init(mode: SystemMode, object: SystemSourceID) {
+        self.mode = mode
+        self.object = object
+    }
     
     
     // MARK: 

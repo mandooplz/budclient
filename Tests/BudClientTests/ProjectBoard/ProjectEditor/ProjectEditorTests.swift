@@ -226,6 +226,8 @@ struct ProjectEditorTests {
                         case .modified(let newName):
                             #expect(newName == testName)
                             con.resume()
+                        default:
+                            Issue.record()
                         }
                     }))
                     

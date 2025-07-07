@@ -1,14 +1,14 @@
 //
-//  ObjectModelType.swift
+//  Relationship.swift
 //  BudClient
 //
 //  Created by 김민우 on 7/7/25.
 //
 
 
-// MARK: ObjectModelType
+// MARK: Relationship
 @frozen
-public enum ObjectModelType: Sendable {
+public enum Relationship: Sendable {
     case oneToOne
     case oneToMany
 }

@@ -38,6 +38,9 @@ package final class ProjectSourceMock: Sendable {
     package var creator: UserID
     package var name: String
     
+    package var systems: Set<SystemSourceID> = []
+    
+    
     package var editTicket: EditProjectSourceName?
     package var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
     
@@ -63,6 +66,20 @@ package final class ProjectSourceMock: Sendable {
         
         projectHubRef.projectSources.remove(self.id)
         self.delete()
+    }
+    
+    package func createFirstSystem() {
+        // mutate
+        guard systems.isEmpty else { return }
+        let systemSourceRef = SystemSourceMock(location: .origin,
+                                               name: "First System")
+        self.systems.insert(systemSourceRef.id)
+        
+        // notify
+        let event = ProjectSourceEvent.added(systemSourceRef.id, systemSourceRef.target)
+        for (_, handler) in eventHandlers {
+            handler.execute(event)
+        }
     }
 }
 

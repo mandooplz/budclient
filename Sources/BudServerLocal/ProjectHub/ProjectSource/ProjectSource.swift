@@ -30,7 +30,6 @@ package final class ProjectSource: Sendable {
     nonisolated let id: ProjectSourceID
     nonisolated let target: ProjectID
     
-    private let db = Firestore.firestore()
     private var listeners: [ObjectID: ListenerRegistration] = [:]
     private typealias Manager = ProjectSourceManager
     
@@ -43,6 +42,7 @@ package final class ProjectSource: Sendable {
                             handler: Handler<ProjectSourceEvent>) {
         guard listeners[ticket.object] == nil else { return }
         
+        let db = Firestore.firestore()
         let documentRef = db.collection(ProjectSources.name)
             .document(id.value)
         
@@ -73,8 +73,9 @@ package final class ProjectSource: Sendable {
         guard let newName = editTicket?.name else { return }
         
         // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
+        let db = Firestore.firestore()
         let documentRef = db.collection(ProjectSources.name).document(id.value)
-        documentRef.updateData(State.getNameUpdator(newName))
+        documentRef.updateData(State.getNameUpdater(newName))
         self.editTicket = nil
     }
     package func remove() {
@@ -85,7 +86,48 @@ package final class ProjectSource: Sendable {
         self.delete()
         
         // FireStore에서 문서 삭제
+        let db = Firestore.firestore()
         db.collection(ProjectSources.name).document(id.value).delete()
+    }
+    
+    package func createFirstSystem() async throws  {
+        // database
+        let db = Firestore.firestore()
+        
+        // reference
+        let projectSourceRef = db.collection(ProjectSources.name)
+            .document(id.value)
+        let systemSourcesRef = projectSourceRef.collection(ProjectSources.SystemSources.name)
+        
+        // transaction
+        let _ = try await db.runTransaction { @Sendable transaction, errorPointer in
+            do {
+                // check ProjectSource.systemModelCount
+                let data = try transaction.getDocument(projectSourceRef)
+                    .data(as: ProjectSource.Data.self)
+                guard data.systemModelCount == 0 else {
+                    return nil
+                }
+                
+                // create SystemSource
+                let newSystemSourceRef = systemSourcesRef.document()
+                let newData = SystemSource.Data(name: "First System",
+                                                location: .origin)
+                
+                try transaction.setData(from: newData, forDocument: newSystemSourceRef)
+                
+                
+                // increase ProjectSource.systemModelCount
+                transaction.updateData([
+                    ProjectSource.State.systemModelCount: FieldValue.increment(Int64(1))
+                ], forDocument: projectSourceRef)
+                
+                return
+            } catch(let error as NSError) {
+                errorPointer?.pointee = error
+                return nil
+            }
+        }
     }
     
     
@@ -99,14 +141,19 @@ package final class ProjectSource: Sendable {
         package var name: String
         package var creator: UserID
         package var target: ProjectID
+        package var systemModelCount: Int
     }
     package enum State: Sendable {
         static let name = "name"
         static let creator = "creator"
         static let target = "target"
+        static let systemModelCount = "systemModelCount"
         
-        static func getNameUpdator(_ value: String) -> [String: Any] {
+        static func getNameUpdater(_ value: String) -> [String: Any] {
             [name: value]
+        }
+        static func getSystemModelCountUpdater(_ value: Int) -> [String: Any] {
+            [systemModelCount: value]
         }
     }
 }

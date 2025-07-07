@@ -10,7 +10,6 @@ import BudServerMock
 import BudServerLocal
 
 
-
 // MARK: Link
 package struct ProjectSourceLink: Sendable, Hashable {
     // MARK: core
@@ -25,6 +24,14 @@ package struct ProjectSourceLink: Sendable, Hashable {
     
     
     // MARK: state
+    @Server func getSystemSources() async -> Set<SystemSourceID> {
+        switch mode {
+        case .test:
+            return TestManager.get(object)!.systems
+        case .real:
+            fatalError()
+        }
+    }
     @Server package func insert(_ ticket: EditProjectSourceName) async throws {
         switch mode {
         case .test:
@@ -90,7 +97,6 @@ package struct ProjectSourceLink: Sendable, Hashable {
             }
         }
     }
-    
     @Server package func remove() async {
         switch mode {
         case .test:
@@ -99,6 +105,15 @@ package struct ProjectSourceLink: Sendable, Hashable {
             await MainActor.run {
                 RealManager.get(object)?.remove()
             }
+        }
+    }
+    
+    @Server package func createFirstSystem() async throws {
+        switch mode {
+        case .test:
+            TestManager.get(object)?.createFirstSystem()
+        case .real:
+            try await RealManager.get(object)?.createFirstSystem()
         }
     }
 }

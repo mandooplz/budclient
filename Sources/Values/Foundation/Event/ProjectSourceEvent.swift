@@ -9,8 +9,8 @@
 // MARK: ProjectEvent
 package enum ProjectSourceEvent: Sendable {
     case modified(Name)
-//    case added(SystemSourceID, SystemID)
-//    case removed(SystemID)
+    case added(SystemSourceID, SystemID)
+    case removed(SystemID)
     
     package typealias Name = String
 }

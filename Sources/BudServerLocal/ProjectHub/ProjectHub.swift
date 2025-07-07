@@ -82,7 +82,8 @@ package final class ProjectHub: Sendable {
             // 새로운 FireStore Document 생성
             let data = ProjectSource.Data(name: ticket.name,
                                           creator: ticket.creator,
-                                          target: ticket.target)
+                                          target: ticket.target,
+                                          systemModelCount: 0)
             try db.collection(ProjectSources.name).addDocument(from: data)
         }
     }
