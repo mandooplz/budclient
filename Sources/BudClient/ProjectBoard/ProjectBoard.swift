@@ -7,6 +7,7 @@
 import Foundation
 import Values
 import BudServer
+import os
 
 
 // MARK: Object
@@ -75,7 +76,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     handler: .init({ event in
                         Task { @MainActor in
                             switch event {
-                            case .added:
+                            case .added(let projectSource):
+                                Logger().error("Event.added : \(projectSource.0.toString)")
                                 guard let updaterRef = updater.ref else { return }
                                 
                                 updaterRef.queue.append(event)

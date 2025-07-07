@@ -8,6 +8,7 @@ import Foundation
 import Values
 import BudServer
 import Collections
+import os
 
 
 // MARK: Object
@@ -50,8 +51,10 @@ public final class ProjectBoardUpdater: Debuggable {
             switch event {
             // when projectSource added
             case .added(let projectSource, let target):
+                // 이미 존재한다면 지우기.
                 if map[projectSource] != nil {
                     setIssue(Error.alreadyAdded)
+                    Logger().error("\(Error.alreadyAdded.rawValue)")
                     return
                 }
                 
