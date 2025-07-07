@@ -11,34 +11,33 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-internal final class EmailRegisterForm: Sendable {
+package final class EmailRegisterForm: Sendable {
     // MARK: core
-    internal init(accountHubRef: AccountHub,
-                  ticket: AccountHub.Ticket) {
+    package init(accountHubRef: AccountHub,
+                  ticket: CreateEmailForm) {
         self.accountHubRef = accountHubRef
-        self.id = ID(value: .init())
         self.ticket = ticket
         
         EmailRegisterFormManager.register(self)
     }
-    internal func delete() {
+    package func delete() {
         EmailRegisterFormManager.unregister(self.id)
     }
     
     
     // MARK: state
-    internal nonisolated let id: ID
-    internal nonisolated let ticket: AccountHub.Ticket
-    internal nonisolated let accountHubRef: AccountHub
+    package nonisolated let id = EmailRegisterFormID()
+    package nonisolated let ticket: CreateEmailForm
+    package nonisolated let accountHubRef: AccountHub
     
-    internal var email: String?
-    internal var password: String?
+    package var email: String?
+    package var password: String?
     
-    internal var issue: (any Issuable)?
+    package var issue: (any Issuable)?
 
     
     // MARK: action
-    internal func submit() async {
+    package func submit() async {
         // capture
         guard let email else {
             self.issue = KnownIssue(Error.emailIsNil)
@@ -58,7 +57,7 @@ internal final class EmailRegisterForm: Sendable {
             return
         }
     }
-    internal func remove() async {
+    package func remove() async {
         // mutate
         accountHubRef.emailRegisterForms[ticket] = nil
         self.delete()
@@ -66,18 +65,7 @@ internal final class EmailRegisterForm: Sendable {
 
     
     // MARK: value
-    @Server
-    internal struct ID: Sendable, Hashable {
-        internal let value: UUID
-        
-        internal var isExist: Bool {
-            EmailRegisterFormManager.container[self] != nil
-        }
-        internal var ref: EmailRegisterForm? {
-            EmailRegisterFormManager.container[self]
-        }
-    }
-    internal enum Error: String, Swift.Error {
+    package enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case emailDuplicate
     }
@@ -87,12 +75,15 @@ internal final class EmailRegisterForm: Sendable {
 
 // MARK: Object Manager
 @Server
-fileprivate final class EmailRegisterFormManager: Sendable {
-    fileprivate static var container: [EmailRegisterForm.ID: EmailRegisterForm] = [:]
+package final class EmailRegisterFormManager: Sendable {
+    fileprivate static var container: [EmailRegisterFormID: EmailRegisterForm] = [:]
     fileprivate static func register(_ object: EmailRegisterForm) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: EmailRegisterForm.ID) {
+    fileprivate static func unregister(_ id: EmailRegisterFormID) {
         container[id] = nil
+    }
+    package static func get(_ id: EmailRegisterFormID) -> EmailRegisterForm? {
+        container[id]
     }
 }

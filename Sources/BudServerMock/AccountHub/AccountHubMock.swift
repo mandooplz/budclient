@@ -51,11 +51,11 @@ package final class AccountHubMock: Sendable {
             .user
     }
     
-    package var emailTickets: Set<Ticket> = []
-    package var emailRegisterForms: [Ticket:EmailRegisterFormMock.ID] = [:]
+    package var emailTickets: Set<CreateEmailForm> = []
+    package var emailRegisterForms: [CreateEmailForm: EmailRegisterFormID] = [:]
     
-    package var googleTickets: Set<Ticket> = []
-    package var googleRegisterForms: [Ticket: GoogleRegisterFormMock.ID] = [:]
+    package var googleTickets: Set<CreateGoogleForm> = []
+    package var googleRegisterForms: [CreateGoogleForm: GoogleRegisterFormID] = [:]
     
     
     // MARK: action
@@ -80,13 +80,6 @@ package final class AccountHubMock: Sendable {
     
     
     // MARK: value
-    package struct Ticket: Sendable, Hashable {
-        package let value: UUID
-        
-        package init(value: UUID = UUID()) {
-            self.value = value
-        }
-    }
     package enum Error: String, Swift.Error {
         case userNotFound, wrongPassword
     }

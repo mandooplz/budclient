@@ -13,26 +13,26 @@ import os
 
 // MARK: Object
 @MainActor
-final class ProjectHub: Sendable {
+package final class ProjectHub: Sendable {
     // MARK: core
-    static let shared = ProjectHub()
+    package static let shared = ProjectHub()
     private init() { }
     
     
     // MARK: state
-    nonisolated let id: ID = ID()
+    package nonisolated let id = ID()
     private let db = Firestore.firestore()
     
-    var projectSources: Set<ProjectSource.ID> = []
-    var projectSourceMap: [ProjectID: ProjectSource.ID] = [:]
+    package var projectSources: Set<ProjectSourceID> = []
+    package var projectSourceMap: [ProjectID: ProjectSourceID] = [:]
     
-    var tickets: Deque<CreateProjectSource> = []
+    package var tickets: Deque<CreateProjectSource> = []
     
-    var listener: ListenerRegistration?
-    func hasHandler() async -> Bool {
+    package var listener: ListenerRegistration?
+    package func hasHandler() async -> Bool {
         listener != nil
     }
-    func setHandler(ticket: SubscribeProjectHub,
+    package func setHandler(ticket: SubscribeProjectHub,
                     handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         
@@ -40,42 +40,44 @@ final class ProjectHub: Sendable {
         
         self.listener = db.collection(DB.ProjectSources)
             .whereField(state.rawValue, isEqualTo: ticket.user)
-            .addSnapshotListener { querySnapshot, error in
-                guard let snapshot = querySnapshot else {
+            .addSnapshotListener { snapshot, error in
+                guard let snapshot else {
                     print("Error fetching snapshots: \(error!)")
                     return
                 }
                 
                 snapshot.documentChanges.forEach { diff in
                     let documentId = diff.document.documentID
+                    let object = ProjectSourceID(documentId)
+                    
                     guard let data = try? diff.document.data(as: ProjectSource.Data.self) else {
-                        Logger().error("Failed to decode ProjectSource.Data for document: \(documentId)")
+                        Logger().error("ProjectSource.Data를 디코딩하는 과정에서 에러 발생")
                         return
                     }
                     
                     if (diff.type == .added) {
-                        let projectSourceRef = ProjectSource(idValue: documentId, target: data.target)
+                        let projectSourceRef = ProjectSource(id: object, target: data.target)
                         self.projectSources.insert(projectSourceRef.id)
                         
-                        let event = ProjectHubEvent.added(data.target)
+                        let event = ProjectHubEvent.added(object, data.target)
                         handler.execute(event)
                     }
                     
                     if (diff.type == .removed) {
-                        let event = ProjectHubEvent.removed(data.target)
+                        let event = ProjectHubEvent.removed(object)
                         handler.execute(event)
                     }
                 }
             }
     }
-    func removeHandler() {
+    package func removeHandler() {
         self.listener?.remove()
         self.listener = nil
     }
     
     
     // MARK: action
-    func createProjectSource() throws {
+    package func createProjectSource() throws {
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             
@@ -89,7 +91,7 @@ final class ProjectHub: Sendable {
     
     
     // MARK: value
-    struct ID: Sendable, Hashable {
+    package struct ID: Sendable, Hashable {
         let value: UUID
         
         init(value: UUID = UUID()) {

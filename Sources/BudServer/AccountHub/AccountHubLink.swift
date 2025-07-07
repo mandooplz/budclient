@@ -7,6 +7,7 @@
 import Foundation
 import Tools
 import BudServerMock
+import BudServerLocal
 
 
 // MARK: Link
@@ -68,63 +69,63 @@ package struct AccountHubLink: Sendable {
         }
     }
     
-    package func insertEmailTicket(_ ticket: Ticket) async {
+    package func insertEmailTicket(_ ticket: CreateEmailForm) async {
         switch mode {
         case .test(let accountHubRef):
             let _ = await Server.run {
-                accountHubRef.emailTickets.insert(ticket.forMock)
+                accountHubRef.emailTickets.insert(ticket)
             }
         case .real:
             await Server.run {
-                AccountHub.shared.emailTickets.insert(ticket.forReal)
+                AccountHub.shared.emailTickets.insert(ticket)
             }
         }
     }
-    package func getEmailRegisterForm(_ ticket: Ticket) async -> EmailRegisterFormLink? {
+    package func getEmailRegisterForm(_ ticket: CreateEmailForm) async -> EmailRegisterFormLink? {
         switch mode {
         case .test(let accountHubRef):
             let emailRegisterForm = await Server.run {
-                accountHubRef.emailRegisterForms[ticket.forMock]
+                accountHubRef.emailRegisterForms[ticket]
             }
             guard let emailRegisterForm else { return nil }
-            return .init(mode: .test(mock: emailRegisterForm))
+            return .init(mode: .test, object: emailRegisterForm)
             
         case .real:
             let emailRegisterForm = await Server.run {
-                AccountHub.shared.emailRegisterForms[ticket.forReal]
+                AccountHub.shared.emailRegisterForms[ticket]
             }
             guard let emailRegisterForm else { return nil }
-            return .init(mode: .real(object: emailRegisterForm))
+            return .init(mode: .real, object: emailRegisterForm)
         }
     }
     
-    package func insertGoogleTicket(_ ticket: Ticket) async {
+    package func insertGoogleTicket(_ ticket: CreateGoogleForm) async {
         switch mode {
         case .test(let accountHubRef):
             let _ = await Server.run {
-                accountHubRef.googleTickets.insert(ticket.forMock)
+                accountHubRef.googleTickets.insert(ticket)
             }
         case .real:
             await Server.run {
-                AccountHub.shared.googleTickets.insert(ticket.forReal)
+                AccountHub.shared.googleTickets.insert(ticket)
             }
         }
     }
-    package func getGoogleRegisterForm(_ ticket: Ticket) async -> GoogleRegisterFormLink? {
+    package func getGoogleRegisterForm(_ ticket: CreateGoogleForm) async -> GoogleRegisterFormLink? {
         switch mode {
         case .test(let accountHubRef):
             return await Server.run {
-                guard let googleRegisterForm = accountHubRef.googleRegisterForms[ticket.forMock] else {
+                guard let googleRegisterForm = accountHubRef.googleRegisterForms[ticket] else {
                     return nil
                 }
-                return .init(mode: .test(mock: googleRegisterForm))
+                return .init(mode: .test, object: googleRegisterForm)
             }
         case .real:
             return await Server.run {
-                guard let googleRegisterForm = AccountHub.shared.googleRegisterForms[ticket.forReal] else {
+                guard let googleRegisterForm = AccountHub.shared.googleRegisterForms[ticket] else {
                     return nil
                 }
-                return .init(mode: .real(object: googleRegisterForm))
+                return .init(mode: .real, object: googleRegisterForm)
             }
         }
     }
@@ -150,19 +151,6 @@ package struct AccountHubLink: Sendable {
     
     
     // MARK: value
-    package struct Ticket: Sendable, Hashable {
-        package let value: UUID
-        package init(value: UUID = UUID()) {
-            self.value = value
-        }
-        
-        fileprivate var forMock: AccountHubMock.Ticket {
-            AccountHubMock.Ticket(value: self.value)
-        }
-        fileprivate var forReal: AccountHub.Ticket {
-            AccountHub.Ticket(value: self.value)
-        }
-    }
     package enum Error: String, Swift.Error {
         case userNotFound, wrongPassword
     }

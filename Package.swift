@@ -67,7 +67,17 @@ let package = Package(
             name: "BudServer",
             dependencies: [
                 "Tools",
+                "BudServerLocal",
                 "BudServerMock",
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
+            ]
+        ),
+        
+        // MARK: BudServerLocal
+        .target(
+            name: "BudServerLocal",
+            dependencies: [
+                "Tools",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
                 .product(name: "Collections", package: "swift-collections")

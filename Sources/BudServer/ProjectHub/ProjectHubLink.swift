@@ -7,6 +7,7 @@
 import Foundation
 import Tools
 import BudServerMock
+import BudServerLocal
 
 
 // MARK: Link
@@ -19,20 +20,6 @@ package struct ProjectHubLink: Sendable {
     
     
     // MARK: state
-    @Server
-    package func getProjectSource(_ target: ProjectID) -> ProjectSourceLink? {
-        switch mode {
-        case .test(let projectHubRef):
-            guard let projectSourceMock = projectHubRef.getProjectSource(target) else {
-                return nil
-            }
-            
-            return ProjectSourceLink(mode: .test(projectSourceMock))
-        case .real:
-            // 이를 어떻게 구현해야 하는가.
-            fatalError()
-        }
-    }
     @Server
     package func insertTicket(_ ticket: CreateProjectSource) async {
         switch mode {

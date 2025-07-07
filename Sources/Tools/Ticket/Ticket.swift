@@ -7,4 +7,4 @@
 
 
 // MARK: Ticket
-protocol Ticket: Sendable, Hashable { }
+public protocol Ticket: Sendable, Hashable { }

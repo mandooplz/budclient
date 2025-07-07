@@ -24,13 +24,7 @@ package final class ProjectHubMock: Sendable, Subscribable {
     // MARK: state
     package nonisolated let id: ID = ID()
     
-    package var projectSources: Set<ProjectSourceMock.ID> = []
-    package func getProjectSource(_ target: ProjectID) -> ProjectSourceMock.ID? {
-        projectSources.lazy
-            .compactMap { $0.ref }
-            .first { $0.target == target }?
-            .id
-    }
+    package var projectSources: Set<ProjectSourceID> = []
     
     package var tickets: Deque<CreateProjectSource> = []
     package var eventHandlers: [ObjectID:Handler<ProjectHubEvent>] = [:]
@@ -51,7 +45,7 @@ package final class ProjectHubMock: Sendable, Subscribable {
             projectSources.insert(projectSourceRef.id)
             
             // notify
-            let event = ProjectHubEvent.added(ticket.target)
+            let event = ProjectHubEvent.added(projectSourceRef.id, ticket.target)
             for handler in eventHandlers.values {
                 handler.execute(event)
             }

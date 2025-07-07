@@ -8,76 +8,55 @@ import Foundation
 import Tools
 import FirebaseAuth
 import BudServerMock
+import BudServerLocal
 
 
 // MARK: Link
 package struct EmailRegisterFormLink: Sendable {
     // MARK: core
-    private nonisolated let mode: Mode
-    internal init(mode: Mode) {
+    private nonisolated let mode: SystemMode
+    private nonisolated let object: EmailRegisterFormID
+    private typealias TestManager = EmailRegisterFormMockManager
+    private typealias RealManager = EmailRegisterFormManager
+    internal init(mode: SystemMode, object: EmailRegisterFormID) {
         self.mode = mode
+        self.object = object
     }
     
     // MARK: state
-    package func setEmail(_ value: String) async {
+    @Server package func setEmail(_ value: String) async {
         switch mode {
-        case .test(let mock):
-            await Server.run {
-                mock.ref?.email = value
-            }
-        case .real(let object):
-            await Server.run {
-                object.ref?.email = value
-            }
+        case .test:
+            TestManager.get(object)?.email = value
+        case .real:
+            RealManager.get(object)?.email = value
         }
     }
-    package func setPassword(_ value: String) async {
+    @Server package func setPassword(_ value: String) async {
         switch mode {
-        case .test(let mock):
-            await Server.run {
-                mock.ref?.password = value
-            }
-        case .real(let object):
-            await Server.run {
-                object.ref?.password = value
-            }
+        case .test:
+            TestManager.get(object)?.password = value
+        case .real:
+            RealManager.get(object)?.password = value
         }
     }
     
     
     // MARK: action
-    package func submit() async {
+    @Server package func submit() async {
         switch mode {
-        case .test(let mock):
-            await mock.ref?.submit()
-        case .real(let object):
-            await object.ref?.submit()
+        case .test:
+            TestManager.get(object)?.submit()
+        case .real:
+            await RealManager.get(object)?.submit()
         }
     }
-    package func remove() async {
+    @Server package func remove() async {
         switch mode {
-        case .test(let mock):
-            await mock.ref?.remove()
-        case .real(let object):
-            await object.ref?.remove()
+        case .test:
+            TestManager.get(object)?.remove()
+        case .real:
+            await RealManager.get(object)?.remove()
         }
-    }
-    
-    
-    // MARK: value
-    package struct ID: Sendable, Hashable {
-        package let value: UUID
-        
-        internal init(_ realId: EmailRegisterForm.ID) {
-            self.value = realId.value
-        }
-        
-        fileprivate func forReal() -> EmailRegisterForm.ID {
-            return .init(value: self.value)
-        }
-    }
-    internal enum Mode: Sendable {
-        case test(mock: EmailRegisterFormMock.ID)
-        case real(object: EmailRegisterForm.ID)
     }
 }

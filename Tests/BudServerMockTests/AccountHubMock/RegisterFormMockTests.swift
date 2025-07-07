@@ -82,13 +82,16 @@ struct EmailRegisterFormMockTests {
         }
         @Test func deleteEmailRegisterForm() async throws {
             // given
-            try await #require(emailRegisterFormRef.id.isExist == true)
+            let manager = EmailRegisterFormMockManager.self
+            let object = emailRegisterFormRef.id
+            
+            try await #require(manager.isExist(object) == true)
             
             // when
             await emailRegisterFormRef.remove()
             
             // then
-            await #expect(emailRegisterFormRef.id.isExist == false)
+            await #expect(manager.isExist(object) == false)
         }
         @Test func removeInAccountHub() async throws {
             // given
@@ -109,17 +112,19 @@ struct EmailRegisterFormMockTests {
 
 
 // MARK: Helphers
+fileprivate let manager = EmailRegisterFormMockManager.self
+
 func getRegisterFormMock(_ budServerMockRef: BudServerMock) async -> EmailRegisterFormMock {
     await budServerMockRef.setUp()
     
     let accountHubRef = await budServerMockRef.accountHubRef!
-    let newTicket = AccountHubMock.Ticket()
+    let ticket = CreateEmailForm()
     
     return await Server.run {
-        accountHubRef.emailTickets.insert(newTicket)
+        accountHubRef.emailTickets.insert(ticket)
         accountHubRef.updateEmailForms()
         
-        let emailRegisterForm = accountHubRef.emailRegisterForms[newTicket]!
-        return emailRegisterForm.ref!
+        let emailRegisterForm = accountHubRef.emailRegisterForms[ticket]!
+        return manager.get(emailRegisterForm)!
     }
 }

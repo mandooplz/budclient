@@ -76,8 +76,10 @@ struct GoogleRegisterFormMockTests {
 
 
 // MARK: Helpher
+fileprivate let manager = GoogleRegisterFormMockManager.self
+
 private func getGoogleRegisterForm(_ accountHubRef: AccountHubMock) async -> GoogleRegisterFormMock {
-    let ticket = AccountHubMock.Ticket()
+    let ticket = CreateGoogleForm()
     
     await Server.run {
         accountHubRef.googleTickets.insert(ticket)
@@ -85,5 +87,5 @@ private func getGoogleRegisterForm(_ accountHubRef: AccountHubMock) async -> Goo
     }
     
     let googleRegisterForm = await accountHubRef.googleRegisterForms[ticket]!
-    return await googleRegisterForm.ref!
+    return await manager.get(googleRegisterForm)!
 }

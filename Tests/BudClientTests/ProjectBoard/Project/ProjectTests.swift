@@ -304,18 +304,13 @@ struct ProjectTests {
             // given
             let projectSourceLink = projectRef.sourceLink
             
-            await #expect(throws: Never.self) {
-                let _ = try await projectSourceLink.processTicket()
-            }
+            await #expect(projectSourceLink.isExist() == true)
              
             // when
             await projectRef.removeSource()
             
             // then
-            await #expect(throws: ProjectSourceLink.Error.projectSourceDoesNotExist) {
-                let _ = try await projectSourceLink.processTicket()
-            }
-            
+            await #expect(projectSourceLink.isExist() == false)
         }
         @Test func removeProjectInProjectBoard() async throws {
             // given

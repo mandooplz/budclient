@@ -525,7 +525,7 @@ private func register(budClientRef: BudClient, email: String, password: String) 
     let budServerLink = await budClientRef.budServerLink!
     let accountHubLink = await budServerLink.getAccountHub()
     
-    let newTicket = AccountHubLink.Ticket()
+    let newTicket = CreateEmailForm()
     await accountHubLink.insertEmailTicket(newTicket)
     await accountHubLink.updateEmailForms()
     
@@ -548,7 +548,7 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     let budServerLink = try! await BudServerLink(mode: .test(budServerRef))
     let accountHubLink = await budServerLink.getAccountHub()
     
-    let newTicket = AccountHubLink.Ticket()
+    let newTicket = CreateEmailForm()
     await accountHubLink.insertEmailTicket(newTicket)
     await accountHubLink.updateEmailForms()
     

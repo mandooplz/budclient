@@ -8,14 +8,19 @@ import Foundation
 import Tools
 import FirebaseAuth
 import BudServerMock
+import BudServerLocal
 
 
 // MARK: Link
 package struct GoogleRegisterFormLink: Sendable {
     // MARK: core
-    private nonisolated let mode: Mode
-    internal init(mode: Mode) {
+    private nonisolated let mode: SystemMode
+    private nonisolated let object: GoogleRegisterFormID
+    private typealias TestManager = GoogleRegisterFormMockManager
+    private typealias RealManager = GoogleRegisterFormManager
+    internal init(mode: SystemMode, object: GoogleRegisterFormID) {
         self.mode = mode
+        self.object = object
     }
     
     
@@ -23,10 +28,10 @@ package struct GoogleRegisterFormLink: Sendable {
     @Server
     package func setToken(_ token: GoogleToken) async {
         switch mode {
-        case .test(let mock):
-            mock.ref?.token = token
-        case .real(let object):
-            object.ref?.token = token
+        case .test:
+            TestManager.get(object)?.token = token
+        case .real:
+            RealManager.get(object)?.token = token
         }
     }
     
@@ -34,25 +39,21 @@ package struct GoogleRegisterFormLink: Sendable {
     // MARK: action
     package func submit() async {
         switch mode {
-        case .test(let mock):
-            await mock.ref?.submit()
-        case .real(let object):
-            await object.ref?.submit()
+        case .test:
+            await TestManager.get(object)?.submit()
+        case .real:
+            await RealManager.get(object)?.submit()
         }
     }
     package func remove() async {
         switch mode {
-        case .test(let mock):
-            await mock.ref?.remove()
-        case .real(let object):
-            await object.ref?.remove()
+        case .test:
+            await TestManager.get(object)?.remove()
+        case .real:
+            await RealManager.get(object)?.remove()
         }
     }
     
     
     // MARK: value
-    internal enum Mode: Sendable {
-        case test(mock: GoogleRegisterFormMock.ID)
-        case real(object: GoogleRegisterForm.ID)
-    }
 }

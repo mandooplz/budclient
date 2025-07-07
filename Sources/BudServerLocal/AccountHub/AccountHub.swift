@@ -11,23 +11,23 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-internal final class AccountHub {
+package final class AccountHub {
     // MARK: core
-    static let shared = AccountHub()
+    package static let shared = AccountHub()
     private init() { }
     
     
     // MARK: state
-    func isExist(email: String, password: String) async throws -> Bool {
+    package func isExist(email: String, password: String) async throws -> Bool {
         do {
             let _ = try await Auth.auth().signIn(withEmail: email, password: password)
         } catch let error as NSError {
             if let errorCode = AuthErrorCode(rawValue: error.code) {
                 switch errorCode {
                 case .userNotFound:
-                    throw AccountHubLink.Error.userNotFound
+                    throw Error.userNotFound
                 case .wrongPassword:
-                    throw AccountHubLink.Error.wrongPassword
+                    throw Error.wrongPassword
                 default:
                     throw error
                 }
@@ -38,7 +38,7 @@ internal final class AccountHub {
         
         return true
     }
-    func getUser(email: String, password: String) async throws -> UserID {
+    package func getUser(email: String, password: String) async throws -> UserID {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             return result.user.uid.toUserID()
@@ -46,9 +46,9 @@ internal final class AccountHub {
             if let errorCode = AuthErrorCode(rawValue: error.code) {
                 switch errorCode {
                 case .userNotFound:
-                    throw AccountHubLink.Error.userNotFound
+                    throw Error.userNotFound
                 case .wrongPassword:
-                    throw AccountHubLink.Error.wrongPassword
+                    throw Error.wrongPassword
                 default:
                     throw error
                 }
@@ -57,7 +57,7 @@ internal final class AccountHub {
             }
         }
     }
-    func getUser(token: GoogleToken) async throws -> UserID {
+    package func getUser(token: GoogleToken) async throws -> UserID {
         if let user = Auth.auth().currentUser {
             return user.uid.toUserID()
         }
@@ -68,15 +68,15 @@ internal final class AccountHub {
         return result.user.uid.toUserID()
     }
     
-    var emailTickets: Set<Ticket> = []
-    var emailRegisterForms: [Ticket:EmailRegisterForm.ID] = [:]
+    package var emailTickets: Set<CreateEmailForm> = []
+    package var emailRegisterForms: [CreateEmailForm:EmailRegisterFormID] = [:]
     
-    var googleTickets: Set<Ticket> = []
-    var googleRegisterForms: [Ticket: GoogleRegisterForm.ID] = [:]
+    package var googleTickets: Set<CreateGoogleForm> = []
+    package var googleRegisterForms: [CreateGoogleForm: GoogleRegisterFormID] = [:]
     
     
     // MARK: action
-    func updateEmailForms() {
+    package func updateEmailForms() {
         // mutate
         for ticket in emailTickets {
             let registerFormRef = EmailRegisterForm(accountHubRef: self,
@@ -85,7 +85,7 @@ internal final class AccountHub {
             emailTickets.remove(ticket)
         }
     }
-    func updateGoogleForms() {
+    package func updateGoogleForms() {
         // mutate
         for ticket in googleTickets {
             let googleRegisterFormRef = GoogleRegisterForm(accountHubRef: self,
@@ -97,12 +97,8 @@ internal final class AccountHub {
     
     
     // MARK: value
-    struct Ticket: Sendable, Hashable {
-        let value: UUID
-        
-        init(value: UUID = UUID()) {
-            self.value = value
-        }
+    package enum Error: String, Swift.Error {
+        case userNotFound, wrongPassword
     }
 }
 

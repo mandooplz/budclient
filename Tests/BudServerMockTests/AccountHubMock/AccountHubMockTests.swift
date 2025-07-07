@@ -118,7 +118,7 @@ struct AccountHubMockTests {
         
         @Test func removeTicket() async throws {
             // given
-            let ticket = AccountHubMock.Ticket()
+            let ticket = CreateEmailForm()
             let _ = await Server.run {
                 accountHubRef.emailTickets.insert(ticket)
             }
@@ -131,7 +131,7 @@ struct AccountHubMockTests {
         }
         @Test func appendEmailRegisterForm() async throws {
             // given
-            let ticket = AccountHubMock.Ticket()
+            let ticket = CreateEmailForm()
             let _ = await Server.run {
                 accountHubRef.emailTickets.insert(ticket)
             }
@@ -144,7 +144,7 @@ struct AccountHubMockTests {
         }
         @Test func createEmailRegisterForm() async throws {
             // given
-            let ticket = AccountHubMock.Ticket()
+            let ticket = CreateEmailForm()
             let _ = await Server.run {
                 accountHubRef.emailTickets.insert(ticket)
             }
@@ -154,7 +154,8 @@ struct AccountHubMockTests {
             
             // then
             let emailRegisterForm = try #require(await accountHubRef.emailRegisterForms[ticket])
-            await #expect(emailRegisterForm.isExist == true)
+            let manager = EmailRegisterFormMockManager.self
+            await #expect(manager.isExist(emailRegisterForm) == true)
         }
     }
     
@@ -166,7 +167,7 @@ struct AccountHubMockTests {
         
         @Test func removeTicket() async throws {
             // given
-            let ticket = AccountHubMock.Ticket()
+            let ticket = CreateGoogleForm()
             let _ = await Server.run {
                 accountHubRef.googleTickets.insert(ticket)
             }
@@ -179,7 +180,7 @@ struct AccountHubMockTests {
         }
         @Test func appendGoogleRegisterForm() async throws {
             // given
-            let ticket = AccountHubMock.Ticket()
+            let ticket = CreateGoogleForm()
             let _ = await Server.run {
                 accountHubRef.googleTickets.insert(ticket)
             }
@@ -192,7 +193,7 @@ struct AccountHubMockTests {
         }
         @Test func createGoogleRegisterForm() async throws {
             // given
-            let ticket = AccountHubMock.Ticket()
+            let ticket = CreateGoogleForm()
             let _ = await Server.run {
                 accountHubRef.googleTickets.insert(ticket)
             }
@@ -202,8 +203,8 @@ struct AccountHubMockTests {
             
             // then
             let googleRegisterForm = try #require(await accountHubRef.googleRegisterForms[ticket])
-            await #expect(googleRegisterForm.isExist == true)
+            let manager = GoogleRegisterFormMockManager.self
+            await #expect(manager.isExist(googleRegisterForm) == true)
         }
     }
 }
-

@@ -15,8 +15,9 @@ import os
 @MainActor
 package final class ProjectSource: Sendable {
     // MARK: core
-    init(idValue: String, target: ProjectID) {
-        self.id = ID(value: idValue)
+    init(id: ProjectSourceID,
+         target: ProjectID) {
+        self.id = id
         self.target = target
         
         ProjectSourceManager.register(self)
@@ -26,14 +27,15 @@ package final class ProjectSource: Sendable {
     }
     
     // MARK: state
-    nonisolated let id: ID
+    nonisolated let id: ProjectSourceID
     nonisolated let target: ProjectID
     
     private let db = Firestore.firestore()
+    private var listeners: [ObjectID: ListenerRegistration] = [:]
+    private typealias Manager = ProjectSourceManager
     
     package var editTicket: EditProjectSourceName?
     
-    var listeners: [ObjectID: ListenerRegistration] = [:]
     package func hasHandler(object: ObjectID) -> Bool {
         listeners[object] != nil
     }
@@ -65,7 +67,7 @@ package final class ProjectSource: Sendable {
     
     // MARK: action
     package func processTicket() throws {
-        guard id.isExist else { return }
+        guard Manager.isExist(id) else { return }
         guard let newName = editTicket?.name else { return }
         
         // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
@@ -74,7 +76,7 @@ package final class ProjectSource: Sendable {
         document.setData(update)
     }
     package func remove() {
-        guard id.isExist else { return }
+        guard Manager.isExist(id) else { return }
         
         // ProjectSource 인스턴스 제거
         ProjectHub.shared.projectSources.remove(self.id)
@@ -86,17 +88,6 @@ package final class ProjectSource: Sendable {
     
     
     // MARK: value
-    @MainActor
-    package struct ID: Sendable, Hashable {
-        let value: String
-        
-        var isExist: Bool {
-            ProjectSourceManager.container[self] != nil
-        }
-        package var ref: ProjectSource? {
-            ProjectSourceManager.container[self]
-        }
-    }
     package struct Data: Hashable, Codable {
         @DocumentID var id: String?
         package var name: String
@@ -123,13 +114,19 @@ package final class ProjectSource: Sendable {
 
 // MARK: Object Manager
 @MainActor
-fileprivate final class ProjectSourceManager: Sendable {
-    fileprivate static var container: [ProjectSource.ID : ProjectSource] = [:]
+package final class ProjectSourceManager: Sendable {
+    fileprivate static var container: [ProjectSourceID : ProjectSource] = [:]
     fileprivate static func register(_ object: ProjectSource) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ProjectSource.ID) {
+    fileprivate static func unregister(_ id: ProjectSourceID) {
         container[id] = nil
+    }
+    package static func get(_ id: ProjectSourceID) -> ProjectSource? {
+        container[id]
+    }
+    package static func isExist(_ id: ProjectSourceID) -> Bool {
+        container[id] != nil
     }
 }
 

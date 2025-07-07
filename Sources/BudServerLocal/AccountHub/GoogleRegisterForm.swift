@@ -11,10 +11,11 @@ import FirebaseAuth
 
 // MARK: Object
 @Server
-final class GoogleRegisterForm: Sendable {
+package final class GoogleRegisterForm: Sendable {
     // MARK: core
-    init(accountHubRef: AccountHub,
-                  ticket: AccountHub.Ticket) {
+    private typealias Manager = GoogleRegisterFormManager
+    package init(accountHubRef: AccountHub,
+                  ticket: CreateGoogleForm) {
         self.accountHubRef = accountHubRef
         self.ticket = ticket
         
@@ -26,20 +27,20 @@ final class GoogleRegisterForm: Sendable {
     
     
     // MARK: state
-    nonisolated let id = ID()
-    nonisolated let accountHubRef: AccountHub
-    nonisolated let ticket: AccountHub.Ticket
+    package nonisolated let id = GoogleRegisterFormID()
+    package nonisolated let accountHubRef: AccountHub
+    package nonisolated let ticket: CreateGoogleForm
     
-    var token: GoogleToken?
+    package var token: GoogleToken?
     
-    var issue: (any Issuable)?
+    package var issue: (any Issuable)?
     
     
     // MARK: action
-    func submit() async {
+    package func submit() async {
         // capture
         guard let token else { issue = KnownIssue(Error.tokenIsNil); return }
-        guard id.isExist else { issue = KnownIssue(Error.googleRegisterFormIsDeleted); return }
+        guard Manager.isExist(id) else { issue = KnownIssue(Error.googleRegisterFormIsDeleted); return }
 
         // compute
         let googleCredential = GoogleAuthProvider.credential(withIDToken: token.idToken,
@@ -50,28 +51,14 @@ final class GoogleRegisterForm: Sendable {
             self.issue = UnknownIssue(error); return
         }
     }
-    internal func remove() {
+    package func remove() {
         accountHubRef.googleRegisterForms[ticket] = nil
         self.delete()
     }
     
     
     // MARK: value
-    @Server
-    struct ID: Sendable, Hashable {
-        let value: UUID
-        nonisolated init(value: UUID = UUID()) {
-            self.value = value
-        }
-        
-        var isExist: Bool {
-            GoogleRegisterFormManager.container[self] != nil
-        }
-        var ref: GoogleRegisterForm? {
-            GoogleRegisterFormManager.container[self]
-        }
-    }
-    enum Error: String, Swift.Error {
+    package enum Error: String, Swift.Error {
         case tokenIsNil
         case googleRegisterFormIsDeleted
     }
@@ -80,13 +67,19 @@ final class GoogleRegisterForm: Sendable {
 
 // MARK: Object Manager
 @Server
-fileprivate final class GoogleRegisterFormManager: Sendable {
+package final class GoogleRegisterFormManager: Sendable {
     // MARK: state
-    fileprivate static var container: [GoogleRegisterForm.ID: GoogleRegisterForm] = [:]
+    fileprivate static var container: [GoogleRegisterFormID: GoogleRegisterForm] = [:]
     fileprivate static func register(_ object: GoogleRegisterForm) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: GoogleRegisterForm.ID) {
+    fileprivate static func unregister(_ id: GoogleRegisterFormID) {
         container[id] = nil
+    }
+    package static func get(_ id: GoogleRegisterFormID) -> GoogleRegisterForm? {
+        container[id]
+    }
+    package static func isExist(_ id: GoogleRegisterFormID) -> Bool {
+        container[id] != nil
     }
 }

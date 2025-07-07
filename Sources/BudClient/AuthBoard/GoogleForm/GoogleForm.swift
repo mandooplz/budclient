@@ -55,7 +55,7 @@ public final class GoogleForm: Debuggable {
             // register
             async let result = {
                 let accountHubLink = await config.budServerLink.getAccountHub()
-                let ticket = AccountHubLink.Ticket()
+                let ticket = CreateGoogleForm()
                 
                 await accountHubLink.insertGoogleTicket(ticket)
                 await accountHubLink.updateGoogleForms()

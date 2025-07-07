@@ -50,23 +50,19 @@ public final class ProjectBoardUpdater: Debuggable {
             let event = queue.removeFirst()
             switch event {
             // when projectSource added
-            case .added(let project):
-                if map[project] != nil {
+            case .added(let projectSource, let target):
+                if map[projectSource] != nil {
                     setIssue(Error.alreadyAdded)
                     return
                 }
                 
-                
-                guard let projectSourceLink = await projectHubLink.getProjectSource(project) else {
-                    setIssue(Error.projectSourceDoesNotExist)
-                    return
-                }
+                let sourceLink = ProjectSourceLink(mode: config.mode, object: projectSource)
                 let projectRef = Project(config: config,
-                                         target: project,
-                                         sourceLink: projectSourceLink)
+                                         target: target,
+                                         sourceLink: sourceLink)
                 
                 projectBoardRef.projects.append(projectRef.id)
-                projectBoardRef.projectSourceMap[project] = projectRef.id
+                projectBoardRef.projectSourceMap[projectSource] = projectRef.id
             
             // when projectSource removed
             case .removed(let projectSource):

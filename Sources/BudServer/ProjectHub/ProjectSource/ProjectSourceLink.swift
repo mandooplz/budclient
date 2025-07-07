@@ -7,146 +7,98 @@
 import Foundation
 import Tools
 import BudServerMock
+import BudServerLocal
 
 
 
 // MARK: Link
-public struct ProjectSourceLink: Sendable, Hashable {
+package struct ProjectSourceLink: Sendable, Hashable {
     // MARK: core
-    private let mode: Mode
-    package init(mode: Mode) {
+    private let mode: SystemMode
+    package let object: ProjectSourceID
+    private typealias TestManager = ProjectSourceMockManager
+    private typealias RealManager = ProjectSourceManager
+    package init(mode: SystemMode, object: ProjectSourceID) {
         self.mode = mode
+        self.object = object
     }
     
     
     // MARK: state
-    @Server
-    public func insert(_ ticket: EditProjectSourceName) async throws {
+    @Server package func insert(_ ticket: EditProjectSourceName) async throws {
         switch mode {
-        case .test(let mock):
-            guard let projectSourceRef = mock.ref else {
-                throw Error.projectSourceDoesNotExist
-            }
-            
-            projectSourceRef.editTicket = ticket
-        case .real(let object):
-           try await MainActor.run {
-               guard let projectSourceRef = object.ref else {
-                    throw Error.projectSourceDoesNotExist
-                }
-               
-               projectSourceRef.editTicket = ticket
+        case .test:
+            TestManager.get(object)?.editTicket = ticket
+        case .real:
+           await MainActor.run {
+               RealManager.get(object)?.editTicket = ticket
             }
         }
     }
     
-    @Server
-    public func hasHandler(object: ObjectID) async throws -> Bool {
+    @Server package func hasHandler(object id: ObjectID) async -> Bool {
         switch mode {
-        case .test(let mock):
-            guard let projectSourceRef = mock.ref else {
-                throw Error.projectSourceDoesNotExist
-            }
-            
-            return projectSourceRef.eventHandlers[object] != nil
-        case .real(let real):
-            return try await MainActor.run {
-                guard let projectSourceRef = real.ref else {
-                    throw Error.projectSourceDoesNotExist
-                }
-                return projectSourceRef.hasHandler(object: object)
+        case .test:
+            return TestManager.get(object)?.eventHandlers[id] != nil
+        case .real:
+            return await MainActor.run {
+                return RealManager.get(object)?.hasHandler(object: id) ?? false
             }
         }
     }
-    @Server
-    package func setHandler(ticket: SubscrieProjectSource, handler: Handler<ProjectSourceEvent>) async throws {
+    @Server package func setHandler(ticket: SubscrieProjectSource, handler: Handler<ProjectSourceEvent>) async {
         switch mode {
-        case .test(let mock):
-            guard let projectSourceRef = mock.ref else {
-                throw Error.projectSourceDoesNotExist
-            }
-            
-            projectSourceRef.eventHandlers[ticket.object] = handler
-        case .real(let object):
-            try await MainActor.run {
-                guard let projectSourceRef = object.ref else {
-                    throw Error.projectSourceDoesNotExist
-                }
-                projectSourceRef.setHandler(ticket: ticket, handler: handler)
+        case .test:
+            TestManager.get(object)?.eventHandlers[ticket.object] = handler
+        case .real:
+            await MainActor.run {
+                RealManager.get(object)?.setHandler(ticket: ticket, handler: handler)
             }
         }
     }
-    @Server
-    package func removeHandler(object: ObjectID) async throws {
+    @Server package func removeHandler(object id: ObjectID) async {
         switch mode {
-        case .test(let mock):
-            guard let projectSourceRef = mock.ref else {
-                throw Error.projectSourceDoesNotExist
-            }
+        case .test:
+            TestManager.get(object)?.eventHandlers[id] = nil
             
-            projectSourceRef.eventHandlers[object] = nil
-            
-        case .real(let real):
-            try await MainActor.run {
-                guard let projectSourceRef = real.ref else {
-                    throw Error.projectSourceDoesNotExist
-                }
-                
-                projectSourceRef.removeHandler(object: object)
+        case .real:
+            await MainActor.run {
+                RealManager.get(object)?.removeHandler(object: id)
             }
+        }
+    }
+    
+    package func isExist() async -> Bool {
+        switch mode {
+        case .test:
+            return await TestManager.isExist(object)
+        case .real:
+            return await RealManager.isExist(object)
         }
     }
     
     
     
     // MARK: action
-    @Server
-    public func processTicket() async throws {
+    @Server package func processTicket() async throws {
         switch mode {
-        case .test(let mock):
-            guard let projectSourceRef = mock.ref else {
-                throw Error.projectSourceDoesNotExist
-            }
-            
-            projectSourceRef.processTicket()
-        case .real(let object):
+        case .test:
+            TestManager.get(object)?.processTicket()
+        case .real:
             try await MainActor.run {
-                guard let projectSourceRef = object.ref else {
-                    throw Error.projectSourceDoesNotExist
-                }
-                
-                try projectSourceRef.processTicket()
+                try RealManager.get(object)?.processTicket()
             }
         }
     }
     
-    @Server
-    public func remove() async throws {
+    @Server package func remove() async {
         switch mode {
-        case .test(let mock):
-            guard let projectSourceRef = mock.ref else {
-                throw Error.projectSourceDoesNotExist
-            }
-            
-            projectSourceRef.remove()
-        case .real(let object):
-            try await MainActor.run {
-                guard let projectSourceRef = object.ref else {
-                    throw Error.projectSourceDoesNotExist
-                }
-                
-                projectSourceRef.remove()
+        case .test:
+            TestManager.get(object)?.remove()
+        case .real:
+            await MainActor.run {
+                RealManager.get(object)?.remove()
             }
         }
-    }
-    
-    
-    // MARK: value
-    package enum Mode: Sendable, Hashable {
-        case test(ProjectSourceMock.ID)
-        case real(ProjectSource.ID)
-    }
-    public enum Error: Swift.Error {
-        case projectSourceDoesNotExist
     }
 }
