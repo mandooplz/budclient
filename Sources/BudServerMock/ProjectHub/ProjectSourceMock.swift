@@ -38,7 +38,7 @@ package final class ProjectSourceMock: Sendable {
     package var creator: UserID
     package var name: String
     
-    package var editTicket: EditProjectNameTicket?
+    package var editTicket: EditProjectSourceName?
     package var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
     
     

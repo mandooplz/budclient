@@ -249,7 +249,7 @@ private func getProject(_ budClientRef: BudClient) async -> ProjectID {
     let projectHubLink = await budServerLink.getProjectHub()
     
     let newProject = ProjectID()
-    let ticket = CreateProjectTicket(creator: .init(),
+    let ticket = CreateProjectSource(creator: .init(),
                                      target: newProject,
                                      name: "")
     

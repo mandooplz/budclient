@@ -21,7 +21,7 @@ public struct ProjectSourceLink: Sendable, Hashable {
     
     // MARK: state
     @Server
-    public func insert(_ ticket: EditProjectNameTicket) async throws {
+    public func insert(_ ticket: EditProjectSourceName) async throws {
         switch mode {
         case .test(let mock):
             guard let projectSourceRef = mock.ref else {
@@ -59,7 +59,7 @@ public struct ProjectSourceLink: Sendable, Hashable {
         }
     }
     @Server
-    package func setHandler(ticket: SetHandlerTicket, handler: Handler<ProjectSourceEvent>) async throws {
+    package func setHandler(ticket: SubscrieProjectSource, handler: Handler<ProjectSourceEvent>) async throws {
         switch mode {
         case .test(let mock):
             guard let projectSourceRef = mock.ref else {

@@ -4,11 +4,10 @@
 //
 //  Created by 김민우 on 7/2/25.
 //
-import Foundation
 
 
-// MARK: Ticket
-public struct SetHandlerTicket: Sendable, Hashable {
+// MARK: SubscrieProjectSource
+public struct SubscrieProjectSource: Ticket {
     public let object: ObjectID
     public let target: ProjectID
     

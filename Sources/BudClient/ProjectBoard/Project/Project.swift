@@ -72,7 +72,6 @@ public final class Project: Debuggable, EventDebuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectIsDeleted); return }
         guard let updater else { setIssue(Error.updaterIsNil); return }
-        let config = self.config
         let callback = self.callback
         let sourceLink = self.sourceLink
         let (me, target) = (ObjectID(self.id.value), self.target)
@@ -81,7 +80,7 @@ public final class Project: Debuggable, EventDebuggable {
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    let ticket = SetHandlerTicket(object: me,
+                    let ticket = SubscrieProjectSource(object: me,
                                                   target: target)
                     try await sourceLink.setHandler(
                         ticket: ticket,
@@ -117,13 +116,12 @@ public final class Project: Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.projectIsDeleted); return }
         guard let name else { setIssue(Error.nameIsNil); return}
         let sourceLink = self.sourceLink
-        let config = self.config
         
         // compute
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    let editTicket = EditProjectNameTicket(name)
+                    let editTicket = EditProjectSourceName(name)
                     
                     try await sourceLink.insert(editTicket)
                     try await sourceLink.processTicket()
@@ -141,7 +139,6 @@ public final class Project: Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectIsDeleted); return }
-        let system = config.system
         let sourceLink = self.sourceLink
         let me = ObjectID(id.value)
         

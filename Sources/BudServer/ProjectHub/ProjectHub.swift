@@ -26,7 +26,7 @@ final class ProjectHub: Sendable {
     var projectSources: Set<ProjectSource.ID> = []
     var projectSourceMap: [ProjectID: ProjectSource.ID] = [:]
     
-    var tickets: Deque<CreateProjectTicket> = []
+    var tickets: Deque<CreateProjectSource> = []
     
     var listener: ListenerRegistration?
     func hasHandler() async -> Bool {

@@ -32,7 +32,7 @@ package final class ProjectHubMock: Sendable, Subscribable {
             .id
     }
     
-    package var tickets: Deque<CreateProjectTicket> = []
+    package var tickets: Deque<CreateProjectSource> = []
     package var eventHandlers: [ObjectID:Handler<ProjectHubEvent>] = [:]
     
     

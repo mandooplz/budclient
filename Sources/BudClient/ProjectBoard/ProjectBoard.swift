@@ -136,7 +136,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 group.addTask {
                     let projectHubLink = await budServerLink.getProjectHub()
                     
-                    let createTicket = CreateProjectTicket(
+                    let createTicket = CreateProjectSource(
                         creator: config.user,
                         target: ProjectID(),
                         name: newProjectName)

@@ -130,7 +130,6 @@ struct ProjectTests {
         @Test func setHandlerInProjectSource() async throws {
             // given
             let sourceLink = projectRef.sourceLink
-            let system = budClientRef.system
             let object = await ObjectID(projectRef.id.value)
             try await #require(sourceLink.hasHandler(object: object) == false)
             
@@ -159,7 +158,7 @@ struct ProjectTests {
                     
                     await projectRef.subscribeSource()
                     
-                    let editTicket = EditProjectNameTicket(testName)
+                    let editTicket = EditProjectSourceName(testName)
                     try! await sourceLink.insert(editTicket)
                     try! await sourceLink.processTicket()
                 }
@@ -217,7 +216,7 @@ struct ProjectTests {
             }
             
             // then
-            let subscribeTicket = SetHandlerTicket(object: randomObject, target: target)
+            let subscribeTicket = SubscrieProjectSource(object: randomObject, target: target)
   
             await withCheckedContinuation { con in
                 Task {

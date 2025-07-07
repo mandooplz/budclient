@@ -33,7 +33,7 @@ package struct ProjectHubLink: Sendable {
         }
     }
     @Server
-    package func insertTicket(_ ticket: CreateProjectTicket) async {
+    package func insertTicket(_ ticket: CreateProjectSource) async {
         switch mode {
         case .test(let projectHubRef):
             projectHubRef.tickets.append(ticket)

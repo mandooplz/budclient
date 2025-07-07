@@ -31,13 +31,13 @@ package final class ProjectSource: Sendable {
     
     private let db = Firestore.firestore()
     
-    package var editTicket: EditProjectNameTicket?
+    package var editTicket: EditProjectSourceName?
     
     var listeners: [ObjectID: ListenerRegistration] = [:]
     package func hasHandler(object: ObjectID) -> Bool {
         listeners[object] != nil
     }
-    package func setHandler(ticket: SetHandlerTicket,
+    package func setHandler(ticket: SubscrieProjectSource,
                             handler: Handler<ProjectSourceEvent>) {
         guard listeners[ticket.object] == nil else { return }
         listeners[ticket.object] = db.collection(DB.ProjectSources).document(id.value)
