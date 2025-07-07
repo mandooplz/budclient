@@ -8,6 +8,7 @@
 
 // MARK: ProjectHubEvent
 package enum ProjectHubEvent: Sendable {
-    case added(ProjectID)
-    case removed(ProjectID)
+    case added(ObjectID)
+    case removed(ObjectID)
+    // ProjectHubEvent는 ProjectSourceLink 자체를 전달해야 한다.
 }

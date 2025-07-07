@@ -56,6 +56,7 @@ public final class ProjectBoardUpdater: Debuggable {
                     return
                 }
                 
+                
                 guard let projectSourceLink = await projectHubLink.getProjectSource(project) else {
                     setIssue(Error.projectSourceDoesNotExist)
                     return

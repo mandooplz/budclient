@@ -29,6 +29,7 @@ package struct ProjectHubLink: Sendable {
             
             return ProjectSourceLink(mode: .test(projectSourceMock))
         case .real:
+            // 이를 어떻게 구현해야 하는가.
             fatalError()
         }
     }
@@ -90,5 +91,9 @@ package struct ProjectHubLink: Sendable {
     enum Mode: Sendable {
         case test(ProjectHubMock)
         case real
+    }
+    enum Event: Sendable {
+        case added(ProjectSourceLink)
+        case removed(ProjectSourceLink)
     }
 }
