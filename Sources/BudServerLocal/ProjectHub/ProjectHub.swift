@@ -39,7 +39,7 @@ package final class ProjectHub: Sendable {
         let state = ProjectSource.State.creator
         
         self.listener = db.collection(DB.ProjectSources)
-            .whereField(state.rawValue, isEqualTo: ticket.user)
+            .whereField(state.rawValue, isEqualTo: ticket.user.value)
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     print("Error fetching snapshots: \(error!)")
