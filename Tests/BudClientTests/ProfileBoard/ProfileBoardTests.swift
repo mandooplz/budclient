@@ -7,7 +7,7 @@
 import Foundation
 import Testing
 @testable import BudClient
-import Tools
+import Values
 
 
 // MARK: Tests

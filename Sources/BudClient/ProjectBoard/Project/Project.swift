@@ -5,7 +5,7 @@
 //  Created by 김민우 on 6/25/25.
 //
 import Foundation
-import Tools
+import Values
 import BudServer
 
 
@@ -77,34 +77,28 @@ public final class Project: Debuggable, EventDebuggable {
         let (me, target) = (ObjectID(self.id.value), self.target)
         
         // compute
-        do {
-            try await withThrowingDiscardingTaskGroup { group in
-                group.addTask {
-                    let ticket = SubscrieProjectSource(object: me,
-                                                  target: target)
-                    try await sourceLink.setHandler(
-                        ticket: ticket,
-                        handler: .init({ event in
-                            Task { @MainActor in
-                                switch event {
-                                case .modified:
-                                    guard let updaterRef = updater.ref else { return }
-                                    
-                                    updaterRef.queue.append(event)
-                                    await updaterRef.update()
-                                    
-                                    await callback?()
-                                }
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                let ticket = SubscrieProjectSource(object: me, target: target)
+                await sourceLink.setHandler(
+                    ticket: ticket,
+                    handler: .init({ event in
+                        Task { @MainActor in
+                            switch event {
+                            case .modified:
+                                guard let updaterRef = updater.ref else { return }
+                                
+                                updaterRef.queue.append(event)
+                                await updaterRef.update()
+                                
+                                await callback?()
                             }
                         }
-                                      )
-                    )
-                }
+                    }
+                                  )
+                )
             }
-        } catch {
-            setUnknownIssue(error); return
         }
-        
     }
     
     public func push() async {
@@ -143,14 +137,10 @@ public final class Project: Debuggable, EventDebuggable {
         let me = ObjectID(id.value)
         
         // compute
-        do {
-            try await withThrowingDiscardingTaskGroup { group in
-                group.addTask {
-                    try await sourceLink.removeHandler(object: me)
-                }
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.removeHandler(object: me)
             }
-        } catch {
-            setUnknownIssue(error); return
         }
     }
     
@@ -164,14 +154,10 @@ public final class Project: Debuggable, EventDebuggable {
         let sourceLink = self.sourceLink
         
         // compute
-        do {
-            try await withThrowingDiscardingTaskGroup { group in
-                group.addTask {
-                    try await sourceLink.remove()
-                }
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.remove()
             }
-        } catch {
-            setUnknownIssue(error); return
         }
     }
     

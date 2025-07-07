@@ -1,5 +1,5 @@
 // swift-tools-version: 6.2
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// The swift-Values-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
@@ -25,10 +25,10 @@ let package = Package(
             targets: ["BudCache"]
         ),
         
-        // MARK: Tools
+        // MARK: Values
         .library(
-            name: "Tools",
-            targets: ["Tools"]
+            name: "Values",
+            targets: ["Values"]
         )
     ],
     dependencies: [
@@ -46,7 +46,7 @@ let package = Package(
         .target(
             name: "BudClient",
             dependencies: [
-                "Tools",
+                "Values",
                 "BudServer", "BudServerMock",
                 "BudCache",
                 .product(name: "Collections", package: "swift-collections")
@@ -57,7 +57,7 @@ let package = Package(
             dependencies: [
                 "BudClient",
                 "BudServer", "BudServerMock",
-                "Tools",
+                "Values",
                 "BudCache"]
         ),
         
@@ -66,7 +66,7 @@ let package = Package(
         .target(
             name: "BudServer",
             dependencies: [
-                "Tools",
+                "Values",
                 "BudServerLocal",
                 "BudServerMock",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
@@ -77,7 +77,7 @@ let package = Package(
         .target(
             name: "BudServerLocal",
             dependencies: [
-                "Tools",
+                "Values",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
                 .product(name: "Collections", package: "swift-collections")
@@ -89,13 +89,13 @@ let package = Package(
         .target(
             name: "BudServerMock",
             dependencies: [
-                "Tools",
+                "Values",
                 .product(name: "Collections", package: "swift-collections")
             ]
         ),
         .testTarget(
             name: "BudServerMockTests",
-            dependencies: ["Tools", "BudServerMock"]
+            dependencies: ["Values", "BudServerMock"]
         ),
         
         
@@ -103,14 +103,14 @@ let package = Package(
         .target(
             name: "BudCache",
             dependencies: [
-                "Tools", "BudServer"
+                "Values", "BudServer"
             ]
         ),
         
         
-        // MARK: Tools
+        // MARK: Values
         .target(
-            name: "Tools",
+            name: "Values",
             dependencies: [
                 .product(name: "Collections", package: "swift-collections")
             ]

@@ -5,7 +5,7 @@
 //  Created by 김민우 on 6/23/25.
 //
 import Foundation
-import Tools
+import Values
 import BudServerMock
 import FirebaseCore
 import FirebaseAuth
@@ -76,3 +76,4 @@ public struct BudServerLink: Sendable {
         }
     }
 }
+

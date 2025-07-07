@@ -5,7 +5,7 @@
 //  Created by 김민우 on 6/29/25.
 //
 import Foundation
-import Tools
+import Values
 import FirebaseAuth
 import BudServerMock
 import BudServerLocal
@@ -57,3 +57,4 @@ package struct GoogleRegisterFormLink: Sendable {
     
     // MARK: value
 }
+

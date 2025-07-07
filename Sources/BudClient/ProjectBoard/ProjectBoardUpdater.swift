@@ -5,7 +5,7 @@
 //  Created by 김민우 on 6/30/25.
 //
 import Foundation
-import Tools
+import Values
 import BudServer
 import Collections
 
@@ -41,7 +41,6 @@ public final class ProjectBoardUpdater: Debuggable {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
-        let projectHubLink = await config.budServerLink.getProjectHub()
         let projectBoardRef = config.parent.ref!
         let config = self.config
         let map = projectBoardRef.projectSourceMap

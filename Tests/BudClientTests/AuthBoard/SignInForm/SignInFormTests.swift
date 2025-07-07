@@ -6,7 +6,7 @@
 //
 import Testing
 import Foundation
-import Tools
+import Values
 @testable import BudClient
 @testable import BudServer
 import BudServerMock
@@ -567,3 +567,4 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     let budCacheLink = budClientRef.budCacheLink
     await budCacheLink.setUser(user)
 }
+
