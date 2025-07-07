@@ -36,10 +36,9 @@ package final class ProjectHub: Sendable {
                             handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         
-        let state = ProjectSource.State.creator
-        
         self.listener = db.collection(DB.ProjectSources)
-            .whereField("creator", isEqualTo: ["value":ticket.user.value])
+            .whereField(ProjectSource.State.creator,
+                        isEqualTo: ticket.user.encode())
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     print("Error fetching snapshots: \(error!)")
@@ -51,8 +50,7 @@ package final class ProjectHub: Sendable {
                     let object = ProjectSourceID(documentId)
                     
                     guard let data = try? diff.document.data(as: ProjectSource.Data.self) else {
-                        Logger().error("ProjectSource.Data를 디코딩하는 과정에서 에러 발생")
-                        return
+                        Logger().error("ProjectSource.Doc Decoding Error"); return
                     }
                     
                     if (diff.type == .added) {

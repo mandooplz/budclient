@@ -14,4 +14,8 @@ public struct ProjectID: Identity {
     public init(value: UUID = UUID()) {
         self.value = value
     }
+    
+    public func encode() -> [String: Any] {
+        return ["value": value]
+    }
 }

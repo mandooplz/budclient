@@ -13,13 +13,19 @@ public protocol Identity: Sendable, Hashable, Codable {
     var value: RawValue { get }
 }
 
+public extension Identity {
+    func encode() -> [String:Any] {
+        ["value": value]
+    }
+}
+
+
 
 public extension Identity where RawValue == UUID {
     var toString: String {
         value.uuidString
     }
 }
-
 public extension Identity where RawValue == String {
     var toString: String {
         value

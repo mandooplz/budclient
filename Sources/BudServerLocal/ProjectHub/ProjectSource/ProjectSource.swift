@@ -42,6 +42,7 @@ package final class ProjectSource: Sendable {
     package func setHandler(ticket: SubscrieProjectSource,
                             handler: Handler<ProjectSourceEvent>) {
         guard listeners[ticket.object] == nil else { return }
+        
         listeners[ticket.object] = db.collection(DB.ProjectSources).document(id.value)
             .addSnapshotListener { documentSnapshot, error in
                 guard let document = documentSnapshot else {
@@ -49,8 +50,8 @@ package final class ProjectSource: Sendable {
                     return
                 }
                 
-                let data = document.data() ?? [:]
-                guard let newName = data["name"] as? String else {
+                
+                guard let newName = try? document.data(as: Data.self).name else {
                     Logger().error("Invalid or missing 'name' field in document: \(document.documentID)")
                     return
                 }
@@ -71,9 +72,8 @@ package final class ProjectSource: Sendable {
         guard let newName = editTicket?.name else { return }
         
         // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-        let update = State.name.update(newName)
         let document = db.collection(DB.ProjectSources).document(id.value)
-        document.updateData(update)
+        document.updateData(State.getNameUpdator(newName))
     }
     package func remove() {
         guard Manager.isExist(id) else { return }
@@ -88,25 +88,23 @@ package final class ProjectSource: Sendable {
     
     
     // MARK: value
+    // Data가 언제 사용되는가.
+    // 1. 리스너 등록
+    // 2. 리스너를 통해 이벤트 처리
+    // 3. 상태 업데이트 ->
     package struct Data: Hashable, Codable {
         @DocumentID var id: String?
         package var name: String
         package var creator: UserID
         package var target: ProjectID
-        
-        init(name: String, creator: UserID, target: ProjectID) {
-            self.name = name
-            self.creator = creator
-            self.target = target
-        }
     }
-    package enum State: String, Sendable {
-        case name
-        case creator
-        case target
+    package enum State: Sendable {
+        static let name = "name"
+        static let creator = "creator"
+        static let target = "target"
         
-        func update(_ value: Any) -> [String: Any] {
-            return [self.rawValue: value]
+        static func getNameUpdator(_ value: String) -> [String: Any] {
+            [name: value]
         }
     }
 }
