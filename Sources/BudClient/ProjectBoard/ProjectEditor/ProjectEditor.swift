@@ -37,6 +37,7 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
     public var name: String?
     
     public var systemBoard: SystemBoard.ID?
+    
     public var flowBoard: FlowBoard.ID?
     
     var updater: ProjectUpdater.ID?

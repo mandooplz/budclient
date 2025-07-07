@@ -13,7 +13,10 @@ import BudServer
 @MainActor @Observable
 public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     // MARK: core
-    init(target: SystemID, sourceLink: SystemSourceLink) {
+    init(config: Config<SystemBoard.ID>,
+         target: SystemID,
+         sourceLink: SystemSourceLink) {
+        self.config = config
         self.target = target
         self.sourceLink = sourceLink
         
@@ -25,6 +28,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<SystemBoard.ID>
     nonisolated let target: SystemID
     nonisolated let sourceLink: SystemSourceLink
     
@@ -32,11 +36,28 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     public var name: String? // ex) BudClient-iOS, BudClient-MacOS 처럼 시스템의 이름
     
+    var updater: SystemUpdater.ID?
+    
     public var issue: (any Issuable)?
     package var callback: Callback?
     
     
     // MARK: action
+    public func setUp() async {
+        await setUp(mutateHook: nil)
+    }
+    func setUp(mutateHook: Hook?) async {
+        // mutate
+        await mutateHook?()
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        guard updater == nil else { setIssue(Error.alreadySetUp); return }
+        
+        let myconfig = config.setParent(id)
+        let systemUpdaterRef = SystemUpdater(config: myconfig)
+        self.updater = systemUpdaterRef.id
+    }
+    
+    
     public func subscribe() { }
     public func unsubscribe() { }
     
@@ -65,6 +86,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         public var ref: SystemModel? {
             SystemModelManager.container[self]
         }
+    }
+    public enum Error: String, Swift.Error {
+        case systemModelIsDeleted
+        case alreadySetUp
     }
 }
 

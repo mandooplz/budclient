@@ -111,3 +111,28 @@ func createAndGetSystemBoard(_ budClientRef: BudClient) async -> SystemBoard {
     
     return systemBoardRef
 }
+
+
+
+func getSystemModel(_ budClientRef: BudClient) async -> SystemModel {
+    let systemBoardRef = await createAndGetSystemBoard(budClientRef)
+    let projectEditorRef = await systemBoardRef.config.parent.ref!
+    
+    await withCheckedContinuation { con in
+        Task {
+            await projectEditorRef.unsubscribe()
+            
+            await projectEditorRef.setCallback {
+                con.resume()
+            }
+            
+            await projectEditorRef.subscribe()
+            await systemBoardRef.createFirstSystem()
+        }
+    }
+    
+    await projectEditorRef.unsubscribe()
+    
+    let systemModel = await systemBoardRef.models.first!
+    return await systemModel.ref!
+}

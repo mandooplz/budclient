@@ -34,9 +34,9 @@ struct SystemUpdaterTests {
 
 // MARK: Helpher
 private func getUpdater(_ budClientRef: BudClient) async -> SystemUpdater {
-    let systemBoardRef = await createAndGetSystemBoard(budClientRef)
+    let systemModelRef = await getSystemModel(budClientRef)
     
-    await systemBoardRef.setUp()
+    await systemModelRef.setUp()
     
-    return await systemBoardRef.updater!.ref!
+    return await systemModelRef.updater!.ref!
 }

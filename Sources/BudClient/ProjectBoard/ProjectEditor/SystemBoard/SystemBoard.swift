@@ -37,27 +37,11 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     }
     
     
-    var updater: SystemUpdater.ID?
-    
     public var issue: (any Issuable)?
     public var callback: Callback?
     
     
     // MARK: action
-    public func setUp() async {
-        await setUp(mutateHook: nil)
-    }
-    func setUp(mutateHook: Hook?) async {
-        // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
-        guard updater == nil else { setIssue(Error.alreadySetUp); return }
-        
-        let myconfig = config.setParent(id)
-        let systemUpdaterRef = SystemUpdater(config: myconfig)
-        self.updater = systemUpdaterRef.id
-    }
-    
     public func createFirstSystem() async {
         await self.createFirstSystem(captureHook: nil)
     }

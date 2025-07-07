@@ -13,7 +13,7 @@ import Collections
 @MainActor @Observable
 public final class SystemUpdater: Sendable, Debuggable {
     // MARK: core
-    init(config: Config<SystemBoard.ID>) {
+    init(config: Config<SystemModel.ID>) {
         self.config = config
         
         SystemUpdaterManager.register(self)
@@ -24,7 +24,7 @@ public final class SystemUpdater: Sendable, Debuggable {
     
     // MARK: state
     nonisolated let id = ID()
-    nonisolated let config: Config<SystemBoard.ID>
+    nonisolated let config: Config<SystemModel.ID>
     
     var queue: Deque<SystemSourceEvent> = []
     

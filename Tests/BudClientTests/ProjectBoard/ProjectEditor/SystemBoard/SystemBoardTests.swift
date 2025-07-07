@@ -13,58 +13,7 @@ import Values
 
 // MARK: Tests
 @Suite("SystemBoard", .timeLimit(.minutes(1)))
-struct SystemBoardTests {
-    struct SetUp {
-        let budClientRef: BudClient
-        let systemBoardRef: SystemBoard
-        init() async {
-            self.budClientRef = await BudClient()
-            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
-        }
-        
-        @Test func whenSystemBoardIsDeleted() async throws {
-            // given
-            try await #require(systemBoardRef.id.isExist == true)
-            
-            // when
-            await systemBoardRef.setUp {
-                await systemBoardRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await systemBoardRef.issue as? KnownIssue)
-            #expect(issue.reason == "systemBoardIsDeleted")
-        }
-        @Test func createSystemUpdater() async throws {
-            // given
-            try await #require(systemBoardRef.updater == nil)
-            
-            // when
-            await systemBoardRef.setUp()
-            
-            // then
-            let updater = try #require(await systemBoardRef.updater)
-            await #expect(updater.isExist == true)
-        }
-        @Test func whenAlreadySetUp() async throws {
-            // given
-            await systemBoardRef.setUp()
-            
-            let oldUpdater = try #require(await systemBoardRef.updater)
-            
-            // when
-            await systemBoardRef.setUp()
-            
-            // then
-            let newUpdater = try #require(await systemBoardRef.updater)
-            #expect(newUpdater == oldUpdater)
-            
-            let issue = try #require(await systemBoardRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadySetUp")
-            
-        }
-    }
-    
+struct SystemBoardTests {    
     struct CreateFirstSystem {
         let budClientRef: BudClient
         let systemBoardRef: SystemBoard

@@ -41,27 +41,28 @@ final class ProjectUpdater: Debuggable {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.projectUpdaterIsDeleted); return }
-        let projectRef = config.parent.ref!
+        let projectEditorRef = config.parent.ref!
         let config = self.config
         
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
             case .modified(let newName):
-                projectRef.name = newName
+                projectEditorRef.name = newName
             case .added(let systemSource, let system):
-                guard let systemBoard = projectRef.systemBoard,
+                guard let systemBoard = projectEditorRef.systemBoard,
                       let systemBoardRef = systemBoard.ref else { return }
                 if systemBoardRef.isExist(system) { return }
                 
                 let systemSourceLink = SystemSourceLink(mode: config.mode,
                                                         object: systemSource)
-                
-                let systemModelRef = SystemModel(target: system,
+                let newConfig = systemBoardRef.config.setParent(systemBoard)
+                let systemModelRef = SystemModel(config: newConfig,
+                                                 target: system,
                                                  sourceLink: systemSourceLink)
                 systemBoardRef.models.insert(systemModelRef.id)
             case .removed(let system):
-                guard let systemBoard = projectRef.systemBoard,
+                guard let systemBoard = projectEditorRef.systemBoard,
                       let systemBoardRef = systemBoard.ref else { return }
                 guard systemBoardRef.isExist(system) else { return }
                 
