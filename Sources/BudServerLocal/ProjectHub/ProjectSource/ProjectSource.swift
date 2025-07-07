@@ -73,7 +73,7 @@ package final class ProjectSource: Sendable {
         // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
         let update = State.name.update(newName)
         let document = db.collection(DB.ProjectSources).document(id.value)
-        document.setData(update)
+        document.updateData(update)
     }
     package func remove() {
         guard Manager.isExist(id) else { return }
