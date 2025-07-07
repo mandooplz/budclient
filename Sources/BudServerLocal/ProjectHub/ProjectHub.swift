@@ -33,13 +33,13 @@ package final class ProjectHub: Sendable {
         listener != nil
     }
     package func setHandler(ticket: SubscribeProjectHub,
-                    handler: Handler<ProjectHubEvent>) {
+                            handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         
         let state = ProjectSource.State.creator
         
         self.listener = db.collection(DB.ProjectSources)
-            .whereField(state.rawValue, isEqualTo: ticket.user.value)
+            .whereField("creator", isEqualTo: ["value":ticket.user.value])
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     print("Error fetching snapshots: \(error!)")
