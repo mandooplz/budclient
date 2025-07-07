@@ -18,10 +18,12 @@ struct ProjectBoardUpdaterTests {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         let updaterRef: ProjectBoardUpdater
+        let target: ProjectID
         init() async {
             self.budClientRef = await BudClient()
             self.updaterRef = await getUpdater(budClientRef)
             self.projectBoardRef = await updaterRef.config.parent.ref!
+            self.target = await getProject(budClientRef)
         }
         
         @Test func whenUpdaterIsDeletedBeforeMutate() async throws {
@@ -74,8 +76,6 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.projects.isEmpty == true)
             
-            let target = ProjectID()
-            
             let _ = await MainActor.run {
                 let event = ProjectHubEvent.added(target)
                 updaterRef.queue.append(event)
@@ -97,8 +97,6 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.projectSourceMap.isEmpty == true)
             
-            let target = ProjectID()
-            
             let _ = await MainActor.run {
                 let event = ProjectHubEvent.added(target)
                 updaterRef.queue.append(event)
@@ -108,6 +106,8 @@ struct ProjectBoardUpdaterTests {
             await updaterRef.update()
             
             // then
+            try await #require(updaterRef.issue == nil)
+            
             await #expect(projectBoardRef.projectSourceMap[target] != nil)
         }
         @Test func removeEventWhenAdded() async throws {
@@ -148,8 +148,6 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.projects.isEmpty == true)
             
-            let target = ProjectID()
-            
             await MainActor.run {
                 let event = ProjectHubEvent.added(target)
                 
@@ -157,6 +155,7 @@ struct ProjectBoardUpdaterTests {
             }
             await updaterRef.update()
             
+            try await #require(updaterRef.issue == nil)
             try await #require(projectBoardRef.projects.count == 1)
             try await #require(updaterRef.queue.isEmpty == true)
             
@@ -243,4 +242,19 @@ private func getUpdater(_ budClientRef: BudClient) async -> ProjectBoardUpdater 
     
     await projectBoardRef.setUpUpdater()
     return await projectBoardRef.updater!.ref!
+}
+
+private func getProject(_ budClientRef: BudClient) async -> ProjectID {
+    let budServerLink = await budClientRef.budServerLink!
+    let projectHubLink = await budServerLink.getProjectHub()
+    
+    let newProject = ProjectID()
+    let ticket = CreateProjectTicket(creator: .init(),
+                                     target: newProject,
+                                     name: "")
+    
+    await projectHubLink.insertTicket(ticket)
+    try! await projectHubLink.createProjectSource()
+    
+    return newProject
 }
