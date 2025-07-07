@@ -11,48 +11,48 @@ import Values
 
 
 // MARK: Tests
-@Suite("ProjectUpdater")
-struct ProjectUpdaterTests {
+@Suite("ProjectEditorUpdater")
+struct ProjectEditorUpdaterTests {
     struct Update {
         let budClientRef: BudClient
-        let projectUpdaterRef: ProjectUpdater
+        let updaterRef: ProjectUpdater
         init() async {
             self.budClientRef = await BudClient()
-            self.projectUpdaterRef = await getProjectUpdater(budClientRef)
+            self.updaterRef = await getUpdater(budClientRef)
         }
         
         @Test func whenProjectUpdaterIsDeleted() async throws {
             // given
-            try await #require(projectUpdaterRef.id.isExist == true)
+            try await #require(updaterRef.id.isExist == true)
             
             // when
-            await projectUpdaterRef.update {
-                await projectUpdaterRef.delete()
+            await updaterRef.update {
+                await updaterRef.delete()
             }
             
             // then
-            let issue = try #require(await projectUpdaterRef.issue as? KnownIssue)
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "projectUpdaterIsDeleted")
         }
         
         @Test func removeEvent() async throws {
             // given
-            try await #require(projectUpdaterRef.queue.isEmpty == true)
+            try await #require(updaterRef.queue.isEmpty == true)
             
             let event = ProjectSourceEvent.modified("TEST_NAME")
             
             // when
             await MainActor.run {
-                projectUpdaterRef.queue.append(event)
+                updaterRef.queue.append(event)
             }
-            await projectUpdaterRef.update()
+            await updaterRef.update()
             
             // then
-            await #expect(projectUpdaterRef.queue.isEmpty == true)
+            await #expect(updaterRef.queue.isEmpty == true)
         }
         @Test func updateNameInProject() async throws {
             // given
-            let projectRef = try #require(await projectUpdaterRef.config.parent.ref)
+            let projectRef = try #require(await updaterRef.config.parent.ref)
             
             let testName = "TEST_NAME"
             let event = ProjectSourceEvent.modified("TEST_NAME")
@@ -61,9 +61,9 @@ struct ProjectUpdaterTests {
             
             // when
             await MainActor.run {
-                projectUpdaterRef.queue.append(event)
+                updaterRef.queue.append(event)
             }
-            await projectUpdaterRef.update()
+            await updaterRef.update()
             
             // then
             await #expect(projectRef.name == testName)
@@ -73,7 +73,7 @@ struct ProjectUpdaterTests {
 
 
 // MARK: Helphers
-private func getProjectUpdater(_ budClientRef: BudClient) async -> ProjectUpdater {
+private func getUpdater(_ budClientRef: BudClient) async -> ProjectUpdater {
     let projectRef = await createAndGetProject(budClientRef)
     
     await projectRef.setUp()

@@ -43,7 +43,7 @@ package final class ProjectSourceMock: Sendable {
     
     
     // MARK: action
-    package func processTicket() {
+    package func editProjectName() {
         // mutate
         guard Manager.isExist(id) else { return }
         guard let editTicket else { return }
@@ -56,7 +56,7 @@ package final class ProjectSourceMock: Sendable {
         // mutate
         guard Manager.isExist(id) else { return }
         
-        let event = ProjectHubEvent.removed(id)
+        let event = ProjectHubEvent.removed(target)
         for (_, eventHandler) in projectHubRef.eventHandlers {
             eventHandler.execute(event)
         }

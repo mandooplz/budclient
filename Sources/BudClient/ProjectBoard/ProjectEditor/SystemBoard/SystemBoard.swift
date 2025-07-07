@@ -12,7 +12,9 @@ import Values
 @MainActor @Observable
 public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     // MARK: core
-    init() {
+    init(config: Config<ProjectEditor.ID>) {
+        self.config = config
+        
         SystemBoardManager.register(self)
     }
     func delete() {
@@ -21,18 +23,30 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<ProjectEditor.ID>
     
-    public internal(set) var systemModels: Set<SystemModel.ID> = []
+    public internal(set) var models: Set<SystemModel.ID> = []
     public var isModelsEmpty: Bool {
-        systemModels.isEmpty
+        models.isEmpty
     }
     
     public var issue: (any Issuable)?
     public var callback: Callback?
     
     
-    
     // MARK: action
+    public func subscribe() async {
+        await subscribe(captureHook: nil)
+    }
+    func subscribe(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        
+        // compute
+        // projectSourceLink.setHandler
+    }
+    
     public func createFirstSystem() async {
         await self.createFirstSystem(captureHook: nil)
     }
@@ -42,20 +56,16 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
         
         // compute
-    }
-    
-    public func subscribe() async {
-        await subscribe(captureHook: nil)
-    }
-    func subscribe(captureHook: Hook?) async {
-        
+        // projectSourceLink.createFirstSystem()
     }
     
     public func unsubscribe() async {
         
     }
     func unsubscribe(captureHook: Hook?) async {
-        
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
     }
     
 

@@ -13,7 +13,7 @@ import Collections
 @MainActor
 final class ProjectUpdater: Debuggable {
     // MARK: core
-    init(config: Config<Project.ID>) {
+    init(config: Config<ProjectEditor.ID>) {
         self.config = config
         
         ProjectUpdaterManager.register(self)
@@ -25,7 +25,7 @@ final class ProjectUpdater: Debuggable {
     
     // MARK: state
     nonisolated let id: ID = ID(value: .init())
-    nonisolated let config: Config<Project.ID>
+    nonisolated let config: Config<ProjectEditor.ID>
     
     var queue: Deque<ProjectSourceEvent> = []
     

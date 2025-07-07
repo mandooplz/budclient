@@ -63,13 +63,13 @@ func signIn(_ budClietRef: BudClient) async {
 }
 
 
-func createAndGetProject(_ budClientRef: BudClient) async -> Project {
+func createAndGetProject(_ budClientRef: BudClient) async -> ProjectEditor {
     await signIn(budClientRef)
     
     let projectBoard = await budClientRef.projectBoard!
     let projectBoardRef = await projectBoard.ref!
     
-    await projectBoardRef.setUpUpdater()
+    await projectBoardRef.setUp()
     try! await #require(projectBoardRef.updater != nil)
     
     await withCheckedContinuation { continuation in
@@ -78,25 +78,24 @@ func createAndGetProject(_ budClientRef: BudClient) async -> Project {
                 continuation.resume()
             }
             
-            await projectBoardRef.subscribeProjectHub()
-            await projectBoardRef.createProjectSource()
+            await projectBoardRef.subscribe()
+            await projectBoardRef.createProject()
         }
     }
     
-    try! await #require(projectBoardRef.projects.count == 1)
-    try! await #require(projectBoardRef.projectSourceMap.count == 1)
+    try! await #require(projectBoardRef.editors.count == 1)
     
     // contunuation의 참조 제거
-    await projectBoardRef.unsubscribeProjectHub()
+    await projectBoardRef.unsubscribe()
     
     // 다시 구독
     await projectBoardRef.setCallback({ })
-    await projectBoardRef.subscribeProjectHub()
+    await projectBoardRef.subscribe()
     
     
-    try! await #require(projectBoardRef.projects.count == 1)
+    try! await #require(projectBoardRef.editors.count == 1)
     
-    let project = await projectBoardRef.projects.first!
+    let project = await projectBoardRef.editors.first!
     return await project.ref!
 }
 

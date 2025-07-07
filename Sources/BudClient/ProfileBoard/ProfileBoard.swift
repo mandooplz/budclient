@@ -58,7 +58,7 @@ public final class ProfileBoard: Debuggable {
         guard self.id.isExist else { setIssue(Error.profileBoardIsDeleted); return }
         let budClientRef = self.config.parent.ref!
         let projectBoardRef = projectBoard!.ref!
-        let projects = projectBoardRef.projects
+        let projects = projectBoardRef.editors
         let communityRef = community!.ref!
         let authBoardRef = AuthBoard(tempConfig: tempConfig)
         

@@ -12,207 +12,207 @@ import Values
 
 
 // MARK: Tests
-@Suite("Project", .timeLimit(.minutes(1)))
-struct ProjectTests {
+@Suite("ProjectEditor", .timeLimit(.minutes(1)))
+struct ProjectEditorTests {
     struct SetUp {
         let budClientRef: BudClient
-        let projectRef: Project
+        let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.projectRef = await createAndGetProject(budClientRef)
+            self.editorRef = await createAndGetProject(budClientRef)
         }
         
         @Test func wnenAlreadtSetUp() async throws {
             // given
-            await projectRef.setUp()
-            let updater = try #require(await projectRef.updater)
-            let systemBoard = try #require(await projectRef.systemBoard)
-            let flowBoard = try #require(await projectRef.flowBoard)
+            await editorRef.setUp()
+            let updater = try #require(await editorRef.updater)
+            let systemBoard = try #require(await editorRef.systemBoard)
+            let flowBoard = try #require(await editorRef.flowBoard)
             
             // when
-            await projectRef.setUp()
+            await editorRef.setUp()
             
             // then
-            let issue = try #require(await projectRef.issue as? KnownIssue)
+            let issue = try #require(await editorRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadySetUp")
             
-            let newUpdater = try #require(await projectRef.updater)
+            let newUpdater = try #require(await editorRef.updater)
             #expect(newUpdater == updater)
             
-            let newSystemBoard = try #require(await projectRef.systemBoard)
+            let newSystemBoard = try #require(await editorRef.systemBoard)
             #expect(newSystemBoard == systemBoard)
             
-            let newFlowBoard = try #require(await projectRef.flowBoard)
+            let newFlowBoard = try #require(await editorRef.flowBoard)
             #expect(newFlowBoard == flowBoard)
         }
         @Test func whenProjectIsDeletedBeforeMutate() async throws {
             // given
-            try await #require(projectRef.id.isExist == true)
+            try await #require(editorRef.id.isExist == true)
             
             // when
-            await projectRef.setUp {
-                await projectRef.delete()
+            await editorRef.setUp {
+                await editorRef.delete()
             }
             
             // then
-            let issue = try #require(await projectRef.issue as? KnownIssue)
-            #expect(issue.reason == "projectIsDeleted")
+            let issue = try #require(await editorRef.issue as? KnownIssue)
+            #expect(issue.reason == "editorIsDeleted")
         }
         
         @Test func createProjectUpdater() async throws {
             // given
-            try await #require(projectRef.updater == nil)
+            try await #require(editorRef.updater == nil)
             
             // when
-            await projectRef.setUp()
+            await editorRef.setUp()
             
             // then
-            let updater = try #require(await projectRef.updater)
+            let updater = try #require(await editorRef.updater)
             await #expect(updater.isExist == true)
         }
         @Test func createSystemBoard() async throws {
             // given
-            try await #require(projectRef.systemBoard == nil)
+            try await #require(editorRef.systemBoard == nil)
             
             // when
-            await projectRef.setUp()
+            await editorRef.setUp()
             
             // then
-            let systemBoard = try #require(await projectRef.systemBoard)
+            let systemBoard = try #require(await editorRef.systemBoard)
             await #expect(systemBoard.isExist == true)
         }
         @Test func createFlowBoard() async throws {
             // given
-            try await #require(projectRef.flowBoard == nil)
+            try await #require(editorRef.flowBoard == nil)
             
             // when
-            await projectRef.setUp()
+            await editorRef.setUp()
             
             // then
-            let flowBoard = try #require(await projectRef.flowBoard)
+            let flowBoard = try #require(await editorRef.flowBoard)
             await #expect(flowBoard.isExist == true)
         }
     }
     
-    struct SubscribeSource {
+    struct Subscribe {
         let budClientRef: BudClient
-        let projectRef: Project
+        let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.projectRef = await createAndGetProject(budClientRef)
+            self.editorRef = await createAndGetProject(budClientRef)
         }
         
         @Test func whenProjectIsDeletedBeforeCapture() async throws {
             // given
-            try await #require(projectRef.id.isExist == true)
+            try await #require(editorRef.id.isExist == true)
             
             // when
-            await projectRef.subscribeSource {
-                await projectRef.delete()
+            await editorRef.subscribe {
+                await editorRef.delete()
             }
             
             // then
-            let issue = try #require(await projectRef.issue as? KnownIssue)
-            #expect(issue.reason == "projectIsDeleted")
+            let issue = try #require(await editorRef.issue as? KnownIssue)
+            #expect(issue.reason == "editorIsDeleted")
         }
         @Test func whenUpdaterIsNil() async throws {
             // given
-            try await #require(projectRef.updater == nil)
+            try await #require(editorRef.updater == nil)
             
             // when
-            await projectRef.subscribeSource()
+            await editorRef.subscribe()
             
             // then
-            let issue = try #require(await projectRef.issue as? KnownIssue)
+            let issue = try #require(await editorRef.issue as? KnownIssue)
             #expect(issue.reason == "updaterIsNil")
         }
         
         @Test func setHandlerInProjectSource() async throws {
             // given
-            let sourceLink = projectRef.sourceLink
-            let object = await ObjectID(projectRef.id.value)
+            let sourceLink = editorRef.sourceLink
+            let object = await ObjectID(editorRef.id.value)
             try await #require(sourceLink.hasHandler(object: object) == false)
             
-            await projectRef.setUp()
+            await editorRef.setUp()
             
             // when
-            await projectRef.subscribeSource()
+            await editorRef.subscribe()
             
             // then
             await #expect(sourceLink.hasHandler(object: object) == true)
         }
         @Test func getUpdateFromProjectSource() async throws {
             // given
-            let sourceLink = projectRef.sourceLink
+            let sourceLink = editorRef.sourceLink
             let testName = "JUST_TEST_NAME"
             
-            try await #require(projectRef.name != testName)
-            await projectRef.setUp()
+            try await #require(editorRef.name != testName)
+            await editorRef.setUp()
             
             // when
             await withCheckedContinuation { con in
                 Task {
-                    await projectRef.setCallback {
+                    await editorRef.setCallback {
                         con.resume()
                     }
                     
-                    await projectRef.subscribeSource()
+                    await editorRef.subscribe()
                     
                     let editTicket = EditProjectSourceName(testName)
                     try! await sourceLink.insert(editTicket)
-                    try! await sourceLink.processTicket()
+                    try! await sourceLink.editProjectName()
                 }
             }
             
             // then
-            await #expect(projectRef.name == testName)
+            await #expect(editorRef.name == testName)
         }
     }
     
     struct Push {
         let budClientRef: BudClient
-        let projectRef: Project
+        let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.projectRef = await createAndGetProject(budClientRef)
+            self.editorRef = await createAndGetProject(budClientRef)
         }
         
         @Test func whenProjectIsDeleted() async throws {
             // given
-            try await #require(projectRef.id.isExist == true)
+            try await #require(editorRef.id.isExist == true)
             
             // when
-            await projectRef.push {
-                await projectRef.delete()
+            await editorRef.push {
+                await editorRef.delete()
             }
             
             // then
-            let issue = try #require(await projectRef.issue)
-            #expect(issue.reason == "projectIsDeleted")
+            let issue = try #require(await editorRef.issue)
+            #expect(issue.reason == "editorIsDeleted")
         }
         @Test func whenNameIsNil() async throws {
             // given
             await MainActor.run {
-                projectRef.name = nil
+                editorRef.name = nil
             }
             
             // when
-            await projectRef.push()
+            await editorRef.push()
             
             // then
-            let issue = try #require(await projectRef.issue)
+            let issue = try #require(await editorRef.issue)
             #expect(issue.reason == "nameIsNil")
         }
         
         @Test func updateNameByUpdater() async throws {
             // given
             let testName = "TEST_PROJECT_NAME"
-            let sourceLink = projectRef.sourceLink
+            let sourceLink = editorRef.sourceLink
             let randomObject = ObjectID()
-            let target = projectRef.target
+            let target = editorRef.target
             
             await MainActor.run {
-                projectRef.name = testName
+                editorRef.name = testName
             }
             
             // then
@@ -230,47 +230,47 @@ struct ProjectTests {
                     }))
                     
                     // when
-                    await projectRef.push()
+                    await editorRef.push()
                 }
             }
         }
     }
     
-    struct UnsubscribeSource {
+    struct UnSubscribe {
         let budClientRef: BudClient
-        let projectRef: Project
+        let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.projectRef = await createAndGetProject(budClientRef)
+            self.editorRef = await createAndGetProject(budClientRef)
             
-            await projectRef.setUp()
-            await projectRef.subscribeSource()
+            await editorRef.setUp()
+            await editorRef.subscribe()
             
-            try! await #require(projectRef.isIssueOccurred == false)
+            try! await #require(editorRef.isIssueOccurred == false)
         }
         
         @Test func whenProjectIsDeleted() async throws {
             // given
-            try await #require(projectRef.id.isExist == true)
+            try await #require(editorRef.id.isExist == true)
             
             // when
-            await projectRef.unsubscribeSource {
-                await projectRef.delete()
+            await editorRef.unsubscribe {
+                await editorRef.delete()
             }
             
             // then
-            let issue = try #require(await projectRef.issue as? KnownIssue)
-            #expect(issue.reason == "projectIsDeleted")
+            let issue = try #require(await editorRef.issue as? KnownIssue)
+            #expect(issue.reason == "editorIsDeleted")
         }
         @Test func removeHandlerInProjectSource() async throws {
             // given
-            let sourceLink = projectRef.sourceLink
-            let me = await ObjectID(projectRef.id.value)
+            let sourceLink = editorRef.sourceLink
+            let me = await ObjectID(editorRef.id.value)
             
             try await #require(sourceLink.hasHandler(object: me) == true)
             
             // when
-            await projectRef.unsubscribeSource()
+            await editorRef.unsubscribe()
             
             // then
             await #expect(sourceLink.hasHandler(object: me) == false)
@@ -280,42 +280,42 @@ struct ProjectTests {
 
     struct RemoveSource {
         let budClientRef: BudClient
-        let projectRef: Project
+        let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.projectRef = await createAndGetProject(budClientRef)
+            self.editorRef = await createAndGetProject(budClientRef)
         }
         
         @Test func whenProjectIsDeleted() async throws {
             // given
-            try await #require(projectRef.id.isExist == true)
+            try await #require(editorRef.id.isExist == true)
             
             // when
-            await projectRef.removeSource {
-                await projectRef.delete()
+            await editorRef.removeProject {
+                await editorRef.delete()
             }
             
             // then
-            let issue = try #require(await projectRef.issue)
-            #expect(issue.reason == "projectIsDeleted")
+            let issue = try #require(await editorRef.issue)
+            #expect(issue.reason == "editorIsDeleted")
         }
         
         @Test func removeProjectSource() async throws {
             // given
-            let projectSourceLink = projectRef.sourceLink
+            let projectSourceLink = editorRef.sourceLink
             
             await #expect(projectSourceLink.isExist() == true)
              
             // when
-            await projectRef.removeSource()
+            await editorRef.removeProject()
             
             // then
             await #expect(projectSourceLink.isExist() == false)
         }
         @Test func removeProjectInProjectBoard() async throws {
             // given
-            let projectBoardRef = try #require(await projectRef.config.parent.ref)
-            try await #require(projectBoardRef.projects.contains(projectRef.id))
+            let projectBoardRef = try #require(await editorRef.config.parent.ref)
+            try await #require(projectBoardRef.editors.contains(editorRef.id))
             
             // when
             await withCheckedContinuation { con in
@@ -324,40 +324,19 @@ struct ProjectTests {
                         con.resume()
                     }
                     
-                    await projectBoardRef.subscribeProjectHub()
+                    await projectBoardRef.subscribe()
                     
-                    await projectRef.removeSource()
+                    await editorRef.removeProject()
                 }
             }
             
             // then
-            await #expect(projectBoardRef.projects.contains(projectRef.id) == false)
+            await #expect(projectBoardRef.editors.contains(editorRef.id) == false)
             
-        }
-        @Test func updateProjectSourceMapInProjectBoard() async throws {
-            // given
-            let projectBoardRef = try #require(await projectRef.config.parent.ref)
-            try await #require(projectBoardRef.projectSourceMap.count == 1)
-            
-            // when
-            await withCheckedContinuation { con in
-                Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
-                    }
-                    
-                    await projectBoardRef.subscribeProjectHub()
-                    
-                    await projectRef.removeSource()
-                }
-            }
-            
-            // then
-            await #expect(projectBoardRef.projectSourceMap.count == 0)
         }
         @Test func deleteProject() async throws {
             // given
-            let projectBoardRef = try #require(await projectRef.config.parent.ref)
+            let projectBoardRef = try #require(await editorRef.config.parent.ref)
             
             // when
             await withCheckedContinuation { con in
@@ -366,13 +345,13 @@ struct ProjectTests {
                         con.resume()
                     }
                     
-                    await projectBoardRef.subscribeProjectHub()
-                    await projectRef.removeSource()
+                    await projectBoardRef.subscribe()
+                    await editorRef.removeProject()
                 }
             }
             
             // then
-            await #expect(projectRef.id.isExist == false)
+            await #expect(editorRef.id.isExist == false)
         }
     }
 }

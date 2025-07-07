@@ -101,7 +101,7 @@ struct ProfileBoardTests {
             // given
             let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
             
-            await projectBoardRef.setUpUpdater()
+            await projectBoardRef.setUp()
             try await #require(projectBoardRef.updater?.isExist == true)
             
             // when
@@ -120,10 +120,10 @@ struct ProfileBoardTests {
                     await projectBoardRef.setCallback {
                         con.resume()
                     }
-                    await projectBoardRef.setUpUpdater()
-                    await projectBoardRef.subscribeProjectHub()
+                    await projectBoardRef.setUp()
+                    await projectBoardRef.subscribe()
                     
-                    await projectBoardRef.createProjectSource()
+                    await projectBoardRef.createProject()
                 }
             }
             
@@ -132,21 +132,21 @@ struct ProfileBoardTests {
                     await projectBoardRef.setCallback {
                         con.resume()
                     }
-                    await projectBoardRef.setUpUpdater()
-                    await projectBoardRef.subscribeProjectHub()
+                    await projectBoardRef.setUp()
+                    await projectBoardRef.subscribe()
                     
-                    await projectBoardRef.createProjectSource()
+                    await projectBoardRef.createProject()
                 }
             }
             
             
-            try await #require(projectBoardRef.projects.count == 2)
+            try await #require(projectBoardRef.editors.count == 2)
         
             // when
             await profileBoardRef.signOut()
             
             // then
-            for project in await projectBoardRef.projects {
+            for project in await projectBoardRef.editors {
                 await #expect(project.isExist == false)
             }
         }
@@ -160,16 +160,16 @@ struct ProfileBoardTests {
                     await projectBoardRef.setCallback {
                         con.resume()
                     }
-                    await projectBoardRef.setUpUpdater()
-                    await projectBoardRef.subscribeProjectHub()
+                    await projectBoardRef.setUp()
+                    await projectBoardRef.subscribe()
                     
-                    await projectBoardRef.createProjectSource()
+                    await projectBoardRef.createProject()
                 }
             }
             
-            try await #require(projectBoardRef.projects.count == 1)
+            try await #require(projectBoardRef.editors.count == 1)
             
-            let projectRef = await projectBoardRef.projects.first!.ref!
+            let projectRef = await projectBoardRef.editors.first!.ref!
             await projectRef.setUp()
             
             let updater = try #require(await projectRef.updater)
@@ -255,7 +255,7 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileB
     return await profileBoard.ref!
 }
 
-private func getProject(_ budClientRef: BudClient) async throws -> Project {
+private func getProject(_ budClientRef: BudClient) async throws -> ProjectEditor {
     let projectBoard = try #require(await budClientRef.projectBoard)
     let projectBoardRef = try #require(await projectBoard.ref)
     
@@ -265,21 +265,21 @@ private func getProject(_ budClientRef: BudClient) async throws -> Project {
             await projectBoardRef.setCallback {
                 con.resume()
             }
-            await projectBoardRef.setUpUpdater()
-            await projectBoardRef.subscribeProjectHub()
+            await projectBoardRef.setUp()
+            await projectBoardRef.subscribe()
             
-            await projectBoardRef.createProjectSource()
+            await projectBoardRef.createProject()
         }
     }
     
-    await projectBoardRef.unsubscribeProjectHub()
+    await projectBoardRef.unsubscribe()
     await projectBoardRef.setCallback { }
-    await projectBoardRef.subscribeProjectHub()
+    await projectBoardRef.subscribe()
     
-    try await #require(projectBoardRef.projects.count == 1)
+    try await #require(projectBoardRef.editors.count == 1)
     
     
-    let project = try await #require(projectBoardRef.projects.first)
+    let project = try await #require(projectBoardRef.editors.first)
     let projectRef = try #require(await project.ref)
     return projectRef
 }

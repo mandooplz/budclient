@@ -44,38 +44,27 @@ public final class ProjectBoardUpdater: Debuggable {
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
         let projectBoardRef = config.parent.ref!
         let config = self.config
-        let map = projectBoardRef.projectSourceMap
         
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
             // when projectSource added
-            case .added(let projectSource, let target):
-                // 이미 존재한다면 지우기.
-                if map[projectSource] != nil {
-                    setIssue(Error.alreadyAdded)
-                    Logger().error("\(Error.alreadyAdded.rawValue)")
-                    return
-                }
+            case .added(let projectSource, let project):
+                if projectBoardRef.isExist(target: project) { return }
                 
                 let sourceLink = ProjectSourceLink(mode: config.mode, object: projectSource)
-                let projectRef = Project(config: config,
-                                         target: target,
-                                         sourceLink: sourceLink)
+                let projectEditorRef = ProjectEditor(config: config,
+                                                     target: project,
+                                                     sourceLink: sourceLink)
                 
-                projectBoardRef.projects.append(projectRef.id)
-                projectBoardRef.projectSourceMap[projectSource] = projectRef.id
+                projectBoardRef.editors.append(projectEditorRef.id)
             
             // when projectSource removed
-            case .removed(let projectSource):
-                guard let project = map[projectSource] else {
-                    setIssue(Error.alreadyRemoved)
-                    return
-                }
+            case .removed(let project):
+                let projectEditor = projectBoardRef.editors.first { $0.ref?.target == project }
+                projectEditor?.ref?.delete()
                 
-                projectBoardRef.projects.removeAll { $0 == project }
-                projectBoardRef.projectSourceMap[projectSource] = nil
-                project.ref?.delete()
+                projectBoardRef.editors.removeAll { $0 == projectEditor }
             }
         }
     }

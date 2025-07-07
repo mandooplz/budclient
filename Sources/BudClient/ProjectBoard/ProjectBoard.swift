@@ -30,18 +30,22 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     var updater: ProjectBoardUpdater.ID?
     
-    public internal(set) var projects: [Project.ID] = []
-    var projectSourceMap: [ProjectSourceID: Project.ID] = [:]
+    public internal(set) var editors: [ProjectEditor.ID] = []
+    public func isExist(target: ProjectID) -> Bool {
+        self.editors.lazy
+            .compactMap { $0.ref }
+            .contains { $0.target == target }
+    }
     
     public var issue: (any Issuable)?
     package var callback: Callback?
     
     
     // MARK: action
-    public func setUpUpdater() async {
-        await setUpUpdater(mutateHook: nil)
+    public func setUp() async {
+        await setUp(mutateHook: nil)
     }
-    func setUpUpdater(mutateHook: Hook?) async {
+    func setUp(mutateHook: Hook?) async {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
@@ -53,10 +57,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         self.updater = updaterRef.id
     }
     
-    public func subscribeProjectHub() async {
-        await self.subscribeProjectHub(captureHook: nil)
+    public func subscribe() async {
+        await self.subscribe(captureHook: nil)
     }
-    func subscribeProjectHub(captureHook: Hook?) async {
+    func subscribe(captureHook: Hook?) async {
         // capture & compute
         await captureHook?()
         guard self.id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
@@ -76,7 +80,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     handler: .init({ event in
                         Task { @MainActor in
                             switch event {
-                            case .added(let projectSource):
+                            case .added:
                                 guard let updaterRef = updater.ref else { return }
                                 
                                 updaterRef.queue.append(event)
@@ -98,10 +102,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         }
     }
     
-    public func unsubscribeProjectHub() async {
-        await unsubscribeProjectHub(captureHook: nil)
+    public func unsubscribe() async {
+        await unsubscribe(captureHook: nil)
     }
-    func unsubscribeProjectHub(captureHook: Hook? = nil) async {
+    func unsubscribe(captureHook: Hook? = nil) async {
         // capture & compute
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
@@ -116,18 +120,17 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         }
     }
     
-    
-    public func createProjectSource() async {
-        await self.createProjectSource(captureHook: nil)
+    public func createProject() async {
+        await self.createProject(captureHook: nil)
     }
-    func createProjectSource(captureHook: Hook?) async {
+    func createProject(captureHook: Hook?) async {
         // capture & compute
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
         let config = self.config
         let budServerLink = config.budServerLink
-        let newProjectName = "Project\(self.projects.count + 1)"
+        let newProjectName = "Project\(self.editors.count + 1)"
         
         do {
             try await withThrowingDiscardingTaskGroup { group in

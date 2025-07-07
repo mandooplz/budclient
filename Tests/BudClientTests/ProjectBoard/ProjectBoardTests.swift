@@ -13,7 +13,7 @@ import Values
 // MARK: Tests
 @Suite("ProjectBoard", .timeLimit(.minutes(1)))
 struct ProjectBoardTests {
-    struct SetUpUpdater {
+    struct SetUp {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -26,7 +26,7 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.setUpUpdater {
+            await projectBoardRef.setUp {
                 await projectBoardRef.delete()
             }
             
@@ -41,7 +41,7 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.updater == nil)
             
             // when
-            await projectBoardRef.setUpUpdater()
+            await projectBoardRef.setUp()
             
             // then
             let updater = try #require(await projectBoardRef.updater)
@@ -51,12 +51,12 @@ struct ProjectBoardTests {
             // given
             try await #require(projectBoardRef.updater == nil)
     
-            await projectBoardRef.setUpUpdater()
+            await projectBoardRef.setUp()
             
             let updater = try #require(await projectBoardRef.updater)
             
             // when
-            await projectBoardRef.setUpUpdater()
+            await projectBoardRef.setUp()
             
             // then
             let issue = try #require(await projectBoardRef.issue as? KnownIssue)
@@ -68,7 +68,7 @@ struct ProjectBoardTests {
         }
     }
     
-    struct SubscribeProjectHub {
+    struct Subscribe {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -81,7 +81,7 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.subscribeProjectHub(captureHook: {
+            await projectBoardRef.subscribe(captureHook: {
                 await projectBoardRef.delete()
             })
 
@@ -96,7 +96,7 @@ struct ProjectBoardTests {
             }
             
             // when
-            await projectBoardRef.subscribeProjectHub()
+            await projectBoardRef.subscribe()
             
             // then
             let issue = try #require(await projectBoardRef.issue as? KnownIssue)
@@ -112,14 +112,14 @@ struct ProjectBoardTests {
             try await #require(projectHubLink.hasHandler(object: object) == false)
             
             // when
-            await projectBoardRef.subscribeProjectHub()
+            await projectBoardRef.subscribe()
             
             // then
             await #expect(projectHubLink.hasHandler(object: object) == true)
         }
     }
     
-    struct UnsubscribeProjectHub {
+    struct Unsubscribe {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -132,7 +132,7 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.unsubscribeProjectHub {
+            await projectBoardRef.unsubscribe {
                 await projectBoardRef.delete()
             }
             
@@ -147,18 +147,18 @@ struct ProjectBoardTests {
             let projectHubLink = await config.budServerLink.getProjectHub()
             let object = await ObjectID(projectBoardRef.id.value)
             
-            await projectBoardRef.subscribeProjectHub()
+            await projectBoardRef.subscribe()
             try await #require(projectHubLink.hasHandler(object: object) == true)
             
             // when
-            await projectBoardRef.unsubscribeProjectHub()
+            await projectBoardRef.unsubscribe()
             
             // then
             await #expect(projectHubLink.hasHandler(object: object) == false)
         }
     }
     
-    struct CreateProjectSource {
+    struct CreateProject {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
@@ -171,7 +171,7 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.createProjectSource {
+            await projectBoardRef.createProject {
                 await projectBoardRef.delete()
             }
             
@@ -188,7 +188,7 @@ struct ProjectBoardTests {
             }
             
             // when
-            await projectBoardRef.createProjectSource()
+            await projectBoardRef.createProject()
             
             // then
             let issue = try #require(await projectBoardRef.issue as? KnownIssue)
@@ -197,7 +197,7 @@ struct ProjectBoardTests {
         
         @Test func appendProject() async throws {
             // given
-            try await #require(projectBoardRef.projects.isEmpty)
+            try await #require(projectBoardRef.editors.isEmpty)
             
             // when
             await withCheckedContinuation { con in
@@ -206,15 +206,15 @@ struct ProjectBoardTests {
                         con.resume()
                     }
                     
-                    await projectBoardRef.subscribeProjectHub()
-                    await projectBoardRef.createProjectSource()
+                    await projectBoardRef.subscribe()
+                    await projectBoardRef.createProject()
                 }
             }
 
             
             // then
-            await projectBoardRef.unsubscribeProjectHub()
-            await #expect(projectBoardRef.projects.count == 1)
+            await projectBoardRef.unsubscribe()
+            await #expect(projectBoardRef.editors.count == 1)
             
             // when
             await withCheckedContinuation { con in
@@ -223,33 +223,14 @@ struct ProjectBoardTests {
                         con.resume()
                     }
                     
-                    await projectBoardRef.subscribeProjectHub()
-                    await projectBoardRef.createProjectSource()
+                    await projectBoardRef.subscribe()
+                    await projectBoardRef.createProject()
                 }
             }
             
             
             // then
-            await #expect(projectBoardRef.projects.count == 2)
-        }
-        @Test func updateSourceMap() async throws {
-            // given
-            try await #require(projectBoardRef.projectSourceMap.isEmpty)
-            
-            // when
-            await withCheckedContinuation { con in
-                Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
-                    }
-                    
-                    await projectBoardRef.subscribeProjectHub()
-                    await projectBoardRef.createProjectSource()
-                }
-            }
-            
-            // then
-            await #expect(projectBoardRef.projectSourceMap.count == 1)
+            await #expect(projectBoardRef.editors.count == 2)
         }
     }
 }
@@ -265,7 +246,7 @@ private func getProjectBoard(_ budClientRef: BudClient) async -> ProjectBoard {
 }
 private func getProjectBoardWithSetUp(_ budClientRef: BudClient) async -> ProjectBoard {
     let projectBoardRef = await getProjectBoard(budClientRef)
-    await projectBoardRef.setUpUpdater()
+    await projectBoardRef.setUp()
     
     try! await #require(projectBoardRef.updater?.isExist == true)
     return projectBoardRef

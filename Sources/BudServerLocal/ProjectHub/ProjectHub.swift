@@ -36,7 +36,7 @@ package final class ProjectHub: Sendable {
                             handler: Handler<ProjectHubEvent>) {
         guard listener == nil else { return }
         
-        self.listener = db.collection(DB.ProjectSources)
+        self.listener = db.collection(ProjectSources.name)
             .whereField(ProjectSource.State.creator,
                         isEqualTo: ticket.user.encode())
             .addSnapshotListener { snapshot, error in
@@ -62,7 +62,7 @@ package final class ProjectHub: Sendable {
                     }
                     
                     if (diff.type == .removed) {
-                        let event = ProjectHubEvent.removed(object)
+                        let event = ProjectHubEvent.removed(data.target)
                         handler.execute(event)
                     }
                 }
@@ -83,7 +83,7 @@ package final class ProjectHub: Sendable {
             let data = ProjectSource.Data(name: ticket.name,
                                           creator: ticket.creator,
                                           target: ticket.target)
-            try db.collection(DB.ProjectSources).addDocument(from: data)
+            try db.collection(ProjectSources.name).addDocument(from: data)
         }
     }
     

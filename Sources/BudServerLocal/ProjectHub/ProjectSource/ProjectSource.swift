@@ -43,22 +43,23 @@ package final class ProjectSource: Sendable {
                             handler: Handler<ProjectSourceEvent>) {
         guard listeners[ticket.object] == nil else { return }
         
-        listeners[ticket.object] = db.collection(DB.ProjectSources).document(id.value)
-            .addSnapshotListener { documentSnapshot, error in
-                guard let document = documentSnapshot else {
-                    Logger().error("Error fetching document: \(error!)")
-                    return
-                }
-                
-                
-                guard let newName = try? document.data(as: Data.self).name else {
-                    Logger().error("Invalid or missing 'name' field in document: \(document.documentID)")
-                    return
-                }
-                let event = ProjectSourceEvent.modified(newName)
-                
-                handler.execute(event)
+        let documentRef = db.collection(ProjectSources.name)
+            .document(id.value)
+        
+        listeners[ticket.object] = documentRef.addSnapshotListener { documentSnapshot, error in
+            guard let document = documentSnapshot else {
+                Logger().error("Error fetching document: \(error!)")
+                return
             }
+            
+            guard let newName = try? document.data(as: Data.self).name else {
+                Logger().error("Invalid or missing 'name' field in document: \(document.documentID)")
+                return
+            }
+            let event = ProjectSourceEvent.modified(newName)
+            
+            handler.execute(event)
+        }
     }
     package func removeHandler(object: ObjectID) {
         self.listeners[object]?.remove()
@@ -67,13 +68,14 @@ package final class ProjectSource: Sendable {
     
     
     // MARK: action
-    package func processTicket() throws {
+    package func editProjectName() throws {
         guard Manager.isExist(id) else { return }
         guard let newName = editTicket?.name else { return }
         
         // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-        let document = db.collection(DB.ProjectSources).document(id.value)
-        document.updateData(State.getNameUpdator(newName))
+        let documentRef = db.collection(ProjectSources.name).document(id.value)
+        documentRef.updateData(State.getNameUpdator(newName))
+        self.editTicket = nil
     }
     package func remove() {
         guard Manager.isExist(id) else { return }
@@ -83,15 +85,15 @@ package final class ProjectSource: Sendable {
         self.delete()
         
         // FireStore에서 문서 삭제
-        db.collection(DB.ProjectSources).document(id.value).delete()
+        db.collection(ProjectSources.name).document(id.value).delete()
     }
     
     
     // MARK: value
-    // Data가 언제 사용되는가.
+    // Data는 아래 경우에 사용된다.
     // 1. 리스너 등록
     // 2. 리스너를 통해 이벤트 처리
-    // 3. 상태 업데이트 ->
+    // 3. 상태 업데이트
     package struct Data: Hashable, Codable {
         @DocumentID var id: String?
         package var name: String

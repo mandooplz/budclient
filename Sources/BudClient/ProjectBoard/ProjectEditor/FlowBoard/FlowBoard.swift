@@ -12,7 +12,9 @@ import Values
 @MainActor @Observable
 public final class FlowBoard: Sendable {
     // MARK: core
-    init() {
+    init(config: Config<ProjectEditor.ID>) {
+        self.config = config
+        
         FlowBoardManager.register(self)
     }
     func delete() {
@@ -22,6 +24,7 @@ public final class FlowBoard: Sendable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<ProjectEditor.ID>
     
     
     // MARK: action

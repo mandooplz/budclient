@@ -13,6 +13,7 @@ public protocol Identity: Sendable, Hashable, Codable {
     var value: RawValue { get }
 }
 
+
 public extension Identity {
     func encode() -> [String:Any] {
         ["value": value]

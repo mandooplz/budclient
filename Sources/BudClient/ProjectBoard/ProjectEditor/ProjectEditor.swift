@@ -1,5 +1,5 @@
 //
-//  Project.swift
+//  ProjectEditor.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/25/25.
@@ -11,7 +11,7 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-public final class Project: Debuggable, EventDebuggable {
+public final class ProjectEditor: Debuggable, EventDebuggable {
     
     // MARK: core
     init(config: Config<ProjectBoard.ID>,
@@ -35,6 +35,7 @@ public final class Project: Debuggable, EventDebuggable {
     nonisolated let sourceLink: ProjectSourceLink
     
     public var name: String?
+    
     public var systemBoard: SystemBoard.ID?
     public var flowBoard: FlowBoard.ID?
     
@@ -51,26 +52,26 @@ public final class Project: Debuggable, EventDebuggable {
     func setUp(mutateHook:Hook?) async {
         // mutate
         await mutateHook?()
-        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
         guard updater == nil, systemBoard == nil, flowBoard == nil else { setIssue(Error.alreadySetUp); return }
         let myConfig = self.config.setParent(id)
         
         let updaterRef = ProjectUpdater(config: myConfig)
-        let systemBoardRef = SystemBoard()
-        let flowBoardRef = FlowBoard()
+        let systemBoardRef = SystemBoard(config: myConfig)
+        let flowBoardRef = FlowBoard(config: myConfig)
         
         self.updater = updaterRef.id
         self.systemBoard = systemBoardRef.id
         self.flowBoard = flowBoardRef.id
     }
     
-    public func subscribeSource() async {
-        await subscribeSource(captureHook: nil)
+    public func subscribe() async {
+        await subscribe(captureHook: nil)
     }
-    internal func subscribeSource(captureHook: Hook? = nil) async {
+    internal func subscribe(captureHook: Hook? = nil) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
         guard let updater else { setIssue(Error.updaterIsNil); return }
         let callback = self.callback
         let sourceLink = self.sourceLink
@@ -107,7 +108,7 @@ public final class Project: Debuggable, EventDebuggable {
     func push(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
         guard let name else { setIssue(Error.nameIsNil); return}
         let sourceLink = self.sourceLink
         
@@ -118,7 +119,7 @@ public final class Project: Debuggable, EventDebuggable {
                     let editTicket = EditProjectSourceName(name)
                     
                     try await sourceLink.insert(editTicket)
-                    try await sourceLink.processTicket()
+                    try await sourceLink.editProjectName()
                 }
             }
         } catch {
@@ -126,13 +127,13 @@ public final class Project: Debuggable, EventDebuggable {
         }
     }
     
-    public func unsubscribeSource() async {
-        await unsubscribeSource(captureHook: nil)
+    public func unsubscribe() async {
+        await unsubscribe(captureHook: nil)
     }
-    func unsubscribeSource(captureHook: Hook?) async {
+    func unsubscribe(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
         let sourceLink = self.sourceLink
         let me = ObjectID(id.value)
         
@@ -144,13 +145,13 @@ public final class Project: Debuggable, EventDebuggable {
         }
     }
     
-    public func removeSource() async {
-        await self.removeSource(captureHook: nil)
+    public func removeProject() async {
+        await self.removeProject(captureHook: nil)
     }
-    func removeSource(captureHook: Hook?) async {
+    func removeProject(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectIsDeleted); return }
+        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
         let sourceLink = self.sourceLink
         
         // compute
@@ -173,12 +174,12 @@ public final class Project: Debuggable, EventDebuggable {
         var isExist: Bool {
             ProjectManager.container[self] != nil
         }
-        public var ref: Project? {
+        public var ref: ProjectEditor? {
             ProjectManager.container[self]
         }
     }
     public enum Error: String, Swift.Error {
-        case projectIsDeleted
+        case editorIsDeleted
         case alreadySetUp
         case updaterIsNil
         case nameIsNil
@@ -189,11 +190,11 @@ public final class Project: Debuggable, EventDebuggable {
 @MainActor @Observable
 fileprivate final class ProjectManager: Sendable {
     // MARK: state
-    fileprivate static var container: [Project.ID: Project] = [:]
-    fileprivate static func register(_ object: Project) {
+    fileprivate static var container: [ProjectEditor.ID: ProjectEditor] = [:]
+    fileprivate static func register(_ object: ProjectEditor) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: Project.ID) {
+    fileprivate static func unregister(_ id: ProjectEditor.ID) {
         container[id] = nil
     }
 }
