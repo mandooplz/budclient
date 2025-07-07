@@ -139,7 +139,7 @@ struct ProjectTests {
             await projectRef.subscribeSource()
             
             // then
-            try await #expect(sourceLink.hasHandler(object: object) == true)
+            await #expect(sourceLink.hasHandler(object: object) == true)
         }
         @Test func getUpdateFromProjectSource() async throws {
             // given
@@ -220,7 +220,7 @@ struct ProjectTests {
   
             await withCheckedContinuation { con in
                 Task {
-                    try! await sourceLink.setHandler(ticket: subscribeTicket,
+                    await sourceLink.setHandler(ticket: subscribeTicket,
                                           handler: .init({ event in
                         switch event {
                         case .modified(let newName):
@@ -273,7 +273,7 @@ struct ProjectTests {
             await projectRef.unsubscribeSource()
             
             // then
-            try await #expect(sourceLink.hasHandler(object: me) == false)
+            await #expect(sourceLink.hasHandler(object: me) == false)
         }
     }
     
