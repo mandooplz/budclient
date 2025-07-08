@@ -68,7 +68,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard self.id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        guard let updater else { setIssue(Error.updaterIsNotSet); return }
+        let updater = self.updater
         let config = self.config
         let callback = self.callback
         let me = ObjectID(id.value)
@@ -83,7 +83,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     ticket: ticket,
                     handler: .init({ event in
                         Task { @MainActor in
-                            guard let updaterRef = updater.ref else { return }
+                            guard let updaterRef = updater?.ref else { return }
                             
                             updaterRef.queue.append(event)
                             await updaterRef.update()
@@ -122,7 +122,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
         let config = self.config
         let budServerLink = config.budServerLink
         
@@ -146,8 +145,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 }
             }
         } catch {
-            setUnknownIssue(error)
-            return
+            setUnknownIssue(error); return
         }
     }
     
@@ -169,7 +167,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case projectBoardIsDeleted
-        case updaterIsNotSet, alreadySetUp
+        case alreadySetUp
     }
 }
 

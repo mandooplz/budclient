@@ -27,7 +27,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     nonisolated let config: Config<ProjectEditor.ID>
     
     public internal(set) var models: Set<SystemModel.ID> = []
-    public var isModelsEmpty: Bool {
+    var isModelsEmpty: Bool {
         models.isEmpty
     }
     func isExist(_ target: SystemID) -> Bool {
@@ -47,10 +47,12 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         await setUp(mutateHook: nil)
     }
     func setUp(mutateHook: Hook?) async {
+        // captrue
+        guard updater == nil else { setIssue(Error.alreadySetUp); return }
+        
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
-        guard updater == nil else { setIssue(Error.alreadySetUp); return }
         
         let myConfig = config.setParent(id)
         let updaterRef = SystemBoardUpdater(config: myConfig)
@@ -64,28 +66,33 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
-        guard let updater else { setIssue(Error.requiredSetUp); return }
         
-        let projectSourceLink = config.parent.ref!.sourceLink
-        let project = config.parent.ref!.target
+        let projectEditorRef = config.parent.ref!
+        let projectSourceLink = projectEditorRef.sourceLink
+        let project = projectEditorRef.target
         let me = ObjectID(id.value)
+        let updater = self.updater
         let callback = self.callback
         
         // compute
-        let ticket = SubscrieProjectSource(object: me, target: project)
+        let ticket = SubscribeProjectSource(object: me, target: project)
         
-        await projectSourceLink.setHandler(
-            ticket: ticket,
-            handler: .init({ event in
-                Task { @MainActor in
-                    guard let updaterRef = updater.ref else { return }
-                    
-                    updaterRef.queue.append(event)
-                    await updaterRef.update()
-                    
-                    await callback?()
-                }
-            }))
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await projectSourceLink.setHandler(
+                    ticket: ticket,
+                    handler: .init({ event in
+                        Task { @MainActor in
+                            guard let updaterRef = updater?.ref else { return }
+                            
+                            updaterRef.queue.append(event)
+                            await updaterRef.update()
+                            
+                            await callback?()
+                        }
+                    }))
+            }
+        }
     }
     
     public func unsubscribe() async {
@@ -100,7 +107,11 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         let me = ObjectID(id.value)
         
         // compute
-        await projectSourceLink.removeHandler(object: me)
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await projectSourceLink.removeHandler(object: me)
+            }
+        }
     }
     
     public func createFirstSystem() async {
@@ -144,7 +155,6 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case alreadySetUp
-        case requiredSetUp
         case systemBoardIsDeleted
         case systemAlreadyExist
     }

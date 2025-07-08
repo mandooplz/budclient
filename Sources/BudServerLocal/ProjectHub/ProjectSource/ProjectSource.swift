@@ -38,8 +38,9 @@ package final class ProjectSource: Sendable {
     package func hasHandler(object: ObjectID) -> Bool {
         self.listeners[object] != nil
     }
-    package func setHandler(ticket: SubscrieProjectSource,
+    package func setHandler(ticket: SubscribeProjectSource,
                             handler: Handler<ProjectSourceEvent>) {
+        // 중복 방지
         guard self.listeners[ticket.object] == nil else { return }
         
         let db = Firestore.firestore()

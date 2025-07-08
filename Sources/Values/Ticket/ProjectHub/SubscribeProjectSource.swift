@@ -6,8 +6,8 @@
 //
 
 
-// MARK: SubscrieProjectSource
-public struct SubscrieProjectSource: Ticket {
+// MARK: SubscribeProjectSource
+public struct SubscribeProjectSource: Ticket {
     public let object: ObjectID
     public let target: ProjectID
     

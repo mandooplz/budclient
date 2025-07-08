@@ -184,7 +184,7 @@ struct ProjectEditorTests {
             // then
             await #expect(projectSourceLink.isExist() == false)
         }
-        @Test func removeProjectInProjectBoard() async throws {
+        @Test func removeProjectEditorInProjectBoard() async throws {
             // given
             let projectBoardRef = try #require(await editorRef.config.parent.ref)
             try await #require(projectBoardRef.editors.contains(editorRef.id))
@@ -206,7 +206,7 @@ struct ProjectEditorTests {
             await #expect(projectBoardRef.editors.contains(editorRef.id) == false)
             
         }
-        @Test func deleteProject() async throws {
+        @Test func deleteProjectEditor() async throws {
             // given
             let projectBoardRef = try #require(await editorRef.config.parent.ref)
             
@@ -227,6 +227,3 @@ struct ProjectEditorTests {
         }
     }
 }
-
-
-// MARK: Helphers

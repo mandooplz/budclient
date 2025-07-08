@@ -53,7 +53,7 @@ package struct ProjectSourceLink: Sendable, Hashable {
             }
         }
     }
-    @Server package func setHandler(ticket: SubscrieProjectSource, handler: Handler<ProjectSourceEvent>) async {
+    @Server package func setHandler(ticket: SubscribeProjectSource, handler: Handler<ProjectSourceEvent>) async {
         switch mode {
         case .test:
             TestManager.get(object)?.eventHandlers[ticket.object] = handler

@@ -21,14 +21,128 @@ struct SystemBoardTests {
             self.budClientRef = await BudClient()
             self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
         }
+        
+        @Test func whenSystemBoardIsDeleted() async throws {
+            // given
+            try await #require(systemBoardRef.id.isExist == true)
+            
+            // when
+            await systemBoardRef.setUp {
+                await systemBoardRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await systemBoardRef.issue)
+            #expect(issue.reason == "systemBoardIsDeleted")
+        }
+        @Test func createSystemBoardUpdater() async throws {
+            // given
+            try await #require(systemBoardRef.updater == nil)
+            
+            // when
+            await systemBoardRef.setUp()
+            
+            // then
+            let updater = try #require(await systemBoardRef.updater)
+            await #expect(updater.isExist == true)
+        }
+        @Test func whenAlreadySetUp() async throws {
+            // given
+            await systemBoardRef.setUp()
+            
+            let oldUpdater = try #require(await systemBoardRef.updater)
+            
+            // when
+            await systemBoardRef.setUp()
+            
+            // then
+            let newUpdater = try #require(await systemBoardRef.updater)
+            #expect(newUpdater == oldUpdater)
+        }
     }
     
     struct Subscribe {
+        let budClientRef: BudClient
+        let systemBoardRef: SystemBoard
+        init() async {
+            self.budClientRef = await BudClient()
+            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+            
+            await systemBoardRef.setUp()
+        }
         
+        @Test func whenSystemBoardIsDeleted() async throws {
+            // given
+            try await #require(systemBoardRef.id.isExist == true)
+            
+            // when
+            await systemBoardRef.subscribe {
+                await systemBoardRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await systemBoardRef.issue)
+            #expect(issue.reason == "systemBoardIsDeleted")
+        }
+        
+        @Test func setHandlerInProjectSource() async throws {
+            // given
+            let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
+            let projectSourceLink = projectEditorRef.sourceLink
+            
+            let me = await ObjectID(systemBoardRef.id.value)
+            
+            try await #require(projectSourceLink.hasHandler(object: me) == false)
+            
+            // when
+            await systemBoardRef.subscribe()
+            
+            // then
+            await #expect(projectSourceLink.hasHandler(object: me) == true)
+        }
     }
     
     struct Unsubscribe {
+        let budClientRef: BudClient
+        let systemBoardRef: SystemBoard
+        init() async {
+            self.budClientRef = await BudClient()
+            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+            
+            await systemBoardRef.setUp()
+        }
         
+        @Test func whenSystemBoardIsDeleted() async throws {
+            // given
+            try await #require(systemBoardRef.id.isExist == true)
+            
+            // when
+            await systemBoardRef.unsubscribe {
+                await systemBoardRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await systemBoardRef.issue)
+            #expect(issue.reason == "systemBoardIsDeleted")
+        }
+        
+        @Test func removeHandlerInProjectSource() async throws {
+            // given
+            let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
+            let projectSourceLink = projectEditorRef.sourceLink
+            
+            let me = await ObjectID(systemBoardRef.id.value)
+            
+            await systemBoardRef.subscribe()
+            
+            try await #require(projectSourceLink.hasHandler(object: me) == true)
+            
+            // when
+            await systemBoardRef.unsubscribe()
+            
+            // then
+            await #expect(projectSourceLink.hasHandler(object: me) == false)
+        }
     }
     
     struct CreateFirstSystem {

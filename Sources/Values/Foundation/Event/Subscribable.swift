@@ -13,7 +13,7 @@ package protocol Subscribable: AnyObject, Sendable {
     
     var eventHandlers: [ObjectID: Handler<Event>] { get set }
     func hasHandler(object: ObjectID) -> Bool
-    func setHandler(ticket: SubscrieProjectSource, handler: Handler<Event>)
+    func setHandler(ticket: SubscribeProjectSource, handler: Handler<Event>)
 }
 
 @Server
@@ -21,7 +21,7 @@ package extension Subscribable {
     func hasHandler(object: ObjectID) -> Bool {
         self.eventHandlers[object] != nil
     }
-    func setHandler(ticket: SubscrieProjectSource, handler: Handler<Event>) {
+    func setHandler(ticket: SubscribeProjectSource, handler: Handler<Event>) {
         self.eventHandlers[ticket.object] = handler
     }
 }

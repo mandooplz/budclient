@@ -11,7 +11,7 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectEditor: Debuggable, EventDebuggable {
+public final class ProjectEditor: Debuggable {
     
     // MARK: core
     init(config: Config<ProjectBoard.ID>,
@@ -29,8 +29,8 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
     
     
     // MARK: state
-    public nonisolated let id = ID()
-    public nonisolated let config: Config<ProjectBoard.ID>
+    nonisolated let id = ID()
+    nonisolated let config: Config<ProjectBoard.ID>
     nonisolated let target: ProjectID
     nonisolated let sourceLink: ProjectSourceLink
     
@@ -40,7 +40,6 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
     public var flowBoard: FlowBoard.ID?
     
     public var issue: (any Issuable)?
-    package var callback: Callback?
     
     
     // MARK: action
@@ -75,9 +74,9 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    let editTicket = EditProjectSourceName(name)
+                    let ticket = EditProjectSourceName(name)
                     
-                    try await sourceLink.insert(editTicket)
+                    try await sourceLink.insert(ticket)
                     try await sourceLink.editProjectName()
                 }
             }
