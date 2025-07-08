@@ -57,10 +57,8 @@ struct ProjectBoardUpdaterTests {
             let projectSource = projectEditorRef.sourceLink.object
             
             // when
-            await MainActor.run {
-                let event = ProjectHubEvent.added(projectSource, projectEditorRef.target)
-                updaterRef.queue.append(event)
-            }
+            let event = ProjectHubEvent.added(projectSource, projectEditorRef.target)
+            await updaterRef.appendEvent(event)
             await updaterRef.update()
             
             // then
@@ -74,10 +72,8 @@ struct ProjectBoardUpdaterTests {
             try await #require(projectBoardRef.editors.isEmpty == true)
             
             let newProject = ProjectID()
-            let _ = await MainActor.run {
-                let event = ProjectHubEvent.added(ProjectSourceID(), newProject)
-                updaterRef.queue.append(event)
-            }
+            let event = ProjectHubEvent.added(ProjectSourceID(), newProject)
+            await updaterRef.appendEvent(event)
             
             // when
             await updaterRef.update()
@@ -96,10 +92,8 @@ struct ProjectBoardUpdaterTests {
             let newProject = ProjectID()
             let newProjectSource = ProjectSourceID()
             
-            await MainActor.run {
-                let event = ProjectHubEvent.added(newProjectSource, newProject)
-                updaterRef.queue.append(event)
-            }
+            let event = ProjectHubEvent.added(newProjectSource, newProject)
+            await updaterRef.appendEvent(event)
             
             // when
             await updaterRef.update()
@@ -114,10 +108,8 @@ struct ProjectBoardUpdaterTests {
             
             let newProject = ProjectID()
             let newProjectSource = ProjectSourceID()
-            await MainActor.run {
-                let event = ProjectHubEvent.added(newProjectSource, newProject)
-                updaterRef.queue.append(event)
-            }
+            let addEvent = ProjectHubEvent.added(newProjectSource, newProject)
+            await updaterRef.appendEvent(addEvent)
             await updaterRef.update()
             
             try await #require(updaterRef.issue == nil)
@@ -128,20 +120,13 @@ struct ProjectBoardUpdaterTests {
             let project = try #require(await projectEditor.ref?.target)
             
             // given
-            await MainActor.run {
-                let event = ProjectHubEvent.removed(project)
-                updaterRef.queue.append(event)
-                
-            }
+            let removeEvent = ProjectHubEvent.removed(project)
+            await updaterRef.appendEvent(removeEvent)
             
             await updaterRef.update()
             
             // when
-            await MainActor.run {
-                let event = ProjectHubEvent.removed(project)
-                updaterRef.queue.append(event)
-                
-            }
+            await updaterRef.appendEvent(removeEvent)
             await updaterRef.update()
             
             // then
@@ -171,10 +156,8 @@ struct ProjectBoardUpdaterTests {
             let project = try #require(await projectEditor.ref?.target)
             
             // when
-            await MainActor.run {
-                let event = ProjectHubEvent.removed(project)
-                updaterRef.queue.append(event)
-            }
+            let event = ProjectHubEvent.removed(project)
+            await updaterRef.appendEvent(event)
             await updaterRef.update()
             
             // then

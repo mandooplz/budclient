@@ -16,12 +16,10 @@ package enum ProjectHubEvent: Sendable {
 
 // MARK: ProjectSourceDiff
 package struct ProjectSourceDiff: Sendable {
-    package let id: ProjectSourceID
     package let target: ProjectID
     package let name: String
     
-    package init(id: ProjectSourceID, target: ProjectID, name: String) {
-        self.id = id
+    package init(target: ProjectID, name: String) {
         self.target = target
         self.name = name
     }

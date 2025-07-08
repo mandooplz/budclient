@@ -12,7 +12,7 @@ import BudServer
 
 // MARK: Object
 @MainActor @Observable
-final class SystemBoardUpdater: Sendable, Debuggable {
+final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
     // MARK: core
     init(config: Config<SystemBoard.ID>) {
         self.config = config
@@ -28,7 +28,6 @@ final class SystemBoardUpdater: Sendable, Debuggable {
     nonisolated let id = ID()
     nonisolated let config: Config<SystemBoard.ID>
     
-    
     var queue: Deque<ProjectSourceEvent> = []
     
     var issue: (any Issuable)?
@@ -41,13 +40,14 @@ final class SystemBoardUpdater: Sendable, Debuggable {
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
         let config = self.config
         let systemBoardRef = config.parent.ref!
-        let projectEditorRef = config.parent.ref!.config.parent.ref!
         
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
             case .added(let systemSource, let system):
-                if systemBoardRef.isExist(system) { return }
+                if systemBoardRef.isExist(system) {
+                    setIssue(Error.alreadyAdded); return
+                }
                 
                 let systemSourceLink = SystemSourceLink(mode: config.mode,
                                                         object: systemSource)
@@ -56,18 +56,23 @@ final class SystemBoardUpdater: Sendable, Debuggable {
                                                  sourceLink: systemSourceLink)
                 systemBoardRef.models.insert(systemModelRef.id)
             case .removed(let system):
-                guard let systemBoard = projectEditorRef.systemBoard,
-                      let systemBoardRef = systemBoard.ref else { return }
-                guard systemBoardRef.isExist(system) else { return }
+                guard systemBoardRef.isExist(system) else {
+                    setIssue(Error.alreadyRemoved); return
+                }
                 
-                let systemModel = systemBoardRef.models.first { $0.ref?.target == system }
-                guard let systemModel else { return }
+                let systemModel = systemBoardRef.models
+                    .first { $0.ref?.target == system }
                 
-                systemModel.ref?.delete()
-                systemBoardRef.models.remove(systemModel)
-            default:
-                // logger 기록?
-                return
+                systemModel!.ref?.delete()
+                systemBoardRef.models.remove(systemModel!)
+            case .modified(let diff):
+                guard let systemModel = systemBoardRef.getSystemModel(diff.target),
+                      let systemModelRef = systemModel.ref else {
+                    setIssue(Error.alreadyRemoved); return
+                }
+                
+                systemModelRef.name = diff.name
+                systemModelRef.location = diff.location
             }
         }
     }
@@ -90,6 +95,7 @@ final class SystemBoardUpdater: Sendable, Debuggable {
     }
     enum Error: String, Swift.Error {
         case updaterIsDeleted
+        case alreadyAdded, alreadyRemoved
     }
 }
 

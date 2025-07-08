@@ -72,7 +72,7 @@ package final class ProjectSource: Sendable {
                         handler.execute(event)
                     case .modified:
                         // server event
-                        let diffValue = SystemSourceDiff(id: systemSource,
+                        let diffValue = SystemSourceDiff(target: data.target,
                                                          name: data.name,
                                                          location: data.location)
                         let event = diffValue.getEvent()

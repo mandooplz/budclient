@@ -150,12 +150,13 @@ struct ProfileBoardTests {
                 await #expect(projectEditor.isExist == false)
             }
         }
+        
         @Test func deleteSystemBoard() async throws {
             // given
-            let projectRef = try await getProject(budClientRef)
-            await projectRef.setUp()
+            let projectEditorRef = try await getProjectEditor(budClientRef)
+            await projectEditorRef.setUp()
             
-            let systemBoard = try #require(await projectRef.systemBoard)
+            let systemBoard = try #require(await projectEditorRef.systemBoard)
             try await #require(systemBoard.isExist == true)
             
             // when
@@ -164,9 +165,27 @@ struct ProfileBoardTests {
             // then
             await #expect(systemBoard.isExist == false)
         }
+        @Test func deleteSystemBoardUpdater() async throws {
+            // given
+            let projectRef = try await getProjectEditor(budClientRef)
+            await projectRef.setUp()
+            
+            let systemBoardRef = try #require(await projectRef.systemBoard?.ref)
+            await systemBoardRef.setUp()
+            
+            let systemBoardUpdater = try #require(await systemBoardRef.updater)
+            try await #require(systemBoardUpdater.isExist == true)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(systemBoardUpdater.isExist == false)
+        }
+        
         @Test func deleteFlowBoard() async throws {
             // given
-            let projectRef = try await getProject(budClientRef)
+            let projectRef = try await getProjectEditor(budClientRef)
             await projectRef.setUp()
             
             let flowBoard = try #require(await projectRef.flowBoard)
@@ -225,7 +244,7 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileB
     return await profileBoard.ref!
 }
 
-private func getProject(_ budClientRef: BudClient) async throws -> ProjectEditor {
+private func getProjectEditor(_ budClientRef: BudClient) async throws -> ProjectEditor {
     let projectBoard = try #require(await budClientRef.projectBoard)
     let projectBoardRef = try #require(await projectBoard.ref)
     

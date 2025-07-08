@@ -65,7 +65,8 @@ package final class ProjectHub: Sendable {
                         handler.execute(event)
                     case .modified:
                         // serve event
-                        let event = ProjectSourceDiff(id: projectSource, target: data.target, name: data.name)
+                        let event = ProjectSourceDiff(target: data.target,
+                                                      name: data.name)
                             .getEvent()
                         handler.execute(event)
                     case .removed:

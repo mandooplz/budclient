@@ -24,12 +24,12 @@ package enum ProjectSourceEvent: Sendable {
 
 // MARK: SystemSourceDiff
 package struct SystemSourceDiff: Sendable {
-    package let id: SystemSourceID
+    package let target: SystemID
     package let name: String
     package let location: Location
     
-    package init(id: SystemSourceID, name: String, location: Location) {
-        self.id = id
+    package init(target: SystemID, name: String, location: Location) {
+        self.target = target
         self.name = name
         self.location = location
     }

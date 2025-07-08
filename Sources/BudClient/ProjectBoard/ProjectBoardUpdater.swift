@@ -13,7 +13,7 @@ import os
 
 // MARK: Object
 @MainActor @Observable
-final class ProjectBoardUpdater: Debuggable {
+final class ProjectBoardUpdater: Debuggable, UpdaterInterface {
     // MARK: core
     init(config: Config<ProjectBoard.ID>) {
         self.config = config
