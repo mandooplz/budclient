@@ -13,7 +13,9 @@ import BudServer
 @MainActor @Observable
 public final class RootModel: Sendable {
     // MARK: core
-    init(config: Config<SystemModel.ID>) {
+    init(target: ObjectID,
+         config: Config<SystemModel.ID>) {
+        self.target = target
         self.config = config
         
         RootModelManager.register(self)
@@ -26,9 +28,12 @@ public final class RootModel: Sendable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let config: Config<SystemModel.ID>
+    nonisolated let target: ObjectID
     
     public var name: String?
     
+    public var states: [RootState.ID] = []
+    public var actions: [RootAction.ID] = []
     
     
     // MARK: action

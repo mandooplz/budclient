@@ -32,9 +32,11 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     nonisolated let target: SystemID
     nonisolated let sourceLink: SystemSourceLink
     
-    public var name: String? // ex) BudClient-iOS, BudClient-MacOS 처럼 시스템의 이름
+    public var name: String? 
     public var location: Location?
     
+    public var rootModel: RootModel.ID?
+    public var objectModels: Set<ObjectModel.ID> = []
     
     public var issue: (any Issuable)?
     package var callback: Callback?

@@ -8,6 +8,6 @@ import Foundation
 
 
 // MARK: StateID
-public struct StateID: Sendable, Hashable {
+public struct StateID: Sendable, Hashable, Codable {
     public let value: UUID
 }

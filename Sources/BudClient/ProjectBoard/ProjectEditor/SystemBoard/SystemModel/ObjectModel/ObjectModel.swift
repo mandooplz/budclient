@@ -12,8 +12,9 @@ import Values
 @MainActor @Observable
 public final class ObjectModel: Sendable {
     // MARK: core
-    init(target: ObjectID) {
+    init(target: ObjectID, config: Config<SystemModel.ID>) {
         self.target = target
+        self.config = config
         
         ObjectModelManager.register(self)
     }
@@ -24,7 +25,8 @@ public final class ObjectModel: Sendable {
     
     // MARK: state
     nonisolated let id = ID()
-    nonisolated let target: ObjectID // 어떤 Object인지를 표현하는 ID
+    nonisolated let config: Config<SystemModel.ID>
+    nonisolated let target: ObjectID
     
     public var type: Relationship = .oneToOne // Object가 상위 Object와 어떻게 연결되어있는지를 표현
     
