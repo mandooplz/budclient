@@ -32,9 +32,9 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     nonisolated let target: SystemID
     nonisolated let sourceLink: SystemSourceLink
     
+    public var name: String? // ex) BudClient-iOS, BudClient-MacOS 처럼 시스템의 이름
     public var location: Location?
     
-    public var name: String? // ex) BudClient-iOS, BudClient-MacOS 처럼 시스템의 이름
     
     public var issue: (any Issuable)?
     package var callback: Callback?
@@ -49,7 +49,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public func pushName() { }
     public func pushLocation() { }
     
-    public func createNewObjectModel() { }
     public func remove() { }
     
     

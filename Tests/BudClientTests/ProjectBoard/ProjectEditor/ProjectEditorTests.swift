@@ -148,7 +148,6 @@ struct ProjectEditorTests {
             }
         }
     }
-    
 
     struct RemoveSource {
         let budClientRef: BudClient

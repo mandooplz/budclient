@@ -77,7 +77,7 @@ public final class ProjectEditor: Debuggable {
                     let ticket = PushProjectSourceName(name)
                     
                     try await sourceLink.insert(ticket)
-                    try await sourceLink.editProjectName()
+                    try await sourceLink.editName()
                 }
             }
         } catch {

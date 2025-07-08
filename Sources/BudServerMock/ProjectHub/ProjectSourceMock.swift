@@ -45,7 +45,7 @@ package final class ProjectSourceMock: Sendable {
     
     
     // MARK: action
-    package func editProjectName() {
+    package func editName() {
         // mutate
         guard Manager.isExist(id) else { return }
         guard let editTicket else { return }

@@ -1,5 +1,5 @@
 //
-//  StateModel.swift
+//  ObjectState.swift
 //  BudClient
 //
 //  Created by 김민우 on 7/7/25.
@@ -10,15 +10,15 @@ import Values
 
 // MARK: Object
 @MainActor @Observable
-public final class StateModel: ObservableObject {
+public final class ObjectState: Sendable {
     // MARK: core
     init(target: StateID) {
         self.target = target
         
-        StateModelManager.register(self)
+        ObjectStateManager.register(self)
     }
     func delete() {
-        StateModelManager.unregister(self.id)
+        ObjectStateManager.unregister(self.id)
     }
     
     
@@ -26,7 +26,7 @@ public final class StateModel: ObservableObject {
     nonisolated let id = ID()
     nonisolated let target: StateID
     
-    public var permission: Permission = .readWrite
+    public var permission: StatePermission = .readWrite
     
     
     // MARK: action
@@ -45,27 +45,24 @@ public final class StateModel: ObservableObject {
         }
         
         var isExist: Bool {
-            fatalError()
+            ObjectStateManager.container[self] != nil
         }
-        public var ref: StateModel? {
-            fatalError()
+        public var ref: ObjectState? {
+            ObjectStateManager.container[self]
         }
-    }
-    public enum Permission: Sendable, Hashable {
-        case none, read, readWrite
     }
 }
 
 
 // MARK: Objec Manager
 @MainActor @Observable
-fileprivate final class StateModelManager: Sendable {
+fileprivate final class ObjectStateManager: Sendable {
     // MARK: state
-    fileprivate static var container: [StateModel.ID: StateModel] = [:]
-    fileprivate static func register(_ object: StateModel) {
+    fileprivate static var container: [ObjectState.ID: ObjectState] = [:]
+    fileprivate static func register(_ object: ObjectState) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: StateModel.ID) {
+    fileprivate static func unregister(_ id: ObjectState.ID) {
         container[id] = nil
     }
 }

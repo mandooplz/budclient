@@ -17,7 +17,4 @@ package struct SystemSourceLink: Sendable {
         self.mode = mode
         self.object = object
     }
-    
-    
-    // MARK: 
 }

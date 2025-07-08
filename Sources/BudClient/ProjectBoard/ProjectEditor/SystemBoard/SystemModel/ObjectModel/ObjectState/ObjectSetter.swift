@@ -10,15 +10,15 @@ import Values
 
 // MARK: Object
 @MainActor @Observable
-public final class SetterModel: Sendable {
+public final class ObjectSetter: Sendable {
     // MARK:  Core
     init(target: StateID) {
         self.target = target
         
-        SetterModelManager.register(self)
+        ObjectSetterManager.register(self)
     }
     func delete() {
-        SetterModelManager.unregister(self.id)
+        ObjectSetterManager.unregister(self.id)
     }
     
     
@@ -41,10 +41,10 @@ public final class SetterModel: Sendable {
         }
         
         var isExist: Bool {
-            SetterModelManager.container[self] != nil
+            ObjectSetterManager.container[self] != nil
         }
-        public var ref: SetterModel? {
-            SetterModelManager.container[self]
+        public var ref: ObjectSetter? {
+            ObjectSetterManager.container[self]
         }
     }
 }
@@ -52,13 +52,13 @@ public final class SetterModel: Sendable {
 
 // MARK: Object Manager
 @MainActor @Observable
-fileprivate final class SetterModelManager: Sendable {
+fileprivate final class ObjectSetterManager: Sendable {
     // MARK: state
-    fileprivate static var container: [SetterModel.ID: SetterModel] = [:]
-    fileprivate static func register(_ object: SetterModel) {
+    fileprivate static var container: [ObjectSetter.ID: ObjectSetter] = [:]
+    fileprivate static func register(_ object: ObjectSetter) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: SetterModel.ID) {
+    fileprivate static func unregister(_ id: ObjectSetter.ID) {
         container[id] = nil
     }
 }

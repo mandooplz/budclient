@@ -96,7 +96,7 @@ package final class ProjectSource: Sendable {
     
     
     // MARK: action
-    package func editProjectName() throws {
+    package func editName() throws {
         guard Manager.isExist(id) else { return }
         guard let newName = editTicket?.name else { return }
         

@@ -87,13 +87,13 @@ package struct ProjectSourceLink: Sendable, Hashable {
     
     
     // MARK: action
-    @Server package func editProjectName() async throws {
+    @Server package func editName() async throws {
         switch mode {
         case .test:
-            TestManager.get(object)?.editProjectName()
+            TestManager.get(object)?.editName()
         case .real:
             try await MainActor.run {
-                try RealManager.get(object)?.editProjectName()
+                try RealManager.get(object)?.editName()
             }
         }
     }

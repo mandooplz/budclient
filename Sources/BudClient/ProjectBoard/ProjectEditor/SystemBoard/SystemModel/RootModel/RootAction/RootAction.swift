@@ -1,24 +1,25 @@
 //
-//  ActionModel.swift
+//  RootAction.swift
 //  BudClient
 //
-//  Created by 김민우 on 7/7/25.
+//  Created by 김민우 on 7/9/25.
 //
 import Foundation
 import Values
+import BudServer
 
 
 // MARK: Object
 @MainActor @Observable
-public final class ActionModel: Sendable {
+public final class RootAction: Sendable {
     // MARK: core
     init(target: ActionID) {
         self.target = target
         
-        ActionModelManager.register(self)
+        RootActionManager.register(self)
     }
     func delete() {
-        ActionModelManager.unregister(self.id)
+        RootActionManager.unregister(self.id)
     }
     
     
@@ -26,11 +27,9 @@ public final class ActionModel: Sendable {
     nonisolated let id = ID()
     nonisolated let target: ActionID
     
-    public var name: String?
-    
     
     // MARK: action
-    public func remove() { }
+    
     
     
     // MARK: value
@@ -42,24 +41,24 @@ public final class ActionModel: Sendable {
         }
         
         var isExist: Bool {
-            false
+            RootActionManager.container[self] != nil
         }
-        public var ref: ActionModel? {
-            nil
+        public var ref: RootAction? {
+            RootActionManager.container[self]
         }
     }
 }
 
 
-// MARK: Object Manager
+// MARK: ObjectManager
 @MainActor @Observable
-fileprivate final class ActionModelManager: Sendable {
+fileprivate final class RootActionManager: Sendable {
     // MARK: state
-    fileprivate static var container: [ActionModel.ID: ActionModel] = [:]
-    fileprivate static func register(_ object: ActionModel) {
+    fileprivate static var container: [RootAction.ID: RootAction] = [:]
+    fileprivate static func register(_ object: RootAction) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ActionModel.ID) {
+    fileprivate static func unregister(_ id: RootAction.ID) {
         container[id] = nil
     }
 }

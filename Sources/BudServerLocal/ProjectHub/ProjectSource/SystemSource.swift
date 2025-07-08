@@ -37,9 +37,14 @@ package final class SystemSource: Sendable {
     // MARK: value
     package struct Data: Hashable, Codable {
         @DocumentID var id: String?
-        var name: String
         var target: SystemID
+        var name: String
         var location: Location
+        var rootModel: Root?
+        
+        package struct Root: Hashable, Codable {
+            let value: UUID
+        }
     }
     package enum State: Sendable, Hashable {
         static let name = "name"

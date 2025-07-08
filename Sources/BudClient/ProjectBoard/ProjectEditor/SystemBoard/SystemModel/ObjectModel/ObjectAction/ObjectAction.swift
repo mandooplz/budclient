@@ -1,5 +1,5 @@
 //
-//  GetterModel.swift
+//  ObjectAction.swift
 //  BudClient
 //
 //  Created by 김민우 on 7/7/25.
@@ -10,24 +10,27 @@ import Values
 
 // MARK: Object
 @MainActor @Observable
-public final class GetterModel: ObservableObject {
+public final class ObjectAction: Sendable {
     // MARK: core
-    init(target: GetterID) {
+    init(target: ActionID) {
         self.target = target
         
-        GetterModelManager.register(self)
+        ObjectActionManager.register(self)
     }
     func delete() {
-        GetterModelManager.unregister(self.id)
+        ObjectActionManager.unregister(self.id)
     }
+    
     
     // MARK: state
     nonisolated let id = ID()
-    nonisolated let target: GetterID
+    nonisolated let target: ActionID
+    
+    public var name: String?
     
     
     // MARK: action
-    public func remove() async { }
+    public func remove() { }
     
     
     // MARK: value
@@ -39,10 +42,10 @@ public final class GetterModel: ObservableObject {
         }
         
         var isExist: Bool {
-            GetterModelManager.container[self] != nil
+            ObjectActionManager.container[self] != nil
         }
-        public var ref: GetterModel? {
-            GetterModelManager.container[self]
+        public var ref: ObjectAction? {
+            ObjectActionManager.container[self]
         }
     }
 }
@@ -50,13 +53,13 @@ public final class GetterModel: ObservableObject {
 
 // MARK: Object Manager
 @MainActor @Observable
-fileprivate final class GetterModelManager: Sendable {
+fileprivate final class ObjectActionManager: Sendable {
     // MARK: state
-    fileprivate static var container: [GetterModel.ID: GetterModel] = [:]
-    fileprivate static func register(_ object: GetterModel) {
+    fileprivate static var container: [ObjectAction.ID: ObjectAction] = [:]
+    fileprivate static func register(_ object: ObjectAction) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: GetterModel.ID) {
+    fileprivate static func unregister(_ id: ObjectAction.ID) {
         container[id] = nil
     }
 }
