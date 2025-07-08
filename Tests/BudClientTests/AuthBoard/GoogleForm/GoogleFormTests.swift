@@ -222,7 +222,7 @@ struct GoogleFormTests {
         
         @Test func setUserIdInBudCache() async throws {
             // given
-            let budCacheLink = budClientRef.budCacheLink
+            let budCacheLink = googleFormRef.tempConfig.budCacheLink
             try await #require(budCacheLink.getUser() == nil)
             
             await MainActor.run {

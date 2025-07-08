@@ -204,7 +204,7 @@ private func getUpdater(_ budClientRef: BudClient) async -> ProjectBoardUpdater 
 }
 
 private func getProject(_ budClientRef: BudClient) async -> ProjectID {
-    let budServerLink = await budClientRef.budServerLink!
+    let budServerLink = await budClientRef.projectBoard!.ref!.config.budServerLink
     let projectHubLink = await budServerLink.getProjectHub()
     
     // create new Project

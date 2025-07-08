@@ -506,7 +506,7 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            let budCacheLink = budClientRef.budCacheLink
+            let budCacheLink = signInFormRef.tempConfig.budCacheLink
             await #expect(budCacheLink.getUser() != nil)
         }
     }
@@ -522,7 +522,7 @@ internal func getEmailForm(_ budClientRef: BudClient) async -> SignInForm {
     return await signInForm.ref!
 }
 private func register(budClientRef: BudClient, email: String, password: String) async {
-    let budServerLink = await budClientRef.budServerLink!
+    let budServerLink = await budClientRef.authBoard!.ref!.tempConfig.budServerLink
     let accountHubLink = await budServerLink.getAccountHub()
     
     let newTicket = CreateEmailForm()
@@ -542,10 +542,10 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     let testPassword = Password.random().value
     
     // register
-    let budServerRef = await BudServerMock()
-    await budServerRef.setUp()
+    let budServerMockRef = BudServerMock()
+    await budServerMockRef.setUp()
     
-    let budServerLink = try! await BudServerLink(mode: .test(budServerRef))
+    let budServerLink = await BudServerLink(budServerMockRef: budServerMockRef)
     let accountHubLink = await budServerLink.getAccountHub()
     
     let newTicket = CreateEmailForm()
@@ -564,7 +564,7 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     
     
     // setUser
-    let budCacheLink = budClientRef.budCacheLink
+    let budCacheLink = await budClientRef.authBoard!.ref!.tempConfig.budCacheLink
     await budCacheLink.setUser(user)
 }
 

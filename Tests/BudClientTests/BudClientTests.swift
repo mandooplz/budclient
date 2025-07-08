@@ -39,17 +39,6 @@ struct BudClientTests {
             try await #require(budClientRef.issue == nil)
             await #expect(budClientRef.community == nil)
         }
-        @Test func setBudServerLink() async throws {
-            // given
-            try await #require(budClientRef.budServerLink == nil)
-            
-            // when
-            await budClientRef.setUp()
-            
-            // then
-            try await #require(budClientRef.issue == nil)
-            await #expect(budClientRef.budServerLink != nil)
-        }
         
         @Test func setAndCreateAuthBoard() async throws {
             // given

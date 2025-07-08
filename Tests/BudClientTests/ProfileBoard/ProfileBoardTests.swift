@@ -25,7 +25,7 @@ struct ProfileBoardTests {
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
-            let budCacheLink = budClientRef.budCacheLink
+            let budCacheLink = profileBoardRef.config.budCacheLink
             try await #require(budCacheLink.getUser() != nil)
             
             // when
@@ -46,7 +46,7 @@ struct ProfileBoardTests {
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
-            let budCacheLink = budClientRef.budCacheLink
+            let budCacheLink = profileBoardRef.config.budCacheLink
             try await #require(budCacheLink.getUser() != nil)
             
             // when
@@ -204,7 +204,7 @@ struct ProfileBoardTests {
         
         @Test func setNilUserIdInBudCache() async throws {
             // given
-            let budCacheLink = budClientRef.budCacheLink
+            let budCacheLink = profileBoardRef.config.budCacheLink
             try await #require(budCacheLink.getUser() != nil)
             
             // when

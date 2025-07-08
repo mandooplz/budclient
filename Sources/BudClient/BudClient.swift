@@ -16,14 +16,14 @@ import BudServerMock
 public final class BudClient: Debuggable {
     // MARK: core
     public init(plistPath: String) {
-        self.mode = .real(plistPath: plistPath)
-        self.budCacheLink = BudCacheLink(mode: .real)
+        self.mode = .real
+        self.plistPath = plistPath
         
         BudClientManager.register(self)
     }
-    public init() {
+    package init() {
         self.mode = .test
-        self.budCacheLink = BudCacheLink(mode: .test(mockRef: budCacheMockRef))
+        self.plistPath = ""
         
         BudClientManager.register(self)
     }
@@ -31,13 +31,12 @@ public final class BudClient: Debuggable {
     
     // MARK: state
     nonisolated let id = ID()
-    nonisolated let mode: Mode
+    nonisolated let mode: SystemMode
     nonisolated let system = SystemID()
     
-    public private(set) var budServerLink: BudServerLink?
+    private nonisolated let plistPath: String
     private nonisolated let budServerMockRef = BudServerMock()
     private nonisolated let budCacheMockRef = BudCacheMock()
-    internal nonisolated let budCacheLink: BudCacheLink
     
     public internal(set) var authBoard: AuthBoard.ID?
     public internal(set) var projectBoard: ProjectBoard.ID?
@@ -52,22 +51,27 @@ public final class BudClient: Debuggable {
     // MARK: action
     public func setUp() async {
         // capture
-        guard authBoard == nil else { setIssue(Error.alreadySetUp); return }
+        guard authBoard == nil && projectBoard == nil && profileBoard == nil
+        else { setIssue(Error.alreadySetUp); return }
         
         // compute
         let budServerLink: BudServerLink
+        let budCacheLink: BudCacheLink
         do {
-            async let result = try await BudServerLink(mode: mode.forBudServerLink(budServerMockRef))
-            budServerLink = try await result
+            switch mode {
+            case .test:
+                budServerLink = await .init(budServerMockRef: budServerMockRef)
+                budCacheLink = BudCacheLink(mode: .test, budCacheMockRef: self.budCacheMockRef)
+            case .real:
+                budServerLink = try await .init(plistPath: plistPath)
+                budCacheLink = BudCacheLink(mode: .real, budCacheMockRef: self.budCacheMockRef)
+            }
         } catch {
-            issue = UnknownIssue(error)
-            return
+            issue = UnknownIssue(error); return
         }
         
         // mutate
-        self.budServerLink = budServerLink
-        
-        let tempConfig = TempConfig(id, mode.getSystemMode(), system, budServerLink, budCacheLink)
+        let tempConfig = TempConfig(id, mode, system, budServerLink, budCacheLink)
         let authBoardRef = AuthBoard(tempConfig: tempConfig)
         self.authBoard = authBoardRef.id
     }
@@ -84,27 +88,7 @@ public final class BudClient: Debuggable {
             BudClientManager.container[self]
         }
     }
-    public enum Mode: Sendable {
-        case test
-        case real(plistPath: String)
-        
-        func forBudServerLink(_ budServerMockRef: BudServerMock) async -> BudServerLink.Mode {
-            switch self {
-            case .test:
-                // 이 코드를 리팩토링해야할 듯하다.
-                await budServerMockRef.setUp()
-                return .test(budServerMockRef)
-            case .real(let plistPath):
-                return .real(plistPath: plistPath)
-            }
-        }
-        func getSystemMode() -> SystemMode {
-            switch self {
-            case .test: return .test
-            case .real: return .real
-            }
-        }
-    }
+    
     public enum Error: String, Swift.Error {
         case alreadySetUp
         case invalidPlistPath

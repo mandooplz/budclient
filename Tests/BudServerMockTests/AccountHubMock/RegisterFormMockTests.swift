@@ -17,7 +17,7 @@ struct EmailRegisterFormMockTests {
         let budServerRef: BudServerMock
         let emailRegisterFormRef: EmailRegisterFormMock
         init() async throws {
-            self.budServerRef = await BudServerMock()
+            self.budServerRef = BudServerMock()
             self.emailRegisterFormRef = await getRegisterFormMock(budServerRef)
         }
         
@@ -77,7 +77,7 @@ struct EmailRegisterFormMockTests {
         let budServerRef: BudServerMock
         let emailRegisterFormRef: EmailRegisterFormMock
         init() async throws {
-            self.budServerRef = await BudServerMock()
+            self.budServerRef = BudServerMock()
             self.emailRegisterFormRef = await getRegisterFormMock(budServerRef)
         }
         @Test func deleteEmailRegisterForm() async throws {

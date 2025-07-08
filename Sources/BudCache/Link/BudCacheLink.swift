@@ -13,26 +13,28 @@ import BudServer
 // MARK: Link
 package struct BudCacheLink: Sendable {
     // MARK: core
-    private let mode: Mode
-    package init(mode: Mode) {
+    private let mode: SystemMode
+    private let budCacheMockRef: BudCacheMock
+    package init(mode: SystemMode, budCacheMockRef: BudCacheMock) {
         self.mode = mode
+        self.budCacheMockRef = budCacheMockRef
     }
     
     
     // MARK: state
     package func getUser() async -> UserID? {
         switch mode {
-        case .test(let mockRef):
-            return await mockRef.user
+        case .test:
+            return await budCacheMockRef.user
         case .real:
             return Auth.auth().currentUser?.uid.toUserID()
         }
     }
     package func setUser(_ value: UserID) async {
         switch mode {
-        case .test(let mockRef):
+        case .test:
             await Server.run {
-                mockRef.user = value
+                budCacheMockRef.user = value
             }
         case .real:
             return
@@ -40,9 +42,9 @@ package struct BudCacheLink: Sendable {
     }
     package func resetUser() async throws {
         switch mode {
-        case .test(let mockRef):
+        case .test:
             await Server.run {
-                mockRef.user = nil
+                budCacheMockRef.user = nil
             }
         case .real:
             await withThrowingTaskGroup { group in
@@ -51,12 +53,5 @@ package struct BudCacheLink: Sendable {
                 }
             }
         }
-    }
-    
-    
-    // MARK: value
-    package enum Mode: Sendable {
-        case test(mockRef: BudCacheMock)
-        case real
     }
 }

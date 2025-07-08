@@ -16,12 +16,12 @@ package final class BudServerMock {
     
     
     // MARK: state
-    @Server package var accountHubRef: AccountHubMock?
-    @Server package var projectHubRef: ProjectHubMock?
+    package var accountHubRef: AccountHubMock?
+    package var projectHubRef: ProjectHubMock?
     
     
     // MARK: action
-    @Server package func setUp() {
+    package func setUp() {
         guard accountHubRef == nil || projectHubRef == nil else { return }
                 
         self.accountHubRef = AccountHubMock()

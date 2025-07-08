@@ -15,21 +15,28 @@ import FirebaseFirestore
 // MARK: Link
 public struct BudServerLink: Sendable {
     // MARK: core
-    private let mode: Mode
-    package init(mode: Mode) async throws(Error) {
-        self.mode = mode
+    private let mode: SystemMode
+    private let budSeverMockRef: BudServerMock!
+    
+    package init(plistPath: String) async throws(Error) {
+        self.mode = .real
+        self.budSeverMockRef = nil
         
-        if case .real(let plistPath) = mode {
-            if FirebaseApp.app() != nil { return }
-            
-            
-            guard let options = FirebaseOptions(contentsOfFile: plistPath) else {
-                throw Error.plistPathIsWrong
-            }
-            await MainActor.run {
-                FirebaseApp.configure(options: options)
-            }
+        if FirebaseApp.app() != nil { return }
+        
+        
+        guard let options = FirebaseOptions(contentsOfFile: plistPath) else {
+            throw Error.plistPathIsWrong
         }
+        await MainActor.run {
+            FirebaseApp.configure(options: options)
+        }
+    }
+    package init(budServerMockRef: BudServerMock) async {
+        self.mode = .test
+        self.budSeverMockRef = budServerMockRef
+        
+        await budServerMockRef.setUp()
     }
     
     
@@ -39,41 +46,26 @@ public struct BudServerLink: Sendable {
     }
     
     package func getAccountHub() async -> AccountHubLink {
-        await AccountHubLink(mode: mode.forAccountHub)
+        switch mode {
+        case .test:
+            return await AccountHubLink(mode: .test(budSeverMockRef.accountHubRef!))
+        case .real:
+            return AccountHubLink(mode: .real)
+        }
     }
     package func getProjectHub() async -> ProjectHubLink {
-        await ProjectHubLink(mode: mode.forProjectHub)
+        switch mode {
+        case .test:
+            return await ProjectHubLink(mode: .test(budSeverMockRef.projectHubRef!))
+        case .real:
+            return ProjectHubLink(mode: .real)
+        }
     }
-    
     
     
     // MARK: value
     package enum Error: String, Swift.Error {
         case plistPathIsWrong
-    }
-    package enum Mode: Sendable {
-        case test(BudServerMock)
-        case real(plistPath: String)
-        
-        @Server
-        var forAccountHub: AccountHubLink.Mode {
-            switch self {
-            case .test(let budServerMock):
-                .test(budServerMock.accountHubRef!)
-            case .real:
-                    .real
-            }
-        }
-        
-        @Server
-        var forProjectHub: ProjectHubLink.Mode {
-            switch self {
-            case .test(let budServerMock):
-                    .test(budServerMock.projectHubRef!)
-            case .real:
-                    .real
-            }
-        }
     }
 }
 
