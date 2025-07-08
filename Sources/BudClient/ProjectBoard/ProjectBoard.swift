@@ -34,7 +34,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     func getProjectEditor(_ target: ProjectID) -> ProjectEditor.ID? {
         self.editors.first { $0.ref?.target == target }
     }
-    public func isExist(target: ProjectID) -> Bool {
+    public func isEditorExist(target: ProjectID) -> Bool {
         self.editors.lazy
             .compactMap { $0.ref }
             .contains { $0.target == target }
@@ -132,14 +132,14 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
                     let newProject = ProjectID()
-                    let newName = "Project\(Int.random(in: 1..<1000))"
+                    let newName = "Project \(Int.random(in: 1..<1000))"
                     
-                    let ticket = CreateProjectSource(
+                    async let ticket = CreateProjectSource(
                         creator: config.user,
                         target: newProject,
                         name: newName)
                     
-                    let projectHubLink = await budServerLink.getProjectHub()
+                    async let projectHubLink = await budServerLink.getProjectHub()
                     
                     await projectHubLink.insertTicket(ticket)
                     try await projectHubLink.createProjectSource()

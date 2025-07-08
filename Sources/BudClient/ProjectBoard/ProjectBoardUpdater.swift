@@ -13,7 +13,7 @@ import os
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectBoardUpdater: Debuggable {
+final class ProjectBoardUpdater: Debuggable {
     // MARK: core
     init(config: Config<ProjectBoard.ID>) {
         self.config = config
@@ -26,52 +26,58 @@ public final class ProjectBoardUpdater: Debuggable {
     
     
     // MARK: state
-    public nonisolated let id = ID()
-    public nonisolated let config: Config<ProjectBoard.ID>
+    nonisolated let id = ID()
+    nonisolated let config: Config<ProjectBoard.ID>
    
     var queue: Deque<ProjectHubEvent> = []
     
-    public var issue: (any Issuable)?
+    var issue: (any Issuable)?
     
     
     // MARK: action
-    func update() async {
-        await update(mutateHook: nil)
-    }
-    func update(mutateHook: Hook?) async {
+    func update(mutateHook: Hook? = nil) async {
+        // capture
+        let config = self.config
+        let projectBoardRef = config.parent.ref!
+        
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
-        let config = self.config
-        let projectBoardRef = config.parent.ref!
         
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
             case .added(let projectSource, let project):
-                if projectBoardRef.isExist(target: project) { return }
+                if projectBoardRef.isEditorExist(target: project) {
+                    setIssue(Error.alreadyAdded); return
+                }
                 
-                let sourceLink = ProjectSourceLink(mode: config.mode, object: projectSource)
+                // create ProjectEditor
+                let sourceLink = ProjectSourceLink(mode: config.mode,
+                                                   object: projectSource)
                 let projectEditorRef = ProjectEditor(config: config,
                                                      target: project,
                                                      sourceLink: sourceLink)
                 
                 projectBoardRef.editors.append(projectEditorRef.id)
                 
-            case .modified(let diff):
-                // update projectEditor
-                let project = diff.target
-                let projectName = diff.name
+            case .modified(let projectSourceDiff):
+                // update ProjectEditor
+                let project = projectSourceDiff.target
+                let newName = projectSourceDiff.name
                 
                 guard let projectEditor = projectBoardRef.getProjectEditor(project),
                       let projectEditorRef = projectEditor.ref else { return }
                 
-                projectEditorRef.name = projectName
+                projectEditorRef.name = newName
             case .removed(let project):
-                // remove projectEditor
-                let projectEditor = projectBoardRef.editors.first { $0.ref?.target == project }
-                projectEditor?.ref?.delete()
+                // remove ProjectEditor
+                guard let projectEditor = projectBoardRef.getProjectEditor(project),
+                      let projectEditorRef = projectEditor.ref else {
+                    setIssue(Error.alreadyRemoved); return
+                }
                 
+                projectEditorRef.delete()
                 projectBoardRef.editors.removeAll { $0 == projectEditor }
             }
         }
@@ -80,8 +86,8 @@ public final class ProjectBoardUpdater: Debuggable {
     
     // MARK: value
     @MainActor
-    public struct ID: Sendable, Hashable {
-        public let value: UUID
+    struct ID: Sendable, Hashable {
+        let value: UUID
         nonisolated init(value: UUID = UUID()) {
             self.value = value
         }
@@ -89,11 +95,11 @@ public final class ProjectBoardUpdater: Debuggable {
         var isExist: Bool {
             ProjectBoardUpdaterManager.container[self] != nil
         }
-        public var ref: ProjectBoardUpdater? {
+        var ref: ProjectBoardUpdater? {
             ProjectBoardUpdaterManager.container[self]
         }
     }
-    public enum Error: String, Swift.Error {
+    enum Error: String, Swift.Error {
         case updaterIsDeleted
         case alreadyAdded, alreadyRemoved
         case projectSourceDoesNotExist
