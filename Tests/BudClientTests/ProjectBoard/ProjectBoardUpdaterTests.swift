@@ -12,7 +12,7 @@ import Values
 
 
 // MARK: Tests
-@Suite("ProjectBoardUpdater")
+@Suite("ProjectBoardUpdater", .timeLimit(.minutes(1)))
 struct ProjectBoardUpdaterTests {
     struct Update {
         let budClientRef: BudClient

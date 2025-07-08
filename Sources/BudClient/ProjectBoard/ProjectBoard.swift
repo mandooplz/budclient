@@ -31,6 +31,9 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     var updater: ProjectBoardUpdater.ID?
     
     public internal(set) var editors: [ProjectEditor.ID] = []
+    func getProjectEditor(_ target: ProjectID) -> ProjectEditor.ID? {
+        self.editors.first { $0.ref?.target == target }
+    }
     public func isExist(target: ProjectID) -> Bool {
         self.editors.lazy
             .compactMap { $0.ref }

@@ -59,15 +59,16 @@ public final class ProjectBoardUpdater: Debuggable {
                 projectBoardRef.editors.append(projectEditorRef.id)
                 
             case .modified(let diff):
-                // diff = ProjectSource의 변경사항
+                // update projectEditor
                 let project = diff.target
                 let projectName = diff.name
                 
-                // TODO: 수정 필요
-                fatalError()
-                // 이를 기반으로 ProjectEditor의 데이터를 업데이트
-                return
+                guard let projectEditor = projectBoardRef.getProjectEditor(project),
+                      let projectEditorRef = projectEditor.ref else { return }
+                
+                projectEditorRef.name = projectName
             case .removed(let project):
+                // remove projectEditor
                 let projectEditor = projectBoardRef.editors.first { $0.ref?.target == project }
                 projectEditor?.ref?.delete()
                 

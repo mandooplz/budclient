@@ -13,13 +13,32 @@ import Values
 
 // MARK: Tests
 @Suite("SystemBoard", .timeLimit(.minutes(1)))
-struct SystemBoardTests {    
+struct SystemBoardTests {
+    struct SetUp {
+        let budClientRef: BudClient
+        let systemBoardRef: SystemBoard
+        init() async {
+            self.budClientRef = await BudClient()
+            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+        }
+    }
+    
+    struct Subscribe {
+        
+    }
+    
+    struct Unsubscribe {
+        
+    }
+    
     struct CreateFirstSystem {
         let budClientRef: BudClient
         let systemBoardRef: SystemBoard
         init() async {
             self.budClientRef = await BudClient()
             self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+            
+            await systemBoardRef.setUp()
         }
         
         @Test func whenSystemBoardIsDeleted() async throws {
@@ -54,17 +73,16 @@ struct SystemBoardTests {
             // given
             try await #require(systemBoardRef.isModelsEmpty == true)
             
-            let projectRef = try #require(await systemBoardRef.config.parent.ref)
-            await projectRef.unsubscribe()
+            await systemBoardRef.unsubscribe()
             
             // when
             await withCheckedContinuation { con in
                 Task {
-                    await projectRef.setCallback {
+                    await systemBoardRef.setCallback {
                         con.resume()
                     }
+                    await systemBoardRef.subscribe()
                     
-                    await projectRef.subscribe()
                     await systemBoardRef.createFirstSystem()
                 }
             }
@@ -77,8 +95,8 @@ struct SystemBoardTests {
         }
         @Test func createSystemSource() async throws {
             // given
-            let projectRef = try #require(await systemBoardRef.config.parent.ref)
-            let projectSourceLink = projectRef.sourceLink
+            let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
+            let projectSourceLink = projectEditorRef.sourceLink
             
             try await #require(projectSourceLink.getSystemSources().isEmpty == true)
             

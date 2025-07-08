@@ -25,7 +25,6 @@ struct ProjectEditorTests {
         @Test func wnenAlreadtSetUp() async throws {
             // given
             await editorRef.setUp()
-            let updater = try #require(await editorRef.updater)
             let systemBoard = try #require(await editorRef.systemBoard)
             let flowBoard = try #require(await editorRef.flowBoard)
             
@@ -35,9 +34,6 @@ struct ProjectEditorTests {
             // then
             let issue = try #require(await editorRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadySetUp")
-            
-            let newUpdater = try #require(await editorRef.updater)
-            #expect(newUpdater == updater)
             
             let newSystemBoard = try #require(await editorRef.systemBoard)
             #expect(newSystemBoard == systemBoard)
@@ -59,17 +55,6 @@ struct ProjectEditorTests {
             #expect(issue.reason == "editorIsDeleted")
         }
         
-        @Test func createProjectUpdater() async throws {
-            // given
-            try await #require(editorRef.updater == nil)
-            
-            // when
-            await editorRef.setUp()
-            
-            // then
-            let updater = try #require(await editorRef.updater)
-            await #expect(updater.isExist == true)
-        }
         @Test func createSystemBoard() async throws {
             // given
             try await #require(editorRef.systemBoard == nil)
@@ -91,81 +76,6 @@ struct ProjectEditorTests {
             // then
             let flowBoard = try #require(await editorRef.flowBoard)
             await #expect(flowBoard.isExist == true)
-        }
-    }
-    
-    struct Subscribe {
-        let budClientRef: BudClient
-        let editorRef: ProjectEditor
-        init() async {
-            self.budClientRef = await BudClient()
-            self.editorRef = await createAndGetProject(budClientRef)
-        }
-        
-        @Test func whenProjectIsDeletedBeforeCapture() async throws {
-            // given
-            try await #require(editorRef.id.isExist == true)
-            
-            // when
-            await editorRef.subscribe {
-                await editorRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await editorRef.issue as? KnownIssue)
-            #expect(issue.reason == "editorIsDeleted")
-        }
-        @Test func whenUpdaterIsNil() async throws {
-            // given
-            try await #require(editorRef.updater == nil)
-            
-            // when
-            await editorRef.subscribe()
-            
-            // then
-            let issue = try #require(await editorRef.issue as? KnownIssue)
-            #expect(issue.reason == "updaterIsNil")
-        }
-        
-        @Test func setHandlerInProjectSource() async throws {
-            // given
-            let sourceLink = editorRef.sourceLink
-            let object = await ObjectID(editorRef.id.value)
-            try await #require(sourceLink.hasHandler(object: object) == false)
-            
-            await editorRef.setUp()
-            
-            // when
-            await editorRef.subscribe()
-            
-            // then
-            await #expect(sourceLink.hasHandler(object: object) == true)
-        }
-        @Test func getUpdateFromProjectSource() async throws {
-            // given
-            let sourceLink = editorRef.sourceLink
-            let testName = "JUST_TEST_NAME"
-            
-            try await #require(editorRef.name != testName)
-            await editorRef.setUp()
-            
-            // when
-            await withCheckedContinuation { con in
-                Task {
-                    await editorRef.setCallback {
-                        con.resume()
-                    }
-                    
-                    await editorRef.subscribe()
-                    
-                    let editTicket = EditProjectSourceName(testName)
-                    try! await sourceLink.insert(editTicket)
-                    try! await sourceLink.editProjectName()
-                }
-            }
-            
-            // then
-            await #expect(editorRef.name == testName)
         }
     }
     
@@ -207,7 +117,7 @@ struct ProjectEditorTests {
         @Test func updateNameByUpdater() async throws {
             // given
             let testName = "TEST_PROJECT_NAME"
-            let sourceLink = editorRef.sourceLink
+            let projectHubLink = await editorRef.config.budServerLink.getProjectHub()
             let randomObject = ObjectID()
             let target = editorRef.target
             
@@ -216,66 +126,27 @@ struct ProjectEditorTests {
             }
             
             // then
-            let subscribeTicket = SubscrieProjectSource(object: randomObject, target: target)
+            let ticket = SubscribeProjectHub(object: randomObject,
+                                             user: .init())
   
             await withCheckedContinuation { con in
                 Task {
-                    await sourceLink.setHandler(ticket: subscribeTicket,
-                                          handler: .init({ event in
-                        switch event {
-                        case .modified(let newName):
-                            #expect(newName == testName)
-                            con.resume()
-                        default:
-                            Issue.record()
-                        }
-                    }))
+                    await projectHubLink.setHandler(
+                        ticket: ticket,
+                        handler: .init({ event in
+                            switch event {
+                            case .modified(let diff):
+                                #expect(diff.name == testName)
+                                con.resume()
+                            default:
+                                Issue.record()
+                            }
+                        }))
                     
                     // when
                     await editorRef.push()
                 }
             }
-        }
-    }
-    
-    struct UnSubscribe {
-        let budClientRef: BudClient
-        let editorRef: ProjectEditor
-        init() async {
-            self.budClientRef = await BudClient()
-            self.editorRef = await createAndGetProject(budClientRef)
-            
-            await editorRef.setUp()
-            await editorRef.subscribe()
-            
-            try! await #require(editorRef.isIssueOccurred == false)
-        }
-        
-        @Test func whenProjectIsDeleted() async throws {
-            // given
-            try await #require(editorRef.id.isExist == true)
-            
-            // when
-            await editorRef.unsubscribe {
-                await editorRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await editorRef.issue as? KnownIssue)
-            #expect(issue.reason == "editorIsDeleted")
-        }
-        @Test func removeHandlerInProjectSource() async throws {
-            // given
-            let sourceLink = editorRef.sourceLink
-            let me = await ObjectID(editorRef.id.value)
-            
-            try await #require(sourceLink.hasHandler(object: me) == true)
-            
-            // when
-            await editorRef.unsubscribe()
-            
-            // then
-            await #expect(sourceLink.hasHandler(object: me) == false)
         }
     }
     

@@ -10,7 +10,7 @@ import Testing
 
 
 // MARK: Tests
-@Suite("SystemUpdater")
+@Suite("SystemUpdater", .timeLimit(.minutes(1)))
 struct SystemUpdaterTests {
     struct Update {
         let budClientRef: BudClient

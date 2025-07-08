@@ -11,7 +11,7 @@ import Values
 
 
 // MARK: Tests
-@Suite("ProfileBoard")
+@Suite("ProfileBoard", .timeLimit(.minutes(1)))
 struct ProfileBoardTests {
     struct SignOut {
         let budClientRef: BudClient
@@ -110,7 +110,7 @@ struct ProfileBoardTests {
             // then
             await #expect(projectBoardRef.updater?.isExist == false)
         }
-        @Test func deleteProjects() async throws {
+        @Test func deleteProjectEditors() async throws {
             // given
             let projectBoard = try #require(await budClientRef.projectBoard)
             let projectBoardRef = try #require(await projectBoard.ref)
@@ -146,39 +146,9 @@ struct ProfileBoardTests {
             await profileBoardRef.signOut()
             
             // then
-            for project in await projectBoardRef.editors {
-                await #expect(project.isExist == false)
+            for projectEditor in await projectBoardRef.editors {
+                await #expect(projectEditor.isExist == false)
             }
-        }
-        @Test func deleteProjectUpdater() async throws {
-            // given
-            let projectBoard = try #require(await budClientRef.projectBoard)
-            let projectBoardRef = try #require(await projectBoard.ref)
-            
-            await withCheckedContinuation { con in
-                Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
-                    }
-                    await projectBoardRef.setUp()
-                    await projectBoardRef.subscribe()
-                    
-                    await projectBoardRef.createProject()
-                }
-            }
-            
-            try await #require(projectBoardRef.editors.count == 1)
-            
-            let projectRef = await projectBoardRef.editors.first!.ref!
-            await projectRef.setUp()
-            
-            let updater = try #require(await projectRef.updater)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(updater.isExist == false)
         }
         @Test func deleteSystemBoard() async throws {
             // given

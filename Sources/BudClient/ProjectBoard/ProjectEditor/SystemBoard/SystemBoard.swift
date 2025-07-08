@@ -6,7 +6,7 @@
 //
 import Foundation
 import Values
-
+import BudServer
 
 
 // MARK: Object
@@ -36,6 +36,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
             .contains { $0.target == target }
     }
     
+    var updater: SystemBoardUpdater.ID?
     
     public var issue: (any Issuable)?
     public var callback: Callback?
@@ -49,6 +50,11 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        guard updater == nil else { setIssue(Error.alreadySetUp); return }
+        
+        let myConfig = config.setParent(id)
+        let updaterRef = SystemBoardUpdater(config: myConfig)
+        self.updater = updaterRef.id
     }
     
     public func subscribe() async {
@@ -58,6 +64,28 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        guard let updater else { setIssue(Error.requiredSetUp); return }
+        
+        let projectSourceLink = config.parent.ref!.sourceLink
+        let project = config.parent.ref!.target
+        let me = ObjectID(id.value)
+        let callback = self.callback
+        
+        // compute
+        let ticket = SubscrieProjectSource(object: me, target: project)
+        
+        await projectSourceLink.setHandler(
+            ticket: ticket,
+            handler: .init({ event in
+                Task { @MainActor in
+                    guard let updaterRef = updater.ref else { return }
+                    
+                    updaterRef.queue.append(event)
+                    await updaterRef.update()
+                    
+                    await callback?()
+                }
+            }))
     }
     
     public func unsubscribe() async {
@@ -68,6 +96,11 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
         
+        let projectSourceLink = config.parent.ref!.sourceLink
+        let me = ObjectID(id.value)
+        
+        // compute
+        await projectSourceLink.removeHandler(object: me)
     }
     
     public func createFirstSystem() async {
@@ -111,6 +144,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case alreadySetUp
+        case requiredSetUp
         case systemBoardIsDeleted
         case systemAlreadyExist
     }
