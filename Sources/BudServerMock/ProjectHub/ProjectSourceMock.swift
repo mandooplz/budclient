@@ -40,7 +40,6 @@ package final class ProjectSourceMock: Sendable {
     
     package var systems: Set<SystemSourceID> = []
     
-    
     package var editTicket: EditProjectSourceName?
     package var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
     
@@ -50,8 +49,10 @@ package final class ProjectSourceMock: Sendable {
         // mutate
         guard Manager.isExist(id) else { return }
         guard let editTicket else { return }
+        let eventHandlers = projectHubRef.eventHandlers
         for (_, handler) in eventHandlers {
-            handler.execute(.modified(editTicket.name))
+            let diff = ProjectSourceDiff(id: id, name: editTicket.name)
+            handler.execute(diff.getEvent())
         }
         self.editTicket = nil
     }

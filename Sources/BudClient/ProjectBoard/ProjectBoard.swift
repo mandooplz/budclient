@@ -79,22 +79,12 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     ticket: subscribeTicket,
                     handler: .init({ event in
                         Task { @MainActor in
-                            switch event {
-                            case .added:
-                                guard let updaterRef = updater.ref else { return }
-                                
-                                updaterRef.queue.append(event)
-                                await updaterRef.update()
-                                
-                                await callback?()
-                            case .removed:
-                                guard let updaterRef = updater.ref else { return }
-                                
-                                updaterRef.queue.append(event)
-                                await updaterRef.update()
-                                
-                                await callback?()
-                            }
+                            guard let updaterRef = updater.ref else { return }
+                            
+                            updaterRef.queue.append(event)
+                            await updaterRef.update()
+                            
+                            await callback?()
                         }
                     })
                 )

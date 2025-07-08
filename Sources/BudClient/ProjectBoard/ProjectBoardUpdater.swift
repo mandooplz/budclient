@@ -42,13 +42,12 @@ public final class ProjectBoardUpdater: Debuggable {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
-        let projectBoardRef = config.parent.ref!
         let config = self.config
+        let projectBoardRef = config.parent.ref!
         
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
-            // when projectSource added
             case .added(let projectSource, let project):
                 if projectBoardRef.isExist(target: project) { return }
                 
@@ -58,8 +57,16 @@ public final class ProjectBoardUpdater: Debuggable {
                                                      sourceLink: sourceLink)
                 
                 projectBoardRef.editors.append(projectEditorRef.id)
-            
-            // when projectSource removed
+                
+            case .modified(let diff):
+                // diff = ProjectSource의 변경사항
+                let project = diff.target
+                let projectName = diff.name
+                
+                // TODO: 수정 필요
+                fatalError()
+                // 이를 기반으로 ProjectEditor의 데이터를 업데이트
+                return
             case .removed(let project):
                 let projectEditor = projectBoardRef.editors.first { $0.ref?.target == project }
                 projectEditor?.ref?.delete()

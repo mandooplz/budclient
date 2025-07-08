@@ -24,19 +24,19 @@ package final class ProjectHub: Sendable {
     private let db = Firestore.firestore()
     
     package var projectSources: Set<ProjectSourceID> = []
-    package var projectSourceMap: [ProjectID: ProjectSourceID] = [:]
     
     package var tickets: Deque<CreateProjectSource> = []
     
-    package var listener: ListenerRegistration?
-    package func hasHandler() async -> Bool {
-        listener != nil
+    package var listeners: [ObjectID:ListenerRegistration] = [:]
+    package func hasHandler(object: ObjectID) async -> Bool {
+        listeners[object] != nil
     }
+    
     package func setHandler(ticket: SubscribeProjectHub,
                             handler: Handler<ProjectHubEvent>) {
-        guard listener == nil else { return }
+        guard listeners[ticket.object] == nil else { return }
         
-        self.listener = db.collection(ProjectSources.name)
+        self.listeners[ticket.object] = db.collection(ProjectSources.name)
             .whereField(ProjectSource.State.creator,
                         isEqualTo: ticket.user.encode())
             .addSnapshotListener { snapshot, error in
@@ -47,30 +47,42 @@ package final class ProjectHub: Sendable {
                 
                 snapshot.documentChanges.forEach { diff in
                     let documentId = diff.document.documentID
-                    let object = ProjectSourceID(documentId)
+                    let projectSource = ProjectSourceID(documentId)
                     
                     guard let data = try? diff.document.data(as: ProjectSource.Data.self) else {
-                        Logger().error("ProjectSource.Doc Decoding Error"); return
+                        print("ProjectSource.Doc Decoding Error");
+                        return
                     }
                     
-                    if (diff.type == .added) {
-                        let projectSourceRef = ProjectSource(id: object, target: data.target)
+                    switch diff.type {
+                    case .added:
+                        // create ProjectSource
+                        let projectSourceRef = ProjectSource(id: projectSource, target: data.target)
                         self.projectSources.insert(projectSourceRef.id)
                         
-                        let event = ProjectHubEvent.added(object, data.target)
+                        // serve event
+                        let event = ProjectHubEvent.added(projectSource, data.target)
                         handler.execute(event)
-                    }
-                    
-                    if (diff.type == .removed) {
+                    case .modified:
+                        // serve event
+                        let event = ProjectSourceDiff(id: projectSource, target: data.target, name: data.name)
+                            .getEvent()
+                        handler.execute(event)
+                    case .removed:
+                        // remove ProjectSource
+                        ProjectSourceManager.get(projectSource)?.delete()
+                        self.projectSources.remove(projectSource)
+                        
+                        // serve event
                         let event = ProjectHubEvent.removed(data.target)
                         handler.execute(event)
                     }
                 }
             }
     }
-    package func removeHandler() {
-        self.listener?.remove()
-        self.listener = nil
+    package func removeHandler(object: ObjectID) {
+        self.listeners[object]?.remove()
+        self.listeners[object] = nil
     }
     
     
@@ -79,7 +91,7 @@ package final class ProjectHub: Sendable {
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             
-            // 새로운 FireStore Document 생성
+            // create ProjectSource in Firestore
             let data = ProjectSource.Data(name: ticket.name,
                                           creator: ticket.creator,
                                           target: ticket.target,

@@ -42,6 +42,34 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     
     
     // MARK: action
+    public func setUp() async {
+        await setUp(mutateHook: nil)
+    }
+    func setUp(mutateHook: Hook?) async {
+        // mutate
+        await mutateHook?()
+        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+    }
+    
+    public func subscribe() async {
+        await self.subscribe(captureHook: nil)
+    }
+    func subscribe(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+    }
+    
+    public func unsubscribe() async {
+        await self.unsubscribe(captureHook: nil)
+    }
+    func unsubscribe(captureHook:Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        
+    }
+    
     public func createFirstSystem() async {
         await self.createFirstSystem(captureHook: nil)
     }

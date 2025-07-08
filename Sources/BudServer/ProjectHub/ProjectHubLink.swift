@@ -39,7 +39,7 @@ package struct ProjectHubLink: Sendable {
         case .test(let projectHubRef):
             return projectHubRef.eventHandlers[object] != nil
         case .real:
-            return await ProjectHub.shared.hasHandler()
+            return await ProjectHub.shared.hasHandler(object: object)
         }
     }
     @Server
@@ -57,7 +57,7 @@ package struct ProjectHubLink: Sendable {
         case .test(let projectHubRef):
             projectHubRef.eventHandlers[object] = nil
         case .real:
-            await ProjectHub.shared.removeHandler()
+            await ProjectHub.shared.removeHandler(object: object)
         }
     }
     

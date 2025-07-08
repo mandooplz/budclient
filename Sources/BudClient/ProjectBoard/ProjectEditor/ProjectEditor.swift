@@ -37,10 +37,7 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
     public var name: String?
     
     public var systemBoard: SystemBoard.ID?
-    
     public var flowBoard: FlowBoard.ID?
-    
-    var updater: ProjectUpdater.ID?
     
     public var issue: (any Issuable)?
     package var callback: Callback?
@@ -54,50 +51,14 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard updater == nil, systemBoard == nil, flowBoard == nil else { setIssue(Error.alreadySetUp); return }
+        guard systemBoard == nil, flowBoard == nil else { setIssue(Error.alreadySetUp); return }
         let myConfig = self.config.setParent(id)
         
-        let updaterRef = ProjectUpdater(config: myConfig)
         let systemBoardRef = SystemBoard(config: myConfig)
         let flowBoardRef = FlowBoard(config: myConfig)
         
-        self.updater = updaterRef.id
         self.systemBoard = systemBoardRef.id
         self.flowBoard = flowBoardRef.id
-    }
-    
-    public func subscribe() async {
-        await subscribe(captureHook: nil)
-    }
-    internal func subscribe(captureHook: Hook? = nil) async {
-        // capture
-        await captureHook?()
-        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard let updater else { setIssue(Error.updaterIsNil); return }
-        let callback = self.callback
-        let sourceLink = self.sourceLink
-        let (me, project) = (ObjectID(self.id.value), self.target)
-        
-        // compute
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                let ticket = SubscrieProjectSource(object: me, target: project)
-                await sourceLink.setHandler(
-                    ticket: ticket,
-                    handler: .init({ event in
-                        Task { @MainActor in
-                            guard let updaterRef = updater.ref else { return }
-                            
-                            updaterRef.queue.append(event)
-                            await updaterRef.update()
-                            
-                            await callback?()
-                        }
-                    }
-                                  )
-                )
-            }
-        }
     }
     
     public func push() async {
@@ -122,24 +83,6 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
             }
         } catch {
             setUnknownIssue(error); return
-        }
-    }
-    
-    public func unsubscribe() async {
-        await unsubscribe(captureHook: nil)
-    }
-    func unsubscribe(captureHook: Hook?) async {
-        // capture
-        await captureHook?()
-        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        let sourceLink = self.sourceLink
-        let me = ObjectID(id.value)
-        
-        // compute
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                await sourceLink.removeHandler(object: me)
-            }
         }
     }
     
@@ -179,7 +122,6 @@ public final class ProjectEditor: Debuggable, EventDebuggable {
     public enum Error: String, Swift.Error {
         case editorIsDeleted
         case alreadySetUp
-        case updaterIsNil
         case nameIsNil
     }
 }

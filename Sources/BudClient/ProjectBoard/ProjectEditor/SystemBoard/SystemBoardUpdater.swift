@@ -1,8 +1,8 @@
 //
-//  ProjectUpdater.swift
+//  SystemBoardUpdater.swift
 //  BudClient
 //
-//  Created by 김민우 on 7/3/25.
+//  Created by 김민우 on 7/8/25.
 //
 import Foundation
 import Values
@@ -11,22 +11,23 @@ import BudServer
 
 
 // MARK: Object
-@MainActor
-final class ProjectUpdater: Debuggable {
+@MainActor @Observable
+final class SystemBoardUpdater: Sendable, Debuggable {
     // MARK: core
-    init(config: Config<ProjectEditor.ID>) {
+    init(config: Config<SystemBoard.ID>) {
         self.config = config
         
-        ProjectUpdaterManager.register(self)
+        SystemBoardUpdaterManager.container[self.id] = self
     }
     func delete() {
-        ProjectUpdaterManager.unregister(self.id)
+        SystemBoardUpdaterManager.container[self.id] = nil
     }
     
     
     // MARK: state
-    nonisolated let id: ID = ID(value: .init())
-    nonisolated let config: Config<ProjectEditor.ID>
+    nonisolated let id = ID()
+    nonisolated let config: Config<SystemBoard.ID>
+    
     
     var queue: Deque<ProjectSourceEvent> = []
     
@@ -34,30 +35,23 @@ final class ProjectUpdater: Debuggable {
     
     
     // MARK: action
-    func update() async {
-        await update(mutateHook: nil)
-    }
-    func update(mutateHook:Hook?) async {
+    func update(mutateHook: Hook? = nil) async {
         // mutate
         await mutateHook?()
-        guard id.isExist else { setIssue(Error.projectUpdaterIsDeleted); return }
-        let projectEditorRef = config.parent.ref!
+        guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
         let config = self.config
+        let systemBoardRef = config.parent.ref!
+        let projectEditorRef = config.parent.ref!.config.parent.ref!
         
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
-            case .modified(let newName):
-                projectEditorRef.name = newName
             case .added(let systemSource, let system):
-                guard let systemBoard = projectEditorRef.systemBoard,
-                      let systemBoardRef = systemBoard.ref else { return }
                 if systemBoardRef.isExist(system) { return }
                 
                 let systemSourceLink = SystemSourceLink(mode: config.mode,
                                                         object: systemSource)
-                let newConfig = systemBoardRef.config.setParent(systemBoard)
-                let systemModelRef = SystemModel(config: newConfig,
+                let systemModelRef = SystemModel(config: config,
                                                  target: system,
                                                  sourceLink: systemSourceLink)
                 systemBoardRef.models.insert(systemModelRef.id)
@@ -71,39 +65,38 @@ final class ProjectUpdater: Debuggable {
                 
                 systemModel.ref?.delete()
                 systemBoardRef.models.remove(systemModel)
+            default:
+                // logger 기록?
+                return
             }
         }
     }
-    
-    
     
     
     // MARK: value
     @MainActor
     struct ID: Sendable, Hashable {
         let value: UUID
-        var isExist: Bool {
-            ProjectUpdaterManager.container[self] != nil
+        nonisolated init(value: UUID = UUID()) {
+            self.value = value
         }
-        var ref: ProjectUpdater? {
-            ProjectUpdaterManager.container[self]
+        
+        var isExist: Bool {
+            SystemBoardUpdaterManager.container[self] != nil
+        }
+        var ref: SystemBoardUpdater? {
+            SystemBoardUpdaterManager.container[self]
         }
     }
     enum Error: String, Swift.Error {
-        case projectUpdaterIsDeleted
+        case updaterIsDeleted
     }
 }
 
 
 // MARK: Object Manager
-@MainActor
-fileprivate final class ProjectUpdaterManager: Sendable {
+@MainActor @Observable
+fileprivate final class SystemBoardUpdaterManager: Sendable {
     // MARK: state
-    fileprivate static var container: [ProjectUpdater.ID: ProjectUpdater] = [:]
-    fileprivate static func register(_ object: ProjectUpdater) {
-        container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: ProjectUpdater.ID) {
-        container[id] = nil
-    }
+    fileprivate static var container: [SystemBoardUpdater.ID: SystemBoardUpdater] = [:]
 }

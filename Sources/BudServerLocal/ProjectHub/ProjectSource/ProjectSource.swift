@@ -30,40 +30,67 @@ package final class ProjectSource: Sendable {
     nonisolated let id: ProjectSourceID
     nonisolated let target: ProjectID
     
-    private var listeners: [ObjectID: ListenerRegistration] = [:]
     private typealias Manager = ProjectSourceManager
     
     package var editTicket: EditProjectSourceName?
+    package var listeners: [ObjectID: ListenerRegistration] = [:]
     
     package func hasHandler(object: ObjectID) -> Bool {
-        listeners[object] != nil
+        self.listeners[object] != nil
     }
     package func setHandler(ticket: SubscrieProjectSource,
                             handler: Handler<ProjectSourceEvent>) {
-        guard listeners[ticket.object] == nil else { return }
+        guard self.listeners[ticket.object] == nil else { return }
         
         let db = Firestore.firestore()
-        let documentRef = db.collection(ProjectSources.name)
+        self.listeners[ticket.object] = db.collection(ProjectSources.name)
             .document(id.value)
+            .collection(ProjectSources.SystemSources.name)
+            .addSnapshotListener({ snapshot, error in
+                guard let snapshot else {
+                    print("Error fetching snapshots: \(error!)")
+                    return
+                }
+                
+                snapshot.documentChanges.forEach { diff in
+                    let documentId = diff.document.documentID
+                    let systemSource = SystemSourceID(documentId)
+                    
+                    guard let data = try? diff.document.data(as: SystemSource.Data.self) else {
+                        print("ProjectSource.Doc Decoding Error");
+                        return
+                    }
+                    
+                    switch diff.type {
+                    case .added:
+                        // create SystemSource
+                        let systemSourceRef = SystemSource(id: systemSource, target: data.target)
+
+                        // serve event
+                        let event = ProjectSourceEvent.added(systemSource, systemSourceRef.target)
+                        handler.execute(event)
+                    case .modified:
+                        // server event
+                        let diffValue = SystemSourceDiff(id: systemSource,
+                                                         name: data.name,
+                                                         location: data.location)
+                        let event = diffValue.getEvent()
+                        handler.execute(event)
+                    case .removed:
+                        // delete SystemSource
+                        SystemSourceManager.get(systemSource)?.delete()
+                        
+                        // serve event
+                        let event = ProjectSourceEvent.removed(data.target)
+                        handler.execute(event)
+                    }
+                }
+            })
         
-        listeners[ticket.object] = documentRef.addSnapshotListener { documentSnapshot, error in
-            guard let document = documentSnapshot else {
-                Logger().error("Error fetching document: \(error!)")
-                return
-            }
-            
-            guard let newName = try? document.data(as: Data.self).name else {
-                Logger().error("Invalid or missing 'name' field in document: \(document.documentID)")
-                return
-            }
-            let event = ProjectSourceEvent.modified(newName)
-            
-            handler.execute(event)
-        }
     }
     package func removeHandler(object: ObjectID) {
-        self.listeners[object]?.remove()
-        self.listeners[object] = nil
+        listeners[object]?.remove()
+        listeners[object] = nil
     }
     
     
@@ -112,6 +139,7 @@ package final class ProjectSource: Sendable {
                 // create SystemSource
                 let newSystemSourceRef = systemSourcesRef.document()
                 let newData = SystemSource.Data(name: "First System",
+                                                target: SystemID(),
                                                 location: .origin)
                 
                 try transaction.setData(from: newData, forDocument: newSystemSourceRef)
@@ -132,18 +160,14 @@ package final class ProjectSource: Sendable {
     
     
     // MARK: value
-    // Data는 아래 경우에 사용된다.
-    // 1. 리스너 등록
-    // 2. 리스너를 통해 이벤트 처리
-    // 3. 상태 업데이트
-    package struct Data: Hashable, Codable {
+    struct Data: Hashable, Codable {
         @DocumentID var id: String?
         package var name: String
         package var creator: UserID
         package var target: ProjectID
         package var systemModelCount: Int
     }
-    package enum State: Sendable {
+    enum State: Sendable {
         static let name = "name"
         static let creator = "creator"
         static let target = "target"

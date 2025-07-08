@@ -120,6 +120,11 @@ func getSystemModel(_ budClientRef: BudClient) async -> SystemModel {
     
     await withCheckedContinuation { con in
         Task {
+//            await systemBoardRef.unsubscribe()
+//            await systemBoardRef.setCallback {
+//                con.resume()
+//            }
+            
             await projectEditorRef.unsubscribe()
             
             await projectEditorRef.setCallback {
