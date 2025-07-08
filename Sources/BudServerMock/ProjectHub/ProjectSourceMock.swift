@@ -40,7 +40,7 @@ package final class ProjectSourceMock: Sendable {
     
     package var systems: Set<SystemSourceID> = []
     
-    package var editTicket: EditProjectSourceName?
+    package var editTicket: PushProjectSourceName?
     package var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
     
     

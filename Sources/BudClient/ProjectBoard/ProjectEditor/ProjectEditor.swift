@@ -60,10 +60,10 @@ public final class ProjectEditor: Debuggable {
         self.flowBoard = flowBoardRef.id
     }
     
-    public func push() async {
-        await self.push(captureHook: nil)
+    public func pushName() async {
+        await self.pushName(captureHook: nil)
     }
-    func push(captureHook: Hook?) async {
+    func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
@@ -74,7 +74,7 @@ public final class ProjectEditor: Debuggable {
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    let ticket = EditProjectSourceName(name)
+                    let ticket = PushProjectSourceName(name)
                     
                     try await sourceLink.insert(ticket)
                     try await sourceLink.editProjectName()

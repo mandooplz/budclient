@@ -46,8 +46,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public func addSystemTop() { }
     public func addSystemBottom() { }
     
-    public func createNewObjectModel() { }
+    public func pushName() { }
+    public func pushLocation() { }
     
+    public func createNewObjectModel() { }
     public func remove() { }
     
     

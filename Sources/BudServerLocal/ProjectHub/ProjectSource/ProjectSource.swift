@@ -32,7 +32,7 @@ package final class ProjectSource: Sendable {
     
     private typealias Manager = ProjectSourceManager
     
-    package var editTicket: EditProjectSourceName?
+    package var editTicket: PushProjectSourceName?
     package var listeners: [ObjectID: ListenerRegistration] = [:]
     
     package func hasHandler(object: ObjectID) -> Bool {

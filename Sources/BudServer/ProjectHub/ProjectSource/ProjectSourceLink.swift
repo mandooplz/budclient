@@ -32,7 +32,7 @@ package struct ProjectSourceLink: Sendable, Hashable {
             fatalError()
         }
     }
-    @Server package func insert(_ ticket: EditProjectSourceName) async throws {
+    @Server package func insert(_ ticket: PushProjectSourceName) async throws {
         switch mode {
         case .test:
             TestManager.get(object)?.editTicket = ticket

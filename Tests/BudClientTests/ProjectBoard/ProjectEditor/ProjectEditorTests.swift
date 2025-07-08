@@ -41,7 +41,7 @@ struct ProjectEditorTests {
             let newFlowBoard = try #require(await editorRef.flowBoard)
             #expect(newFlowBoard == flowBoard)
         }
-        @Test func whenProjectIsDeletedBeforeMutate() async throws {
+        @Test func whenProjectEditorIsDeletedBeforeMutate() async throws {
             // given
             try await #require(editorRef.id.isExist == true)
             
@@ -79,7 +79,7 @@ struct ProjectEditorTests {
         }
     }
     
-    struct Push {
+    struct PushName {
         let budClientRef: BudClient
         let editorRef: ProjectEditor
         init() async {
@@ -87,12 +87,12 @@ struct ProjectEditorTests {
             self.editorRef = await createAndGetProject(budClientRef)
         }
         
-        @Test func whenProjectIsDeleted() async throws {
+        @Test func whenProjectEditorIsDeleted() async throws {
             // given
             try await #require(editorRef.id.isExist == true)
             
             // when
-            await editorRef.push {
+            await editorRef.pushName {
                 await editorRef.delete()
             }
             
@@ -107,7 +107,7 @@ struct ProjectEditorTests {
             }
             
             // when
-            await editorRef.push()
+            await editorRef.pushName()
             
             // then
             let issue = try #require(await editorRef.issue)
@@ -143,7 +143,7 @@ struct ProjectEditorTests {
                         }))
                     
                     // when
-                    await editorRef.push()
+                    await editorRef.pushName()
                 }
             }
         }
@@ -158,7 +158,7 @@ struct ProjectEditorTests {
             self.editorRef = await createAndGetProject(budClientRef)
         }
         
-        @Test func whenProjectIsDeleted() async throws {
+        @Test func whenProjectEditorIsDeleted() async throws {
             // given
             try await #require(editorRef.id.isExist == true)
             
