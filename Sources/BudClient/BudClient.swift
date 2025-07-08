@@ -17,16 +17,12 @@ public final class BudClient: Debuggable {
     // MARK: core
     public init(plistPath: String) {
         self.mode = .real(plistPath: plistPath)
-        self.budServerMockRef = .shared
-        self.budCacheMockRef = .shared
         self.budCacheLink = BudCacheLink(mode: .real)
         
         BudClientManager.register(self)
     }
     public init() {
         self.mode = .test
-        self.budServerMockRef = BudServerMock()
-        self.budCacheMockRef = BudCacheMock()
         self.budCacheLink = BudCacheLink(mode: .test(mockRef: budCacheMockRef))
         
         BudClientManager.register(self)
@@ -39,8 +35,8 @@ public final class BudClient: Debuggable {
     nonisolated let system = SystemID()
     
     public private(set) var budServerLink: BudServerLink?
-    private nonisolated let budServerMockRef: BudServerMock
-    private nonisolated let budCacheMockRef: BudCacheMock
+    private nonisolated let budServerMockRef = BudServerMock()
+    private nonisolated let budCacheMockRef = BudCacheMock()
     internal nonisolated let budCacheLink: BudCacheLink
     
     public internal(set) var authBoard: AuthBoard.ID?
@@ -95,6 +91,7 @@ public final class BudClient: Debuggable {
         func forBudServerLink(_ budServerMockRef: BudServerMock) async -> BudServerLink.Mode {
             switch self {
             case .test:
+                // 이 코드를 리팩토링해야할 듯하다.
                 await budServerMockRef.setUp()
                 return .test(budServerMockRef)
             case .real(let plistPath):

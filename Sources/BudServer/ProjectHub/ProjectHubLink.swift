@@ -79,8 +79,4 @@ package struct ProjectHubLink: Sendable {
         case test(ProjectHubMock)
         case real
     }
-    enum Event: Sendable {
-        case added(ProjectSourceLink)
-        case removed(ProjectSourceLink)
-    }
 }

@@ -9,11 +9,10 @@ import Values
 
 
 // MARK: Object
-@MainActor
+@Server
 package final class BudServerMock {
     // MARK: core
-    package static let shared = BudServerMock()
-    package init() { }
+    package nonisolated init() { }
     
     
     // MARK: state

@@ -49,13 +49,14 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await setUp(mutateHook: nil)
     }
     func setUp(mutateHook: Hook?) async {
+        // capture
+        guard self.updater == nil else { setIssue(Error.alreadySetUp); return }
+        let config = self.config
+        let myConfig = config.setParent(self.id)
+        
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        guard self.updater == nil else { setIssue(Error.alreadySetUp); return }
-        let config = self.config
-        
-        let myConfig = config.setParent(self.id)
         let updaterRef = ProjectBoardUpdater(config: myConfig)
         self.updater = updaterRef.id
     }
@@ -64,7 +65,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await self.subscribe(captureHook: nil)
     }
     func subscribe(captureHook: Hook?) async {
-        // capture & compute
+        // capture
         await captureHook?()
         guard self.id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
         guard let updater else { setIssue(Error.updaterIsNotSet); return }
@@ -72,14 +73,14 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         let callback = self.callback
         let me = ObjectID(id.value)
         
-        
-        let projectHubLink = await config.budServerLink.getProjectHub()
-        let subscribeTicket = SubscribeProjectHub(object: me, user: config.user)
-        
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
+                let projectHubLink = await config.budServerLink.getProjectHub()
+                let ticket = SubscribeProjectHub(object: me,user: config.user)
+                
                 await projectHubLink.setHandler(
-                    ticket: subscribeTicket,
+                    ticket: ticket,
                     handler: .init({ event in
                         Task { @MainActor in
                             guard let updaterRef = updater.ref else { return }
@@ -99,12 +100,13 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await unsubscribe(captureHook: nil)
     }
     func unsubscribe(captureHook: Hook? = nil) async {
-        // capture & compute
+        // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         let config = config
         let me = ObjectID(id.value)
         
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 let projectHubLink = await config.budServerLink.getProjectHub()
@@ -117,25 +119,29 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await self.createProject(captureHook: nil)
     }
     func createProject(captureHook: Hook?) async {
-        // capture & compute
+        // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
+        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
         guard updater != nil else { setIssue(Error.updaterIsNotSet); return }
         let config = self.config
         let budServerLink = config.budServerLink
-        let newProjectName = "Project\(self.editors.count + 1)"
         
+        
+        // compute
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
+                    let newProject = ProjectID()
+                    let newName = "Project\(Int.random(in: 1..<1000))"
+                    
+                    let ticket = CreateProjectSource(
+                        creator: config.user,
+                        target: newProject,
+                        name: newName)
+                    
                     let projectHubLink = await budServerLink.getProjectHub()
                     
-                    let createTicket = CreateProjectSource(
-                        creator: config.user,
-                        target: ProjectID(),
-                        name: newProjectName)
-                    
-                    await projectHubLink.insertTicket(createTicket)
+                    await projectHubLink.insertTicket(ticket)
                     try await projectHubLink.createProjectSource()
                 }
             }
@@ -149,7 +155,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
-        public let value: UUID
+        let value: UUID
         nonisolated init(value: UUID = UUID()) {
             self.value = value
         }

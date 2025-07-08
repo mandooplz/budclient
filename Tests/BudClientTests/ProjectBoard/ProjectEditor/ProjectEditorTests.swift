@@ -119,7 +119,6 @@ struct ProjectEditorTests {
             let testName = "TEST_PROJECT_NAME"
             let projectHubLink = await editorRef.config.budServerLink.getProjectHub()
             let randomObject = ObjectID()
-            let target = editorRef.target
             
             await MainActor.run {
                 editorRef.name = testName

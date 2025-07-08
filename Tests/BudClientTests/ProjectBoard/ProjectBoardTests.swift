@@ -103,7 +103,7 @@ struct ProjectBoardTests {
             #expect(issue.reason == "updaterIsNotSet")
         }
         
-        @Test func registerNotifierInProjectHub() async throws {
+        @Test func setHandlerInProjectHub() async throws {
             // given
             let config = projectBoardRef.config
             let projectHubLink = await config.budServerLink.getProjectHub()
@@ -141,7 +141,7 @@ struct ProjectBoardTests {
             #expect(issue.reason == "projectBoardIsDeleted")
         }
         
-        @Test func unregisterNotifierInProjectHub() async throws {
+        @Test func removeHandlerInProjectHub() async throws {
             // given
             let config = projectBoardRef.config
             let projectHubLink = await config.budServerLink.getProjectHub()

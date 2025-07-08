@@ -10,11 +10,10 @@ import BudServer
 
 
 // MARK: BudCache
-@MainActor
+@Server
 package final class BudCacheMock: Sendable {
     // MARK: core
-    package static let shared = BudCacheMock()
-    package init() { }
+    package nonisolated init() { }
     
     
     // MARK: state

@@ -31,7 +31,7 @@ package struct BudCacheLink: Sendable {
     package func setUser(_ value: UserID) async {
         switch mode {
         case .test(let mockRef):
-            await MainActor.run {
+            await Server.run {
                 mockRef.user = value
             }
         case .real:
@@ -41,7 +41,7 @@ package struct BudCacheLink: Sendable {
     package func resetUser() async throws {
         switch mode {
         case .test(let mockRef):
-            await MainActor.run {
+            await Server.run {
                 mockRef.user = nil
             }
         case .real:
