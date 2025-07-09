@@ -28,6 +28,21 @@ package final class ProjectHubMock: Sendable, Subscribable {
     
     package var tickets: Deque<CreateProjectSource> = []
     package var eventHandlers: [ObjectID:Handler<ProjectHubEvent>] = [:]
+    package func notifyModified(_ id: ProjectID) {
+        let projectSource = projectSources.first {
+            ProjectSourceMockManager.get($0)?.target == id
+        }
+        
+        guard let projectSource,
+                let projectSourceRef = ProjectSourceMockManager.get(projectSource) else { return }
+        
+        let diff = ProjectSourceDiff(target: projectSourceRef.target,
+                                     name: projectSourceRef.name)
+        
+        for (_, handler) in eventHandlers {
+            handler.execute(diff.getEvent())
+        }
+    }
     
     
     // MARK: action

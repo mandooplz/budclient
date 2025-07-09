@@ -61,6 +61,15 @@ package struct ProjectHubLink: Sendable {
         }
     }
     
+    @Server package func notifyModified(_ id: ProjectID) {
+        switch mode {
+        case .test(let projectHubMock):
+            projectHubMock.notifyModified(id)
+        case .real:
+            return
+        }
+    }
+    
     
     // MARK: action
     @Server

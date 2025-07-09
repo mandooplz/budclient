@@ -69,15 +69,15 @@ public final class ProjectEditor: Debuggable {
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
         guard let name else { setIssue(Error.nameIsNil); return}
         let sourceLink = self.sourceLink
+        let target = self.target
+        let projectHubLink = await self.config.budServerLink.getProjectHub()
         
         // compute
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    let ticket = PushProjectSourceName(name)
-                    
-                    try await sourceLink.insert(ticket)
-                    try await sourceLink.editName()
+                    await sourceLink.setName(name)
+                    await projectHubLink.notifyModified(target)
                 }
             }
         } catch {

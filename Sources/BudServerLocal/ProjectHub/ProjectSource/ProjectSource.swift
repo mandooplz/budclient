@@ -29,10 +29,16 @@ package final class ProjectSource: Sendable {
     // MARK: state
     nonisolated let id: ProjectSourceID
     nonisolated let target: ProjectID
-    
     private typealias Manager = ProjectSourceManager
     
-    package var editTicket: PushProjectSourceName?
+    package func setName(_ value: String) {
+        // set ProjectSource.name
+        let db = Firestore.firestore()
+        let documentRef = db.collection(ProjectSources.name).document(id.value)
+        
+        documentRef.updateData(State.getNameUpdater(value))
+    }
+    
     package var listeners: [ObjectID: ListenerRegistration] = [:]
     
     package func hasHandler(object: ObjectID) -> Bool {
@@ -96,16 +102,6 @@ package final class ProjectSource: Sendable {
     
     
     // MARK: action
-    package func editName() throws {
-        guard Manager.isExist(id) else { return }
-        guard let newName = editTicket?.name else { return }
-        
-        // FireStore의 Projects 테이블에 있는 ProjectSource 문서의 name을 수정한다.
-        let db = Firestore.firestore()
-        let documentRef = db.collection(ProjectSources.name).document(id.value)
-        documentRef.updateData(State.getNameUpdater(newName))
-        self.editTicket = nil
-    }
     package func remove() {
         guard Manager.isExist(id) else { return }
         

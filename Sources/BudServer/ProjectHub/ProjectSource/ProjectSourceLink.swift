@@ -32,14 +32,13 @@ package struct ProjectSourceLink: Sendable, Hashable {
             fatalError()
         }
     }
-    @Server package func insert(_ ticket: PushProjectSourceName) async throws {
+    
+    @Server package func setName(_ value: String) async {
         switch mode {
         case .test:
-            TestManager.get(object)?.editTicket = ticket
+            TestManager.get(object)?.name = value
         case .real:
-           await MainActor.run {
-               RealManager.get(object)?.editTicket = ticket
-            }
+            await RealManager.get(object)?.setName(value)
         }
     }
     
@@ -87,16 +86,6 @@ package struct ProjectSourceLink: Sendable, Hashable {
     
     
     // MARK: action
-    @Server package func editName() async throws {
-        switch mode {
-        case .test:
-            TestManager.get(object)?.editName()
-        case .real:
-            try await MainActor.run {
-                try RealManager.get(object)?.editName()
-            }
-        }
-    }
     @Server package func remove() async {
         switch mode {
         case .test:
@@ -107,7 +96,6 @@ package struct ProjectSourceLink: Sendable, Hashable {
             }
         }
     }
-    
     @Server package func createFirstSystem() async throws {
         switch mode {
         case .test:

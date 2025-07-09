@@ -40,23 +40,10 @@ package final class ProjectSourceMock: Sendable {
     
     package var systems: Set<SystemSourceID> = []
     
-    package var editTicket: PushProjectSourceName?
     package var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
     
     
     // MARK: action
-    package func editName() {
-        // mutate
-        guard Manager.isExist(id) else { return }
-        guard let editTicket else { return }
-        let eventHandlers = projectHubRef.eventHandlers
-        for (_, handler) in eventHandlers {
-            let diff = ProjectSourceDiff(target: target,
-                                         name: editTicket.name)
-            handler.execute(diff.getEvent())
-        }
-        self.editTicket = nil
-    }
     package func remove() {
         // mutate
         guard Manager.isExist(id) else { return }
@@ -69,7 +56,6 @@ package final class ProjectSourceMock: Sendable {
         projectHubRef.projectSources.remove(self.id)
         self.delete()
     }
-    
     package func createFirstSystem() {
         // mutate
         guard systems.isEmpty else { return }
