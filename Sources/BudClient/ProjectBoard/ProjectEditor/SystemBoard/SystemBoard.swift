@@ -99,13 +99,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     }
     
     public func unsubscribe() async {
-        await self.unsubscribe(captureHook: nil)
-    }
-    func unsubscribe(captureHook:Hook?) async {
         // capture
-        await captureHook?()
-        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
-        
         let projectSourceLink = config.parent.ref!.sourceLink
         let me = ObjectID(id.value)
         

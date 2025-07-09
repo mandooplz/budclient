@@ -97,12 +97,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     }
     
     public func unsubscribe() async {
-        await unsubscribe(captureHook: nil)
-    }
-    func unsubscribe(captureHook: Hook? = nil) async {
         // capture
-        await captureHook?()
-        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return}
         let config = config
         let me = ObjectID(id.value)
         

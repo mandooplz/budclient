@@ -35,7 +35,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public var name: String? 
     public var location: Location?
     
-    public var rootModel: RootModel.ID?
+    public var rootModel: RootModel.ID? // rootModel이 수정되었을 때
     public var objectModels: Set<ObjectModel.ID> = []
     
     public var issue: (any Issuable)?
@@ -43,6 +43,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     
     // MARK: action
+    public func subscribe(captureHook: Hook? = nil) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { return }
+    }
+    public func unsubscribe() { }
+    
     public func addSystemRight() { }
     public func addSystemLeft() { }
     public func addSystemTop() { }

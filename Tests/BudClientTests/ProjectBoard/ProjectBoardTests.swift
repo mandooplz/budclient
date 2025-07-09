@@ -114,20 +114,6 @@ struct ProjectBoardTests {
             self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
         }
         
-        @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
-            // given
-            try await #require(projectBoardRef.id.isExist == true)
-            
-            // when
-            await projectBoardRef.unsubscribe {
-                await projectBoardRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
-            #expect(issue.reason == "projectBoardIsDeleted")
-        }
-        
         @Test func removeHandlerInProjectHub() async throws {
             // given
             let config = projectBoardRef.config

@@ -139,8 +139,8 @@ package final class ProjectSource: Sendable {
                 
                 // create SystemSource
                 let newSystemSourceRef = systemSourcesRef.document()
-                let newData = SystemSource.Data(name: "First System",
-                                                target: SystemID(),
+                let newData = SystemSource.Data(target: SystemID(),
+                                                name: "First System",
                                                 location: .origin)
                 
                 try transaction.setData(from: newData, forDocument: newSystemSourceRef)

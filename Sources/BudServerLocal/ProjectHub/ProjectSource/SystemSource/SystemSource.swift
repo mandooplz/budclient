@@ -40,7 +40,7 @@ package final class SystemSource: Sendable {
         var target: SystemID
         var name: String
         var location: Location
-        var rootModel: Root? // 여기서 Root에 대해 설명할 필요가 있을까. 
+        var rootModel: Root? // 여기서 Root에 대해 설명할 필요가 있을까.
         
         package struct Root: Hashable, Codable {
             let target: ObjectID

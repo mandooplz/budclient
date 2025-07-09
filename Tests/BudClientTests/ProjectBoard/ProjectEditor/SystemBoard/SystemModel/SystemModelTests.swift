@@ -13,6 +13,12 @@ import Values
 // MARK: Tests
 @Suite("SystemModel", .timeLimit(.minutes(1)))
 struct SystemModelTests {
+    struct Subscribe {
+        
+    }
     
+    struct Unsubscribe {
+        
+    }
 
 }

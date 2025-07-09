@@ -112,20 +112,6 @@ struct SystemBoardTests {
             await systemBoardRef.setUp()
         }
         
-        @Test func whenSystemBoardIsDeleted() async throws {
-            // given
-            try await #require(systemBoardRef.id.isExist == true)
-            
-            // when
-            await systemBoardRef.unsubscribe {
-                await systemBoardRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await systemBoardRef.issue)
-            #expect(issue.reason == "systemBoardIsDeleted")
-        }
-        
         @Test func removeHandlerInProjectSource() async throws {
             // given
             let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
