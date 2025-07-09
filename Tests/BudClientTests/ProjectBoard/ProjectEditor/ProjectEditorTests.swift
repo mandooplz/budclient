@@ -19,7 +19,7 @@ struct ProjectEditorTests {
         let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.editorRef = await createAndGetProject(budClientRef)
+            self.editorRef = await getProject(budClientRef)
         }
         
         @Test func wnenAlreadtSetUp() async throws {
@@ -84,7 +84,7 @@ struct ProjectEditorTests {
         let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.editorRef = await createAndGetProject(budClientRef)
+            self.editorRef = await getProject(budClientRef)
         }
         
         @Test func whenProjectEditorIsDeleted() async throws {
@@ -154,7 +154,7 @@ struct ProjectEditorTests {
         let editorRef: ProjectEditor
         init() async {
             self.budClientRef = await BudClient()
-            self.editorRef = await createAndGetProject(budClientRef)
+            self.editorRef = await getProject(budClientRef)
         }
         
         @Test func whenProjectEditorIsDeleted() async throws {

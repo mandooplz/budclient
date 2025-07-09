@@ -19,7 +19,7 @@ struct SystemBoardTests {
         let systemBoardRef: SystemBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+            self.systemBoardRef = await getSystemBoard(budClientRef)
         }
         
         @Test func whenSystemBoardIsDeleted() async throws {
@@ -66,7 +66,7 @@ struct SystemBoardTests {
         let systemBoardRef: SystemBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+            self.systemBoardRef = await getSystemBoard(budClientRef)
             
             await systemBoardRef.setUp()
         }
@@ -107,7 +107,7 @@ struct SystemBoardTests {
         let systemBoardRef: SystemBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+            self.systemBoardRef = await getSystemBoard(budClientRef)
             
             await systemBoardRef.setUp()
         }
@@ -136,7 +136,7 @@ struct SystemBoardTests {
         let systemBoardRef: SystemBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.systemBoardRef = await createAndGetSystemBoard(budClientRef)
+            self.systemBoardRef = await getSystemBoard(budClientRef)
             
             await systemBoardRef.setUp()
         }

@@ -16,11 +16,10 @@ extension Tag {
 }
 
 
-// MARK: Logger
 fileprivate let logger = Logger(subsystem: "com.ginger.budclient.test", category: "test")
 
 
-// MARK: Navigator
+// MARK: signIn
 func signIn(_ budClietRef: BudClient) async {
     await budClietRef.setUp()
     guard let authBoardRef = await budClietRef.authBoard?.ref else {
@@ -63,7 +62,8 @@ func signIn(_ budClietRef: BudClient) async {
 }
 
 
-func createAndGetProject(_ budClientRef: BudClient) async -> ProjectEditor {
+// MARK: getProject
+func getProject(_ budClientRef: BudClient) async -> ProjectEditor {
     await signIn(budClientRef)
     
     let projectBoard = await budClientRef.projectBoard!
@@ -100,8 +100,9 @@ func createAndGetProject(_ budClientRef: BudClient) async -> ProjectEditor {
 }
 
 
-func createAndGetSystemBoard(_ budClientRef: BudClient) async -> SystemBoard {
-    let projectRef = await createAndGetProject(budClientRef)
+// MARK: getSystemBoard
+func getSystemBoard(_ budClientRef: BudClient) async -> SystemBoard {
+    let projectRef = await getProject(budClientRef)
     
     await projectRef.setUp()
     guard let systemBoardRef = await projectRef.systemBoard?.ref else {
@@ -113,9 +114,9 @@ func createAndGetSystemBoard(_ budClientRef: BudClient) async -> SystemBoard {
 }
 
 
-
+// MARK: getSystemModel
 func getSystemModel(_ budClientRef: BudClient) async -> SystemModel {
-    let systemBoardRef = await createAndGetSystemBoard(budClientRef)
+    let systemBoardRef = await getSystemBoard(budClientRef)
     
     await systemBoardRef.setUp()
     
@@ -135,4 +136,11 @@ func getSystemModel(_ budClientRef: BudClient) async -> SystemModel {
     
     let systemModel = await systemBoardRef.models.first!
     return await systemModel.ref!
+}
+func getSystemModelWithSetUp(_ budClientRef: BudClient) async -> SystemModel {
+    let systemModelRef = await getSystemModel(budClientRef)
+    
+    await systemModelRef.setUp()
+    
+    return systemModelRef
 }

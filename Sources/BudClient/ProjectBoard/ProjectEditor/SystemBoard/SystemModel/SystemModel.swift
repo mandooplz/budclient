@@ -35,18 +35,28 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public var name: String? 
     public var location: Location?
     
-    public var rootModel: RootModel.ID? // rootModel이 수정되었을 때
+    public var rootModel: RootModel.ID? // SrootModel이 수정되었을 때
     public var objectModels: Set<ObjectModel.ID> = []
+    
+    var updater: SystemModel
     
     public var issue: (any Issuable)?
     package var callback: Callback?
     
     
     // MARK: action
+    public func setUp() async {
+        
+    }
+    
     public func subscribe(captureHook: Hook? = nil) async {
         // capture
         await captureHook?()
         guard id.isExist else { return }
+        
+        // 이를 어떻게 구현할 것인가./
+        // systemSourceLink.setHandler
+        //
     }
     public func unsubscribe() { }
     

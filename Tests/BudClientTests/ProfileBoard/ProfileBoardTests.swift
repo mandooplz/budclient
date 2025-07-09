@@ -183,6 +183,34 @@ struct ProfileBoardTests {
             await #expect(systemBoardUpdater.isExist == false)
         }
         
+        @Test func deleteSystemModel() async throws {
+            // given
+            let budClientRef = await BudClient()
+            let systemModelRef = await getSystemModelWithSetUp(budClientRef)
+            
+            let profileBoardRef = try #require(budClientRef.profileBoard?.ref)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(systemModelRef.id.isExist == false)
+        }
+        @Test func deleteSystemModelUpdater() async throws {
+            // given
+            let budClientRef = await BudClient()
+            let systemModelRef = await getSystemModelWithSetUp(budClientRef)
+            let systemModelUpdater = try #require(systemModelRef.)
+            
+            let profileBoardRef = try #require(budClientRef.profileBoard?.ref)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(systemModelRef.id.isExist == false)
+        }
+        
         @Test func deleteFlowBoard() async throws {
             // given
             let projectRef = try await getProjectEditor(budClientRef)
