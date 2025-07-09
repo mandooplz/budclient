@@ -22,7 +22,7 @@ struct ProjectEditorTests {
             self.editorRef = await getProject(budClientRef)
         }
         
-        @Test func wnenAlreadtSetUp() async throws {
+        @Test func wnenAlreadySetUp() async throws {
             // given
             await editorRef.setUp()
             let systemBoard = try #require(await editorRef.systemBoard)
@@ -76,6 +76,17 @@ struct ProjectEditorTests {
             // then
             let flowBoard = try #require(await editorRef.flowBoard)
             await #expect(flowBoard.isExist == true)
+        }
+        @Test func createValueBoard() async throws {
+            // given
+            try await #require(editorRef.valueBoard == nil)
+            
+            // when
+            await editorRef.setUp()
+            
+            // then
+            let valueBoard = try #require(await editorRef.valueBoard)
+            await #expect(valueBoard.isExist == true)
         }
     }
     

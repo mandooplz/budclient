@@ -166,10 +166,10 @@ struct ProfileBoardTests {
         
         @Test func deleteFlowBoard() async throws {
             // given
-            let projectRef = try await getProjectEditor(budClientRef)
-            await projectRef.setUp()
+            let projectEditorRef = try await getProjectEditor(budClientRef)
+            await projectEditorRef.setUp()
             
-            let flowBoard = try #require(await projectRef.flowBoard)
+            let flowBoard = try #require(await projectEditorRef.flowBoard)
             try await #require(flowBoard.isExist == true)
             
             // when
@@ -177,6 +177,21 @@ struct ProfileBoardTests {
             
             // then
             await #expect(flowBoard.isExist == false)
+        }
+        
+        @Test func deleteValueBoard() async throws {
+            // given
+            let projectEditorRef = try await getProjectEditor(budClientRef)
+            await projectEditorRef.setUp()
+            
+            let valueBoard = try #require(await projectEditorRef.valueBoard)
+            try await #require(valueBoard.isExist == true)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(valueBoard.isExist == false)
         }
         
         @Test func deleteProfileBoard() async throws {

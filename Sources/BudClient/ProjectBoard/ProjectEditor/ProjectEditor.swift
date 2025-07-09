@@ -38,6 +38,7 @@ public final class ProjectEditor: Debuggable {
     
     public var systemBoard: SystemBoard.ID?
     public var flowBoard: FlowBoard.ID?
+    public var valueBoard: ValueBoard.ID?
     
     public var issue: (any Issuable)?
     
@@ -50,14 +51,16 @@ public final class ProjectEditor: Debuggable {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard systemBoard == nil, flowBoard == nil else { setIssue(Error.alreadySetUp); return }
+        guard systemBoard == nil && flowBoard == nil && valueBoard == nil else { setIssue(Error.alreadySetUp); return }
         let myConfig = self.config.setParent(id)
         
         let systemBoardRef = SystemBoard(config: myConfig)
         let flowBoardRef = FlowBoard(config: myConfig)
+        let valueBoardRef = ValueBoard(config: myConfig)
         
         self.systemBoard = systemBoardRef.id
         self.flowBoard = flowBoardRef.id
+        self.valueBoard = valueBoardRef.id
     }
     
     public func pushName() async {
