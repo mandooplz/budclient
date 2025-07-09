@@ -16,6 +16,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<BudClient.ID>) {
         self.config = config
+        self.updater = ProjectBoardUpdater(config: config.setParent(self.id))
         
         ProjectBoardManager.register(self)
     }
@@ -28,7 +29,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
     
-    var updater: ProjectBoardUpdater.ID?
+    var updater: ProjectBoardUpdater
     
     public internal(set) var editors: [ProjectEditor.ID] = []
     func getProjectEditor(_ target: ProjectID) -> ProjectEditor.ID? {
@@ -45,22 +46,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     
     // MARK: action
-    public func setUp() async {
-        await setUp(mutateHook: nil)
-    }
-    func setUp(mutateHook: Hook?) async {
-        // capture
-        guard self.updater == nil else { setIssue(Error.alreadySetUp); return }
-        let config = self.config
-        let myConfig = config.setParent(self.id)
-        
-        // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        let updaterRef = ProjectBoardUpdater(config: myConfig)
-        self.updater = updaterRef.id
-    }
-    
     public func subscribe() async {
         await self.subscribe(captureHook: nil)
     }
@@ -68,10 +53,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard self.id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        let updater = self.updater
         let config = self.config
         let callback = self.callback
         let me = ObjectID(id.value)
+        let projectBoard = self.id
         
         // compute
         await withDiscardingTaskGroup { group in
@@ -83,7 +68,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     ticket: ticket,
                     handler: .init({ event in
                         Task { @MainActor in
-                            guard let updaterRef = updater?.ref else { return }
+                            guard let updaterRef = projectBoard.ref?.updater else { return }
                             
                             updaterRef.appendEvent(event)
                             await updaterRef.update()
@@ -98,6 +83,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     public func unsubscribe() async {
         // capture
+        
         let config = config
         let me = ObjectID(id.value)
         

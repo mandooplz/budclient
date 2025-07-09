@@ -38,7 +38,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public var rootModel: RootModel.ID? // SrootModel이 수정되었을 때
     public var objectModels: Set<ObjectModel.ID> = []
     
-    var updater: SystemModel
+    var updater = SystemModelUpdater()
     
     public var issue: (any Issuable)?
     package var callback: Callback?

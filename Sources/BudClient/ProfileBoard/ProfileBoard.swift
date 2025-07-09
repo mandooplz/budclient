@@ -69,7 +69,10 @@ public final class ProfileBoard: Debuggable {
         
         for projectEditor in projectEditors {
             let systemBoardRef = projectEditor.ref?.systemBoard?.ref
-            systemBoardRef?.updater?.ref?.delete()
+            systemBoardRef?.models.forEach { systemModel in
+                systemModel.ref?.delete()
+            }
+            
             systemBoardRef?.delete()
             
             projectEditor.ref?.systemBoard?.ref?.delete()
@@ -78,7 +81,6 @@ public final class ProfileBoard: Debuggable {
         }
         
         projectBoardRef.delete()
-        projectBoardRef.updater?.ref?.delete()
         communityRef.delete()
         self.delete()
     }

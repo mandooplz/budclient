@@ -17,16 +17,10 @@ final class ProjectBoardUpdater: Debuggable, UpdaterInterface {
     // MARK: core
     init(config: Config<ProjectBoard.ID>) {
         self.config = config
-        
-        ProjectBoardUpdaterManager.register(self)
-    }
-    func delete() {
-        ProjectBoardUpdaterManager.unregister(self.id)
     }
     
     
     // MARK: state
-    nonisolated let id = ID()
     nonisolated let config: Config<ProjectBoard.ID>
    
     var queue: Deque<ProjectHubEvent> = []
@@ -35,15 +29,12 @@ final class ProjectBoardUpdater: Debuggable, UpdaterInterface {
     
     
     // MARK: action
-    func update(mutateHook: Hook? = nil) async {
+    func update() async {
         // capture
         let config = self.config
         let projectBoardRef = config.parent.ref!
         
         // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
-        
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
@@ -85,36 +76,9 @@ final class ProjectBoardUpdater: Debuggable, UpdaterInterface {
     
     
     // MARK: value
-    @MainActor
-    struct ID: Sendable, Hashable {
-        let value: UUID
-        nonisolated init(value: UUID = UUID()) {
-            self.value = value
-        }
-        
-        var isExist: Bool {
-            ProjectBoardUpdaterManager.container[self] != nil
-        }
-        var ref: ProjectBoardUpdater? {
-            ProjectBoardUpdaterManager.container[self]
-        }
-    }
     enum Error: String, Swift.Error {
         case updaterIsDeleted
         case alreadyAdded, alreadyRemoved
         case projectSourceDoesNotExist
-    }
-}
-
-
-// MARK: Object Manager
-@MainActor @Observable
-fileprivate final class ProjectBoardUpdaterManager: Sendable {
-    fileprivate static var container: [ProjectBoardUpdater.ID: ProjectBoardUpdater] = [:]
-    fileprivate static func register(_ object: ProjectBoardUpdater) {
-        container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: ProjectBoardUpdater.ID) {
-        container[id] = nil
     }
 }

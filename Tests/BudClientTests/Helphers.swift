@@ -69,9 +69,6 @@ func getProject(_ budClientRef: BudClient) async -> ProjectEditor {
     let projectBoard = await budClientRef.projectBoard!
     let projectBoardRef = await projectBoard.ref!
     
-    await projectBoardRef.setUp()
-    try! await #require(projectBoardRef.updater != nil)
-    
     await withCheckedContinuation { continuation in
         Task {
             await projectBoardRef.setCallback {
@@ -117,8 +114,6 @@ func getSystemBoard(_ budClientRef: BudClient) async -> SystemBoard {
 // MARK: getSystemModel
 func getSystemModel(_ budClientRef: BudClient) async -> SystemModel {
     let systemBoardRef = await getSystemBoard(budClientRef)
-    
-    await systemBoardRef.setUp()
     
     await withCheckedContinuation { con in
         Task {

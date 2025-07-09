@@ -16,16 +16,10 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
     // MARK: core
     init(config: Config<SystemBoard.ID>) {
         self.config = config
-        
-        SystemBoardUpdaterManager.container[self.id] = self
-    }
-    func delete() {
-        SystemBoardUpdaterManager.container[self.id] = nil
     }
     
     
     // MARK: state
-    nonisolated let id = ID()
     nonisolated let config: Config<SystemBoard.ID>
     
     var queue: Deque<ProjectSourceEvent> = []
@@ -34,10 +28,8 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
     
     
     // MARK: action
-    func update(mutateHook: Hook? = nil) async {
+    func update() async {
         // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.updaterIsDeleted); return }
         let config = self.config
         let systemBoardRef = config.parent.ref!
         

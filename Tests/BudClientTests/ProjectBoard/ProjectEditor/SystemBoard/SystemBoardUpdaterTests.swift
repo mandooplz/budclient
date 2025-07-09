@@ -19,22 +19,8 @@ struct SystemBoardUpdaterTests {
         let systemBoardRef: SystemBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.updaterRef = await getSystemBoardUpdater(budClientRef)
+            self.updaterRef = await getSystemBoard(budClientRef).updater
             self.systemBoardRef = await updaterRef.config.parent.ref!
-        }
-        
-        @Test func whenSystemBoardIsDeleted() async throws {
-            // given
-            try await #require(updaterRef.id.isExist == true)
-            
-            // when
-            await updaterRef.update {
-                await updaterRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "updaterIsDeleted")
         }
         
         @Test func createSystemModel() async throws {
@@ -158,14 +144,4 @@ struct SystemBoardUpdaterTests {
             #expect(issue.reason == "alreadyRemoved")
         }
     }
-}
-
-
-// MARK: Helpher
-private func getSystemBoardUpdater(_ budClientRef: BudClient) async -> SystemBoardUpdater {
-    let systemBoardRef = await getSystemBoard(budClientRef)
-    
-    await systemBoardRef.setUp()
-    
-    return await systemBoardRef.updater!.ref!
 }

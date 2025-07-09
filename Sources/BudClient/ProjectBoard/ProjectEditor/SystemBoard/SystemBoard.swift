@@ -15,6 +15,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<ProjectEditor.ID>) {
         self.config = config
+        self.updater = SystemBoardUpdater(config: config.setParent(self.id))
         
         SystemBoardManager.register(self)
     }
@@ -39,29 +40,13 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         self.models.first { $0.ref?.target == target }
     }
     
-    var updater: SystemBoardUpdater.ID?
+    var updater: SystemBoardUpdater
     
     public var issue: (any Issuable)?
     public var callback: Callback?
     
     
     // MARK: action
-    public func setUp() async {
-        await setUp(mutateHook: nil)
-    }
-    func setUp(mutateHook: Hook?) async {
-        // captrue
-        guard updater == nil else { setIssue(Error.alreadySetUp); return }
-        
-        // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
-        
-        let myConfig = config.setParent(id)
-        let updaterRef = SystemBoardUpdater(config: myConfig)
-        self.updater = updaterRef.id
-    }
-    
     public func subscribe() async {
         await self.subscribe(captureHook: nil)
     }
@@ -74,7 +59,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         let projectSourceLink = projectEditorRef.sourceLink
         let project = projectEditorRef.target
         let me = ObjectID(id.value)
-        let updater = self.updater
+        let systemBoard = self.id
         let callback = self.callback
         
         // compute
@@ -86,7 +71,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                     ticket: ticket,
                     handler: .init({ event in
                         Task { @MainActor in
-                            guard let updaterRef = updater?.ref else { return }
+                            guard let updaterRef = systemBoard.ref?.updater else { return }
                             
                             updaterRef.queue.append(event)
                             await updaterRef.update()

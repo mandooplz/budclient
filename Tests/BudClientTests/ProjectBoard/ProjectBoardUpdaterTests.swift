@@ -24,20 +24,6 @@ struct ProjectBoardUpdaterTests {
             self.projectBoardRef = await updaterRef.config.parent.ref!
         }
         
-        @Test func whenUpdaterIsDeletedBeforeMutate() async throws {
-            // given
-            try await #require(updaterRef.id.isExist == true)
-            
-            // when
-            await updaterRef.update {
-                await updaterRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "updaterIsDeleted")
-        }
-        
         @Test func whenEditorAlreadyAdded() async throws {
             // given
             await withCheckedContinuation { con in
@@ -177,7 +163,6 @@ private func getUpdater(_ budClientRef: BudClient) async -> ProjectBoardUpdater 
     let projectBoard = await budClientRef.projectBoard!
     let projectBoardRef = await projectBoard.ref!
     
-    await projectBoardRef.setUp()
-    return await projectBoardRef.updater!.ref!
+    return await projectBoardRef.updater
 }
 

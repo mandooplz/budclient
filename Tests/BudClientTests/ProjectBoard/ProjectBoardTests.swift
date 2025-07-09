@@ -13,67 +13,12 @@ import Values
 // MARK: Tests
 @Suite("ProjectBoard", .timeLimit(.minutes(1)))
 struct ProjectBoardTests {
-    struct SetUp {
-        let budClientRef: BudClient
-        let projectBoardRef: ProjectBoard
-        init() async {
-            self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoard(budClientRef)
-        }
-        
-        @Test func whenProjectBoardIsDeletedBeforeMutate() async throws {
-            // given
-            try await #require(projectBoardRef.id.isExist == true)
-            
-            // when
-            await projectBoardRef.setUp {
-                await projectBoardRef.delete()
-            }
-            
-            // then
-            try await #require(projectBoardRef.updater == nil)
-            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
-            #expect(issue.reason == "projectBoardIsDeleted")
-        }
-        
-        @Test func createUpdater() async throws {
-            // given
-            try await #require(projectBoardRef.updater == nil)
-            
-            // when
-            await projectBoardRef.setUp()
-            
-            // then
-            let updater = try #require(await projectBoardRef.updater)
-            await #expect(updater.isExist == true)
-        }
-        @Test func whenUpdaterAlreadySetUp() async throws {
-            // given
-            try await #require(projectBoardRef.updater == nil)
-    
-            await projectBoardRef.setUp()
-            
-            let updater = try #require(await projectBoardRef.updater)
-            
-            // when
-            await projectBoardRef.setUp()
-            
-            // then
-            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
-            try #require(issue.reason == "alreadySetUp")
-            
-            
-            let newUpdater = try #require(await projectBoardRef.updater)
-            #expect(newUpdater == updater)
-        }
-    }
-    
     struct Subscribe {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
+            self.projectBoardRef = await getProjectBoard(budClientRef)
         }
         
         @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
@@ -111,7 +56,7 @@ struct ProjectBoardTests {
         let projectBoardRef: ProjectBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
+            self.projectBoardRef = await getProjectBoard(budClientRef)
         }
         
         @Test func removeHandlerInProjectHub() async throws {
@@ -136,7 +81,7 @@ struct ProjectBoardTests {
         let projectBoardRef: ProjectBoard
         init() async {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoardWithSetUp(budClientRef)
+            self.projectBoardRef = await getProjectBoard(budClientRef)
         }
         
         @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
@@ -203,11 +148,4 @@ private func getProjectBoard(_ budClientRef: BudClient) async -> ProjectBoard {
     
     let projectBoard = await budClientRef.projectBoard!
     return await projectBoard.ref!
-}
-private func getProjectBoardWithSetUp(_ budClientRef: BudClient) async -> ProjectBoard {
-    let projectBoardRef = await getProjectBoard(budClientRef)
-    await projectBoardRef.setUp()
-    
-    try! await #require(projectBoardRef.updater?.isExist == true)
-    return projectBoardRef
 }

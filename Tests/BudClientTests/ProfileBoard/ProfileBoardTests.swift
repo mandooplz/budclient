@@ -97,19 +97,6 @@ struct ProfileBoardTests {
             // then
             await #expect(projectBoard.isExist == false)
         }
-        @Test func deleteProjectBoardUpdater() async throws {
-            // given
-            let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
-            
-            await projectBoardRef.setUp()
-            try await #require(projectBoardRef.updater?.isExist == true)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(projectBoardRef.updater?.isExist == false)
-        }
         @Test func deleteProjectEditors() async throws {
             // given
             let projectBoard = try #require(await budClientRef.projectBoard)
@@ -120,7 +107,6 @@ struct ProfileBoardTests {
                     await projectBoardRef.setCallback {
                         con.resume()
                     }
-                    await projectBoardRef.setUp()
                     await projectBoardRef.subscribe()
                     
                     await projectBoardRef.createProject()
@@ -132,7 +118,6 @@ struct ProfileBoardTests {
                     await projectBoardRef.setCallback {
                         con.resume()
                     }
-                    await projectBoardRef.setUp()
                     await projectBoardRef.subscribe()
                     
                     await projectBoardRef.createProject()
@@ -165,44 +150,12 @@ struct ProfileBoardTests {
             // then
             await #expect(systemBoard.isExist == false)
         }
-        @Test func deleteSystemBoardUpdater() async throws {
-            // given
-            let projectRef = try await getProjectEditor(budClientRef)
-            await projectRef.setUp()
-            
-            let systemBoardRef = try #require(await projectRef.systemBoard?.ref)
-            await systemBoardRef.setUp()
-            
-            let systemBoardUpdater = try #require(await systemBoardRef.updater)
-            try await #require(systemBoardUpdater.isExist == true)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(systemBoardUpdater.isExist == false)
-        }
-        
         @Test func deleteSystemModel() async throws {
             // given
             let budClientRef = await BudClient()
             let systemModelRef = await getSystemModelWithSetUp(budClientRef)
             
-            let profileBoardRef = try #require(budClientRef.profileBoard?.ref)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(systemModelRef.id.isExist == false)
-        }
-        @Test func deleteSystemModelUpdater() async throws {
-            // given
-            let budClientRef = await BudClient()
-            let systemModelRef = await getSystemModelWithSetUp(budClientRef)
-            let systemModelUpdater = try #require(systemModelRef.)
-            
-            let profileBoardRef = try #require(budClientRef.profileBoard?.ref)
+            let profileBoardRef = try #require(await budClientRef.profileBoard?.ref)
             
             // when
             await profileBoardRef.signOut()
@@ -282,7 +235,6 @@ private func getProjectEditor(_ budClientRef: BudClient) async throws -> Project
             await projectBoardRef.setCallback {
                 con.resume()
             }
-            await projectBoardRef.setUp()
             await projectBoardRef.subscribe()
             
             await projectBoardRef.createProject()
