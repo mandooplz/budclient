@@ -9,9 +9,13 @@ import Foundation
 
 // MARK: ObjectSourceID
 public struct ObjectSourceID: Identity {
-    public var value: UUID
+    public var value: String
     
-    public init(value: UUID = UUID()) {
+    public init(value: String) {
         self.value = value
+    }
+    
+    public init() {
+        self.value = UUID().uuidString
     }
 }

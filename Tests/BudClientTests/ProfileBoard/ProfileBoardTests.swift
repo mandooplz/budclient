@@ -138,7 +138,7 @@ struct ProfileBoardTests {
         
         @Test func deleteSystemBoard() async throws {
             // given
-            let projectEditorRef = try await getProjectEditor(budClientRef)
+            let projectEditorRef = await getProjectEditor(budClientRef)
             await projectEditorRef.setUp()
             
             let systemBoard = try #require(await projectEditorRef.systemBoard)
@@ -153,7 +153,7 @@ struct ProfileBoardTests {
         @Test func deleteSystemModel() async throws {
             // given
             let budClientRef = await BudClient()
-            let systemModelRef = await getSystemModelWithSetUp(budClientRef)
+            let systemModelRef = await getSystemModel(budClientRef)
             
             let profileBoardRef = try #require(await budClientRef.profileBoard?.ref)
             
@@ -166,7 +166,7 @@ struct ProfileBoardTests {
         
         @Test func deleteFlowBoard() async throws {
             // given
-            let projectEditorRef = try await getProjectEditor(budClientRef)
+            let projectEditorRef = await getProjectEditor(budClientRef)
             await projectEditorRef.setUp()
             
             let flowBoard = try #require(await projectEditorRef.flowBoard)
@@ -181,7 +181,7 @@ struct ProfileBoardTests {
         
         @Test func deleteValueBoard() async throws {
             // given
-            let projectEditorRef = try await getProjectEditor(budClientRef)
+            let projectEditorRef = await getProjectEditor(budClientRef)
             await projectEditorRef.setUp()
             
             let valueBoard = try #require(await projectEditorRef.valueBoard)
@@ -238,32 +238,4 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileB
     
     let profileBoard = await budClientRef.profileBoard!
     return await profileBoard.ref!
-}
-
-private func getProjectEditor(_ budClientRef: BudClient) async throws -> ProjectEditor {
-    let projectBoard = try #require(await budClientRef.projectBoard)
-    let projectBoardRef = try #require(await projectBoard.ref)
-    
-    // createProject
-    await withCheckedContinuation { con in
-        Task {
-            await projectBoardRef.setCallback {
-                con.resume()
-            }
-            await projectBoardRef.subscribe()
-            
-            await projectBoardRef.createProject()
-        }
-    }
-    
-    await projectBoardRef.unsubscribe()
-    await projectBoardRef.setCallback { }
-    await projectBoardRef.subscribe()
-    
-    try await #require(projectBoardRef.editors.count == 1)
-    
-    
-    let project = try await #require(projectBoardRef.editors.first)
-    let projectRef = try #require(await project.ref)
-    return projectRef
 }

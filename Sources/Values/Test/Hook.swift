@@ -7,4 +7,4 @@
 
 
 // MARK: Hook
-public typealias Hook = (@Sendable () async -> Void)
+package typealias Hook = (@Sendable () async -> Void)

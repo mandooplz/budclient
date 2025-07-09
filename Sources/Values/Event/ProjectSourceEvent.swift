@@ -11,14 +11,6 @@ package enum ProjectSourceEvent: Sendable {
     case added(SystemSourceID, SystemID)
     case modified(SystemSourceDiff)
     case removed(SystemID)
-    
-    package struct Data {
-        package let name: String
-        
-        package init(name: String) {
-            self.name = name
-        }
-    }
 }
 
 

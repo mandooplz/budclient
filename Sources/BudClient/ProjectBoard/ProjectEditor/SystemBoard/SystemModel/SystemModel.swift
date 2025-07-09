@@ -35,7 +35,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public var name: String? 
     public var location: Location?
     
-    public var rootModel: RootModel.ID? // SrootModel이 수정되었을 때
+    public var rootModel: RootModel.ID?
     public var objectModels: Set<ObjectModel.ID> = []
     
     var updater = SystemModelUpdater()
@@ -45,30 +45,100 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     
     // MARK: action
-    public func setUp() async {
-        
+    public func subscribe() async {
+        await subscribe(captureHook: nil)
     }
-    
-    public func subscribe(captureHook: Hook? = nil) async {
+    func subscribe(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { return }
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        let callback = self.callback
+        let sourceLink = self.sourceLink
+        let systemModel = self.id
+        let me = ObjectID(id.value)
         
-        // 이를 어떻게 구현할 것인가./
-        // systemSourceLink.setHandler
-        //
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.setHandler(
+                    requester: me,
+                    handler: .init({ event in
+                        Task { @MainActor in
+                            guard let updaterRef = systemModel.ref?.updater else { return }
+                            
+                            updaterRef.appendEvent(event)
+                            updaterRef.update()
+                            
+                            await callback?()
+                        }
+                    }))
+            }
+        }
     }
-    public func unsubscribe() { }
     
-    public func addSystemRight() { }
-    public func addSystemLeft() { }
-    public func addSystemTop() { }
-    public func addSystemBottom() { }
+    public func unsubscribe() async {
+        // capture
+        let sourceLink = self.sourceLink
+        let me = ObjectID(id.value)
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.removeHandler(requester: me)
+            }
+        }
+    }
     
-    public func pushName() { }
-    public func pushLocation() { }
+    public func pushName() async {
+        await self.pushName(captureHook: nil)
+    }
+    func pushName(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return}
+        guard let name else { setIssue(Error.nameIsNil); return}
+        let sourceLink = self.sourceLink
+    }
     
-    public func remove() { }
+    func addSystemRight(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        let systemBoardRef = self.config.parent.ref
+        let sourceLink = self.sourceLink
+    }
+    func addSystemLeft(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        let sourceLink = self.sourceLink
+    }
+    func addSystemTop(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        let sourceLink = self.sourceLink
+    }
+    func addSystemBottom(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        let sourceLink = self.sourceLink
+    }
+    
+    public func remove() async {
+        await self.remove(captureHook: nil)
+    }
+    func remove(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return}
+        let sourceLink = self.sourceLink
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.remove()
+            }
+        }
+    }
     
     
     // MARK: value
@@ -88,7 +158,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case systemModelIsDeleted
-        case alreadySetUp
+        case systemAlreadyExist
+        case nameIsNil
     }
 }
 

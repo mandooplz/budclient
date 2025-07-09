@@ -18,7 +18,21 @@ struct SystemModelTests {
         let systemModelRef: SystemModel
         init() async {
             self.budClientRef = await BudClient()
-            self.systemModelRef = await getSystemModelWithSetUp(budClientRef)
+            self.systemModelRef = await getSystemModel(budClientRef)
+        }
+        
+        @Test func whenSystemModelIsDeleted() async throws {
+            // given
+            try await #require(systemModelRef.id.isExist == true)
+            
+            // when
+            await systemModelRef.subscribe {
+                await systemModelRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "systemModelIsDeleted")
         }
     }
     
@@ -27,7 +41,53 @@ struct SystemModelTests {
         let systemModelRef: SystemModel
         init() async {
             self.budClientRef = await BudClient()
-            self.systemModelRef = await getSystemModelWithSetUp(budClientRef)
+            self.systemModelRef = await getSystemModel(budClientRef)
+        }
+    }
+    
+    struct PushName {
+        let budClientRef: BudClient
+        let systemModelRef: SystemModel
+        init() async {
+            self.budClientRef = await BudClient()
+            self.systemModelRef = await getSystemModel(budClientRef)
+        }
+        
+        @Test func whenSystemModelIsDeleted() async throws {
+            // given
+            try await #require(systemModelRef.id.isExist == true)
+            
+            // when
+            await systemModelRef.pushName {
+                await systemModelRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "systemModelIsDeleted")
+        }
+    }
+    
+    struct Remove {
+        let budClientRef: BudClient
+        let systemModelRef: SystemModel
+        init() async {
+            self.budClientRef = await BudClient()
+            self.systemModelRef = await getSystemModel(budClientRef)
+        }
+        
+        @Test func whenSystemModelIsDeleted() async throws {
+            // given
+            try await #require(systemModelRef.id.isExist == true)
+            
+            // when
+            await systemModelRef.remove {
+                await systemModelRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "systemModelIsDeleted")
         }
     }
 

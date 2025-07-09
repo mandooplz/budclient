@@ -83,8 +83,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     public func unsubscribe() async {
         // capture
-        
-        let config = config
+        let config = self.config
         let me = ObjectID(id.value)
         
         // compute

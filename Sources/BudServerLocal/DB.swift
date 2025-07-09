@@ -7,12 +7,17 @@
 
 
 // MARK: DB
-internal struct ProjectSources {
+struct ProjectSources {
     static let name = "ProjectSources"
     private init() { }
     
-    internal struct SystemSources {
+    struct SystemSources {
         static let name = "SystemSources"
+        private init() { }
+    }
+    
+    struct ValueSources {
+        static let name = "ValueSources"
         private init() { }
     }
 }

@@ -63,7 +63,7 @@ func signIn(_ budClietRef: BudClient) async {
 
 
 // MARK: getProject
-func getProject(_ budClientRef: BudClient) async -> ProjectEditor {
+func getProjectEditor(_ budClientRef: BudClient) async -> ProjectEditor {
     await signIn(budClientRef)
     
     let projectBoard = await budClientRef.projectBoard!
@@ -99,7 +99,7 @@ func getProject(_ budClientRef: BudClient) async -> ProjectEditor {
 
 // MARK: getSystemBoard
 func getSystemBoard(_ budClientRef: BudClient) async -> SystemBoard {
-    let projectRef = await getProject(budClientRef)
+    let projectRef = await getProjectEditor(budClientRef)
     
     await projectRef.setUp()
     guard let systemBoardRef = await projectRef.systemBoard?.ref else {
@@ -131,11 +131,4 @@ func getSystemModel(_ budClientRef: BudClient) async -> SystemModel {
     
     let systemModel = await systemBoardRef.models.first!
     return await systemModel.ref!
-}
-func getSystemModelWithSetUp(_ budClientRef: BudClient) async -> SystemModel {
-    let systemModelRef = await getSystemModel(budClientRef)
-    
-    await systemModelRef.setUp()
-    
-    return systemModelRef
 }

@@ -27,17 +27,14 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectEditor.ID>
     
-    public internal(set) var models: Set<SystemModel.ID> = []
-    var isModelsEmpty: Bool {
-        models.isEmpty
-    }
+    public internal(set) var models: [Location: SystemModel.ID] = [:]
     func isExist(_ target: SystemID) -> Bool {
-        self.models.lazy
+        self.models.values.lazy
             .compactMap { $0.ref }
             .contains { $0.target == target }
     }
     func getSystemModel(_ target: SystemID) -> SystemModel.ID? {
-        self.models.first { $0.ref?.target == target }
+        self.models.values.first { $0.ref?.target == target }
     }
     
     var updater: SystemBoardUpdater
