@@ -61,6 +61,12 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         
         await withDiscardingTaskGroup { group in
             group.addTask {
+                let isSubscribed = await sourceLink.hasHandler(requester: me)
+                guard isSubscribed == false else {
+                    await systemModel.ref?.setIssue(Error.alreadySubscribed);
+                    return
+                }
+                
                 await sourceLink.setHandler(
                     requester: me,
                     handler: .init({ event in
@@ -193,6 +199,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public enum Error: String, Swift.Error {
         case systemModelIsDeleted
         case systemAlreadyExist
+        case alreadySubscribed
         case nameInputIsNil
         case noChangesToPush
     }

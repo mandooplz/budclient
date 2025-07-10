@@ -63,6 +63,12 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
             group.addTask {
                 let projectHubLink = await config.budServerLink.getProjectHub()
                 
+                let isSubscribed = await projectHubLink.hasHandler(requester: me)
+                guard isSubscribed == false else {
+                    await projectBoard.ref?.setIssue(Error.alreadySubscribed);
+                    return
+                }
+                
                 await projectHubLink.setHandler(
                     requester: me,
                     user: config.user,
@@ -95,7 +101,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         }
     }
     
-    public func createProject() async {
+    public func createNewProject() async {
         await self.createProject(captureHook: nil)
     }
     func createProject(captureHook: Hook?) async {
@@ -147,6 +153,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case projectBoardIsDeleted
+        case alreadySubscribed
         case alreadySetUp
     }
 }

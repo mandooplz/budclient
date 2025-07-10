@@ -109,9 +109,12 @@ struct ProfileBoardTests {
                     }
                     await projectBoardRef.subscribe()
                     
-                    await projectBoardRef.createProject()
+                    await projectBoardRef.createNewProject()
                 }
             }
+            
+            await projectBoardRef.unsubscribe()
+            
             
             await withCheckedContinuation { con in
                 Task {
@@ -120,7 +123,7 @@ struct ProfileBoardTests {
                     }
                     await projectBoardRef.subscribe()
                     
-                    await projectBoardRef.createProject()
+                    await projectBoardRef.createNewProject()
                 }
             }
             

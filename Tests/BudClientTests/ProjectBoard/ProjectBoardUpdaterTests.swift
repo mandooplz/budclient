@@ -33,7 +33,7 @@ struct ProjectBoardUpdaterTests {
                     }
                     
                     await projectBoardRef.subscribe()
-                    await projectBoardRef.createProject()
+                    await projectBoardRef.createNewProject()
                 }
             }
             
@@ -132,7 +132,7 @@ struct ProjectBoardUpdaterTests {
                     }
                     
                     await projectBoardRef.subscribe()
-                    await projectBoardRef.createProject()
+                    await projectBoardRef.createNewProject()
                 }
             }
             

@@ -25,11 +25,21 @@ package struct SystemSourceLink: Sendable {
     
     
     // MARK: state
-    func hasHandler(requester: ObjectID) -> Bool {
-        fatalError()
+    package func hasHandler(requester: ObjectID) -> Bool {
+        switch mode {
+        case .test:
+            return TestManager.get(object)?.hasHandler(requester: requester) ?? false
+        case .real:
+            fatalError()
+        }
     }
     package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) {
-        fatalError()
+        switch mode {
+        case .test:
+            TestManager.get(object)?.setHandler(requester: requester, handler: handler)
+        case .real:
+            fatalError()
+        }
     }
     package func removeHandler(requester: ObjectID) {
         fatalError()

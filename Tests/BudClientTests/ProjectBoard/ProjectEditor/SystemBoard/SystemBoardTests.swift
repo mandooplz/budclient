@@ -35,7 +35,6 @@ struct SystemBoardTests {
             let issue = try #require(await systemBoardRef.issue)
             #expect(issue.reason == "systemBoardIsDeleted")
         }
-        
         @Test func setHandlerInProjectSource() async throws {
             // given
             let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
@@ -50,6 +49,18 @@ struct SystemBoardTests {
             
             // then
             await #expect(projectSourceLink.hasHandler(requester: me) == true)
+        }
+        @Test func whenAlreadySubscribed() async throws {
+            // given
+            await systemBoardRef.subscribe()
+            try await #require(systemBoardRef.issue == nil)
+            
+            // when
+            await systemBoardRef.subscribe()
+            
+            // then
+            let issue = try #require(await systemBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadySubscribed")
         }
     }
     

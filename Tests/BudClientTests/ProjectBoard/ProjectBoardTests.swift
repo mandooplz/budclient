@@ -34,6 +34,18 @@ struct ProjectBoardTests {
             let issue = try #require(await projectBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "projectBoardIsDeleted")
         }
+        @Test func whenAlreadySubscribed() async throws {
+            // given
+            await projectBoardRef.subscribe()
+            try await #require(projectBoardRef.issue == nil)
+            
+            // when
+            await projectBoardRef.subscribe()
+            
+            // then
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadySubscribed")
+        }
         
         @Test func setHandlerInProjectHub() async throws {
             // given
@@ -112,7 +124,7 @@ struct ProjectBoardTests {
                     }
                     
                     await projectBoardRef.subscribe()
-                    await projectBoardRef.createProject()
+                    await projectBoardRef.createNewProject()
                 }
             }
 
@@ -129,7 +141,7 @@ struct ProjectBoardTests {
                     }
                     
                     await projectBoardRef.subscribe()
-                    await projectBoardRef.createProject()
+                    await projectBoardRef.createNewProject()
                 }
             }
             

@@ -41,7 +41,7 @@ struct ProjectEditorTests {
             let newFlowBoard = try #require(await editorRef.flowBoard)
             #expect(newFlowBoard == flowBoard)
         }
-        @Test func whenProjectEditorIsDeletedBeforeMutate() async throws {
+        @Test func whenProjectEditorIsDeleted() async throws {
             // given
             try await #require(editorRef.id.isExist == true)
             
@@ -204,11 +204,11 @@ struct ProjectEditorTests {
             // when
             await withCheckedContinuation { con in
                 Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
-                    }
+                    await projectBoardRef.unsubscribe()
                     
+                    await projectBoardRef.setCallback { con.resume() }
                     await projectBoardRef.subscribe()
+                    await #expect(projectBoardRef.issue == nil)
                     
                     await editorRef.removeProject()
                 }
@@ -225,11 +225,15 @@ struct ProjectEditorTests {
             // when
             await withCheckedContinuation { con in
                 Task {
+                    await projectBoardRef.unsubscribe()
+                    
                     await projectBoardRef.setCallback {
                         con.resume()
                     }
                     
                     await projectBoardRef.subscribe()
+                    await #expect(projectBoardRef.issue == nil)
+                    
                     await editorRef.removeProject()
                 }
             }

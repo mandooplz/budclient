@@ -76,7 +76,7 @@ func getProjectEditor(_ budClientRef: BudClient) async -> ProjectEditor {
             }
             
             await projectBoardRef.subscribe()
-            await projectBoardRef.createProject()
+            await projectBoardRef.createNewProject()
         }
     }
     

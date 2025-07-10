@@ -63,6 +63,12 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
+                let isSubscribed = await projectSourceLink.hasHandler(requester: me)
+                guard isSubscribed == false else {
+                    await systemBoard.ref?.setIssue(Error.alreadySubscribed)
+                    return
+                }
+                
                 await projectSourceLink.setHandler(
                     requester: me,
                     handler: .init({ event in
@@ -133,6 +139,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case alreadySetUp
+        case alreadySubscribed
         case systemBoardIsDeleted
         case systemAlreadyExist
     }

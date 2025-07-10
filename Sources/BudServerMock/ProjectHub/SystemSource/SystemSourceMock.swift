@@ -36,6 +36,14 @@ package final class SystemSourceMock: Sendable {
     package var name: String
     package var location: Location
     
+    package var eventHandlers: [ObjectID: Handler<SystemSourceEvent>] = [:]
+    package func hasHandler(requester: ObjectID) -> Bool {
+        eventHandlers[requester] != nil
+    }
+    package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) {
+        eventHandlers[requester] = handler
+    }
+    
     package func notifyNameChanged() {
         // capture
         guard SystemSourceMockManager.isExist(id) else { return }
@@ -47,7 +55,7 @@ package final class SystemSourceMock: Sendable {
                                     name: name,
                                     location: location)
         
-        for (_, handler) in projectSourceRef.eventHandlers {
+        for (_, handler) in eventHandlers {
             handler.execute(.modified(diff))
         }
     }
