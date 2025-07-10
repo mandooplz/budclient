@@ -130,5 +130,6 @@ func getSystemModel(_ budClientRef: BudClient) async -> SystemModel {
     await systemBoardRef.unsubscribe()
     
     let systemModel = await systemBoardRef.models.values.first!
+    try! await #require(systemBoardRef.models[.origin] != nil)
     return await systemModel.ref!
 }

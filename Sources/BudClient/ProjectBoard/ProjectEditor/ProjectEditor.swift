@@ -34,7 +34,8 @@ public final class ProjectEditor: Debuggable {
     nonisolated let target: ProjectID
     nonisolated let sourceLink: ProjectSourceLink
     
-    public var name: String?
+    public internal(set) var name: String?
+    public var nameInput: String?
     
     public var systemBoard: SystemBoard.ID?
     public var flowBoard: FlowBoard.ID?
@@ -70,7 +71,7 @@ public final class ProjectEditor: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard let name else { setIssue(Error.nameIsNil); return}
+        guard let nameInput else { setIssue(Error.nameInputIsNil); return}
         let sourceLink = self.sourceLink
         let target = self.target
         let projectHubLink = await self.config.budServerLink.getProjectHub()
@@ -79,8 +80,8 @@ public final class ProjectEditor: Debuggable {
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    await sourceLink.setName(name)
-                    await projectHubLink.notifyModified(target)
+                    await sourceLink.setName(nameInput)
+                    await projectHubLink.notifyNameChanged(target)
                 }
             }
         } catch {
@@ -124,7 +125,7 @@ public final class ProjectEditor: Debuggable {
     public enum Error: String, Swift.Error {
         case editorIsDeleted
         case alreadySetUp
-        case nameIsNil
+        case nameInputIsNil
     }
 }
 

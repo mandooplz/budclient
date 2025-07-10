@@ -8,6 +8,7 @@ import Foundation
 import Values
 import Collections
 import BudServer
+import os
 
 
 // MARK: Object
@@ -17,7 +18,6 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
     init(config: Config<SystemBoard.ID>) {
         self.config = config
     }
-    
     
     // MARK: state
     nonisolated let config: Config<SystemBoard.ID>
@@ -58,8 +58,12 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
                 systemModel!.ref?.delete()
                 systemBoardRef.models[diff.location] = nil
             case .modified(let diff):
-                guard let systemModel = systemBoardRef.getSystemModel(diff.target),
-                      let systemModelRef = systemModel.ref else {
+                let systemModel = systemBoardRef.models.values.first {
+                    $0.ref!.target == diff.target
+                }
+                guard let systemModel else { fatalError() }
+                guard let systemModelRef = systemModel.ref else {
+                    fatalError()
                     setIssue(Error.alreadyRemoved); return
                 }
                 

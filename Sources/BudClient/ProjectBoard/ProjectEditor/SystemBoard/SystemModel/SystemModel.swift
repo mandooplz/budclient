@@ -32,7 +32,9 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     nonisolated let target: SystemID
     nonisolated let sourceLink: SystemSourceLink
     
-    public var name: String? 
+    public internal(set) var name: String?
+    public var nameInput: String?
+    
     public var location: Location?
     
     public var rootModel: RootModel.ID?
@@ -93,13 +95,15 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return}
-        guard let name else { setIssue(Error.nameIsNil); return}
+        guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        guard let nameInput else { setIssue(Error.nameInputIsNil); return }
+        guard name != nameInput else { setIssue(Error.noChangesToPush); return }
         let sourceLink = self.sourceLink
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.setName(name)
+                await sourceLink.setName(nameInput)
+                await sourceLink.notifyNameChanged()
             }
         }
     }
@@ -189,7 +193,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public enum Error: String, Swift.Error {
         case systemModelIsDeleted
         case systemAlreadyExist
-        case nameIsNil
+        case nameInputIsNil
+        case noChangesToPush
     }
 }
 

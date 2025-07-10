@@ -12,21 +12,45 @@ import Values
 @Server
 package final class SystemSourceMock: Sendable {
     // MARK: core
-    init(location: Location,
-         name: String,
+    init(name: String,
+         location: Location,
+         parent: ProjectSourceID,
          target: SystemID = SystemID()) {
-        self.location = location
         self.name = name
+        self.location = location
+        self.parent = parent
         self.target = target
+        
+        SystemSourceMockManager.register(self)
+    }
+    func delete() {
+        SystemSourceMockManager.unregister(self.id)
     }
     
     
     // MARK: state
     nonisolated let id = SystemSourceID()
     nonisolated let target: SystemID
+    nonisolated let parent: ProjectSourceID
     
-    package var location: Location
     package var name: String
+    package var location: Location
+    
+    package func notifyNameChanged() {
+        // capture
+        guard SystemSourceMockManager.isExist(id) else { return }
+        guard let projectSourceRef = ProjectSourceMockManager.get(parent) else { return }
+        let eventHandlers = projectSourceRef.eventHandlers
+        
+        let diff = SystemSourceDiff(id: id,
+                                    target: target,
+                                    name: name,
+                                    location: location)
+        
+        for (_, handler) in projectSourceRef.eventHandlers {
+            handler.execute(.modified(diff))
+        }
+    }
     
     
     // MARK: action
@@ -35,7 +59,7 @@ package final class SystemSourceMock: Sendable {
 
 // MARK: Object Manager
 @Server
-package final class SystemSourceManager: Sendable {
+package final class SystemSourceMockManager: Sendable {
     // MARK: state
     private static var container: [SystemSourceID: SystemSourceMock] = [:]
     fileprivate static func register(_ object: SystemSourceMock) {

@@ -66,20 +66,59 @@ struct SystemModelTests {
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "systemModelIsDeleted")
         }
+        @Test func whenAlreadyUpdated() async throws {
+            // given
+            let testName = "TEST_NAME_22"
+            await MainActor.run {
+                systemModelRef.name = testName
+                systemModelRef.nameInput = testName
+            }
+            
+            // when
+            await systemModelRef.pushName()
+            
+            // then
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "noChangesToPush")
+        }
         
         @Test func modifySystemSourceName() async throws {
             
         }
         @Test func notifyPushEvent() async throws {
             // given
-            let projectSourceLink = try #require(await systemModelRef .config.parent.ref?.config.parent.ref?.sourceLink)
+            let projectSourceRef = try #require(await systemModelRef.config.parent.ref)
+            let projectSourceLink = try #require(await projectSourceRef.config.parent.ref?.sourceLink)
             
+            let testName = "TEST_NAME"
+            await MainActor.run {
+                systemModelRef.nameInput = testName
+            }
             
+            try await #require(systemModelRef.name == nil)
+            try await #require(systemModelRef.id.isExist == true)
+            
+            // when & then
             await withCheckedContinuation { continuation in
                 Task {
-                    continuation.resume()
+                    await projectSourceLink.setHandler(
+                        requester: .init(),
+                        handler: .init({ event in
+                            switch event {
+                            case .modified(let diff):
+                                #expect(diff.name == testName)
+                                continuation.resume()
+                            default:
+                                Issue.record()
+                            }
+                        }))
+                    
+                    await systemModelRef.pushName()
                 }
             }
+            
+            // then
+            await #expect(systemModelRef.name == testName)
         }
     }
     

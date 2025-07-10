@@ -13,9 +13,12 @@ import Values
 @MainActor
 package final class SystemSource: Sendable {
     // MARK: core
-    init(id: SystemSourceID, target: SystemID) {
+    init(id: SystemSourceID,
+         target: SystemID,
+         parent: ProjectSourceID) {
         self.id = id
         self.target = target
+        self.parent = parent
         
         SystemSourceManager.register(self)
     }
@@ -27,7 +30,23 @@ package final class SystemSource: Sendable {
     // MARK: state
     nonisolated let id: SystemSourceID
     nonisolated let target: SystemID
+    nonisolated let parent: ProjectSourceID
     
+    package func setName(_ value: String) {
+        // compute
+        guard let projectSourceRef = ProjectSourceManager.get(parent) else {
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let nameUpdater = State.getNameUpdater(value)
+        let docRef = db.collection(ProjectSources.name)
+            .document(parent.value)
+            .collection(ProjectSources.SystemSources.name)
+            .document(id.value)
+        
+        docRef.updateData(nameUpdater)   
+    }
     
     
     // MARK: action
@@ -52,6 +71,10 @@ package final class SystemSource: Sendable {
     package enum State: Sendable, Hashable {
         static let name = "name"
         static let location = "location"
+        
+        static func getNameUpdater(_ value: String) -> [String:Any] {
+            [name: value]
+        }
     }
 }
 
@@ -60,11 +83,11 @@ package final class SystemSource: Sendable {
 @MainActor
 package final class SystemSourceManager: Sendable {
     // MARK: state
-    package static var container: [SystemSourceID: SystemSource] = [:]
-    package static func register(_ object: SystemSource) {
+    fileprivate static var container: [SystemSourceID: SystemSource] = [:]
+    fileprivate static func register(_ object: SystemSource) {
         container[object.id] = object
     }
-    package static func unregister(_ id: SystemSourceID) {
+    fileprivate static func unregister(_ id: SystemSourceID) {
         container[id] = nil
     }
     package static func get(_ id: SystemSourceID) -> SystemSource? {

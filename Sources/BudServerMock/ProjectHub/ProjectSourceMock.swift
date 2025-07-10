@@ -59,8 +59,9 @@ package final class ProjectSourceMock: Sendable {
     package func createFirstSystem() {
         // mutate
         guard systems.isEmpty else { return }
-        let systemSourceRef = SystemSourceMock(location: .origin,
-                                               name: "First System")
+        let systemSourceRef = SystemSourceMock(name: "First System",
+                                               location: .origin,
+                                               parent: self.id)
         self.systems.insert(systemSourceRef.id)
         
         // notify

@@ -61,7 +61,7 @@ package struct ProjectHubLink: Sendable {
         }
     }
     
-    @Server package func notifyModified(_ id: ProjectID) {
+    @Server package func notifyNameChanged(_ id: ProjectID) {
         switch mode {
         case .test(let projectHubMock):
             projectHubMock.notifyModified(id)

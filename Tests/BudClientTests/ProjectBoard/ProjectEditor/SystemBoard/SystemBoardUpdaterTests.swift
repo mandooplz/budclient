@@ -98,7 +98,7 @@ struct SystemBoardUpdaterTests {
             await #expect(systemBoardRef.models.values.contains(systemModel) == false)
         }
         @Test func whenAlreadyRemoved() async throws {
-            // given            
+            // given
             let diff = SystemSourceDiff(id: .init(),
                                         target: .init(),
                                         name: "",

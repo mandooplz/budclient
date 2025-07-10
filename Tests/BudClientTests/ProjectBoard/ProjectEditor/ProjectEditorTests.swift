@@ -114,7 +114,7 @@ struct ProjectEditorTests {
         @Test func whenNameIsNil() async throws {
             // given
             await MainActor.run {
-                editorRef.name = nil
+                editorRef.nameInput = nil
             }
             
             // when
@@ -122,7 +122,7 @@ struct ProjectEditorTests {
             
             // then
             let issue = try #require(await editorRef.issue)
-            #expect(issue.reason == "nameIsNil")
+            #expect(issue.reason == "nameInputIsNil")
         }
         
         @Test func updateNameByUpdater() async throws {
@@ -133,7 +133,7 @@ struct ProjectEditorTests {
             let user = editorRef.config.user
             
             await MainActor.run {
-                editorRef.name = testName
+                editorRef.nameInput = testName
             }
             
             // then
@@ -156,6 +156,9 @@ struct ProjectEditorTests {
                     await editorRef.pushName()
                 }
             }
+            
+            // then
+            await #expect(editorRef.name == testName)
         }
     }
 

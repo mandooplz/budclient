@@ -34,9 +34,10 @@ package final class ProjectSource: Sendable {
     package func setName(_ value: String) {
         // set ProjectSource.name
         let db = Firestore.firestore()
-        let documentRef = db.collection(ProjectSources.name).document(id.value)
+        let nameUpdater = State.getNameUpdater(value)
+        let docRef = db.collection(ProjectSources.name).document(id.value)
         
-        documentRef.updateData(State.getNameUpdater(value))
+        docRef.updateData(nameUpdater)
     }
     
     package var listeners: [ObjectID: ListenerRegistration] = [:]
@@ -77,7 +78,8 @@ package final class ProjectSource: Sendable {
                     case .added:
                         // create SystemSource
                         let _ = SystemSource(id: systemSource,
-                                             target: data.target)
+                                             target: data.target,
+                                             parent: self.id)
 
                         // serve event
                         handler.execute(.added(diff))
