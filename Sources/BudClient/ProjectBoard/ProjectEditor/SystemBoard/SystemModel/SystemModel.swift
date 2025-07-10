@@ -96,32 +96,62 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return}
         guard let name else { setIssue(Error.nameIsNil); return}
         let sourceLink = self.sourceLink
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.setName(name)
+            }
+        }
     }
     
     func addSystemRight(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
-        let systemBoardRef = self.config.parent.ref
+        
         let sourceLink = self.sourceLink
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.addSystemRight()
+            }
+        }
     }
     func addSystemLeft(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
         let sourceLink = self.sourceLink
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.addSystemLeft()
+            }
+        }
     }
     func addSystemTop(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
         let sourceLink = self.sourceLink
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.addSystemTop()
+            }
+        }
     }
     func addSystemBottom(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
         let sourceLink = self.sourceLink
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                await sourceLink.addSystemBottom()
+            }
+        }
     }
     
     public func remove() async {

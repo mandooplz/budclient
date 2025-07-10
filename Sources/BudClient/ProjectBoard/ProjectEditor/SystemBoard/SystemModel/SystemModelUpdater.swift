@@ -30,20 +30,20 @@ final class SystemModelUpdater: Sendable, Debuggable, UpdaterInterface {
             switch event {
             case .root(let rootEvent):
                 switch rootEvent {
-                case .created(let rootSource, let target):
+                case .created:
                     fatalError()
-                case .modified(let diff):
+                case .modified:
                     fatalError()
-                case .deleted(let rootSource):
+                case .deleted:
                     fatalError()
                 }
             case .object(let objectEvent):
                 switch objectEvent {
-                case .added(let objectSource, let target):
+                case .added:
                     fatalError()
-                case .modified(let diff):
+                case .modified:
                     fatalError()
-                case .removed(let target):
+                case .removed:
                     fatalError()
                 }
             }

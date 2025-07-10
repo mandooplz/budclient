@@ -130,6 +130,7 @@ struct ProjectEditorTests {
             let testName = "TEST_PROJECT_NAME"
             let projectHubLink = await editorRef.config.budServerLink.getProjectHub()
             let randomObject = ObjectID()
+            let user = editorRef.config.user
             
             await MainActor.run {
                 editorRef.name = testName
@@ -142,7 +143,8 @@ struct ProjectEditorTests {
             await withCheckedContinuation { con in
                 Task {
                     await projectHubLink.setHandler(
-                        ticket: ticket,
+                        requester: randomObject,
+                        user: user,
                         handler: .init({ event in
                             switch event {
                             case .modified(let diff):

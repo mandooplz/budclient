@@ -62,10 +62,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await withDiscardingTaskGroup { group in
             group.addTask {
                 let projectHubLink = await config.budServerLink.getProjectHub()
-                let ticket = SubscribeProjectHub(object: me,user: config.user)
                 
                 await projectHubLink.setHandler(
-                    ticket: ticket,
+                    requester: me,
+                    user: config.user,
                     handler: .init({ event in
                         Task { @MainActor in
                             guard let updaterRef = projectBoard.ref?.updater else { return }

@@ -66,6 +66,21 @@ struct SystemModelTests {
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "systemModelIsDeleted")
         }
+        
+        @Test func modifySystemSourceName() async throws {
+            
+        }
+        @Test func notifyPushEvent() async throws {
+            // given
+            let projectSourceLink = try #require(await systemModelRef .config.parent.ref?.config.parent.ref?.sourceLink)
+            
+            
+            await withCheckedContinuation { continuation in
+                Task {
+                    continuation.resume()
+                }
+            }
+        }
     }
     
     struct Remove {

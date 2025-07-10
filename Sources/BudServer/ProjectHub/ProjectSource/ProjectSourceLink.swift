@@ -42,34 +42,34 @@ package struct ProjectSourceLink: Sendable, Hashable {
         }
     }
     
-    @Server package func hasHandler(object id: ObjectID) async -> Bool {
+    @Server package func hasHandler(requester: ObjectID) async -> Bool {
         switch mode {
         case .test:
-            return TestManager.get(object)?.eventHandlers[id] != nil
+            return TestManager.get(object)?.eventHandlers[requester] != nil
         case .real:
             return await MainActor.run {
-                return RealManager.get(object)?.hasHandler(object: id) ?? false
+                return RealManager.get(object)?.hasHandler(requester: requester) ?? false
             }
         }
     }
-    @Server package func setHandler(ticket: SubscribeProjectSource, handler: Handler<ProjectSourceEvent>) async {
+    @Server package func setHandler(requester: ObjectID, handler: Handler<ProjectSourceEvent>) async {
         switch mode {
         case .test:
-            TestManager.get(object)?.eventHandlers[ticket.object] = handler
+            TestManager.get(object)?.eventHandlers[requester] = handler
         case .real:
             await MainActor.run {
-                RealManager.get(object)?.setHandler(ticket: ticket, handler: handler)
+                RealManager.get(object)?.setHandler(requester: requester, handler: handler)
             }
         }
     }
-    @Server package func removeHandler(object id: ObjectID) async {
+    @Server package func removeHandler(requester: ObjectID) async {
         switch mode {
         case .test:
-            TestManager.get(object)?.eventHandlers[id] = nil
+            TestManager.get(object)?.eventHandlers[requester] = nil
             
         case .real:
             await MainActor.run {
-                RealManager.get(object)?.removeHandler(object: id)
+                RealManager.get(object)?.removeHandler(requester: requester)
             }
         }
     }

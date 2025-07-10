@@ -12,15 +12,15 @@ package enum SystemSourceEvent: Sendable {
     case object(ObjectEvent)
     
     package enum RootEvent: Sendable {
-        case created(RootSourceID, ObjectID)
+        case created(RootSourceDiff)
         case modified(RootSourceDiff)
-        case deleted(RootSourceID)
+        case deleted(RootSourceDiff)
     }
     
     package enum ObjectEvent: Sendable {
-        case added(ObjectSourceID, ObjectID)
+        case added(ObjectSourceDiff)
         case modified(ObjectSourceDiff)
-        case removed(ObjectID)
+        case removed(ObjectSourceDiff)
     }
 }
 
@@ -28,12 +28,15 @@ package enum SystemSourceEvent: Sendable {
 
 // MARK: RootSourceDiff
 package struct RootSourceDiff: Sendable {
+    package let id: RootSourceID
+    package let target: ObjectID
     package let name: String
 }
 
 
 // MARK: ObjectSourceDiff
 package struct ObjectSourceDiff: Sendable {
+    package let id: ObjectSourceID
     package let target: ObjectID
     package let name: String
 }

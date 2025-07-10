@@ -43,13 +43,13 @@ struct SystemBoardTests {
             
             let me = await ObjectID(systemBoardRef.id.value)
             
-            try await #require(projectSourceLink.hasHandler(object: me) == false)
+            try await #require(projectSourceLink.hasHandler(requester: me) == false)
             
             // when
             await systemBoardRef.subscribe()
             
             // then
-            await #expect(projectSourceLink.hasHandler(object: me) == true)
+            await #expect(projectSourceLink.hasHandler(requester: me) == true)
         }
     }
     
@@ -70,13 +70,13 @@ struct SystemBoardTests {
             
             await systemBoardRef.subscribe()
             
-            try await #require(projectSourceLink.hasHandler(object: me) == true)
+            try await #require(projectSourceLink.hasHandler(requester: me) == true)
             
             // when
             await systemBoardRef.unsubscribe()
             
             // then
-            await #expect(projectSourceLink.hasHandler(object: me) == false)
+            await #expect(projectSourceLink.hasHandler(requester: me) == false)
         }
     }
     

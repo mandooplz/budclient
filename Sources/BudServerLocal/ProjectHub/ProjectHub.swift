@@ -28,17 +28,16 @@ package final class ProjectHub: Sendable {
     package var tickets: Deque<CreateProjectSource> = []
     
     package var listeners: [ObjectID:ListenerRegistration] = [:]
-    package func hasHandler(object: ObjectID) async -> Bool {
-        listeners[object] != nil
+    package func hasHandler(requester: ObjectID) async -> Bool {
+        listeners[requester] != nil
     }
     
-    package func setHandler(ticket: SubscribeProjectHub,
-                            handler: Handler<ProjectHubEvent>) {
-        guard listeners[ticket.object] == nil else { return }
+    package func setHandler(requester: ObjectID, user: UserID, handler: Handler<ProjectHubEvent>) {
+        guard listeners[requester] == nil else { return }
         
-        self.listeners[ticket.object] = db.collection(ProjectSources.name)
+        self.listeners[requester] = db.collection(ProjectSources.name)
             .whereField(ProjectSource.State.creator,
-                        isEqualTo: ticket.user.encode())
+                        isEqualTo: user.encode())
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     print("Error fetching snapshots: \(error!)")

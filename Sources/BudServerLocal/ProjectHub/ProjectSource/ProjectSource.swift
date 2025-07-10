@@ -41,16 +41,15 @@ package final class ProjectSource: Sendable {
     
     package var listeners: [ObjectID: ListenerRegistration] = [:]
     
-    package func hasHandler(object: ObjectID) -> Bool {
-        self.listeners[object] != nil
+    package func hasHandler(requester: ObjectID) -> Bool {
+        self.listeners[requester] != nil
     }
-    package func setHandler(ticket: SubscribeProjectSource,
-                            handler: Handler<ProjectSourceEvent>) {
+    package func setHandler(requester: ObjectID, handler: Handler<ProjectSourceEvent>) {
         // 중복 방지
-        guard self.listeners[ticket.object] == nil else { return }
+        guard self.listeners[requester] == nil else { return }
         
         let db = Firestore.firestore()
-        self.listeners[ticket.object] = db.collection(ProjectSources.name)
+        self.listeners[requester] = db.collection(ProjectSources.name)
             .document(id.value)
             .collection(ProjectSources.SystemSources.name)
             .addSnapshotListener({ snapshot, error in
@@ -77,10 +76,10 @@ package final class ProjectSource: Sendable {
                     switch changed.type {
                     case .added:
                         // create SystemSource
-                        let systemSourceRef = SystemSource(id: systemSource, target: data.target)
+                        let _ = SystemSource(id: systemSource,
+                                             target: data.target)
 
                         // serve event
-                        
                         handler.execute(.added(diff))
                     case .modified:
                         handler.execute(.modified(diff))
@@ -95,9 +94,9 @@ package final class ProjectSource: Sendable {
             })
         
     }
-    package func removeHandler(object: ObjectID) {
-        listeners[object]?.remove()
-        listeners[object] = nil
+    package func removeHandler(requester: ObjectID) {
+        listeners[requester]?.remove()
+        listeners[requester] = nil
     }
     
     

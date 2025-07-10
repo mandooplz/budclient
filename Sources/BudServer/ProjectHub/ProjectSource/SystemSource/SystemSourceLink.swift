@@ -36,10 +36,18 @@ package struct SystemSourceLink: Sendable {
     }
     
     // MARK: action
-    package func addSystemRight() { }
-    package func addSystemLeft() { }
-    package func addSystemTop() { }
-    package func addSystemBottom() { }
+    package func addSystemRight() {
+        fatalError()
+    }
+    package func addSystemLeft() {
+        fatalError()
+    }
+    package func addSystemTop() {
+        fatalError()
+    }
+    package func addSystemBottom() {
+        fatalError()
+    }
     
     package func remove() {
         fatalError()

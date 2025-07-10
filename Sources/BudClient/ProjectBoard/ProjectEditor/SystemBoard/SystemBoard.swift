@@ -54,18 +54,15 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         
         let projectEditorRef = config.parent.ref!
         let projectSourceLink = projectEditorRef.sourceLink
-        let project = projectEditorRef.target
         let me = ObjectID(id.value)
         let systemBoard = self.id
         let callback = self.callback
         
         // compute
-        let ticket = SubscribeProjectSource(object: me, target: project)
-        
         await withDiscardingTaskGroup { group in
             group.addTask {
                 await projectSourceLink.setHandler(
-                    ticket: ticket,
+                    requester: me,
                     handler: .init({ event in
                         Task { @MainActor in
                             guard let updaterRef = systemBoard.ref?.updater else { return }
@@ -88,7 +85,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await projectSourceLink.removeHandler(object: me)
+                await projectSourceLink.removeHandler(requester: me)
             }
         }
     }

@@ -34,21 +34,21 @@ package struct ProjectHubLink: Sendable {
     
     
     @Server
-    package func hasHandler(object: ObjectID) async -> Bool {
+    package func hasHandler(requester: ObjectID) async -> Bool {
         switch mode {
         case .test(let projectHubRef):
-            return projectHubRef.eventHandlers[object] != nil
+            return projectHubRef.hasHandler(requester: requester)
         case .real:
-            return await ProjectHub.shared.hasHandler(object: object)
+            return await ProjectHub.shared.hasHandler(requester: requester)
         }
     }
     @Server
-    package func setHandler(ticket: SubscribeProjectHub, handler: Handler<ProjectHubEvent>) async {
+    package func setHandler(requester: ObjectID, user: UserID, handler: Handler<ProjectHubEvent>) async {
         switch mode {
         case .test(let projectHubRef):
-            projectHubRef.eventHandlers[ticket.object] = handler
+            projectHubRef.sethandler(requester: requester, handler: handler)
         case .real:
-            await ProjectHub.shared.setHandler(ticket: ticket, handler: handler)
+            await ProjectHub.shared.setHandler(requester: requester, user: user, handler: handler)
         }
     }
     @Server

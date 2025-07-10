@@ -11,7 +11,7 @@ import Collections
 
 // MARK: Object
 @Server
-package final class ProjectHubMock: Sendable, Subscribable {
+package final class ProjectHubMock: Sendable {
     // MARK: core
     package init() {
         ProjectHubMockManager.register(self)
@@ -28,6 +28,13 @@ package final class ProjectHubMock: Sendable, Subscribable {
     
     package var tickets: Deque<CreateProjectSource> = []
     package var eventHandlers: [ObjectID:Handler<ProjectHubEvent>] = [:]
+    package func hasHandler(requester: ObjectID) -> Bool {
+        eventHandlers[requester] != nil
+    }
+    package func sethandler(requester: ObjectID, handler: Handler<ProjectHubEvent>) {
+        eventHandlers[requester] = handler
+    }
+    
     package func notifyModified(_ id: ProjectID) {
         let projectSource = projectSources.first {
             ProjectSourceMockManager.get($0)?.target == id
