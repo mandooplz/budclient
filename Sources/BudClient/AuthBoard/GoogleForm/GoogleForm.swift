@@ -28,6 +28,8 @@ public final class GoogleForm: Debuggable {
     public nonisolated let id = ID()
     public nonisolated let tempConfig: TempConfig<AuthBoard.ID>
     
+    public private(set) var googleClientId: String?
+    
     public var idToken: String?
     public var accessToken: String?
     
@@ -35,6 +37,20 @@ public final class GoogleForm: Debuggable {
     
     
     // MARK: action
+    public func fetchGoogleClientId() async {
+        await self.fetchGoogleClientId(mutateHook: nil)
+    }
+    func fetchGoogleClientId(mutateHook: Hook?) async {
+        // compute
+        let accountHubLink = await tempConfig.budServerLink.getAccountHub()
+        async let googleClientId = await accountHubLink.getGoogleClientID(for: "BudClient")
+        
+        // mutate
+        await mutateHook?()
+        guard id.isExist else { setIssue(Error.googleFormIsDeleted); return }
+        self.googleClientId = await googleClientId
+    }
+    
     public func signUpAndSignIn() async {
         await signUpAndSignIn(captureHook: nil, mutateHook: nil)
     }

@@ -6,10 +6,19 @@
 //
 import Foundation
 import Values
+import FirebaseCore
+import FirebaseAuth
+import FirebaseFirestore
+
+
+// MARK: Interface
+package protocol AccountHubInterface: Sendable {
+    func getGoogleClientID(for: String) async -> String?
+}
 
 
 // MARK: Link
-package struct AccountHubLink: Sendable {
+package struct AccountHubLink: AccountHubInterface {
     // MARK: core
     private let mode: Mode
     init(mode: Mode) {
@@ -18,6 +27,15 @@ package struct AccountHubLink: Sendable {
     
     
     // MARK: state
+    package func getGoogleClientID(for systemName: String) async -> String? {
+        switch mode {
+        case .test:
+            return "SAMPLE_GOOGLE_CLIENT_ID"
+        case .real:
+            return FirebaseApp.app()?.options.clientID
+        }
+    }
+    
     package func isExist(email: String, password: String) async throws -> Bool {
         switch mode {
         case .test(let accountHubRef):

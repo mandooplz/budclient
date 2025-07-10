@@ -11,8 +11,19 @@ import FirebaseAuth
 import FirebaseFirestore
 
 
+// MARK: Interface
+package protocol BudServerInterface: Sendable {
+    
+}
+
+
+
+// MARK: Value
+
+
+
 // MARK: Link
-public struct BudServerLink: Sendable {
+public struct BudServerLink: BudServerInterface {
     // MARK: core
     private let mode: SystemMode
     private let budSeverMockRef: BudServerMock!
@@ -40,10 +51,6 @@ public struct BudServerLink: Sendable {
     
     
     // MARK: state
-    public func getGoogleClientId() -> String? {
-        FirebaseApp.app()?.options.clientID
-    }
-    
     package func getAccountHub() async -> AccountHubLink {
         switch mode {
         case .test:

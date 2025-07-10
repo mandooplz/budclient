@@ -14,6 +14,41 @@ import Values
 // MARK: Tests
 @Suite("GoogleForm")
 struct GoogleFormTests {
+    struct FetchGoogleClientId {
+        let budClientRef: BudClient
+        let googleFormRef: GoogleForm
+        init() async {
+            self.budClientRef = await BudClient()
+            self.googleFormRef = await getGoogleForm(budClientRef)
+        }
+        
+        @Test func whenGoogleFormIsDeleted() async throws {
+            // given
+            try await #require(googleFormRef.id.isExist == true)
+            
+            // when
+            await googleFormRef.fetchGoogleClientId {
+                await googleFormRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await googleFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "googleFormIsDeleted")
+        }
+        
+        @Test func updateGoogleClientId() async throws {
+            // given
+            try await #require(googleFormRef.googleClientId == nil)
+            
+            // when
+            await googleFormRef.fetchGoogleClientId()
+            
+            // then
+            try await #require(googleFormRef.issue == nil)
+            await #expect(googleFormRef.googleClientId != nil)
+        }
+    }
+    
     struct SignUpAndSignIn {
         let budClientRef: BudClient
         let authBoardRef: AuthBoard
