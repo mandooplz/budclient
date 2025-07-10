@@ -58,14 +58,10 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
                 systemModel!.ref?.delete()
                 systemBoardRef.models[diff.location] = nil
             case .modified(let diff):
-                let systemModel = systemBoardRef.models.values.first {
-                    $0.ref!.target == diff.target
-                }
-                guard let systemModel else { fatalError() }
-                guard let systemModelRef = systemModel.ref else {
-                    fatalError()
+                guard let systemModel = systemBoardRef.getSystemModel(diff.target) else{
                     setIssue(Error.alreadyRemoved); return
                 }
+                let systemModelRef = systemModel.ref!
                 
                 systemModelRef.name = diff.name
                 systemModelRef.location = diff.location

@@ -51,6 +51,7 @@ struct SystemModelTests {
         init() async {
             self.budClientRef = await BudClient()
             self.systemModelRef = await getSystemModel(budClientRef)
+
         }
         
         @Test func whenSystemModelIsDeleted() async throws {
@@ -88,7 +89,6 @@ struct SystemModelTests {
         @Test func notifyPushEvent() async throws {
             // given
             let projectSourceRef = try #require(await systemModelRef.config.parent.ref)
-            let projectSourceLink = try #require(await projectSourceRef.config.parent.ref?.sourceLink)
             
             let testName = "TEST_NAME"
             await MainActor.run {
@@ -101,17 +101,12 @@ struct SystemModelTests {
             // when & then
             await withCheckedContinuation { continuation in
                 Task {
-                    await projectSourceLink.setHandler(
-                        requester: .init(),
-                        handler: .init({ event in
-                            switch event {
-                            case .modified(let diff):
-                                #expect(diff.name == testName)
-                                continuation.resume()
-                            default:
-                                Issue.record()
-                            }
-                        }))
+                    await projectSourceRef.unsubscribe()
+
+                    await projectSourceRef.setCallback {
+                        continuation.resume()
+                    }
+                    await projectSourceRef.subscribe()
                     
                     await systemModelRef.pushName()
                 }

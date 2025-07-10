@@ -33,6 +33,11 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
             .compactMap { $0.ref }
             .contains { $0.target == target }
     }
+    func getSystemModel(_ target: SystemID) -> SystemModel.ID? {
+        return models.values.first {
+            $0.ref?.target == target
+        }
+    }
     
     var updater: SystemBoardUpdater
     
