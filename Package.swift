@@ -13,18 +13,6 @@ let package = Package(
             targets: ["BudClient"]
         ),
         
-        // MARK: BudServer
-        .library(
-            name: "BudServer",
-            targets: ["BudServer"]
-        ),
-        
-        // MARK: BudCache
-        .library(
-            name: "BudCache",
-            targets: ["BudCache"]
-        ),
-        
         // MARK: Values
         .library(
             name: "Values",

@@ -70,6 +70,21 @@ struct SystemModelTests {
             self.budClientRef = await BudClient()
             self.systemModelRef = await getSystemModel(budClientRef)
         }
+        
+        @Test func removeHandlerInSystemSource() async throws {
+            // given
+            await systemModelRef.subscribe()
+            
+            let sourceLink = systemModelRef.sourceLink
+            let me = await ObjectID(systemModelRef.id.value)
+            try await #require(sourceLink.hasHandler(requester: me) == true)
+            
+            // when
+            await systemModelRef.unsubscribe()
+            
+            // then
+            await #expect(sourceLink.hasHandler(requester: me) == false)
+        }
     }
     
     struct PushName {

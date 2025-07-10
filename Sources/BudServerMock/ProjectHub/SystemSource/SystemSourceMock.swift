@@ -43,6 +43,9 @@ package final class SystemSourceMock: Sendable {
     package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) {
         eventHandlers[requester] = handler
     }
+    package func removeHandler(requester: ObjectID) {
+        eventHandlers[requester] = nil
+    }
     
     package func notifyNameChanged() {
         // capture

@@ -42,7 +42,12 @@ package struct SystemSourceLink: Sendable {
         }
     }
     package func removeHandler(requester: ObjectID) {
-        fatalError()
+        switch mode {
+        case .test:
+            TestManager.get(object)?.removeHandler(requester: requester)
+        case .real:
+            fatalError()
+        }
     }
     
     package func setName(_ value: String) async {
