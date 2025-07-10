@@ -47,7 +47,13 @@ public final class ProfileBoard: Debuggable {
         // compute
         let tempConfig = config.getTempConfig(config.parent)
         do {
-            try await config.budCacheLink.resetUser()
+            try await withThrowingDiscardingTaskGroup { group in
+                group.addTask {
+                    guard let budCacheRef = await config.budCache.ref else { return }
+                    
+                    try await budCacheRef.removeUser()
+                }
+            }
         } catch {
             setUnknownIssue(error); return
         }

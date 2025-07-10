@@ -34,8 +34,6 @@ public final class BudClient: Debuggable {
     nonisolated let system = SystemID()
     
     private nonisolated let plistPath: String
-    private nonisolated let budServerMockRef = BudServerMock()
-    private nonisolated let budCacheMockRef = BudCacheMock()
     
     public internal(set) var authBoard: AuthBoard.ID?
     public internal(set) var projectBoard: ProjectBoard.ID?
@@ -54,23 +52,23 @@ public final class BudClient: Debuggable {
         else { setIssue(Error.alreadySetUp); return }
         
         // compute
-        let budServerLink: BudServerLink
-        let budCacheLink: BudCacheLink
+        let budServer: any BudServerIdentity
+        let budCache: any BudCacheIdentity
         do {
             switch mode {
             case .test:
-                budServerLink = await .init(budServerMockRef: budServerMockRef)
-                budCacheLink = BudCacheLink(mode: .test, budCacheMockRef: self.budCacheMockRef)
+                budServer = await BudServerMock().id
+                budCache = await BudCacheMock().id
             case .real:
-                budServerLink = try await .init(plistPath: plistPath)
-                budCacheLink = BudCacheLink(mode: .real, budCacheMockRef: self.budCacheMockRef)
+                budServer = try await BudServer(plistPath: plistPath).id
+                budCache = await BudCache().id
             }
         } catch {
             issue = UnknownIssue(error); return
         }
         
         // mutate
-        let tempConfig = TempConfig(id, mode, system, budServerLink, budCacheLink)
+        let tempConfig = TempConfig(id, mode, system, budServer, budCache)
         let authBoardRef = AuthBoard(tempConfig: tempConfig)
         self.authBoard = authBoardRef.id
     }
@@ -99,29 +97,29 @@ public final class BudClient: Debuggable {
 // MARK: TempConfig
 public struct TempConfig<Parent: Sendable>: Sendable {
     public let parent: Parent
-    public let mode: SystemMode
-    public let system: SystemID
-    let budServerLink: BudServerLink
-    let budCacheLink: BudCacheLink
+    let mode: SystemMode
+    let system: SystemID
+    let budServer: any BudServerIdentity
+    let budCache: any BudCacheIdentity
     
     init(_ parent: Parent,
          _ mode: SystemMode,
          _ system: SystemID,
-         _ budServerLink: BudServerLink,
-         _ budCacheLink: BudCacheLink) {
+         _ budServer: any BudServerIdentity,
+         _ budCache: any BudCacheIdentity) {
         self.parent = parent
         self.mode = mode
         self.system = system
-        self.budServerLink = budServerLink
-        self.budCacheLink = budCacheLink
+        self.budServer = budServer
+        self.budCache = budCache
     }
     
     
     func getConfig<P:Sendable>(_ parent: P, user: UserID) -> Config<P> {
-        .init(parent, mode, system, user, budServerLink, budCacheLink)
+        .init(parent, mode, system, user, budServer, budCache)
     }
     func setParent<P:Sendable>(_ parent: P) -> TempConfig<P> {
-        .init(parent, mode, system, budServerLink, budCacheLink)
+        .init(parent, mode, system, budServer, budCache)
     }
 }
 
@@ -130,32 +128,32 @@ public struct TempConfig<Parent: Sendable>: Sendable {
 public struct Config<Parent: Sendable> : Sendable{
     public let parent: Parent
     
-    public let mode: SystemMode
-    public let system: SystemID
-    public let user: UserID
+    let mode: SystemMode
+    let system: SystemID
+    let user: UserID
     
-    let budServerLink: BudServerLink
-    let budCacheLink: BudCacheLink
+    let budServer: any BudServerIdentity
+    let budCache: any BudCacheIdentity
     
     init(_ parent: Parent,
          _ mode: SystemMode,
          _ system: SystemID,
          _ user: UserID,
-         _ budSeverLink: BudServerLink,
-         _ budCacheLink: BudCacheLink) {
+         _ budServer: any BudServerIdentity,
+         _ budCache: any BudCacheIdentity) {
         self.parent = parent
         self.mode = mode
         self.system = system
         self.user = user
-        self.budServerLink = budSeverLink
-        self.budCacheLink = budCacheLink
+        self.budServer = budServer
+        self.budCache = budCache
     }
     
     func getTempConfig<P:Sendable>(_ parent: P) -> TempConfig<P> {
-        .init(parent, mode, system, budServerLink, budCacheLink)
+        .init(parent, mode, system, budServer, budCache)
     }
     func setParent<P: Sendable>(_ parent: P) -> Config<P> {
-        .init(parent, mode, system, user, budServerLink, budCacheLink)
+        .init(parent, mode, system, user, budServer, budCache)
     }
 }
 

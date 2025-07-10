@@ -41,9 +41,16 @@ public final class GoogleForm: Debuggable {
         await self.fetchGoogleClientId(mutateHook: nil)
     }
     func fetchGoogleClientId(mutateHook: Hook?) async {
+        // capture
+        let tempConfig = self.tempConfig
+        
         // compute
-        let accountHubLink = await tempConfig.budServerLink.getAccountHub()
-        async let googleClientId = await accountHubLink.getGoogleClientID(for: "BudClient")
+        async let googleClientId: String? = {
+            guard let budServerRef = await tempConfig.budServer.ref,
+                  let accountHubRef = await budServerRef.accountHub.ref else { return nil }
+            
+            return await accountHubRef.getGoogleClientID(for: "BudClient")
+        }()
         
         // mutate
         await mutateHook?()
@@ -69,37 +76,41 @@ public final class GoogleForm: Debuggable {
         let user: UserID
         do {
             // register
+            guard let budServerRef = await tempConfig.budServer.ref,
+                  let accountHubRef = await budServerRef.accountHub.ref,
+                    let budCacheRef = await tempConfig.budCache.ref else { return }
+            
             async let result = {
-                let accountHubLink = await config.budServerLink.getAccountHub()
-                let ticket = CreateGoogleForm()
+                let ticket = CreateFormTicket(formType: .google)
                 
-                await accountHubLink.insertGoogleTicket(ticket)
-                await accountHubLink.updateGoogleForms()
+                await accountHubRef.appendTicket(ticket)
+                await accountHubRef.createFormsFromTickets()
                 
-                guard let googleRegisterFormLink = await accountHubLink.getGoogleRegisterForm(ticket) else {
+                guard let googleRegisterFormRef = await accountHubRef.getGoogleRegisterForm(ticket: ticket)?.ref else {
                     throw UnknownIssue(reason: "GoogleRegisterFormLink.updateGoogleForms() failed")
                 }
                 
                 let googleToken = GoogleToken(idToken: idToken, accessToken: accessToken)
-                await googleRegisterFormLink.setToken(googleToken)
+                await googleRegisterFormRef.setToken(googleToken)
                 
-                await googleRegisterFormLink.submit()
-                await googleRegisterFormLink.remove()
+                try await googleRegisterFormRef.submit()
+                await googleRegisterFormRef.remove()
                 
                 // signIn
-                return try await accountHubLink.getUser(token: googleToken)
+                return try await accountHubRef.getUser(token: googleToken)
             }()
             
             user = try await result
             
             // save in BudCache
-            await config.budCacheLink.setUser(user)
+            await budCacheRef.setUser(user)
         } catch {
             setUnknownIssue(error); return
         }
         
         // compute
-        let newConfig = config.getConfig(budClientRef.id, user: user)
+        let newConfig = config.getConfig(budClientRef.id,
+                                         user: user)
         
         // mutate
         await mutateHook?()

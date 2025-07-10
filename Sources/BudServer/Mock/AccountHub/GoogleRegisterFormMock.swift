@@ -10,48 +10,62 @@ import Values
 
 // MARK: Object
 @Server
-package final class GoogleRegisterFormMock: Sendable {
+package final class GoogleRegisterFormMock: GoogleRegisterFormInterface {
     // MARK: core
-    package init(accountHub: AccountHubMock,
-                  ticket: CreateGoogleForm) {
+    init(accountHub: AccountHubMock.ID,
+         ticket: CreateFormTicket) {
         self.ticket = ticket
         self.accountHub = accountHub
         
         GoogleRegisterFormMockManager.register(self)
     }
-    package func delete() {
+    func delete() {
         GoogleRegisterFormMockManager.unregister(self.id)
     }
     
     
     // MARK: state
-    package nonisolated let id = GoogleRegisterFormID()
-    private nonisolated let ticket: CreateGoogleForm
-    private nonisolated let accountHub: AccountHubMock
+    package nonisolated let id = ID()
+    nonisolated let ticket: CreateFormTicket
+    nonisolated let accountHub: AccountHubMock.ID
     
-    package var token: GoogleToken?
-    
-    package var issue: (any Issuable)?
+    private var token: GoogleToken?
+    package func setToken(_ token: GoogleToken) async {
+        self.token = token
+    }
     
     
     // MARK: action
-    package func submit() {
+    package func submit() throws {
         // capture
-        guard let token else { issue = KnownIssue(Error.tokenIsNil); return }
-        if accountHub.isExist(token: token) == true { return }
+        guard let token else { throw Error.tokenIsNil }
+        guard let accountHubRef = accountHub.ref else { return }
+        guard accountHubRef.isExist(token: token) == false else { return }
         
         // mutate
         let accountRef = AccountMock(token: token)
-        accountHub.accounts.insert(accountRef.id)
+        accountHubRef.accounts.insert(accountRef.id)
     }
     package func remove() {
         // mutate
-        accountHub.googleRegisterForms[ticket] = nil
+        accountHub.ref?.googleRegisterForms[ticket] = nil
         self.delete()
     }
     
     
     // MARK: value
+    @Server
+    package struct ID: GoogleRegisterFormIdentity {
+        let value: UUID = UUID()
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            GoogleRegisterFormMockManager.container[self] != nil
+        }
+        package var ref: GoogleRegisterFormMock? {
+            GoogleRegisterFormMockManager.container[self]
+        }
+    }
     package enum Error: String, Swift.Error {
         case tokenIsNil
         case googleUserIdIsNil
@@ -61,19 +75,13 @@ package final class GoogleRegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @Server
-package final class GoogleRegisterFormMockManager: Sendable {
-    fileprivate static var container: [GoogleRegisterFormID: GoogleRegisterFormMock] = [:]
+fileprivate final class GoogleRegisterFormMockManager: Sendable {
+    fileprivate static var container: [GoogleRegisterFormMock.ID: GoogleRegisterFormMock] = [:]
     fileprivate static func register(_ object: GoogleRegisterFormMock) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: GoogleRegisterFormID) {
+    fileprivate static func unregister(_ id: GoogleRegisterFormMock.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: GoogleRegisterFormID) -> GoogleRegisterFormMock? {
-        container[id]
-    }
-    package static func isExist(_ id: GoogleRegisterFormID) -> Bool {
-        container[id] != nil
     }
 }
 

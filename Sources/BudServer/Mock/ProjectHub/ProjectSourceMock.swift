@@ -10,14 +10,14 @@ import Values
 
 // MARK: Object
 @Server
-package final class ProjectSourceMock: Sendable {
+package final class ProjectSourceMock: ProjectSourceInterface {
     // MARK: core
-    package init(projectHubRef: ProjectHubMock,
+    package init(projectHub: ProjectHubMock.ID,
                  target: ProjectID,
                  creator: UserID,
                  name: String) {
         self.target = target
-        self.projectHubRef = projectHubRef
+        self.projectHub = projectHub
         self.creator = creator
         self.name = name
         
@@ -30,32 +30,32 @@ package final class ProjectSourceMock: Sendable {
     
     
     // MARK: state
-    package nonisolated let id = ProjectSourceID()
-    package nonisolated let target: ProjectID
-    package nonisolated let projectHubRef: ProjectHubMock
-    private typealias Manager = ProjectSourceMockManager
+    package nonisolated let id = ID()
+    nonisolated let target: ProjectID
+    nonisolated let projectHub: ProjectHubMock.ID
     
+    private(set) var systems: Set<SystemSourceMock.ID> = []
     package var creator: UserID
-    package var name: String
     
-    package var systems: Set<SystemSourceID> = []
+    private(set) var name: String
+    package func setName(_ value: String) {
+        self.name = value
+    }
     
-    package var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
+    private(set) var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
+    package func hasHandler(requester: ObjectID) async -> Bool {
+        eventHandlers[requester] != nil
+    }
+    package func setHandler(requester: ObjectID, handler: Handler<ProjectSourceEvent>) {
+        eventHandlers[requester] = handler
+    }
+    package func removeHandler(requester: ObjectID) async {
+        eventHandlers[requester] = nil
+    }
+    
     
     
     // MARK: action
-    package func remove() {
-        // mutate
-        guard Manager.isExist(id) else { return }
-        
-        let event = ProjectHubEvent.removed(target)
-        for (_, eventHandler) in projectHubRef.eventHandlers {
-            eventHandler.execute(event)
-        }
-        
-        projectHubRef.projectSources.remove(self.id)
-        self.delete()
-    }
     package func createFirstSystem() {
         // mutate
         guard systems.isEmpty else { return }
@@ -74,24 +74,49 @@ package final class ProjectSourceMock: Sendable {
             handler.execute(.added(diff))
         }
     }
+    package func remove() {
+        // mutate
+        guard id.isExist else { return }
+        guard let projectHubRef = projectHub.ref else { return }
+        
+        let diff = ProjectSourceDiff(id: self.id,
+                                     target: self.target,
+                                     name: self.name)
+
+        for (_, eventHandler) in projectHubRef.eventHandlers {
+            eventHandler.execute(.removed(diff))
+        }
+        
+        projectHubRef.projectSources.remove(self.id)
+        self.delete()
+    }
+    
+    
+    // MARK: value
+    @Server
+    package struct ID: ProjectSourceIdentity {
+        let value: UUID = UUID()
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            ProjectSourceMockManager.container[self] != nil
+        }
+        package var ref: ProjectSourceMock? {
+            ProjectSourceMockManager.container[self]
+        }
+    }
 }
 
 
 // MARK: Object Manager
 @Server
-package final class ProjectSourceMockManager: Sendable {
+fileprivate final class ProjectSourceMockManager: Sendable {
     // MARK: state
-    fileprivate static var container: [ProjectSourceID: ProjectSourceMock] = [:]
+    fileprivate static var container: [ProjectSourceMock.ID: ProjectSourceMock] = [:]
     fileprivate static func register(_ object: ProjectSourceMock) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ProjectSourceID) {
+    fileprivate static func unregister(_ id: ProjectSourceMock.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: ProjectSourceID) -> ProjectSourceMock? {
-        container[id]
-    }
-    package static func isExist(_ id: ProjectSourceID) -> Bool {
-        container[id] != nil
     }
 }

@@ -12,14 +12,13 @@ import BudServer
 // MARK: Object
 @MainActor @Observable
 public final class ProjectEditor: Debuggable {
-    
     // MARK: core
     init(config: Config<ProjectBoard.ID>,
          target: ProjectID,
-         sourceLink: ProjectSourceLink) {
+         source: any ProjectSourceIdentity) {
         self.config = config
         self.target = target
-        self.sourceLink = sourceLink
+        self.source = source
         
         ProjectManager.register(self)
     }
@@ -32,7 +31,7 @@ public final class ProjectEditor: Debuggable {
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectBoard.ID>
     nonisolated let target: ProjectID
-    nonisolated let sourceLink: ProjectSourceLink
+    nonisolated let source: any ProjectSourceIdentity
     
     public internal(set) var name: String?
     public var nameInput: String?
@@ -72,16 +71,21 @@ public final class ProjectEditor: Debuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
         guard let nameInput else { setIssue(Error.nameInputIsNil); return}
-        let sourceLink = self.sourceLink
+        let projectSource = self.source
         let target = self.target
-        let projectHubLink = await self.config.budServerLink.getProjectHub()
+        let config = self.config
+        
         
         // compute
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    await sourceLink.setName(nameInput)
-                    await projectHubLink.notifyNameChanged(target)
+                    guard let projectSourceRef = await projectSource.ref else { return }
+                    guard let budServerRef = await config.budServer.ref,
+                          let projectHubRef = await budServerRef.projectHub.ref else { return }
+                    
+                    await projectSourceRef.setName(nameInput)
+                    await projectHubRef.notifyNameChanged(target)
                 }
             }
         } catch {
@@ -96,12 +100,14 @@ public final class ProjectEditor: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        let sourceLink = self.sourceLink
+        let projectSource = self.source
         
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.remove()
+                guard let projectSourceRef = await projectSource.ref else { return }
+                
+                await projectSourceRef.remove()
             }
         }
     }

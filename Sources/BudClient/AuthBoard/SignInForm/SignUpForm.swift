@@ -52,36 +52,40 @@ public final class SignUpForm: Debuggable {
         let authBoardRef = signInFormRef.tempConfig.parent.ref!
         let budClientRef = authBoardRef.tempConfig.parent.ref!
         let googleFormRef = authBoardRef.googleForm!.ref!
+        let tempConfig = self.tempConfig
 
         
         // compute
         let user: UserID
         do {
+            async let budServerRef = await tempConfig.budServer.ref!
+            let accountHubRef = await budServerRef.accountHub.ref!
+            async let budCacheRef = await tempConfig.budCache.ref!
+            
             async let result = {
-                let accountHubLink = await tempConfig.budServerLink.getAccountHub()
+                let ticket = CreateFormTicket(formType: .email)
                 
-                let ticket = CreateEmailForm()
-                await accountHubLink.insertEmailTicket(ticket)
-                await accountHubLink.updateEmailForms()
+                await accountHubRef.appendTicket(ticket)
+                await accountHubRef.createFormsFromTickets()
                 
-                guard let emailRegisterFormLink = await accountHubLink.getEmailRegisterForm(ticket) else {
+                guard let emailRegisterFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)?.ref else {
                     throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
                 }
-                await emailRegisterFormLink.setEmail(email)
-                await emailRegisterFormLink.setPassword(password)
+                await emailRegisterFormRef.setEmail(email)
+                await emailRegisterFormRef.setPassword(password)
                 
-                await emailRegisterFormLink.submit()
-                await emailRegisterFormLink.remove()
+                try await emailRegisterFormRef.submit()
+                try await emailRegisterFormRef.remove()
                 
                 // getUser
-                return try await accountHubLink.getUser(email: email,
+                return try await accountHubRef.getUser(email: email,
                                                         password: password)
             }()
             
             user = try await result
             
             // setUserId
-            await tempConfig.budCacheLink.setUser(user)
+            await budCacheRef.setUser(user)
         } catch {
             setUnknownIssue(error); return
         }

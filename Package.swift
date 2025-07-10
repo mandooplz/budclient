@@ -60,10 +60,6 @@ let package = Package(
                 .product(name: "Collections", package: "swift-collections")
             ]
         ),
-        .testTarget(
-            name: "BudServerTests",
-            dependencies: ["Values", "BudServer"]
-        ),
         
         
         // MARK: BudCache

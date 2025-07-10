@@ -15,10 +15,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<SystemBoard.ID>,
          target: SystemID,
-         sourceLink: SystemSourceLink) {
+         source: any SystemSourceIdentity) {
         self.config = config
         self.target = target
-        self.sourceLink = sourceLink
+        self.source = source
         
         SystemModelManager.register(self)
     }
@@ -30,7 +30,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     nonisolated let id = ID()
     nonisolated let config: Config<SystemBoard.ID>
     nonisolated let target: SystemID
-    nonisolated let sourceLink: SystemSourceLink
+    nonisolated let source: any SystemSourceIdentity
     
     public internal(set) var name: String?
     public var nameInput: String?
@@ -54,20 +54,22 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
+        let systemSource = self.source
         let callback = self.callback
-        let sourceLink = self.sourceLink
         let systemModel = self.id
         let me = ObjectID(id.value)
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                let isSubscribed = await sourceLink.hasHandler(requester: me)
+                guard let systemSourceRef = await systemSource.ref else { return }
+                
+                let isSubscribed = await systemSourceRef.hasHandler(requester: me)
                 guard isSubscribed == false else {
                     await systemModel.ref?.setIssue(Error.alreadySubscribed);
                     return
                 }
                 
-                await sourceLink.setHandler(
+                await systemSourceRef.setHandler(
                     requester: me,
                     handler: .init({ event in
                         Task { @MainActor in
@@ -85,12 +87,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     public func unsubscribe() async {
         // capture
-        let sourceLink = self.sourceLink
+        let systemSource = self.source
         let me = ObjectID(id.value)
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.removeHandler(requester: me)
+                guard let systemSourceRef = await systemSource.ref else { return }
+                await systemSourceRef.removeHandler(requester: me)
             }
         }
     }
@@ -104,12 +107,14 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
         guard let nameInput else { setIssue(Error.nameInputIsNil); return }
         guard name != nameInput else { setIssue(Error.noChangesToPush); return }
-        let sourceLink = self.sourceLink
+        let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.setName(nameInput)
-                await sourceLink.notifyNameChanged()
+                guard let systemSourceRef = await systemSource.ref else { return }
+                
+                await systemSourceRef.setName(nameInput)
+                await systemSourceRef.notifyNameChanged()
             }
         }
     }
@@ -119,11 +124,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
         
-        let sourceLink = self.sourceLink
+        let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.addSystemRight()
+                guard let systemSourceRef = await systemSource.ref else { return }
+                
+                await systemSourceRef.addSystemRight()
             }
         }
     }
@@ -131,11 +138,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
-        let sourceLink = self.sourceLink
+        let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.addSystemLeft()
+                guard let systemSourceRef = await systemSource.ref else { return }
+                
+                await systemSourceRef.addSystemLeft()
             }
         }
     }
@@ -143,11 +152,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
-        let sourceLink = self.sourceLink
+        let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.addSystemTop()
+                guard let systemSourceRef = await systemSource.ref else { return }
+                
+                await systemSourceRef.addSystemTop()
             }
         }
     }
@@ -155,11 +166,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
-        let sourceLink = self.sourceLink
+        let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.addSystemBottom()
+                guard let systemSourceRef = await systemSource.ref else { return }
+                
+                await systemSourceRef.addSystemBottom()
             }
         }
     }
@@ -171,11 +184,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return}
-        let sourceLink = self.sourceLink
+        let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await sourceLink.remove()
+                guard let systemSourceRef = await systemSource.ref else { return }
+                
+                await systemSourceRef.remove()
             }
         }
     }

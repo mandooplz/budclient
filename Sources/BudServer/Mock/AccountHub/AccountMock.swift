@@ -10,46 +10,46 @@ import Values
 
 // MARK: Link
 @Server
-package final class AccountMock: Sendable {
+final class AccountMock: Sendable {
     // MARK: core
-    package init(email: String, password: String) {
+    init(email: String, password: String) {
         self.email = email
         self.password = password
         
         AccountMockManager.register(self)
     }
-    package init(token: GoogleToken) {
+    init(token: GoogleToken) {
         self.token = token
         
         AccountMockManager.register(self)
     }
-    package func delete() {
+    func delete() {
         AccountMockManager.unregister(self.id)
     }
     
     
     // MARK: state
-    package nonisolated let id = ID()
-    package nonisolated let user = UserID()
+    nonisolated let id = ID()
+    nonisolated let user = UserID()
     
-    package var email: String?
-    package var password: String?
+    var email: String?
+    var password: String?
     
-    package var token: GoogleToken?
+    var token: GoogleToken?
     
     
     // MARK: value
     @Server
-    package struct ID: Sendable, Hashable {
-        package let value: UUID
-        package nonisolated init(value: UUID = UUID()) {
+    struct ID: Sendable, Hashable {
+        let value: UUID
+        nonisolated init(value: UUID = UUID()) {
             self.value = value
         }
         
-        package var isExist: Bool {
+        var isExist: Bool {
             AccountMockManager.container[self] != nil
         }
-        package var ref: AccountMock? {
+        var ref: AccountMock? {
             AccountMockManager.container[self]
         }
     }

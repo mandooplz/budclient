@@ -11,55 +11,61 @@ import Collections
 
 // MARK: Object
 @Server
-package final class ProjectHubMock: Sendable {
+package final class ProjectHubMock: ProjectHubInterface {
     // MARK: core
-    package init() {
+    init() {
         ProjectHubMockManager.register(self)
-    }
-    package func delete() {
-        ProjectHubMockManager.unregister(self.id)
     }
     
     
     // MARK: state
     package nonisolated let id: ID = ID()
     
-    package var projectSources: Set<ProjectSourceID> = []
+    package var projectSources: Set<ProjectSourceMock.ID> = []
     
-    package var tickets: Deque<CreateProjectSource> = []
-    package var eventHandlers: [ObjectID:Handler<ProjectHubEvent>] = [:]
+    private var tickets: Deque<CreateProject> = []
+    package func insertTicket(_ ticket: CreateProject) async {
+        tickets.append(ticket)
+    }
+    
+    var eventHandlers: [ObjectID:Handler<ProjectHubEvent>] = [:]
     package func hasHandler(requester: ObjectID) -> Bool {
         eventHandlers[requester] != nil
     }
-    package func sethandler(requester: ObjectID, handler: Handler<ProjectHubEvent>) {
+    package func setHandler(requester: ObjectID,
+                            user: UserID,
+                            handler: Handler<ProjectHubEvent>) {
         eventHandlers[requester] = handler
     }
+    package func removeHandler(requester: ObjectID) async {
+        eventHandlers[requester] = nil
+    }
     
-    package func notifyModified(_ id: ProjectID) {
+    package func notifyNameChanged(_ project: ProjectID) {
         let projectSource = projectSources.first {
-            ProjectSourceMockManager.get($0)?.target == id
+            $0.ref?.target == project
         }
         
-        guard let projectSource,
-                let projectSourceRef = ProjectSourceMockManager.get(projectSource) else { return }
+        guard let projectSourceRef = projectSource?.ref else { return }
         
-        let diff = ProjectSourceDiff(target: projectSourceRef.target,
+        let diff = ProjectSourceDiff(id: projectSourceRef.id,
+                                     target: projectSourceRef.target,
                                      name: projectSourceRef.name)
         
         for (_, handler) in eventHandlers {
-            handler.execute(diff.getEvent())
+            handler.execute(.modified(diff))
         }
     }
     
     
     // MARK: action
-    package func createProjectSource() async {
+    package func createNewProject() async {
         // mutate
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             
             let projectSourceRef = ProjectSourceMock(
-                projectHubRef: self,
+                projectHub: self.id,
                 target: ticket.target,
                 creator: ticket.creator,
                 name: ticket.name)
@@ -67,7 +73,11 @@ package final class ProjectHubMock: Sendable {
             projectSources.insert(projectSourceRef.id)
             
             // notify
-            let event = ProjectHubEvent.added(projectSourceRef.id, ticket.target)
+            let diff = ProjectSourceDiff(id: projectSourceRef.id,
+                                         target: projectSourceRef.target,
+                                         name: projectSourceRef.name)
+            
+            let event = ProjectHubEvent.added(diff)
             for handler in eventHandlers.values {
                 handler.execute(event)
             }
@@ -76,10 +86,16 @@ package final class ProjectHubMock: Sendable {
     
     
     // MARK: value
-    package struct ID: Sendable, Hashable {
-        package let value: UUID
-        package nonisolated init(value: UUID = UUID()) {
-            self.value = value
+    @Server
+    package struct ID: ProjectHubIdentity {
+        let value = "ProjectHubMock"
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            ProjectHubMockManager.container[self] != nil
+        }
+        package var ref: ProjectHubMock? {
+            ProjectHubMockManager.container[self]
         }
     }
 }
@@ -91,8 +107,5 @@ fileprivate final class ProjectHubMockManager: Sendable {
     fileprivate static var container: [ProjectHubMock.ID : ProjectHubMock] = [:]
     fileprivate static func register(_ object: ProjectHubMock) {
         container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: ProjectHubMock.ID) {
-        container[id] = nil
     }
 }

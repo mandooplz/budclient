@@ -35,7 +35,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     func getProjectEditor(_ target: ProjectID) -> ProjectEditor.ID? {
         self.editors.first { $0.ref?.target == target }
     }
-    public func isEditorExist(target: ProjectID) -> Bool {
+    func isEditorExist(target: ProjectID) -> Bool {
         self.editors.lazy
             .compactMap { $0.ref }
             .contains { $0.target == target }
@@ -61,15 +61,16 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                let projectHubLink = await config.budServerLink.getProjectHub()
+                guard let budServerRef = await config.budServer.ref,
+                      let projectHubRef = await budServerRef.projectHub.ref else { return }
                 
-                let isSubscribed = await projectHubLink.hasHandler(requester: me)
+                let isSubscribed = await projectHubRef.hasHandler(requester: me)
                 guard isSubscribed == false else {
                     await projectBoard.ref?.setIssue(Error.alreadySubscribed);
                     return
                 }
                 
-                await projectHubLink.setHandler(
+                await projectHubRef.setHandler(
                     requester: me,
                     user: config.user,
                     handler: .init({ event in
@@ -95,8 +96,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                let projectHubLink = await config.budServerLink.getProjectHub()
-                await projectHubLink.removeHandler(requester: me)
+                guard let budServerRef = await config.budServer.ref,
+                      let projectHubRef = await budServerRef.projectHub.ref else { return }
+                
+                await projectHubRef.removeHandler(requester: me)
             }
         }
     }
@@ -109,7 +112,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
         let config = self.config
-        let budServerLink = config.budServerLink
         
         
         // compute
@@ -119,15 +121,17 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     let newProject = ProjectID()
                     let newName = "Project \(Int.random(in: 1..<1000))"
                     
-                    async let ticket = CreateProjectSource(
+                    async let ticket = CreateProject(
                         creator: config.user,
                         target: newProject,
                         name: newName)
                     
-                    async let projectHubLink = await budServerLink.getProjectHub()
+                    guard let budServerRef = await config.budServer.ref,
+                          let projectHubRef = await budServerRef.projectHub.ref else { return }
                     
-                    await projectHubLink.insertTicket(ticket)
-                    try await projectHubLink.createProjectSource()
+                    
+                    await projectHubRef.insertTicket(ticket)
+                    try await projectHubRef.createNewProject()
                 }
             }
         } catch {

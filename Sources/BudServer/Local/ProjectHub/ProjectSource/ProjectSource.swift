@@ -13,12 +13,12 @@ import os
 
 // MARK: Object
 @MainActor
-package final class ProjectSource: Sendable {
+package final class ProjectSource: ProjectSourceInterface {
     // MARK: core
-    init(id: ProjectSourceID,
-         target: ProjectID) {
+    init(id: ID, target: ProjectID, parent: ProjectHub.ID) {
         self.id = id
         self.target = target
+        self.parent = parent
         
         ProjectSourceManager.register(self)
     }
@@ -27,9 +27,9 @@ package final class ProjectSource: Sendable {
     }
     
     // MARK: state
-    nonisolated let id: ProjectSourceID
+    nonisolated let id: ID
     nonisolated let target: ProjectID
-    private typealias Manager = ProjectSourceManager
+    nonisolated let parent: ProjectHub.ID
     
     package func setName(_ value: String) {
         // set ProjectSource.name
@@ -61,7 +61,7 @@ package final class ProjectSource: Sendable {
                 
                 snapshot.documentChanges.forEach { changed in
                     let documentId = changed.document.documentID
-                    let systemSource = SystemSourceID(documentId)
+                    let systemSource = SystemSource.ID(documentId)
                     
                     guard let data = try? changed.document.data(as: SystemSource.Data.self) else {
                         print("ProjectSource.Doc Decoding Error");
@@ -87,7 +87,7 @@ package final class ProjectSource: Sendable {
                         handler.execute(.modified(diff))
                     case .removed:
                         // delete SystemSource
-                        SystemSourceManager.get(systemSource)?.delete()
+                        systemSource.ref?.delete()
                         
                         // serve event
                         handler.execute(.removed(diff))
@@ -103,18 +103,6 @@ package final class ProjectSource: Sendable {
     
     
     // MARK: action
-    package func remove() {
-        guard Manager.isExist(id) else { return }
-        
-        // ProjectSource 인스턴스 제거
-        ProjectHub.shared.projectSources.remove(self.id)
-        self.delete()
-        
-        // FireStore에서 문서 삭제
-        let db = Firestore.firestore()
-        db.collection(ProjectSources.name).document(id.value).delete()
-    }
-    
     package func createFirstSystem() async throws  {
         // database
         let db = Firestore.firestore()
@@ -155,9 +143,35 @@ package final class ProjectSource: Sendable {
             }
         }
     }
+    package func remove() {
+        guard id.isExist else { return }
+        guard let projectHubRef = parent.ref else { return }
+        
+        // ProjectSource 인스턴스 제거
+        projectHubRef.projectSources.remove(self.id)
+        self.delete()
+        
+        // FireStore에서 문서 삭제
+        let db = Firestore.firestore()
+        db.collection(ProjectSources.name).document(id.value).delete()
+    }
     
     
     // MARK: value
+    @MainActor
+    package struct ID: ProjectSourceIdentity {
+        let value: String
+        nonisolated init(_ value: String) {
+            self.value = value
+        }
+        
+        package var isExist: Bool {
+            ProjectSourceManager.container[self] != nil
+        }
+        package var ref: ProjectSource? {
+            ProjectSourceManager.container[self]
+        }
+    }
     struct Data: Hashable, Codable {
         @DocumentID var id: String?
         package var name: String
@@ -183,19 +197,13 @@ package final class ProjectSource: Sendable {
 
 // MARK: Object Manager
 @MainActor
-package final class ProjectSourceManager: Sendable {
-    fileprivate static var container: [ProjectSourceID : ProjectSource] = [:]
+fileprivate final class ProjectSourceManager: Sendable {
+    fileprivate static var container: [ProjectSource.ID : ProjectSource] = [:]
     fileprivate static func register(_ object: ProjectSource) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ProjectSourceID) {
+    fileprivate static func unregister(_ id: ProjectSource.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: ProjectSourceID) -> ProjectSource? {
-        container[id]
-    }
-    package static func isExist(_ id: ProjectSourceID) -> Bool {
-        container[id] != nil
     }
 }
 

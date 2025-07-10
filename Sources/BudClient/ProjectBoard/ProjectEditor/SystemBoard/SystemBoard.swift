@@ -55,7 +55,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
         
         let projectEditorRef = config.parent.ref!
-        let projectSourceLink = projectEditorRef.sourceLink
+        let projectSource = projectEditorRef.source
         let me = ObjectID(id.value)
         let systemBoard = self.id
         let callback = self.callback
@@ -63,13 +63,14 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                let isSubscribed = await projectSourceLink.hasHandler(requester: me)
+                guard let projectSourceRef = await projectSource.ref else { return }
+                let isSubscribed = await projectSourceRef.hasHandler(requester: me)
                 guard isSubscribed == false else {
                     await systemBoard.ref?.setIssue(Error.alreadySubscribed)
                     return
                 }
                 
-                await projectSourceLink.setHandler(
+                await projectSourceRef.setHandler(
                     requester: me,
                     handler: .init({ event in
                         Task { @MainActor in
@@ -87,13 +88,15 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     
     public func unsubscribe() async {
         // capture
-        let projectSourceLink = config.parent.ref!.sourceLink
         let me = ObjectID(id.value)
+        let projectSource = self.config.parent.ref!.source
         
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                await projectSourceLink.removeHandler(requester: me)
+                guard let projectSourceRef = await projectSource.ref else { return }
+                
+                await projectSourceRef.removeHandler(requester: me)
             }
         }
     }
@@ -107,13 +110,15 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
         guard models.isEmpty else { setIssue(Error.systemAlreadyExist); return }
         let project = config.parent
-        let projectSourceLink = project.ref!.sourceLink
+        let projectSource = self.config.parent.ref!.source
         
         // compute
         do {
             try await withThrowingDiscardingTaskGroup { group in
                 group.addTask {
-                    try await projectSourceLink.createFirstSystem()
+                    guard let projectSourceRef = await projectSource.ref else { return }
+                    
+                    try await projectSourceRef.createFirstSystem()
                 }
             }
         } catch {

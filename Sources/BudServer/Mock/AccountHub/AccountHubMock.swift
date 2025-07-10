@@ -6,19 +6,29 @@
 //
 import Foundation
 import Values
+import Collections
 
 
 // MARK: Object
 @Server
-package final class AccountHubMock: Sendable {
+package final class AccountHubMock: AccountHubInterface {
     // MARK: core
-    package init() { }
+    init() {
+        self.accounts = [AccountMock(email: "test@test.com", password: "123456").id]
+        
+        AccountHubMockManager.register(self)
+    }
     
     
     // MARK: state
-    package var accounts: Set<AccountMock.ID> = [
-        AccountMock(email: "test@test.com", password: "123456").id
-    ]
+    package nonisolated let id = ID()
+    
+    private var clientIds: [String: String] = ["BudClient":"SAMPLE_ID_123456"]
+    package func getGoogleClientID(for systemName: String) async -> String? {
+        return clientIds[systemName]
+    }
+    
+    var accounts: Set<AccountMock.ID>
     package func isExist(email: String, password: String) -> Bool {
         accounts.lazy
             .compactMap { $0.ref }
@@ -44,43 +54,73 @@ package final class AccountHubMock: Sendable {
         
         return user
     }
-    package func getUser(token: GoogleToken) -> UserID? {
-        accounts.lazy
+    package func getUser(token: GoogleToken) throws -> UserID {
+        let user = accounts.lazy
             .compactMap { $0.ref }
             .first { $0.token == token }?
             .user
+        
+        guard let result = user else { throw Error.userNotFound }
+        return result
     }
     
-    package var emailTickets: Set<CreateEmailForm> = []
-    package var emailRegisterForms: [CreateEmailForm: EmailRegisterFormID] = [:]
+    private var tickets: Deque<CreateFormTicket> = []
+    package func appendTicket(_ ticket: CreateFormTicket) async {
+        tickets.append(ticket)
+    }
     
-    package var googleTickets: Set<CreateGoogleForm> = []
-    package var googleRegisterForms: [CreateGoogleForm: GoogleRegisterFormID] = [:]
+    var emailRegisterForms: [CreateFormTicket: EmailRegisterFormMock.ID] = [:]
+    var googleRegisterForms: [CreateFormTicket: GoogleRegisterFormMock.ID] = [:]
+    package func getEmailRegisterForm(ticket: CreateFormTicket) async -> EmailRegisterFormMock.ID? {
+        guard ticket.formType == .email else { return nil }
+        return emailRegisterForms[ticket]
+    }
+    package func getGoogleRegisterForm(ticket: CreateFormTicket) async -> GoogleRegisterFormMock.ID? {
+        guard ticket.formType == .google else { return nil }
+        return googleRegisterForms[ticket]
+    }
+    
     
     
     // MARK: action
-    package func updateEmailForms() {
-        // mutate
-        for ticket in emailTickets {
-            let emailRegisterFormRef = EmailRegisterFormMock(accountHub: self,
-                                                   ticket: ticket)
-            self.emailRegisterForms[ticket] = emailRegisterFormRef.id
-            emailTickets.remove(ticket)
+    package func createFormsFromTickets() {
+        let accountHub = self.id
+        while tickets.isEmpty == false {
+            let ticket = tickets.removeFirst()
+            switch ticket.formType {
+            case .email:
+                let emailRegisterFormRef = EmailRegisterFormMock(accountHub: accountHub,
+                                                                 ticket: ticket)
+                self.emailRegisterForms[ticket] = emailRegisterFormRef.id
+            case .google:
+                let googleRegisterFormRef = GoogleRegisterFormMock(accountHub: accountHub,
+                                                                   ticket: ticket)
+                self.googleRegisterForms[ticket] = googleRegisterFormRef.id
+            }
         }
     }
-    package func updateGoogleForms() {
-        // mutate
-        for ticket in googleTickets {
-            let googleRegisterFormRef = GoogleRegisterFormMock(accountHub: self,
-                                                               ticket: ticket)
-            self.googleRegisterForms[ticket] = googleRegisterFormRef.id
-            googleTickets.remove(ticket)
-        }
-    }
-    
+
     
     // MARK: value
+    @Server
+    package struct ID: AccountHubIdentity {
+        let value: String = "AccountHubMock"
+        nonisolated init() { }
+        
+        package var isExist: Bool { false }
+        package var ref: AccountHubMock? { nil }
+    }
     package enum Error: String, Swift.Error {
         case userNotFound, wrongPassword
+    }
+}
+
+
+// MARK: ObjectManager
+@Server
+fileprivate final class AccountHubMockManager: Sendable {
+    fileprivate static var container: [AccountHubMock.ID: AccountHubMock] = [:]
+    fileprivate static func register(_ object: AccountHubMock) {
+        container[object.id] = object
     }
 }

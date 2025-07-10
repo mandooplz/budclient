@@ -49,8 +49,11 @@ public final class SignInForm: Debuggable {
         let budClientRef = authBoardRef.tempConfig.parent.ref!
         
         // compute
-        async let result = {
-            return await tempConfig.budCacheLink.getUser()
+        async let result: UserID? = {
+            guard let budCacheRef = await tempConfig.budCache.ref else {
+                return nil
+            }
+            return await budCacheRef.getUser()
         }()
         guard let user = await result else {
             setIssue(Error.userIsNilInCache); return
@@ -76,18 +79,21 @@ public final class SignInForm: Debuggable {
         
         let authBoardRef = self.tempConfig.parent.ref!
         let budClientRef = authBoardRef.tempConfig.parent.ref!
+        let tempConfig = authBoardRef.tempConfig
         
         // compute
         let user: UserID
         do {
-            let accountHubLink = await tempConfig.budServerLink.getAccountHub()
+            guard let budServerRef = await tempConfig.budServer.ref,
+                    let accountHubRef = await budServerRef.accountHub.ref,
+                    let budCacheRef = await tempConfig.budCache.ref else { return }
             
-            async let userFromServer = try await accountHubLink.getUser(email: email,
-                                                                        password: password)
+            async let userFromServer = try await accountHubRef.getUser(email: email,
+                                                                       password: password)
             user = try await userFromServer
             
-            await tempConfig.budCacheLink.setUser(user)
-        } catch(let error as AccountHubLink.Error) {
+            await budCacheRef.setUser(user)
+        } catch(let error as AccountHubError) {
             switch error {
             case .userNotFound: setIssue(Error.userNotFound)
             case .wrongPassword: setIssue(Error.wrongPassword)

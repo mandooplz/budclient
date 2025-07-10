@@ -8,12 +8,4 @@
 
 
 // MARK: SubscribeProjectHub
-public struct SubscribeProjectHub: Ticket {
-    public let object: ObjectID
-    public let user: UserID
-    
-    public init(object: ObjectID, user: UserID) {
-        self.object = object
-        self.user = user
-    }
-}
+

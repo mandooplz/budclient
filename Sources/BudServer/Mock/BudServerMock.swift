@@ -10,21 +10,52 @@ import Values
 
 // MARK: Object
 @Server
-package final class BudServerMock {
+package final class BudServerMock: BudServerInterface {
     // MARK: core
-    package nonisolated init() { }
+    package init() {
+        BudServerMockManager.register(self)
+    }
     
     
     // MARK: state
-    package var accountHubRef: AccountHubMock?
-    package var projectHubRef: ProjectHubMock?
+    package nonisolated let id = ID()
+    
+    private var accountHubRef = AccountHubMock()
+    private var projectHubRef = ProjectHubMock()
+    
+    package var accountHub: AccountHubMock.ID {
+        accountHubRef.id
+    }
+    package var projectHub: ProjectHubMock.ID {
+        projectHubRef.id
+    }
     
     
-    // MARK: action
-    package func setUp() {
-        guard accountHubRef == nil || projectHubRef == nil else { return }
-                
-        self.accountHubRef = AccountHubMock()
-        self.projectHubRef = ProjectHubMock()
+    // MARK: value
+    @Server
+    package struct ID: BudServerIdentity {
+        let value = "BudServerMock"
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            BudServerMockManager.container[self] != nil
+        }
+        package var ref: BudServerMock? {
+            BudServerMockManager.container[self]
+        }
+    }
+}
+
+
+// MARK: ObjectManager
+@Server
+fileprivate final class BudServerMockManager: Sendable {
+    // MARK: state
+    fileprivate static var container: [BudServerMock.ID: BudServerMock] = [:]
+    fileprivate static func register(_ object: BudServerMock) {
+        container[object.id] = object
+    }
+    fileprivate static func unregister(_ id: BudServerMock.ID) {
+        container[id] = nil
     }
 }

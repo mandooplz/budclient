@@ -10,65 +10,74 @@ import Values
 
 // MARK: Object
 @Server
-package final class EmailRegisterFormMock: Sendable {
+package final class EmailRegisterFormMock: EmailRegisterFormInterface {
     // MARK: core
-    package init(accountHub: AccountHubMock,
-         ticket: CreateEmailForm) {
+    init(accountHub: AccountHubMock.ID,
+                 ticket: CreateFormTicket) {
         self.accountHub = accountHub
         self.ticket = ticket
 
         EmailRegisterFormMockManager.register(self)
     }
-    package func delete() {
+    func delete() {
         EmailRegisterFormMockManager.unregister(self.id)
     }
     
 
     // MARK: state
-    package nonisolated let id = EmailRegisterFormID()
-    package nonisolated let ticket: CreateEmailForm
-    package nonisolated let accountHub: AccountHubMock
+    package nonisolated let id = ID()
+    package nonisolated let ticket: CreateFormTicket
+    package nonisolated let accountHub: AccountHubMock.ID
     
-    package var email: String?
-    package var password: String?
+    private var email: String?
+    private var password: String?
+    package func setEmail(_ value: String) async {
+        self.email = value
+    }
+    package func setPassword(_ value: String) async {
+        self.password = value
+    }
     
-    package var issue: (any Issuable)?
 
     
     // MARK: action
-    package func submit() {
+    package func submit() throws {
         // capture
-        guard let email else {
-            self.issue = KnownIssue(Error.emailIsNil)
-            return
-        }
-        guard let password else {
-            self.issue = KnownIssue(Error.passwordIsNil)
-            return
-        }
-        let accounts = accountHub.accounts
+        guard let email else { throw Error.emailIsNil }
+        guard let password else { throw Error.passwordIsNil }
+        guard let accountHubRef = accountHub.ref else { return }
+        let accounts = accountHub.ref!.accounts
         
         // compute
         let isDuplicate = accounts.lazy
             .compactMap { $0.ref }
             .contains { $0.email == email }
-        guard isDuplicate == false else {
-            self.issue = KnownIssue(Error.emailDuplicate)
-            return
-        }
+        guard isDuplicate == false else { throw Error.emailDuplicate }
         
         // mutate
         let account = AccountMock(email: email, password: password)
-        accountHub.accounts.insert(account.id)
+        accountHubRef.accounts.insert(account.id)
     }
     package func remove() {
         // mutate
-        accountHub.emailRegisterForms[ticket] = nil
+        accountHub.ref?.emailRegisterForms[ticket] = nil
         self.delete()
     }
 
     
     // MARK: value
+    @Server
+    package struct ID: EmailRegisterFormIdentity {
+        let value: UUID = UUID()
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            EmailRegisterFormMockManager.container[self] != nil
+        }
+        package var ref: EmailRegisterFormMock? {
+            EmailRegisterFormMockManager.container[self]
+        }
+    }
     package enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
         case emailDuplicate
@@ -77,18 +86,12 @@ package final class EmailRegisterFormMock: Sendable {
 
 // MARK: Object Manager
 @Server
-package final class EmailRegisterFormMockManager: Sendable {
-    fileprivate static var container: [EmailRegisterFormID: EmailRegisterFormMock] = [:]
+fileprivate final class EmailRegisterFormMockManager: Sendable {
+    fileprivate static var container: [EmailRegisterFormMock.ID: EmailRegisterFormMock] = [:]
     fileprivate static func register(_ object: EmailRegisterFormMock) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: EmailRegisterFormID) {
+    fileprivate static func unregister(_ id: EmailRegisterFormMock.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: EmailRegisterFormID) -> EmailRegisterFormMock? {
-        container[id]
-    }
-    package static func isExist(_ id: EmailRegisterFormID) -> Bool {
-        container[id] != nil
     }
 }

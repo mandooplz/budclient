@@ -6,18 +6,27 @@
 //
 import Foundation
 import Values
+import Collections
 import FirebaseAuth
+import FirebaseCore
 
 
 // MARK: Object
-@Server
-package final class AccountHub {
+@MainActor
+package final class AccountHub: AccountHubInterface {
     // MARK: core
-    package static let shared = AccountHub()
-    private init() { }
+    init() {
+        AccountHubManager.register(self)
+    }
     
     
     // MARK: state
+    package nonisolated let id = ID()
+    
+    package func getGoogleClientID(for systemName: String) async -> String? {
+        return FirebaseApp.app()?.options.clientID
+    }
+    
     package func isExist(email: String, password: String) async throws -> Bool {
         do {
             let _ = try await Auth.auth().signIn(withEmail: email, password: password)
@@ -41,7 +50,7 @@ package final class AccountHub {
     package func getUser(email: String, password: String) async throws -> UserID {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
-            return result.user.uid.toUserID()
+            return UserID(result.user.uid)
         } catch let error as NSError {
             if let errorCode = AuthErrorCode(rawValue: error.code) {
                 switch errorCode {
@@ -59,47 +68,81 @@ package final class AccountHub {
     }
     package func getUser(token: GoogleToken) async throws -> UserID {
         if let user = Auth.auth().currentUser {
-            return user.uid.toUserID()
+            return UserID(user.uid)
         }
         
         let googleCredential  = GoogleAuthProvider.credential(withIDToken: token.idToken,
                                                        accessToken: token.accessToken)
         let result = try await Auth.auth().signIn(with: googleCredential )
-        return result.user.uid.toUserID()
+        return UserID(result.user.uid)
     }
     
-    package var emailTickets: Set<CreateEmailForm> = []
-    package var emailRegisterForms: [CreateEmailForm:EmailRegisterFormID] = [:]
+    private var tickets: Deque<CreateFormTicket> = []
+    package func appendTicket(_ ticket: CreateFormTicket) {
+        self.tickets.append(ticket)
+    }
     
-    package var googleTickets: Set<CreateGoogleForm> = []
-    package var googleRegisterForms: [CreateGoogleForm: GoogleRegisterFormID] = [:]
+    var emailRegisterForms: [CreateFormTicket:EmailRegisterForm.ID] = [:]
+    var googleRegisterForms: [CreateFormTicket: GoogleRegisterForm.ID] = [:]
+    package func getEmailRegisterForm(ticket: CreateFormTicket) async -> EmailRegisterForm.ID? {
+        guard ticket.formType == .email else { return nil }
+        return emailRegisterForms[ticket]
+    }
+    package func getGoogleRegisterForm(ticket: CreateFormTicket) async -> GoogleRegisterForm.ID? {
+        guard ticket.formType == .google else { return nil }
+        return googleRegisterForms[ticket]
+    }
     
     
     // MARK: action
-    package func updateEmailForms() {
+    package func createFormsFromTickets() {
+        // capture
+        let accountHub = self.id
+        
         // mutate
-        for ticket in emailTickets {
-            let registerFormRef = EmailRegisterForm(accountHubRef: self,
-                                               ticket: ticket)
-            self.emailRegisterForms[ticket] = registerFormRef.id
-            emailTickets.remove(ticket)
-        }
-    }
-    package func updateGoogleForms() {
-        // mutate
-        for ticket in googleTickets {
-            let googleRegisterFormRef = GoogleRegisterForm(accountHubRef: self,
-                                                           ticket: ticket)
-            self.googleRegisterForms[ticket] = googleRegisterFormRef.id
-            googleTickets.remove(ticket)
+        while tickets.isEmpty == false {
+            let ticket = tickets.removeFirst()
+            switch ticket.formType {
+            case .email:
+                let registerFormRef = EmailRegisterForm(accountHub: accountHub,
+                                                        ticket: ticket)
+                self.emailRegisterForms[ticket] = registerFormRef.id
+
+            case .google:
+                let googleRegisterFormRef = GoogleRegisterForm(accountHub: accountHub,
+                                                               ticket: ticket)
+                self.googleRegisterForms[ticket] = googleRegisterFormRef.id
+            }
         }
     }
     
     
     // MARK: value
+    @MainActor
+    package struct ID: AccountHubIdentity {
+        let value = "AccountHub"
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            AccountHubManager.container[self] != nil
+        }
+        package var ref: AccountHub? {
+            AccountHubManager.container[self]
+        }
+    }
     package enum Error: String, Swift.Error {
-        case userNotFound, wrongPassword
+        case userNotFound
+        case wrongPassword
     }
 }
 
 
+// MARK: ObjectManager
+@MainActor
+fileprivate final class AccountHubManager: Sendable {
+    // MARK: state
+    fileprivate static var container: [AccountHub.ID: AccountHub] = [:]
+    fileprivate static func register(_ object: AccountHub) {
+        container[object.id] = object
+    }
+}

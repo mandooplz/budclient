@@ -13,28 +13,34 @@ import os
 
 // MARK: Object
 @MainActor
-package final class ProjectHub: Sendable {
+package final class ProjectHub: ProjectHubInterface {
     // MARK: core
-    package static let shared = ProjectHub()
-    private init() { }
+    init() {
+        ProjectHubManager.register(self)
+    }
     
     
     // MARK: state
     package nonisolated let id = ID()
-    private let db = Firestore.firestore()
     
-    package var projectSources: Set<ProjectSourceID> = []
+    var projectSources: Set<ProjectSource.ID> = []
     
-    package var tickets: Deque<CreateProjectSource> = []
+    private var tickets: Deque<CreateProject> = []
+    package func insertTicket(_ ticket: CreateProject) async {
+        tickets.append(ticket)
+    }
     
-    package var listeners: [ObjectID:ListenerRegistration] = [:]
+    private var listeners: [ObjectID:ListenerRegistration] = [:]
     package func hasHandler(requester: ObjectID) async -> Bool {
         listeners[requester] != nil
     }
     
-    package func setHandler(requester: ObjectID, user: UserID, handler: Handler<ProjectHubEvent>) {
+    package func setHandler(requester: ObjectID,
+                            user: UserID,
+                            handler: Handler<ProjectHubEvent>) {
         guard listeners[requester] == nil else { return }
         
+        let db = Firestore.firestore()
         self.listeners[requester] = db.collection(ProjectSources.name)
             .whereField(ProjectSource.State.creator,
                         isEqualTo: user.encode())
@@ -46,7 +52,7 @@ package final class ProjectHub: Sendable {
                 
                 snapshot.documentChanges.forEach { diff in
                     let documentId = diff.document.documentID
-                    let projectSource = ProjectSourceID(documentId)
+                    let projectSource = ProjectSource.ID(documentId)
                     
                     guard let data = try? diff.document.data(as: ProjectSource.Data.self) else {
                         print("ProjectSource.Doc Decoding Error");
@@ -56,38 +62,50 @@ package final class ProjectHub: Sendable {
                     switch diff.type {
                     case .added:
                         // create ProjectSource
-                        let projectSourceRef = ProjectSource(id: projectSource, target: data.target)
+                        let projectSourceRef = ProjectSource(id: projectSource,
+                                                             target: data.target,
+                                                             parent: self.id)
                         self.projectSources.insert(projectSourceRef.id)
                         
                         // serve event
-                        let event = ProjectHubEvent.added(projectSource, data.target)
-                        handler.execute(event)
+                        let diff = ProjectSourceDiff(id: projectSource,
+                                                     target: projectSourceRef.target,
+                                                     name: data.name)
+                        handler.execute(.added(diff))
                     case .modified:
                         // serve event
-                        let event = ProjectSourceDiff(target: data.target,
+                        let diff = ProjectSourceDiff(id: projectSource,
+                                                      target: data.target,
                                                       name: data.name)
-                            .getEvent()
-                        handler.execute(event)
+                        
+                        handler.execute(.modified(diff))
                     case .removed:
                         // remove ProjectSource
-                        ProjectSourceManager.get(projectSource)?.delete()
+                        projectSource.ref?.delete()
                         self.projectSources.remove(projectSource)
                         
                         // serve event
-                        let event = ProjectHubEvent.removed(data.target)
-                        handler.execute(event)
+                        let diff = ProjectSourceDiff(id: projectSource,
+                                                     target: data.target,
+                                                     name: data.name)
+                        
+                        handler.execute(.removed(diff))
                     }
                 }
             }
     }
-    package func removeHandler(object: ObjectID) {
-        self.listeners[object]?.remove()
-        self.listeners[object] = nil
+    package func removeHandler(requester: ObjectID) {
+        self.listeners[requester]?.remove()
+        self.listeners[requester] = nil
     }
     
+    package func notifyNameChanged(_ project: ProjectID) async {
+        return
+    }
     
     // MARK: action
-    package func createProjectSource() throws {
+    package func createNewProject() throws {
+        let db = Firestore.firestore()
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             
@@ -102,12 +120,28 @@ package final class ProjectHub: Sendable {
     
     
     // MARK: value
-    package struct ID: Sendable, Hashable {
-        let value: UUID
+    @MainActor
+    package struct ID: ProjectHubIdentity {
+        let value: String = "ProjectHub"
+        nonisolated init() { }
         
-        init(value: UUID = UUID()) {
-            self.value = value
+        package var isExist: Bool {
+            ProjectHubManager.container[self] != nil
         }
+        package var ref: ProjectHub? {
+            ProjectHubManager.container[self]
+        }
+    }
+}
+
+
+// MARK: ObjectManager
+@MainActor
+fileprivate final class ProjectHubManager: Sendable {
+    // MARK: state
+    fileprivate static var container: [ProjectHub.ID: ProjectHub] = [:]
+    fileprivate static func register(_ object: ProjectHub) {
+        container[object.id] = object
     }
 }
 

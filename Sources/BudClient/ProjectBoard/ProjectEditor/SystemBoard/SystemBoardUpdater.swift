@@ -41,13 +41,9 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
                     setIssue(Error.alreadyAdded); return
                 }
                 
-                // diff로부터 SystemSourceID를 받아야 한다.
-                // 만약 직접 ID를 받는다면?
-                let systemSourceLink = SystemSourceLink(mode: config.mode,
-                                                        object: diff.id)
                 let systemModelRef = SystemModel(config: config,
                                                  target: diff.target,
-                                                 sourceLink: systemSourceLink)
+                                                 source: diff.id)
                 systemBoardRef.models[diff.location] = systemModelRef.id
             case .removed(let diff):
                 guard systemBoardRef.isExist(diff.target) else {

@@ -5,17 +5,17 @@
 //  Created by 김민우 on 7/7/25.
 //
 import Foundation
-import FirebaseFirestore
 import Values
+import FirebaseFirestore
 
 
 // MARK: Object
 @MainActor
-package final class SystemSource: Sendable {
+package final class SystemSource: SystemSourceInterface {
     // MARK: core
-    init(id: SystemSourceID,
+    init(id: ID,
          target: SystemID,
-         parent: ProjectSourceID) {
+         parent: ProjectSource.ID) {
         self.id = id
         self.target = target
         self.parent = parent
@@ -28,15 +28,13 @@ package final class SystemSource: Sendable {
     
     
     // MARK: state
-    nonisolated let id: SystemSourceID
+    nonisolated let id: ID
     nonisolated let target: SystemID
-    nonisolated let parent: ProjectSourceID
+    nonisolated let parent: ProjectSource.ID
     
     package func setName(_ value: String) {
         // compute
-        guard let projectSourceRef = ProjectSourceManager.get(parent) else {
-            return
-        }
+        guard let projectSourceRef = parent.ref else { return }
         
         let db = Firestore.firestore()
         let nameUpdater = State.getNameUpdater(value)
@@ -49,6 +47,9 @@ package final class SystemSource: Sendable {
     }
     
     private var listeners: [ObjectID: Listener] = [:]
+    package func hasHandler(requester: ObjectID) -> Bool {
+        listeners[requester] != nil
+    }
     package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) {
         let db = Firestore.firestore()
         
@@ -66,7 +67,7 @@ package final class SystemSource: Sendable {
                 
                 snapshot.documentChanges.forEach { changed in
                     let documentId = changed.document.documentID
-                    let _ = RootSourceID(documentId)
+                    let rootSource = RootSource.ID(documentId)
                     
                     switch changed.type {
                     case .added:
@@ -93,7 +94,7 @@ package final class SystemSource: Sendable {
                 
                 snapshot.documentChanges.forEach { changed in
                     let documentId = changed.document.documentID
-                    let _ = RootSourceID(documentId)
+                    let _ = RootSource.ID(documentId)
                 }
             }
     }
@@ -102,30 +103,66 @@ package final class SystemSource: Sendable {
         listeners[requester]?.objectSource.remove()
         listeners[requester] = nil
     }
+    
+    package func notifyNameChanged() async {
+        return
+    }
+    
+    
     // MARK: action
+    package func addSystemTop() async {
+        fatalError()
+    }
+    package func addSystemLeft() async {
+        fatalError()
+    }
+    package func addSystemRight() async {
+        fatalError()
+    }
+    package func addSystemBottom() async {
+        fatalError()
+    }
+    
+    package func remove() async {
+        fatalError()
+    }
     
     
     
     // MARK: value
+    @MainActor
+    package struct ID: SystemSourceIdentity {
+        let value: String
+        nonisolated init(_ value: String) {
+            self.value = value
+        }
+        
+        package var isExist: Bool {
+            SystemSourceManager.container[self] != nil
+        }
+        package var ref: SystemSource? {
+            SystemSourceManager.container[self]
+        }
+    }
     private struct Listener {
         let rootSource: ListenerRegistration
         let objectSource: ListenerRegistration
     }
-    package struct Data: Hashable, Codable {
+    struct Data: Hashable, Codable {
         @DocumentID var id: String?
         var target: SystemID
         var name: String
         var location: Location
         var rootModel: Root?
         
-        package struct Root: Hashable, Codable {
+        struct Root: Hashable, Codable {
             let target: ObjectID
             let name: String
             let states: [StateID]
             let actions: [ActionID]
         }
     }
-    package enum State: Sendable, Hashable {
+    enum State: Sendable, Hashable {
         static let name = "name"
         static let location = "location"
         
@@ -140,14 +177,11 @@ package final class SystemSource: Sendable {
 @MainActor
 package final class SystemSourceManager: Sendable {
     // MARK: state
-    fileprivate static var container: [SystemSourceID: SystemSource] = [:]
+    fileprivate static var container: [SystemSource.ID: SystemSource] = [:]
     fileprivate static func register(_ object: SystemSource) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: SystemSourceID) {
+    fileprivate static func unregister(_ id: SystemSource.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: SystemSourceID) -> SystemSource? {
-        container[id]
     }
 }

@@ -10,11 +10,11 @@ import Values
 
 // MARK: Object
 @Server
-package final class SystemSourceMock: Sendable {
+package final class SystemSourceMock: SystemSourceInterface {
     // MARK: core
     init(name: String,
          location: Location,
-         parent: ProjectSourceID,
+         parent: ProjectSourceMock.ID,
          target: SystemID = SystemID()) {
         self.name = name
         self.location = location
@@ -29,11 +29,15 @@ package final class SystemSourceMock: Sendable {
     
     
     // MARK: state
-    nonisolated let id = SystemSourceID()
-    nonisolated let target: SystemID
-    nonisolated let parent: ProjectSourceID
+    package nonisolated let id = ID()
+    let target: SystemID
+    let parent: ProjectSourceMock.ID
     
-    package var name: String
+    private(set) var name: String
+    package func setName(_ value: String) async {
+        self.name = value
+    }
+    
     package var location: Location
     
     package var eventHandlers: [ObjectID: Handler<SystemSourceEvent>] = [:]
@@ -49,8 +53,8 @@ package final class SystemSourceMock: Sendable {
     
     package func notifyNameChanged() {
         // capture
-        guard SystemSourceMockManager.isExist(id) else { return }
-        guard let projectSourceRef = ProjectSourceMockManager.get(parent) else { return }
+        guard id.isExist else { return }
+        guard let projectSourceRef = parent.ref else { return }
         let eventHandlers = projectSourceRef.eventHandlers
         
         let diff = SystemSourceDiff(id: id,
@@ -65,24 +69,49 @@ package final class SystemSourceMock: Sendable {
     
     
     // MARK: action
+    package func addSystemTop() async {
+        fatalError()
+    }
+    package func addSystemLeft() async {
+        fatalError()
+    }
+    package func addSystemRight() async {
+        fatalError()
+    }
+    package func addSystemBottom() async {
+        fatalError()
+    }
+    
+    package func remove() async {
+        fatalError()
+    }
+    
+    
+    // MARK: value
+    @Server
+    package struct ID: SystemSourceIdentity {
+        let value = UUID()
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            SystemSourceMockManager.container[self] != nil
+        }
+        package var ref: SystemSourceMock? {
+            SystemSourceMockManager.container[self]
+        }
+    }
 }
 
 
 // MARK: Object Manager
 @Server
-package final class SystemSourceMockManager: Sendable {
+fileprivate final class SystemSourceMockManager: Sendable {
     // MARK: state
-    private static var container: [SystemSourceID: SystemSourceMock] = [:]
+    fileprivate static var container: [SystemSourceMock.ID: SystemSourceMock] = [:]
     fileprivate static func register(_ object: SystemSourceMock) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: SystemSourceID) {
+    fileprivate static func unregister(_ id: SystemSourceMock.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: SystemSourceID) -> SystemSourceMock? {
-        container[id]
-    }
-    package static func isExist(_ id: SystemSourceID) -> Bool {
-        container[id] != nil
     }
 }

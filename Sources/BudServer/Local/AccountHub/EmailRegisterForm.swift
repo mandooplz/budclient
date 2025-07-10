@@ -10,12 +10,12 @@ import FirebaseAuth
 
 
 // MARK: Object
-@Server
-package final class EmailRegisterForm: Sendable {
+@MainActor
+package final class EmailRegisterForm: EmailRegisterFormInterface {
     // MARK: core
-    package init(accountHubRef: AccountHub,
-                  ticket: CreateEmailForm) {
-        self.accountHubRef = accountHubRef
+    init(accountHub: AccountHub.ID,
+         ticket: CreateFormTicket) {
+        self.accountHub = accountHub
         self.ticket = ticket
         
         EmailRegisterFormManager.register(self)
@@ -26,64 +26,66 @@ package final class EmailRegisterForm: Sendable {
     
     
     // MARK: state
-    package nonisolated let id = EmailRegisterFormID()
-    package nonisolated let ticket: CreateEmailForm
-    package nonisolated let accountHubRef: AccountHub
+    package nonisolated let id = ID()
+    nonisolated let ticket: CreateFormTicket
+    nonisolated let accountHub: AccountHub.ID
     
-    package var email: String?
-    package var password: String?
+    private var email: String?
+    package func setEmail(_ value: String) async {
+        self.email = value
+    }
     
-    package var issue: (any Issuable)?
+    private var password: String?
+    package func setPassword(_ value: String) async {
+        self.password = value
+    }
 
     
     // MARK: action
-    package func submit() async {
+    package func submit() async throws {
         // capture
-        guard let email else {
-            self.issue = KnownIssue(Error.emailIsNil)
-            return
-        }
-        guard let password else {
-            self.issue = KnownIssue(Error.passwordIsNil)
-            return
-        }
+        guard let email else { throw Error.emailIsNil }
+        guard let password else { throw Error.passwordIsNil }
         
         // mutate
-        do {
-            try await Auth.auth().createUser(withEmail: email,
-                                             password: password)
-        } catch {
-            self.issue = UnknownIssue(error)
-            return
-        }
+        try await Auth.auth().createUser(withEmail: email,
+                                         password: password)
     }
-    package func remove() async {
+    package func remove() async throws {
         // mutate
-        accountHubRef.emailRegisterForms[ticket] = nil
+        accountHub.ref?.emailRegisterForms[ticket] = nil
         self.delete()
     }
 
     
     // MARK: value
+    @MainActor
+    package struct ID: EmailRegisterFormIdentity {
+        let value = UUID()
+        nonisolated init() { }
+        
+        package var isExist: Bool {
+            EmailRegisterFormManager.container[self] != nil
+        }
+        package var ref: EmailRegisterForm? {
+            EmailRegisterFormManager.container[self]
+        }
+    }
     package enum Error: String, Swift.Error {
         case emailIsNil, passwordIsNil
-        case emailDuplicate
     }
 }
 
 
 
 // MARK: Object Manager
-@Server
-package final class EmailRegisterFormManager: Sendable {
-    fileprivate static var container: [EmailRegisterFormID: EmailRegisterForm] = [:]
+@MainActor
+fileprivate final class EmailRegisterFormManager: Sendable {
+    fileprivate static var container: [EmailRegisterForm.ID: EmailRegisterForm] = [:]
     fileprivate static func register(_ object: EmailRegisterForm) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: EmailRegisterFormID) {
+    fileprivate static func unregister(_ id: EmailRegisterForm.ID) {
         container[id] = nil
-    }
-    package static func get(_ id: EmailRegisterFormID) -> EmailRegisterForm? {
-        container[id]
     }
 }

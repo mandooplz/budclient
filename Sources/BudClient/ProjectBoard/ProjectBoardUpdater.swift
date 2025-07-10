@@ -38,32 +38,27 @@ final class ProjectBoardUpdater: Debuggable, UpdaterInterface {
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
-            case .added(let projectSource, let project):
-                if projectBoardRef.isEditorExist(target: project) {
+            case .added(let diff):
+                if projectBoardRef.isEditorExist(target: diff.target) {
                     setIssue(Error.alreadyAdded); return
                 }
                 
                 // create ProjectEditor
-                let sourceLink = ProjectSourceLink(mode: config.mode,
-                                                   object: projectSource)
                 let projectEditorRef = ProjectEditor(config: config,
-                                                     target: project,
-                                                     sourceLink: sourceLink)
+                                                     target: diff.target,
+                                                     source: diff.id)
                 
                 projectBoardRef.editors.append(projectEditorRef.id)
                 
-            case .modified(let projectSourceDiff):
+            case .modified(let diff):
                 // update ProjectEditor
-                let project = projectSourceDiff.target
-                let newName = projectSourceDiff.name
-                
-                guard let projectEditor = projectBoardRef.getProjectEditor(project),
+                guard let projectEditor = projectBoardRef.getProjectEditor(diff.target),
                       let projectEditorRef = projectEditor.ref else { return }
                 
-                projectEditorRef.name = newName
-            case .removed(let project):
+                projectEditorRef.name = diff.name
+            case .removed(let diff):
                 // remove ProjectEditor
-                guard let projectEditor = projectBoardRef.getProjectEditor(project),
+                guard let projectEditor = projectBoardRef.getProjectEditor(diff.target),
                       let projectEditorRef = projectEditor.ref else {
                     setIssue(Error.alreadyRemoved); return
                 }
