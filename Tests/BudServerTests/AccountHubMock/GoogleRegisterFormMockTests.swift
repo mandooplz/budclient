@@ -7,7 +7,7 @@
 import Foundation
 import Testing
 import Values
-@testable import BudServerMock
+@testable import BudServer
 
 
 // MARK: Tests
