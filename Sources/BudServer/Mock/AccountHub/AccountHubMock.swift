@@ -105,7 +105,7 @@ package final class AccountHubMock: AccountHubInterface {
     // MARK: value
     @Server
     package struct ID: AccountHubIdentity {
-        let value: String = "AccountHubMock"
+        let value = UUID()
         nonisolated init() { }
         
         package var isExist: Bool {

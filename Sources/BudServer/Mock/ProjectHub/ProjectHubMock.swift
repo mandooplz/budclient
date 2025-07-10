@@ -88,7 +88,7 @@ package final class ProjectHubMock: ProjectHubInterface {
     // MARK: value
     @Server
     package struct ID: ProjectHubIdentity {
-        let value = "ProjectHubMock"
+        let value = UUID()
         nonisolated init() { }
         
         package var isExist: Bool {

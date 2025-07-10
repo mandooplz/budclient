@@ -34,7 +34,7 @@ package final class BudServerMock: BudServerInterface {
     // MARK: value
     @Server
     package struct ID: BudServerIdentity {
-        let value = "BudServerMock"
+        let value = UUID()
         nonisolated init() { }
         
         package var isExist: Bool {
