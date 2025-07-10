@@ -11,7 +11,7 @@ import Foundation
 public struct RootSourceID: Identity {
     public let value: String
     
-    public init(value: String) {
+    public init(_ value: String) {
         self.value = value
     }
     

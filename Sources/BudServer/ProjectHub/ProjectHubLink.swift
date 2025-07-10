@@ -10,8 +10,20 @@ import BudServerMock
 import BudServerLocal
 
 
+// MARK: Interface
+package protocol ProjectHubInterface: Sendable {
+    func insertTicket(_: CreateProjectSource) async
+    
+    func hasHandler(requester: ObjectID) async -> Bool
+    func setHandler(requester: ObjectID, user: UserID, handler: Handler<ProjectHubEvent>) async
+    func removeHandler(requester: ObjectID) async
+    
+    func notifyNameChanged(_: ProjectID) async
+}
+
+
 // MARK: Link
-package struct ProjectHubLink: Sendable {
+package struct ProjectHubLink: ProjectHubInterface {
     // MARK: core
     private let mode: Mode
     init(mode: Mode) {
@@ -52,12 +64,12 @@ package struct ProjectHubLink: Sendable {
         }
     }
     @Server
-    package func removeHandler(object: ObjectID) async {
+    package func removeHandler(requester: ObjectID) async {
         switch mode {
         case .test(let projectHubRef):
-            projectHubRef.eventHandlers[object] = nil
+            projectHubRef.eventHandlers[requester] = nil
         case .real:
-            await ProjectHub.shared.removeHandler(object: object)
+            await ProjectHub.shared.removeHandler(object: requester)
         }
     }
     

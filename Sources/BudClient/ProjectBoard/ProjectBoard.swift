@@ -96,7 +96,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await withDiscardingTaskGroup { group in
             group.addTask {
                 let projectHubLink = await config.budServerLink.getProjectHub()
-                await projectHubLink.removeHandler(object: me)
+                await projectHubLink.removeHandler(requester: me)
             }
         }
     }

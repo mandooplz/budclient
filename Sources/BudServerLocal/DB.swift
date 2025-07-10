@@ -14,6 +14,16 @@ struct ProjectSources {
     struct SystemSources {
         static let name = "SystemSources"
         private init() { }
+        
+        struct RootSources {
+            static let name = "RootSources"
+            private init() { }
+        }
+        
+        struct ObjectSources {
+            static let name = "ObjectSources"
+            private init() { }
+        }
     }
     
     struct ValueSources {

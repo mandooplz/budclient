@@ -33,20 +33,24 @@ package struct SystemSourceLink: Sendable {
             fatalError()
         }
     }
-    package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) {
+    package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) async {
         switch mode {
         case .test:
             TestManager.get(object)?.setHandler(requester: requester, handler: handler)
         case .real:
-            fatalError()
+            await MainActor.run {
+                RealManager.get(object)?.setHandler(requester: requester, handler: handler)
+            }
         }
     }
-    package func removeHandler(requester: ObjectID) {
+    package func removeHandler(requester: ObjectID) async {
         switch mode {
         case .test:
             TestManager.get(object)?.removeHandler(requester: requester)
         case .real:
-            fatalError()
+            await MainActor.run {
+                RealManager.get(object)?.removeHandler(requester: requester)
+            }
         }
     }
     
