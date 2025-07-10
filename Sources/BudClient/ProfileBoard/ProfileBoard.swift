@@ -69,7 +69,7 @@ public final class ProfileBoard: Debuggable {
         
         for projectEditor in projectEditors {
             let systemBoardRef = projectEditor.ref?.systemBoard?.ref
-            systemBoardRef?.models.forEach { systemModel in
+            systemBoardRef?.models.values.forEach { systemModel in
                 systemModel.ref?.delete()
             }
             

@@ -64,9 +64,13 @@ package final class ProjectSourceMock: Sendable {
         self.systems.insert(systemSourceRef.id)
         
         // notify
-        let event = ProjectSourceEvent.added(systemSourceRef.id, systemSourceRef.target)
+        let diff = SystemSourceDiff(id: systemSourceRef.id,
+                                    target: systemSourceRef.target,
+                                    name: systemSourceRef.name,
+                                    location: systemSourceRef.location)
+        
         for (_, handler) in eventHandlers {
-            handler.execute(event)
+            handler.execute(.added(diff))
         }
     }
 }

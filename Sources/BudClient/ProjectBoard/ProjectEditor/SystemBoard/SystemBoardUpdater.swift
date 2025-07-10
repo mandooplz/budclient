@@ -36,27 +36,27 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
         while queue.isEmpty == false {
             let event = queue.removeFirst()
             switch event {
-            case .added(let systemSource, let system):
-                if systemBoardRef.isExist(system) {
+            case .added(let diff):
+                if systemBoardRef.isExist(diff.target) {
                     setIssue(Error.alreadyAdded); return
                 }
                 
                 let systemSourceLink = SystemSourceLink(mode: config.mode,
-                                                        object: systemSource)
+                                                        object: diff.id)
                 let systemModelRef = SystemModel(config: config,
-                                                 target: system,
+                                                 target: diff.target,
                                                  sourceLink: systemSourceLink)
-                systemBoardRef.models.insert(systemModelRef.id)
-            case .removed(let system):
-                guard systemBoardRef.isExist(system) else {
+                systemBoardRef.models[diff.location] = systemModelRef.id
+            case .removed(let diff):
+                guard systemBoardRef.isExist(diff.target) else {
                     setIssue(Error.alreadyRemoved); return
                 }
                 
-                let systemModel = systemBoardRef.models
-                    .first { $0.ref?.target == system }
+                let systemModel = systemBoardRef.models.values
+                    .first { $0.ref?.target == diff.target }
                 
                 systemModel!.ref?.delete()
-                systemBoardRef.models.remove(systemModel!)
+                systemBoardRef.models[diff.location] = nil
             case .modified(let diff):
                 guard let systemModel = systemBoardRef.getSystemModel(diff.target),
                       let systemModelRef = systemModel.ref else {

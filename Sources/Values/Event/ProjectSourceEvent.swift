@@ -8,19 +8,21 @@
 
 // MARK: ProjectEvent
 package enum ProjectSourceEvent: Sendable {
-    case added(SystemSourceID, SystemID)
+    case added(SystemSourceDiff)
     case modified(SystemSourceDiff)
-    case removed(SystemID)
+    case removed(SystemSourceDiff)
 }
 
 
 // MARK: SystemSourceDiff
 package struct SystemSourceDiff: Sendable {
+    package let id: SystemSourceID
     package let target: SystemID
     package let name: String
     package let location: Location
     
-    package init(target: SystemID, name: String, location: Location) {
+    package init(id: SystemSourceID, target: SystemID, name: String, location: Location) {
+        self.id = id
         self.target = target
         self.name = name
         self.location = location

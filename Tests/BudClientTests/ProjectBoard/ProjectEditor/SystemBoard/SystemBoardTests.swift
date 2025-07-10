@@ -103,9 +103,18 @@ struct SystemBoardTests {
         }
         @Test func whenSystemAlreadyExist() async throws {
             // given
-            let _ = await MainActor.run {
-                systemBoardRef.models.insert(.init())
+            await withCheckedContinuation { con in
+                Task {
+                    await systemBoardRef.setCallback {
+                        con.resume()
+                    }
+                    
+                    await systemBoardRef.subscribe()
+                    await systemBoardRef.createFirstSystem()
+                }
             }
+            
+            try await #require(systemBoardRef.models.isEmpty == false)
             try await #require(systemBoardRef.issue == nil)
             
             // when
@@ -118,7 +127,7 @@ struct SystemBoardTests {
         
         @Test func createSystemModel() async throws {
             // given
-            try await #require(systemBoardRef.isModelsEmpty == true)
+            try await #require(systemBoardRef.models.isEmpty == true)
             
             await systemBoardRef.unsubscribe()
             
@@ -137,7 +146,7 @@ struct SystemBoardTests {
             // then
             try await #require(systemBoardRef.models.count == 1)
             
-            let systemModel = try #require(await systemBoardRef.models.first)
+            let systemModel = try #require(await systemBoardRef.models.values.first)
             await #expect(systemModel.isExist == true)
         }
         @Test func createSystemSource() async throws {

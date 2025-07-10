@@ -59,37 +59,37 @@ package final class ProjectSource: Sendable {
                     return
                 }
                 
-                snapshot.documentChanges.forEach { diff in
-                    let documentId = diff.document.documentID
+                snapshot.documentChanges.forEach { changed in
+                    let documentId = changed.document.documentID
                     let systemSource = SystemSourceID(documentId)
                     
-                    guard let data = try? diff.document.data(as: SystemSource.Data.self) else {
+                    guard let data = try? changed.document.data(as: SystemSource.Data.self) else {
                         print("ProjectSource.Doc Decoding Error");
                         return
                     }
                     
-                    switch diff.type {
+                    let diff = SystemSourceDiff(id: systemSource,
+                                                target: data.target,
+                                                name: data.name,
+                                                location: data.location)
+                    
+                    
+                    switch changed.type {
                     case .added:
                         // create SystemSource
                         let systemSourceRef = SystemSource(id: systemSource, target: data.target)
 
                         // serve event
-                        let event = ProjectSourceEvent.added(systemSource, systemSourceRef.target)
-                        handler.execute(event)
+                        
+                        handler.execute(.added(diff))
                     case .modified:
-                        // server event
-                        let diffValue = SystemSourceDiff(target: data.target,
-                                                         name: data.name,
-                                                         location: data.location)
-                        let event = diffValue.getEvent()
-                        handler.execute(event)
+                        handler.execute(.modified(diff))
                     case .removed:
                         // delete SystemSource
                         SystemSourceManager.get(systemSource)?.delete()
                         
                         // serve event
-                        let event = ProjectSourceEvent.removed(data.target)
-                        handler.execute(event)
+                        handler.execute(.removed(diff))
                     }
                 }
             })

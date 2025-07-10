@@ -29,9 +29,13 @@ struct SystemBoardUpdaterTests {
             
             let newSystemSource = SystemSourceID()
             let newSystem = SystemID()
-            let addEvent = ProjectSourceEvent.added(newSystemSource, newSystem)
             
-            await updaterRef.appendEvent(addEvent)
+            let diff = SystemSourceDiff(id: newSystemSource,
+                                        target: newSystem,
+                                        name: "",
+                                        location: .init(x: 999, y: 999))
+            
+            await updaterRef.appendEvent(.added(diff))
             
             // when
             await updaterRef.update()
@@ -40,19 +44,23 @@ struct SystemBoardUpdaterTests {
             try await #require(systemBoardRef.models.count == 1)
             try await #require(updaterRef.queue.isEmpty)
             
-            await #expect(systemBoardRef.models.first?.isExist == true)
+            await #expect(systemBoardRef.models.values.first?.isExist == true)
         }
         @Test func whenAlreadyAdded() async throws {
             // given
             let newSystemSource = SystemSourceID()
             let newSystem = SystemID()
-            let addEvent = ProjectSourceEvent.added(newSystemSource, newSystem)
             
-            await updaterRef.appendEvent(addEvent)
+            let diff = SystemSourceDiff(id: newSystemSource,
+                                        target: newSystem,
+                                        name: "",
+                                        location: .init(x: 999, y: 999))
+            
+            await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
             
             // when
-            await updaterRef.appendEvent(addEvent)
+            await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
             
             // then
@@ -66,33 +74,39 @@ struct SystemBoardUpdaterTests {
             // given
             let newSystemSource = SystemSourceID()
             let newSystem = SystemID()
-            let addEvent = ProjectSourceEvent.added(newSystemSource, newSystem)
             
-            await updaterRef.appendEvent(addEvent)
+            let diff = SystemSourceDiff(id: newSystemSource,
+                                        target: newSystem,
+                                        name: "",
+                                        location: .init(x: 999, y: 999))
+            
+            await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
             
             try await #require(systemBoardRef.models.count == 1)
-            let systemModel = try #require(await systemBoardRef.models.first)
+            let systemModel = try #require(await systemBoardRef.models.values.first)
             try await #require(systemModel.isExist == true)
             
             // when
-            let removeEvent = ProjectSourceEvent.removed(newSystem)
-            
-            await updaterRef.appendEvent(removeEvent)
+            await updaterRef.appendEvent(.removed(diff))
             await updaterRef.update()
             
             // then
             try await #require(updaterRef.queue.isEmpty)
             
             await #expect(systemModel.isExist == false)
-            await #expect(systemBoardRef.models.contains(systemModel) == false)
+            await #expect(systemBoardRef.models.values.contains(systemModel) == false)
         }
         @Test func whenAlreadyRemoved() async throws {
             // given
             let someSystem = SystemID()
-            let removeEvent = ProjectSourceEvent.removed(someSystem)
             
-            await updaterRef.appendEvent(removeEvent)
+            let diff = SystemSourceDiff(id: .init(),
+                                        target: .init(),
+                                        name: "",
+                                        location: .init(x: 1, y: 1))
+            
+            await updaterRef.appendEvent(.removed(diff))
             
             // when
             await updaterRef.update()
@@ -108,21 +122,27 @@ struct SystemBoardUpdaterTests {
             // given
             let newSystemSource = SystemSourceID()
             let newSystem = SystemID()
-            let addEvent = ProjectSourceEvent.added(newSystemSource, newSystem)
             
-            await updaterRef.appendEvent(addEvent)
+            let diff = SystemSourceDiff(id: newSystemSource,
+                                        target: newSystem,
+                                        name: "",
+                                        location: .init(x: 88, y: 88))
+            
+            await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
             
-            let systemModelRef = try #require(await systemBoardRef.models.first?.ref)
+            let systemModelRef = try #require(await systemBoardRef.models.values.first?.ref)
             
             // when
             let testName = "TEST_Name"
             let testLocation = Location(x: 999, y: 999)
-            let modifyEvent = SystemSourceDiff(target: newSystem,
-                                               name: testName,
-                                               location: testLocation).getEvent()
             
-            await updaterRef.appendEvent(modifyEvent)
+            let newDiff = SystemSourceDiff(id: newSystemSource,
+                                           target: newSystem,
+                                           name: testName,
+                                           location: testLocation)
+            
+            await updaterRef.appendEvent(.modified(newDiff))
             await updaterRef.update()
             
             // then
@@ -131,12 +151,13 @@ struct SystemBoardUpdaterTests {
         }
         @Test func modifySystemModelWhenAlreadyRemoved() async throws {
             // given
-            let modifyEvent = SystemSourceDiff(target: .init(),
-                                               name: "TEST_Name",
-                                               location: .init(x: 1, y: 1)).getEvent()
+            let diff = SystemSourceDiff(id: .init(),
+                                        target: .init(),
+                                        name: "",
+                                        location: .init(x: 88, y: 88))
 
             // when
-            await updaterRef.appendEvent(modifyEvent)
+            await updaterRef.appendEvent(.modified(diff))
             await updaterRef.update()
             
             // then
