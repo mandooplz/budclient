@@ -27,7 +27,7 @@ package final class ProjectSource: ProjectSourceInterface {
     }
     
     // MARK: state
-    nonisolated let id: ID
+    package nonisolated let id: ID
     nonisolated let target: ProjectID
     nonisolated let parent: ProjectHub.ID
     

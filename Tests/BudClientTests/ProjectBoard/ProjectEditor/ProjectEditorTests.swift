@@ -128,7 +128,8 @@ struct ProjectEditorTests {
         @Test func updateNameByUpdater() async throws {
             // given
             let testName = "TEST_PROJECT_NAME"
-            let projectHubLink = await editorRef.config.budServerLink.getProjectHub()
+            let projectHubRef = try #require(await editorRef.config.budServer.ref?.projectHub.ref)
+            
             let randomObject = ObjectID()
             let user = editorRef.config.user
             
@@ -139,7 +140,7 @@ struct ProjectEditorTests {
             // then
             await withCheckedContinuation { con in
                 Task {
-                    await projectHubLink.setHandler(
+                    await projectHubRef.setHandler(
                         requester: randomObject,
                         user: user,
                         handler: .init({ event in
@@ -186,15 +187,15 @@ struct ProjectEditorTests {
         
         @Test func removeProjectSource() async throws {
             // given
-            let projectSourceLink = editorRef.sourceLink
+            let projectSource = editorRef.source
             
-            await #expect(projectSourceLink.isExist() == true)
+            await #expect(projectSource.isExist == true)
              
             // when
             await editorRef.removeProject()
             
             // then
-            await #expect(projectSourceLink.isExist() == false)
+            await #expect(projectSource.isExist == false)
         }
         @Test func removeProjectEditorInProjectBoard() async throws {
             // given

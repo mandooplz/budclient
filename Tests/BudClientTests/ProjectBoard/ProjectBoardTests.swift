@@ -50,16 +50,16 @@ struct ProjectBoardTests {
         @Test func setHandlerInProjectHub() async throws {
             // given
             let config = projectBoardRef.config
-            let projectHubLink = await config.budServerLink.getProjectHub()
+            let projectHubRef = try #require(await config.budServer.ref?.projectHub.ref)
             let me = await ObjectID(projectBoardRef.id.value)
             
-            try await #require(projectHubLink.hasHandler(requester: me) == false)
+            try await #require(projectHubRef.hasHandler(requester: me) == false)
             
             // when
             await projectBoardRef.subscribe()
             
             // then
-            await #expect(projectHubLink.hasHandler(requester: me) == true)
+            await #expect(projectHubRef.hasHandler(requester: me) == true)
         }
     }
     
@@ -74,17 +74,17 @@ struct ProjectBoardTests {
         @Test func removeHandlerInProjectHub() async throws {
             // given
             let config = projectBoardRef.config
-            let projectHubLink = await config.budServerLink.getProjectHub()
+            let projectHubRef = try #require(await config.budServer.ref?.projectHub.ref)
             let me = await ObjectID(projectBoardRef.id.value)
             
             await projectBoardRef.subscribe()
-            try await #require(projectHubLink.hasHandler(requester: me) == true)
+            try await #require(projectHubRef.hasHandler(requester: me) == true)
             
             // when
             await projectBoardRef.unsubscribe()
             
             // then
-            await #expect(projectHubLink.hasHandler(requester: me) == false)
+            await #expect(projectHubRef.hasHandler(requester: me) == false)
         }
     }
     

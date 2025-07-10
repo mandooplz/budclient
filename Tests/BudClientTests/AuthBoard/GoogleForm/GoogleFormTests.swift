@@ -257,8 +257,9 @@ struct GoogleFormTests {
         
         @Test func setUserIdInBudCache() async throws {
             // given
-            let budCacheLink = googleFormRef.tempConfig.budCacheLink
-            try await #require(budCacheLink.getUser() == nil)
+            let budCacheRef = try #require(await googleFormRef.tempConfig.budCache.ref)
+            
+            try await #require(budCacheRef.getUser() == nil)
             
             await MainActor.run {
                 googleFormRef.idToken = Token.random().value
@@ -269,7 +270,7 @@ struct GoogleFormTests {
             await googleFormRef.signUpAndSignIn()
             
             // then
-            await #expect(budCacheLink.getUser() != nil)
+            await #expect(budCacheRef.getUser() != nil)
         }
     }
 }

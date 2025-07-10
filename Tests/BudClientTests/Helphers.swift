@@ -71,6 +71,7 @@ func getProjectEditor(_ budClientRef: BudClient) async -> ProjectEditor {
     
     await withCheckedContinuation { continuation in
         Task {
+            await projectBoardRef.unsubscribe()
             await projectBoardRef.setCallback {
                 continuation.resume()
             }

@@ -276,8 +276,9 @@ struct SignUpFormTests {
         
         @Test func setUserInBudCache() async throws {
             // given
-            let budCacheLink = signUpFormRef.tempConfig.budCacheLink
-            try await #require(budCacheLink.getUser() == nil)
+            let budCacheRef = try #require(await signUpFormRef.tempConfig.budCache.ref)
+            
+            try await #require(budCacheRef.getUser() == nil)
             
             // given
             try await #require(signUpFormRef.issue == nil)
@@ -292,7 +293,7 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            await #expect(budCacheLink.getUser() != nil)
+            await #expect(budCacheRef.getUser() != nil)
         }
     }
     

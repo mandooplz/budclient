@@ -251,7 +251,9 @@ struct SignInFormTests {
             self.validEmail = Email.random().value
             self.validPassword = Password.random().value
             
-            await register(budClientRef: budClientRef, email: validEmail, password: validPassword)
+            await register(budClientRef: budClientRef,
+                           email: validEmail,
+                           password: validPassword)
         }
         
         @Test func whenSignInFormIsDeletedBeforeCapture() async throws {
@@ -505,8 +507,8 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            let budCacheLink = signInFormRef.tempConfig.budCacheLink
-            await #expect(budCacheLink.getUser() != nil)
+            let budCacheRef = try #require(await signInFormRef.tempConfig.budCache.ref)
+            await #expect(budCacheRef.getUser() != nil)
         }
     }
 }
@@ -521,19 +523,22 @@ internal func getEmailForm(_ budClientRef: BudClient) async -> SignInForm {
     return await signInForm.ref!
 }
 private func register(budClientRef: BudClient, email: String, password: String) async {
-    let budServerLink = await budClientRef.authBoard!.ref!.tempConfig.budServerLink
-    let accountHubLink = await budServerLink.getAccountHub()
+    await budClientRef.setUp()
     
-    let newTicket = CreateEmailForm()
-    await accountHubLink.insertEmailTicket(newTicket)
-    await accountHubLink.updateEmailForms()
+    let budServerRef = await budClientRef.authBoard!.ref!.tempConfig.budServer.ref!
+    let accountHubRef = await budServerRef.accountHub.ref!
     
-    let registerFormLink = await accountHubLink.getEmailRegisterForm(newTicket)!
-    await registerFormLink.setEmail(email)
-    await registerFormLink.setPassword(password)
+    let ticket = CreateFormTicket(formType: .email)
     
-    await registerFormLink.submit()
-    await registerFormLink.remove()
+    await accountHubRef.appendTicket(ticket)
+    await accountHubRef.createFormsFromTickets()
+    
+    let registerFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)!.ref!
+    await registerFormRef.setEmail(email)
+    await registerFormRef.setPassword(password)
+    
+    try! await registerFormRef.submit()
+    try! await registerFormRef.remove()
 }
 private func setUserIdInBudCache(budClientRef: BudClient) async {
     // email & password
@@ -541,29 +546,28 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     let testPassword = Password.random().value
     
     // register
-    let budServerMockRef = BudServerMock()
-    await budServerMockRef.setUp()
+    await budClientRef.setUp()
     
-    let budServerLink = await BudServerLink(budServerMockRef: budServerMockRef)
-    let accountHubLink = await budServerLink.getAccountHub()
+    let budServerRef = await budClientRef.authBoard!.ref!.tempConfig.budServer.ref!
+    let accountHubRef = await budServerRef.accountHub.ref!
     
-    let newTicket = CreateEmailForm()
-    await accountHubLink.insertEmailTicket(newTicket)
-    await accountHubLink.updateEmailForms()
+    let ticket = CreateFormTicket(formType: .email)
+    await accountHubRef.appendTicket(ticket)
+    await accountHubRef.createFormsFromTickets()
     
-    let emailRegisterFormLink = await accountHubLink.getEmailRegisterForm(newTicket)!
-    await emailRegisterFormLink.setEmail(testEmail)
-    await emailRegisterFormLink.setPassword(testPassword)
+    let emailRegisterFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)!.ref!
+    await emailRegisterFormRef.setEmail(testEmail)
+    await emailRegisterFormRef.setPassword(testPassword)
     
-    await emailRegisterFormLink.submit()
-    await emailRegisterFormLink.remove()
+    try! await emailRegisterFormRef.submit()
+    try! await emailRegisterFormRef.remove()
     
     // getUser
-    let user = try! await accountHubLink.getUser(email: testEmail, password: testPassword)
+    let user = try! await accountHubRef.getUser(email: testEmail, password: testPassword)
     
     
     // setUser
-    let budCacheLink = await budClientRef.authBoard!.ref!.tempConfig.budCacheLink
-    await budCacheLink.setUser(user)
+    let budCacheRef = await budClientRef.authBoard!.ref!.tempConfig.budCache.ref!
+    await budCacheRef.setUser(user)
 }
 

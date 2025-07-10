@@ -97,7 +97,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.projectHub.ref else { return }
+                      let projectHubRef = await budServerRef.projectHub.ref else {
+                    return }
                 
                 await projectHubRef.removeHandler(requester: me)
             }

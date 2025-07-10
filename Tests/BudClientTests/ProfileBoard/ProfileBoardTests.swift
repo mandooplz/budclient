@@ -25,8 +25,9 @@ struct ProfileBoardTests {
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
-            let budCacheLink = profileBoardRef.config.budCacheLink
-            try await #require(budCacheLink.getUser() != nil)
+            let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
+            
+            try await #require(budCacheRef.getUser() != nil)
             
             // when
             await profileBoardRef.signOut {
@@ -40,14 +41,14 @@ struct ProfileBoardTests {
             #expect(issue.reason == "profileBoardIsDeleted")
             
             try await #require(budClientRef.profileBoard?.isExist == false)
-            await #expect(budCacheLink.getUser() != nil)
+            await #expect(budCacheRef.getUser() != nil)
         }
         @Test func whenProfileBoardIsDeletedBeforeMutate() async throws {
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
-            let budCacheLink = profileBoardRef.config.budCacheLink
-            try await #require(budCacheLink.getUser() != nil)
+            let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
+            try await #require(budCacheRef.getUser() != nil)
             
             // when
             await profileBoardRef.signOut {
@@ -222,14 +223,14 @@ struct ProfileBoardTests {
         
         @Test func setNilUserIdInBudCache() async throws {
             // given
-            let budCacheLink = profileBoardRef.config.budCacheLink
-            try await #require(budCacheLink.getUser() != nil)
+            let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
+            try await #require(budCacheRef.getUser() != nil)
             
             // when
             await profileBoardRef.signOut()
             
             // then
-            await #expect(budCacheLink.getUser() == nil)
+            await #expect(budCacheRef.getUser() == nil)
         }
     }
 }

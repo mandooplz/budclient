@@ -13,6 +13,8 @@ package protocol ProjectSourceInterface: Sendable {
     associatedtype ID: ProjectSourceIdentity where ID.Object == Self
     
     // MARK: state
+    nonisolated var id: ID { get }
+    
     func setName(_ value: String) async;
     
     func hasHandler(requester: ObjectID) async -> Bool

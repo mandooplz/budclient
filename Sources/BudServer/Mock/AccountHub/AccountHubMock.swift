@@ -46,6 +46,7 @@ package final class AccountHubMock: AccountHubInterface {
         
         if filtered.isEmpty { throw Error.userNotFound }
         
+        
         guard let user = filtered.lazy
             .first(where: { $0.password == password })?
             .user else {
@@ -107,8 +108,12 @@ package final class AccountHubMock: AccountHubInterface {
         let value: String = "AccountHubMock"
         nonisolated init() { }
         
-        package var isExist: Bool { false }
-        package var ref: AccountHubMock? { nil }
+        package var isExist: Bool {
+            AccountHubMockManager.container[self] != nil
+        }
+        package var ref: AccountHubMock? {
+            AccountHubMockManager.container[self]
+        }
     }
     package enum Error: String, Swift.Error {
         case userNotFound, wrongPassword

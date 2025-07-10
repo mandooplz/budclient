@@ -40,11 +40,15 @@ struct ProjectBoardUpdaterTests {
             try await #require(projectBoardRef.editors.count == 1)
             
             let projectEditorRef = try #require(await projectBoardRef.editors.first?.ref)
-            let projectSource = projectEditorRef.sourceLink.object
+            let projectSourceRef = try #require(await projectEditorRef.source.ref)
             
             // when
-            let event = ProjectHubEvent.added(projectSource, projectEditorRef.target)
-            await updaterRef.appendEvent(event)
+            let diff = ProjectSourceDiff(
+                id: projectSourceRef.id,
+                target: projectEditorRef.target,
+                name: "DUPLICATE")
+            
+            await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
             
             // then
@@ -57,9 +61,14 @@ struct ProjectBoardUpdaterTests {
             // given
             try await #require(projectBoardRef.editors.isEmpty == true)
             
+            let newProjectSource = ProjectSourceMock.ID()
             let newProject = ProjectID()
-            let event = ProjectHubEvent.added(ProjectSourceID(), newProject)
-            await updaterRef.appendEvent(event)
+            
+            let diff = ProjectSourceDiff(id: newProjectSource,
+                                         target: newProject,
+                                         name: "")
+            
+            await updaterRef.appendEvent(.added(diff))
             
             // when
             await updaterRef.update()
@@ -76,10 +85,12 @@ struct ProjectBoardUpdaterTests {
         @Test func removeEventWhenAdded() async throws {
             // given
             let newProject = ProjectID()
-            let newProjectSource = ProjectSourceID()
+            let newProjectSource = ProjectSourceMock.ID()
             
-            let event = ProjectHubEvent.added(newProjectSource, newProject)
-            await updaterRef.appendEvent(event)
+            let diff = ProjectSourceDiff(id: newProjectSource,
+                                         target: newProject,
+                                         name: "")
+            await updaterRef.appendEvent(.added(diff))
             
             // when
             await updaterRef.update()
@@ -93,9 +104,13 @@ struct ProjectBoardUpdaterTests {
             try await #require(projectBoardRef.editors.isEmpty == true)
             
             let newProject = ProjectID()
-            let newProjectSource = ProjectSourceID()
-            let addEvent = ProjectHubEvent.added(newProjectSource, newProject)
-            await updaterRef.appendEvent(addEvent)
+            let newProjectSource = ProjectSourceMock.ID()
+            
+            let diff = ProjectSourceDiff(id: newProjectSource,
+                                         target: newProject,
+                                         name: "")
+            
+            await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
             
             try await #require(updaterRef.issue == nil)
@@ -106,13 +121,16 @@ struct ProjectBoardUpdaterTests {
             let project = try #require(await projectEditor.ref?.target)
             
             // given
-            let removeEvent = ProjectHubEvent.removed(project)
-            await updaterRef.appendEvent(removeEvent)
+            let removedDiff = ProjectSourceDiff(id: newProjectSource,
+                                                target: newProject,
+                                                name: "")
+            
+            await updaterRef.appendEvent(.removed(removedDiff))
             
             await updaterRef.update()
             
             // when
-            await updaterRef.appendEvent(removeEvent)
+            await updaterRef.appendEvent(.removed(removedDiff))
             await updaterRef.update()
             
             // then
@@ -136,14 +154,18 @@ struct ProjectBoardUpdaterTests {
                 }
             }
             
+            await projectBoardRef.unsubscribe()
             try await #require(projectBoardRef.editors.count == 1)
             
             let projectEditor = try #require(await projectBoardRef.editors.first)
-            let project = try #require(await projectEditor.ref?.target)
+            let projectEditorRef = try #require(await projectEditor.ref)
+            
+            let diff = ProjectSourceDiff(id: projectEditorRef.source,
+                                         target: projectEditorRef.target,
+                                         name: "")
             
             // when
-            let event = ProjectHubEvent.removed(project)
-            await updaterRef.appendEvent(event)
+            await updaterRef.appendEvent(.removed(diff))
             await updaterRef.update()
             
             // then

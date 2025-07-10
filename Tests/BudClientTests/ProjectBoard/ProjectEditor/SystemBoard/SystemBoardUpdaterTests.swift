@@ -8,6 +8,7 @@ import Foundation
 import Testing
 import Values
 @testable import BudClient
+@testable import BudServer
 
 
 // MARK: Tests
@@ -27,7 +28,7 @@ struct SystemBoardUpdaterTests {
             // given
             try await #require(systemBoardRef.models.count == 0)
             
-            let newSystemSource = SystemSourceID()
+            let newSystemSource = SystemSourceMock.ID()
             let newSystem = SystemID()
             
             let diff = SystemSourceDiff(id: newSystemSource,
@@ -48,7 +49,7 @@ struct SystemBoardUpdaterTests {
         }
         @Test func whenAlreadyAdded() async throws {
             // given
-            let newSystemSource = SystemSourceID()
+            let newSystemSource = SystemSourceMock.ID()
             let newSystem = SystemID()
             
             let diff = SystemSourceDiff(id: newSystemSource,
@@ -72,7 +73,7 @@ struct SystemBoardUpdaterTests {
         
         @Test func deleteSystemModel() async throws {
             // given
-            let newSystemSource = SystemSourceID()
+            let newSystemSource = SystemSourceMock.ID()
             let newSystem = SystemID()
             
             let diff = SystemSourceDiff(id: newSystemSource,
@@ -99,7 +100,8 @@ struct SystemBoardUpdaterTests {
         }
         @Test func whenAlreadyRemoved() async throws {
             // given
-            let diff = SystemSourceDiff(id: .init(),
+            let newSystemSource = SystemSourceMock.ID()
+            let diff = SystemSourceDiff(id: newSystemSource,
                                         target: .init(),
                                         name: "",
                                         location: .init(x: 1, y: 1))
@@ -118,7 +120,7 @@ struct SystemBoardUpdaterTests {
         
         @Test func modifySystemModel() async throws {
             // given
-            let newSystemSource = SystemSourceID()
+            let newSystemSource = SystemSourceMock.ID()
             let newSystem = SystemID()
             
             let diff = SystemSourceDiff(id: newSystemSource,
@@ -149,7 +151,8 @@ struct SystemBoardUpdaterTests {
         }
         @Test func modifySystemModelWhenAlreadyRemoved() async throws {
             // given
-            let diff = SystemSourceDiff(id: .init(),
+            let newSystemSource = SystemSourceMock.ID()
+            let diff = SystemSourceDiff(id: newSystemSource,
                                         target: .init(),
                                         name: "",
                                         location: .init(x: 88, y: 88))

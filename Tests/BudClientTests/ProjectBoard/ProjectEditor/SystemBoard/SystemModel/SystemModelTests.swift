@@ -50,16 +50,16 @@ struct SystemModelTests {
         
         @Test func setHandlerInSystemSource() async throws {
             // given
-            let systemSourceLink = systemModelRef.sourceLink
+            let systemSourceRef = try #require(await systemModelRef.source.ref)
             let me = await ObjectID(systemModelRef.id.value)
             
-            try await #require(systemSourceLink.hasHandler(requester: me) == false)
+            try await #require(systemSourceRef.hasHandler(requester: me) == false)
             
             // when
             await systemModelRef.subscribe()
             
             // then
-            await #expect(systemSourceLink.hasHandler(requester: me) == true)
+            await #expect(systemSourceRef.hasHandler(requester: me) == true)
         }
     }
     
@@ -75,15 +75,15 @@ struct SystemModelTests {
             // given
             await systemModelRef.subscribe()
             
-            let sourceLink = systemModelRef.sourceLink
+            let systemSourceRef = try #require(await systemModelRef.source.ref)
             let me = await ObjectID(systemModelRef.id.value)
-            try await #require(sourceLink.hasHandler(requester: me) == true)
+            try await #require(systemSourceRef.hasHandler(requester: me) == true)
             
             // when
             await systemModelRef.unsubscribe()
             
             // then
-            await #expect(sourceLink.hasHandler(requester: me) == false)
+            await #expect(systemSourceRef.hasHandler(requester: me) == false)
         }
     }
     

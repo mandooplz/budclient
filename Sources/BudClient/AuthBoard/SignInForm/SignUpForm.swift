@@ -62,27 +62,25 @@ public final class SignUpForm: Debuggable {
             let accountHubRef = await budServerRef.accountHub.ref!
             async let budCacheRef = await tempConfig.budCache.ref!
             
-            async let result = {
-                let ticket = CreateFormTicket(formType: .email)
-                
-                await accountHubRef.appendTicket(ticket)
-                await accountHubRef.createFormsFromTickets()
-                
-                guard let emailRegisterFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)?.ref else {
-                    throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
-                }
-                await emailRegisterFormRef.setEmail(email)
-                await emailRegisterFormRef.setPassword(password)
-                
-                try await emailRegisterFormRef.submit()
-                try await emailRegisterFormRef.remove()
-                
-                // getUser
-                return try await accountHubRef.getUser(email: email,
-                                                        password: password)
-            }()
+            let ticket = CreateFormTicket(formType: .email)
             
-            user = try await result
+            await accountHubRef.appendTicket(ticket)
+            await accountHubRef.createFormsFromTickets()
+            
+            guard let emailRegisterFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)?.ref else {
+                throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
+            }
+            await emailRegisterFormRef.setEmail(email)
+            await emailRegisterFormRef.setPassword(password)
+            
+            try await emailRegisterFormRef.submit()
+            try await emailRegisterFormRef.remove()
+            
+            // getUser
+            user = try await accountHubRef.getUser(email: email,
+                                                   password: password)
+            
+//            user = try await result
             
             // setUserId
             await budCacheRef.setUser(user)

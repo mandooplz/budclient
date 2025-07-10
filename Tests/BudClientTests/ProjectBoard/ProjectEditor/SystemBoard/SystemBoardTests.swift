@@ -38,17 +38,17 @@ struct SystemBoardTests {
         @Test func setHandlerInProjectSource() async throws {
             // given
             let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
-            let projectSourceLink = projectEditorRef.sourceLink
+            let projectSourceRef = try #require(await projectEditorRef.source.ref)
             
             let me = await ObjectID(systemBoardRef.id.value)
             
-            try await #require(projectSourceLink.hasHandler(requester: me) == false)
+            try await #require(projectSourceRef.hasHandler(requester: me) == false)
             
             // when
             await systemBoardRef.subscribe()
             
             // then
-            await #expect(projectSourceLink.hasHandler(requester: me) == true)
+            await #expect(projectSourceRef.hasHandler(requester: me) == true)
         }
         @Test func whenAlreadySubscribed() async throws {
             // given
@@ -75,19 +75,19 @@ struct SystemBoardTests {
         @Test func removeHandlerInProjectSource() async throws {
             // given
             let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
-            let projectSourceLink = projectEditorRef.sourceLink
+            let projectSourceRef = try #require(await projectEditorRef.source.ref)
             
             let me = await ObjectID(systemBoardRef.id.value)
             
             await systemBoardRef.subscribe()
             
-            try await #require(projectSourceLink.hasHandler(requester: me) == true)
+            try await #require(projectSourceRef.hasHandler(requester: me) == true)
             
             // when
             await systemBoardRef.unsubscribe()
             
             // then
-            await #expect(projectSourceLink.hasHandler(requester: me) == false)
+            await #expect(projectSourceRef.hasHandler(requester: me) == false)
         }
     }
     
@@ -163,15 +163,15 @@ struct SystemBoardTests {
         @Test func createSystemSource() async throws {
             // given
             let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
-            let projectSourceLink = projectEditorRef.sourceLink
+            let projectSourceRef = try #require(await projectEditorRef.source.ref as? ProjectSourceMock)
             
-            try await #require(projectSourceLink.getSystemSources().isEmpty == true)
+            try await #require(projectSourceRef.systems.isEmpty == true)
             
             // when
             await systemBoardRef.createFirstSystem()
             
             // then
-            await #expect(projectSourceLink.getSystemSources().count == 1)
+            await #expect(projectSourceRef.systems.count == 1)
         }
     }
 }
