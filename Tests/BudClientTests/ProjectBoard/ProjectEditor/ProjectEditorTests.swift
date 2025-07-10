@@ -137,9 +137,6 @@ struct ProjectEditorTests {
             }
             
             // then
-            let ticket = SubscribeProjectHub(object: randomObject,
-                                             user: .init())
-  
             await withCheckedContinuation { con in
                 Task {
                     await projectHubLink.setHandler(
