@@ -36,7 +36,7 @@ package final class BudCacheMock: BudCacheInterface {
     // MARK: value
     @Server
     package struct ID: BudCacheIdentity {
-        let value = "BudCacheMock"
+        let value = UUID()
         nonisolated init() { }
         
         package var isExist: Bool {

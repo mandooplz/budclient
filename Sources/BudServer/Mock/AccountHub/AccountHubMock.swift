@@ -44,13 +44,12 @@ package final class AccountHubMock: AccountHubInterface {
             .compactMap { $0.ref }
             .filter { $0.email == email }
         
-        if filtered.isEmpty { throw Error.userNotFound }
-        
+        if filtered.isEmpty { throw AccountHubError.userNotFound }
         
         guard let user = filtered.lazy
             .first(where: { $0.password == password })?
             .user else {
-                throw Error.wrongPassword
+                throw AccountHubError.wrongPassword
             }
         
         return user
@@ -61,7 +60,7 @@ package final class AccountHubMock: AccountHubInterface {
             .first { $0.token == token }?
             .user
         
-        guard let result = user else { throw Error.userNotFound }
+        guard let result = user else { throw AccountHubError.userNotFound }
         return result
     }
     
@@ -114,9 +113,6 @@ package final class AccountHubMock: AccountHubInterface {
         package var ref: AccountHubMock? {
             AccountHubMockManager.container[self]
         }
-    }
-    package enum Error: String, Swift.Error {
-        case userNotFound, wrongPassword
     }
 }
 
