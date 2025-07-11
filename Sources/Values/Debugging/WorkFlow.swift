@@ -19,10 +19,12 @@ public enum WorkFlow: Sendable {
         }
     }
     
-    public static func create(task: @Sendable @escaping () async throws -> Void) async rethrows {
+    public static func create(location: String = "", task: @Sendable @escaping () async throws -> Void) async rethrows {
         let newWorkFlow = WorkFlow.ID()
-        
+
         try await WorkFlow.$id.withValue(newWorkFlow) {
+            let logger = WorkFlow.getLogger(for: location)
+            logger.start()
             try await task()
         }
     }

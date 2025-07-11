@@ -20,6 +20,9 @@ public struct BudLogger: Sendable {
     }
     
     // MARK: operator
+    internal func start() {
+        logger.debug("[\(workflow)] start")
+    }
     public func debug(_ routine: String, _ result: RoutineResult) {
         logger.debug("[\(workflow)] \(routine) \(result)")
     }
