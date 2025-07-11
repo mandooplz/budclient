@@ -8,6 +8,8 @@ import Foundation
 import Values
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "ProjectEditor")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -15,9 +17,11 @@ public final class ProjectEditor: Debuggable {
     // MARK: core
     init(config: Config<ProjectBoard.ID>,
          target: ProjectID,
+         name: String,
          source: any ProjectSourceIdentity) {
         self.config = config
         self.target = target
+        self.name = name
         self.source = source
         
         ProjectManager.register(self)
@@ -33,8 +37,13 @@ public final class ProjectEditor: Debuggable {
     nonisolated let target: ProjectID
     nonisolated let source: any ProjectSourceIdentity
     
-    public internal(set) var name: String?
-    public var nameInput: String?
+    public internal(set) var name: String
+    public internal(set) var nameInput: String?
+    public func setNameInput(_ value: String) {
+        self.nameInput = value
+        logger.success(value)
+    }
+    
     
     public var systemBoard: SystemBoard.ID?
     public var flowBoard: FlowBoard.ID?
@@ -89,8 +98,10 @@ public final class ProjectEditor: Debuggable {
                 }
             }
         } catch {
+            logger.failure(error)
             setUnknownIssue(error); return
         }
+        logger.success(nameInput)
     }
     
     public func removeProject() async {

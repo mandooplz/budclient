@@ -8,7 +8,8 @@ import Foundation
 import Values
 import Collections
 import FirebaseFirestore
-import os
+
+private nonisolated let logger = WorkFlow.getLogger(for: "ProjectSource")
 
 
 // MARK: Object
@@ -27,18 +28,28 @@ package final class ProjectSource: ProjectSourceInterface {
     }
     
     // MARK: state
-    private let logger = Logger(subsystem: "BudClient", category: "ProjectSource")
     package nonisolated let id: ID
     nonisolated let target: ProjectID
     nonisolated let parent: ProjectHub.ID
     
+    var systemSources: Set<SystemSource.ID> = []
+    
     package func setName(_ value: String) {
         // set ProjectSource.name
         let db = Firestore.firestore()
-        let nameUpdater = State.getNameUpdater(value)
         let docRef = db.collection(ProjectSources.name).document(id.value)
         
-        docRef.updateData(nameUpdater)
+        let updateData: [String: Any] = [
+            "name": value,
+            "metadata": [
+                "update": [
+                    "value": WorkFlow.id.value?.uuidString
+                ]
+            ]
+        ]
+        
+        docRef.updateData(updateData)
+        logger.success(value)
     }
     
     package var listeners: [ObjectID: ListenerRegistration] = [:]
@@ -49,6 +60,7 @@ package final class ProjectSource: ProjectSourceInterface {
     package func setHandler(requester: ObjectID, handler: Handler<ProjectSourceEvent>) {
         // 중복 방지
         guard self.listeners[requester] == nil else { return }
+        let workflow = WorkFlow.id
         
         let db = Firestore.firestore()
         self.listeners[requester] = db.collection(ProjectSources.name)
@@ -56,7 +68,7 @@ package final class ProjectSource: ProjectSourceInterface {
             .collection(ProjectSources.SystemSources.name)
             .addSnapshotListener({ snapshot, error in
                 guard let snapshot else {
-                    print("Error fetching snapshots: \(error!)")
+                    logger.failure(error?.localizedDescription ?? "Snapshot Error")
                     return
                 }
                 
@@ -65,7 +77,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     let systemSource = SystemSource.ID(documentId)
                     
                     guard let data = try? changed.document.data(as: SystemSource.Data.self) else {
-                        self.logger.error("SystemSource decoding 실패")
+                        logger.failure("SystemSource.Data Decoding 실패")
                         return
                     }
                     
@@ -78,20 +90,21 @@ package final class ProjectSource: ProjectSourceInterface {
                     switch changed.type {
                     case .added:
                         // create SystemSource
-                        let _ = SystemSource(id: systemSource,
-                                             target: data.target,
-                                             parent: self.id)
+                        let systemSourceRef = SystemSource(id: systemSource,
+                                                           target: data.target,
+                                                           parent: self.id)
+                        self.systemSources.insert(systemSourceRef.id)
 
                         // serve event
-                        handler.execute(.added(diff))
+                        handler.execute(.added(diff), data.updateBy)
                     case .modified:
-                        handler.execute(.modified(diff))
+                        handler.execute(.modified(diff), data.updateBy)
                     case .removed:
                         // delete SystemSource
                         systemSource.ref?.delete()
                         
                         // serve event
-                        handler.execute(.removed(diff))
+                        handler.execute(.removed(diff), data.updateBy)
                     }
                 }
             })
@@ -126,7 +139,8 @@ package final class ProjectSource: ProjectSourceInterface {
                 let newSystemSourceRef = systemSourcesRef.document()
                 let newData = SystemSource.Data(target: SystemID(),
                                                 name: "First System",
-                                                location: .origin)
+                                                location: .origin,
+                                                updateBy: WorkFlow.id)
                 
                 try transaction.setData(from: newData, forDocument: newSystemSourceRef)
                 
@@ -178,18 +192,23 @@ package final class ProjectSource: ProjectSourceInterface {
         package var creator: UserID
         package var target: ProjectID
         package var systemModelCount: Int
-    }
-    enum State: Sendable {
-        static let name = "name"
-        static let creator = "creator"
-        static let target = "target"
-        static let systemModelCount = "systemModelCount"
+        package var metadata: MetaData
         
-        static func getNameUpdater(_ value: String) -> [String: Any] {
-            [name: value]
+        package struct MetaData: Sendable, Hashable, Codable {
+            package let create: WorkFlow.ID
+            package let update: WorkFlow.ID?
+            package let remove: WorkFlow.ID?
         }
+    }
+    enum State: String, Sendable {
+        case name
+        case creator
+        case target
+        case systemModelCount
+        case updateBy
+        
         static func getSystemModelCountUpdater(_ value: Int) -> [String: Any] {
-            [systemModelCount: value]
+            [State.systemModelCount.rawValue: value]
         }
     }
 }

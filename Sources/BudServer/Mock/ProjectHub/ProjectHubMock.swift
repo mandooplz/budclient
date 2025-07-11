@@ -8,6 +8,8 @@ import Foundation
 import Values
 import Collections
 
+private let logger = WorkFlow.getLogger(for: "ProjectHubMock")
+
 
 // MARK: Object
 @Server
@@ -45,21 +47,26 @@ package final class ProjectHubMock: ProjectHubInterface {
         let projectSource = projectSources.first {
             $0.ref?.target == project
         }
-        
-        guard let projectSourceRef = projectSource?.ref else { return }
+        guard let projectSourceRef = projectSource?.ref else {
+            logger.failure("ProjectSourceMock 존재하지 않음")
+            return
+        }
+        let workflow = WorkFlow.id
         
         let diff = ProjectSourceDiff(id: projectSourceRef.id,
                                      target: projectSourceRef.target,
                                      name: projectSourceRef.name)
         
         for (_, handler) in eventHandlers {
-            handler.execute(.modified(diff))
+            handler.execute(.modified(diff), workflow)
         }
     }
     
     
     // MARK: action
     package func createNewProject() async {
+        let workflow = WorkFlow.id
+        
         // mutate
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
@@ -79,7 +86,7 @@ package final class ProjectHubMock: ProjectHubInterface {
             
             let event = ProjectHubEvent.added(diff)
             for handler in eventHandlers.values {
-                handler.execute(event)
+                handler.execute(event, workflow)
             }
         }
     }

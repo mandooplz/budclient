@@ -7,7 +7,8 @@
 import Foundation
 import Values
 import BudServer
-import os
+
+private let logger = WorkFlow.getLogger(for: "ProjectBoard")
 
 
 // MARK: Object
@@ -28,7 +29,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     // MARK: state
     public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
-    private let logger = Logger(subsystem: "BudClient", category: "ProjectBoard")
     
     var updater: ProjectBoardUpdater
     
@@ -77,7 +77,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     handler: .init({ event, workflow in
                         Task {
                             await WorkFlow.with(workflow) {
-                                guard let updaterRef = await projectBoard.ref?.updater else { return }
+                                guard let updaterRef = await projectBoard.ref?.updater else {
+                                    logger.failure("ProjectBoard가 존재하지 않음")
+                                    return
+                                }
                                 
                                 await updaterRef.appendEvent(event)
                                 await updaterRef.update()
@@ -89,6 +92,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 )
             }
         }
+        
+        logger.success()
     }
     
     public func unsubscribe() async {
@@ -106,6 +111,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 await projectHubRef.removeHandler(requester: me)
             }
         }
+        
+        logger.success()
     }
     
     public func createNewProject() async {
@@ -139,8 +146,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 }
             }
         } catch {
-            setUnknownIssue(error); return
+            logger.failure(error)
+            setUnknownIssue(error)
+            return
         }
+        logger.success()
     }
     
     

@@ -11,40 +11,53 @@ import os
 // MARK: BudLogger
 public struct BudLogger: Sendable {
     // MARK: rawValue
-    private let workflow: WorkFlow.ID
+    private let objectName: String
     private let logger: Logger
-    
-    internal init(workflow: WorkFlow.ID, category: String) {
-        self.workflow = workflow
-        self.logger = Logger(subsystem: "Bud", category: category)
+    internal init(objectName: String) {
+        self.objectName = objectName
+        self.logger = Logger(subsystem: "Bud", category: objectName)
     }
     
-    // MARK: operator
-    internal func start() {
-        logger.debug("[\(workflow)] start")
-    }
-    public func debug(_ routine: String, _ result: RoutineResult) {
-        logger.debug("[\(workflow)] \(routine) \(result)")
-    }
-    public func error(_ routine: String, _ result: RoutineResult) {
-        logger.error("[\(workflow)] \(routine) \(result)")
-    }
-    public func fault(_ routine: String, _ result: RoutineResult) {
-        logger.fault("[\(workflow)] \(routine) \(result)")
+    
+    // MARK: log
+    func start(_ workflow: WorkFlow.ID = WorkFlow.id) {
+        logger.debug("[\(workflow)] 🚀 start")
     }
     
-    // MARK: value
-    public enum RoutineResult: CustomStringConvertible {
-        case success
-        case failure(reason: String)
+    func end(_ workflow: WorkFlow.ID = WorkFlow.id) {
+        logger.debug("[\(workflow)] 💨 end")
+    }
+    
+    public func success(_ info: Info? = nil,
+                        _ workflow: WorkFlow.ID = WorkFlow.id,
+                        _ routine: String = #function) {
         
-        public var description: String {
-            switch self {
-            case .success:
-                return "success"
-            case .failure(let reason):
-                return "failure(\(reason))"
-            }
+        if let info {
+            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) success(\(info))")
+        } else {
+            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) success")
         }
     }
+    
+    public func failure(_ info: Info,
+                        _ workflow: WorkFlow.ID = WorkFlow.id,
+                        _ routine: String = #function) {
+        logger.error("[\(workflow)] ⚠️ \(objectName).\(routine) failure(\(info))")
+    }
+    
+    public func failure(_ error: Error,
+                        _ workflow: WorkFlow.ID = WorkFlow.id,
+                        _ routine: String = #function) {
+        self.failure(error.localizedDescription, workflow, routine)
+    }
+    
+    public func critical(_ info: Info,
+                         _ workflow: WorkFlow.ID = WorkFlow.id,
+                         _ routine: String = #function) {
+        logger.fault("[\(workflow)] 🚨 \(objectName).\(routine) critical(\(info))")
+    }
+    
+    
+    // MARK: value
+    public typealias Info = String
 }

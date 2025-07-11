@@ -7,6 +7,8 @@
 import Foundation
 import Values
 
+private let logger = WorkFlow.getLogger(for: "ProjectSourceMock")
+
 
 // MARK: Object
 @Server
@@ -40,6 +42,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     private(set) var name: String
     package func setName(_ value: String) {
         self.name = value
+        logger.success(value)
     }
     
     private(set) var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
@@ -69,9 +72,10 @@ package final class ProjectSourceMock: ProjectSourceInterface {
                                     target: systemSourceRef.target,
                                     name: systemSourceRef.name,
                                     location: systemSourceRef.location)
+        let workflow = WorkFlow.id
         
         for (_, handler) in eventHandlers {
-            handler.execute(.added(diff))
+            handler.execute(.added(diff), workflow)
         }
     }
     package func remove() {
@@ -82,9 +86,10 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         let diff = ProjectSourceDiff(id: self.id,
                                      target: self.target,
                                      name: self.name)
+        let workflow = WorkFlow.id
 
         for (_, eventHandler) in projectHubRef.eventHandlers {
-            eventHandler.execute(.removed(diff))
+            eventHandler.execute(.removed(diff), workflow)
         }
         
         projectHubRef.projectSources.remove(self.id)

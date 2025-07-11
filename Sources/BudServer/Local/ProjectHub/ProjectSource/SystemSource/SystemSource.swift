@@ -8,6 +8,8 @@ import Foundation
 import Values
 import FirebaseFirestore
 
+private let logger = WorkFlow.getLogger(for: "SystemSource")
+
 
 // MARK: Object
 @MainActor
@@ -37,13 +39,16 @@ package final class SystemSource: SystemSourceInterface {
         guard let projectSourceRef = parent.ref else { return }
         
         let db = Firestore.firestore()
-        let nameUpdater = State.getNameUpdater(value)
         let docRef = db.collection(ProjectSources.name)
             .document(parent.value)
             .collection(ProjectSources.SystemSources.name)
             .document(id.value)
         
-        docRef.updateData(nameUpdater)   
+        let updateData: [String: Any] = [
+            "name": value,
+            "updateBy" : ["value": WorkFlow.id.value?.uuidString]
+        ]
+        docRef.updateData(updateData)
     }
     
     private var listeners: [ObjectID: Listener] = [:]
@@ -154,21 +159,19 @@ package final class SystemSource: SystemSourceInterface {
         var name: String
         var location: Location
         var rootModel: Root?
+        var updateBy: WorkFlow.ID
         
         struct Root: Hashable, Codable {
             let target: ObjectID
             let name: String
             let states: [StateID]
             let actions: [ActionID]
+            let updateBy: WorkFlow.ID
         }
     }
     enum State: Sendable, Hashable {
         static let name = "name"
         static let location = "location"
-        
-        static func getNameUpdater(_ value: String) -> [String:Any] {
-            [name: value]
-        }
     }
 }
 

@@ -10,7 +10,7 @@
 package struct Handler<Event>: Sendable where Event: Sendable {
     package let routine: @Sendable (Event, WorkFlow.ID) -> Void
     
-    package func execute(_ event: Event, workflow: WorkFlow.ID = WorkFlow.id) {
+    package func execute(_ event: Event, _ workflow: WorkFlow.ID) {
         self.routine(event, workflow)
     }
     
