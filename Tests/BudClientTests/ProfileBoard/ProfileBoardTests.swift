@@ -22,7 +22,6 @@ struct ProfileBoardTests {
         }
         
         @Test func whenProfileBoardIsDeletedBeforeCapture() async throws {
-            logger.debug("whenProfileBoardIsDeletedBeforeCapture 실행 중")
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
@@ -43,8 +42,6 @@ struct ProfileBoardTests {
             
             try await #require(budClientRef.profileBoard?.isExist == false)
             await #expect(budCacheRef.getUser() != nil)
-            logger.fault("Crashed!!")
-            logger.debug("whenProfileBoardIsDeletedBeforeCapture 실행 종료!")
         }
         @Test func whenProfileBoardIsDeletedBeforeMutate() async throws {
             // given
