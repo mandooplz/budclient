@@ -74,12 +74,12 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 await projectHubRef.setHandler(
                     requester: me,
                     user: config.user,
-                    handler: .init({ event in
-                        Task { @MainActor in
-                            await FlowGroup.$id.withValue(UUID()) {
-                                guard let updaterRef = projectBoard.ref?.updater else { return }
+                    handler: .init({ event, workflow in
+                        Task {
+                            await WorkFlow.with(workflow) {
+                                guard let updaterRef = await projectBoard.ref?.updater else { return }
                                 
-                                updaterRef.appendEvent(event)
+                                await updaterRef.appendEvent(event)
                                 await updaterRef.update()
                                 
                                 await callback?()

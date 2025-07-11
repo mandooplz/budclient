@@ -72,7 +72,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                 
                 await projectSourceRef.setHandler(
                     requester: me,
-                    handler: .init({ event in
+                    handler: .init({ event, workflow in
                         Task { @MainActor in
                             guard let updaterRef = systemBoard.ref?.updater else { return }
                             
