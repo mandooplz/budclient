@@ -8,6 +8,7 @@ import Foundation
 import Values
 import BudServer
 import BudCache
+import os
 
 
 // MARK: System
@@ -32,6 +33,7 @@ public final class BudClient: Debuggable {
     nonisolated let id = ID()
     nonisolated let mode: SystemMode
     nonisolated let system = SystemID()
+    private let logger = Logger(subsystem: "BudClient", category: "BudClient")
     
     private nonisolated let plistPath: String
     

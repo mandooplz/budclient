@@ -28,6 +28,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     // MARK: state
     public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
+    private let logger = Logger(subsystem: "BudClient", category: "ProjectBoard")
     
     var updater: ProjectBoardUpdater
     
@@ -75,12 +76,14 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     user: config.user,
                     handler: .init({ event in
                         Task { @MainActor in
-                            guard let updaterRef = projectBoard.ref?.updater else { return }
-                            
-                            updaterRef.appendEvent(event)
-                            await updaterRef.update()
-                            
-                            await callback?()
+                            await FlowGroup.$id.withValue(UUID()) {
+                                guard let updaterRef = projectBoard.ref?.updater else { return }
+                                
+                                updaterRef.appendEvent(event)
+                                await updaterRef.update()
+                                
+                                await callback?()
+                            }
                         }
                     })
                 )

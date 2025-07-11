@@ -22,27 +22,10 @@
   },
   "testTargets" : [
     {
-      "skippedTags" : {
-        "tags" : [
-          ".real"
-        ]
-      },
       "target" : {
         "containerPath" : "container:",
         "identifier" : "BudClientTests",
         "name" : "BudClientTests"
-      }
-    },
-    {
-      "skippedTags" : {
-        "tags" : [
-          ".real"
-        ]
-      },
-      "target" : {
-        "containerPath" : "container:",
-        "identifier" : "BudServerTests",
-        "name" : "BudServerTests"
       }
     }
   ],

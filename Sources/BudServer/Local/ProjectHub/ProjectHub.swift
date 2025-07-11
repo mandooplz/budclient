@@ -22,6 +22,7 @@ package final class ProjectHub: ProjectHubInterface {
     
     // MARK: state
     package nonisolated let id = ID()
+    private let logger = Logger(subsystem: "BudClient", category: "ProjectHub")
     
     var projectSources: Set<ProjectSource.ID> = []
     
@@ -55,7 +56,7 @@ package final class ProjectHub: ProjectHubInterface {
                     let projectSource = ProjectSource.ID(documentId)
                     
                     guard let data = try? diff.document.data(as: ProjectSource.Data.self) else {
-                        print("ProjectSource.Doc Decoding Error");
+                        self.logger.error("ProjectSource decoding 실패")
                         return
                     }
                     

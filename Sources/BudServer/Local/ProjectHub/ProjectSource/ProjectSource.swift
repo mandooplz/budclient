@@ -65,7 +65,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     let systemSource = SystemSource.ID(documentId)
                     
                     guard let data = try? changed.document.data(as: SystemSource.Data.self) else {
-                        print("ProjectSource.Doc Decoding Error");
+                        self.logger.error("SystemSource decoding 실패")
                         return
                     }
                     
@@ -95,7 +95,6 @@ package final class ProjectSource: ProjectSourceInterface {
                     }
                 }
             })
-        
     }
     package func removeHandler(requester: ObjectID) {
         listeners[requester]?.remove()
