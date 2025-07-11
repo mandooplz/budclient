@@ -17,9 +17,9 @@ struct ProjectEditorTests {
     struct SetUp {
         let budClientRef: BudClient
         let editorRef: ProjectEditor
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.editorRef = await getProjectEditor(budClientRef)
+            self.editorRef = try await getProjectEditor(budClientRef)
         }
         
         @Test func wnenAlreadySetUp() async throws {
@@ -93,9 +93,9 @@ struct ProjectEditorTests {
     struct PushName {
         let budClientRef: BudClient
         let editorRef: ProjectEditor
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.editorRef = await getProjectEditor(budClientRef)
+            self.editorRef = try await getProjectEditor(budClientRef)
         }
         
         @Test func whenProjectEditorIsDeleted() async throws {
@@ -166,9 +166,9 @@ struct ProjectEditorTests {
     struct RemoveSource {
         let budClientRef: BudClient
         let editorRef: ProjectEditor
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.editorRef = await getProjectEditor(budClientRef)
+            self.editorRef = try await getProjectEditor(budClientRef)
         }
         
         @Test func whenProjectEditorIsDeleted() async throws {
@@ -243,4 +243,54 @@ struct ProjectEditorTests {
             await #expect(editorRef.id.isExist == false)
         }
     }
+}
+
+
+// MARK: Helphers
+private func getProjectEditor(_ budClientRef: BudClient) async throws -> ProjectEditor {
+    // BudClient.setUp()
+    await budClientRef.setUp()
+    let authBoard = try #require(await budClientRef.authBoard)
+    let authBoardRef = try #require(await authBoard.ref)
+    
+    // AuthBoard.setUpForms()
+    await authBoardRef.setUpForms()
+    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInFormRef = try #require(await signInForm.ref)
+    
+    // SignInForm.setUpSignUpForm()
+    await signInFormRef.setUpSignUpForm()
+    let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
+    
+    // SignUpForm.signUp()
+    let testEmail = Email.random().value
+    let testPassword = Password.random().value
+    await MainActor.run {
+        signUpFormRef.email = testEmail
+        signUpFormRef.password = testPassword
+        signUpFormRef.passwordCheck = testPassword
+    }
+    
+    await signUpFormRef.signUp()
+    
+
+    // ProjectBoard.createNewProject
+    let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectBoardRef.setCallback {
+                continuation.resume()
+            }
+            
+            await projectBoardRef.subscribe()
+            await projectBoardRef.createNewProject()
+        }
+    }
+    
+    await projectBoardRef.unsubscribe()
+    
+    // ProjectEditor
+    await #expect(projectBoardRef.editors.count == 1)
+    return try #require(await projectBoardRef.editors.first?.ref)
 }

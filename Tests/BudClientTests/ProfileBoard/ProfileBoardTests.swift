@@ -22,6 +22,7 @@ struct ProfileBoardTests {
         }
         
         @Test func whenProfileBoardIsDeletedBeforeCapture() async throws {
+            logger.debug("whenProfileBoardIsDeletedBeforeCapture 실행 중")
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
@@ -42,6 +43,8 @@ struct ProfileBoardTests {
             
             try await #require(budClientRef.profileBoard?.isExist == false)
             await #expect(budCacheRef.getUser() != nil)
+            logger.fault("Crashed!!")
+            logger.debug("whenProfileBoardIsDeletedBeforeCapture 실행 종료!")
         }
         @Test func whenProfileBoardIsDeletedBeforeMutate() async throws {
             // given
@@ -142,7 +145,7 @@ struct ProfileBoardTests {
         
         @Test func deleteSystemBoard() async throws {
             // given
-            let projectEditorRef = await getProjectEditor(budClientRef)
+            let projectEditorRef = try await createProjectEditor(budClientRef)
             await projectEditorRef.setUp()
             
             let systemBoard = try #require(await projectEditorRef.systemBoard)
@@ -170,7 +173,7 @@ struct ProfileBoardTests {
         
         @Test func deleteFlowBoard() async throws {
             // given
-            let projectEditorRef = await getProjectEditor(budClientRef)
+            let projectEditorRef = try await createProjectEditor(budClientRef)
             await projectEditorRef.setUp()
             
             let flowBoard = try #require(await projectEditorRef.flowBoard)
@@ -185,7 +188,7 @@ struct ProfileBoardTests {
         
         @Test func deleteValueBoard() async throws {
             // given
-            let projectEditorRef = await getProjectEditor(budClientRef)
+            let projectEditorRef = try await createProjectEditor(budClientRef)
             await projectEditorRef.setUp()
             
             let valueBoard = try #require(await projectEditorRef.valueBoard)
@@ -238,8 +241,56 @@ struct ProfileBoardTests {
 
 // MARK: Helphers
 private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileBoard {
-    await signIn(budClientRef)
+    // BudClient.setUp()
+    await budClientRef.setUp()
+    let authBoard = try #require(await budClientRef.authBoard)
+    let authBoardRef = try #require(await authBoard.ref)
     
-    let profileBoard = await budClientRef.profileBoard!
-    return await profileBoard.ref!
+    // AuthBoard.setUpForms()
+    await authBoardRef.setUpForms()
+    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInFormRef = try #require(await signInForm.ref)
+    
+    // SignInForm.setUpSignUpForm()
+    await signInFormRef.setUpSignUpForm()
+    let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
+    
+    // SignUpForm.signUp()
+    let testEmail = Email.random().value
+    let testPassword = Password.random().value
+    await MainActor.run {
+        signUpFormRef.email = testEmail
+        signUpFormRef.password = testPassword
+        signUpFormRef.passwordCheck = testPassword
+    }
+    
+    await signUpFormRef.signUp()
+    
+    // ProfileBoard
+    let profileBoardRef = try #require(await budClientRef.profileBoard?.ref)
+    return profileBoardRef
 }
+
+private func createProjectEditor(_ budClientRef: BudClient) async throws -> ProjectEditor{
+    // check
+    let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
+    
+    // ProjectBoard.createNewProject
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectBoardRef.setCallback {
+                continuation.resume()
+            }
+            
+            await projectBoardRef.subscribe()
+            await projectBoardRef.createNewProject()
+        }
+    }
+    
+    await projectBoardRef.unsubscribe()
+    
+    // ProjectEditor
+    await #expect(projectBoardRef.editors.count == 1)
+    return try #require(await projectBoardRef.editors.first?.ref)
+}
+

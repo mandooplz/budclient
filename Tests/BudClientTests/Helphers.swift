@@ -16,11 +16,12 @@ extension Tag {
 }
 
 
-fileprivate let logger = Logger(subsystem: "com.ginger.budclient.test", category: "test")
+let logger = Logger(subsystem: "BudClient", category: "Test")
 
 
 // MARK: signIn
 func signIn(_ budClietRef: BudClient) async {
+    // 여기서 logger를 기록하는게 맞는가.
     await budClietRef.setUp()
     guard let authBoardRef = await budClietRef.authBoard?.ref else {
         logger.error("BudClient.setUp() failed")
@@ -63,7 +64,7 @@ func signIn(_ budClietRef: BudClient) async {
 
 
 // MARK: getProject
-func getProjectEditor(_ budClientRef: BudClient) async -> ProjectEditor {
+private func getProjectEditor(_ budClientRef: BudClient) async -> ProjectEditor {
     await signIn(budClientRef)
     
     let projectBoard = await budClientRef.projectBoard!

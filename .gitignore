@@ -10,3 +10,4 @@ GoogleService-Info.plist
 .command
 Sources/**/GoogleService-Info.plist
 Sources/BudServer/GoogleService-Info.plist
+system_logs.logarchive/

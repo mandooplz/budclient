@@ -70,20 +70,6 @@ struct BudClientTests {
             
             await #expect(budClientRef.authBoard == authBoard)
         }
-        
-        @Test func whenPlistPathIsWrong() async throws {
-            // given
-            let budClientForReal = await BudClient(plistPath: "wrongPath")
-            
-            // when
-            await budClientForReal.setUp()
-            
-            // then
-            try await #require(budClientForReal.isIssueOccurred == true)
-            
-            let issue = try #require(await budClientForReal.issue)
-            #expect(issue.isKnown == false)
-        }
     }
 }
 

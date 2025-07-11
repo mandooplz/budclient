@@ -18,9 +18,34 @@ struct CommunityTests {
 
 
 // MARK: Helphers
-private func getCommunity(_ budClientRef: BudClient) async -> Community {
-    await signIn(budClientRef)
+private func getCommunity(_ budClientRef: BudClient) async throws -> Community {
+    // BudClient.setUp()
+    await budClientRef.setUp()
+    let authBoard = try #require(await budClientRef.authBoard)
+    let authBoardRef = try #require(await authBoard.ref)
     
-    let community = await budClientRef.community!
-    return await community.ref!
+    // AuthBoard.setUpForms()
+    await authBoardRef.setUpForms()
+    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInFormRef = try #require(await signInForm.ref)
+    
+    // SignInForm.setUpSignUpForm()
+    await signInFormRef.setUpSignUpForm()
+    let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
+    
+    
+    // SignUpForm.signUp()
+    let testEmail = Email.random().value
+    let testPassword = Password.random().value
+    await MainActor.run {
+        signUpFormRef.email = testEmail
+        signUpFormRef.password = testPassword
+        signUpFormRef.passwordCheck = testPassword
+    }
+    
+    await signUpFormRef.signUp()
+    
+    // Community
+    let communityRef = try #require(await budClientRef.community?.ref)
+    return communityRef
 }

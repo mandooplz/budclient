@@ -16,9 +16,9 @@ struct ProjectBoardTests {
     struct Subscribe {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoard(budClientRef)
+            self.projectBoardRef = try await getProjectBoard(budClientRef)
         }
         
         @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
@@ -66,9 +66,9 @@ struct ProjectBoardTests {
     struct Unsubscribe {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoard(budClientRef)
+            self.projectBoardRef = try await getProjectBoard(budClientRef)
         }
         
         @Test func removeHandlerInProjectHub() async throws {
@@ -91,9 +91,9 @@ struct ProjectBoardTests {
     struct CreateProject {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.projectBoardRef = await getProjectBoard(budClientRef)
+            self.projectBoardRef = try await getProjectBoard(budClientRef)
         }
         
         @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
@@ -155,9 +155,35 @@ struct ProjectBoardTests {
 
 
 // MARK: Helphers
-private func getProjectBoard(_ budClientRef: BudClient) async -> ProjectBoard {
-    await signIn(budClientRef)
+private func getProjectBoard(_ budClientRef: BudClient) async throws -> ProjectBoard {
+    // BudClient.setUp()
+    await budClientRef.setUp()
+    let authBoard = try #require(await budClientRef.authBoard)
+    let authBoardRef = try #require(await authBoard.ref)
     
-    let projectBoard = await budClientRef.projectBoard!
-    return await projectBoard.ref!
+    // AuthBoard.setUpForms()
+    await authBoardRef.setUpForms()
+    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInFormRef = try #require(await signInForm.ref)
+    
+    // SignInForm.setUpSignUpForm()
+    await signInFormRef.setUpSignUpForm()
+    let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
+    
+    // SignUpForm.signUp()
+    let testEmail = Email.random().value
+    let testPassword = Password.random().value
+    await MainActor.run {
+        signUpFormRef.email = testEmail
+        signUpFormRef.password = testPassword
+        signUpFormRef.passwordCheck = testPassword
+    }
+    
+    await signUpFormRef.signUp()
+    
+    // ProjectBoard
+    let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
+    return projectBoardRef
 }
+
+
