@@ -20,7 +20,7 @@ public final class BudClient: Debuggable {
         
         BudClientManager.register(self)
     }
-    package init() {
+    public init() {
         self.mode = .test
         self.plistPath = ""
         
