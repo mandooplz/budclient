@@ -156,8 +156,8 @@ struct ProfileBoardTests {
         }
         @Test func deleteSystemModel() async throws {
             // given
-            let budClientRef = await BudClient()
-            let systemModelRef = await getSystemModel(budClientRef)
+            let projectEditorRef = try await createProjectEditor(budClientRef)
+            let systemModelRef = try await createSystemModel(projectEditorRef)
             
             let profileBoardRef = try #require(await budClientRef.profileBoard?.ref)
             
@@ -289,5 +289,30 @@ private func createProjectEditor(_ budClientRef: BudClient) async throws -> Proj
     // ProjectEditor
     await #expect(projectBoardRef.editors.count == 1)
     return try #require(await projectBoardRef.editors.first?.ref)
+}
+
+private func createSystemModel(_ projectEditorRef: ProjectEditor) async throws -> SystemModel {
+    // ProjectEditor.setUp
+    await projectEditorRef.setUp()
+    
+    // SystemBoard.createFirstSystem
+    let systemBoardRef = try #require(await projectEditorRef.systemBoard?.ref)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemBoardRef.setCallback {
+                continuation.resume()
+            }
+            
+            await systemBoardRef.subscribe()
+            await systemBoardRef.createFirstSystem()
+        }
+    }
+    
+    await systemBoardRef.unsubscribe()
+    
+    // SystemModel
+    let systemModelRef = try #require(await systemBoardRef.models.values.first?.ref)
+    return systemModelRef
 }
 

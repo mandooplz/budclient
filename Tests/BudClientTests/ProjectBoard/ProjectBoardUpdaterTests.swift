@@ -18,9 +18,9 @@ struct ProjectBoardUpdaterTests {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         let updaterRef: ProjectBoardUpdater
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.updaterRef = await getUpdater(budClientRef)
+            self.updaterRef = try await getProjectBoardUpdater(budClientRef)
             self.projectBoardRef = await updaterRef.config.parent.ref!
         }
         
@@ -118,7 +118,6 @@ struct ProjectBoardUpdaterTests {
             try await #require(updaterRef.queue.isEmpty == true)
             
             let projectEditor = try #require(await projectBoardRef.editors.first)
-            let project = try #require(await projectEditor.ref?.target)
             
             // given
             let removedDiff = ProjectSourceDiff(id: newProjectSource,
@@ -179,12 +178,34 @@ struct ProjectBoardUpdaterTests {
 
 
 // MARK: Helpher
-private func getUpdater(_ budClientRef: BudClient) async -> ProjectBoardUpdater {
-    await signIn(budClientRef)
+private func getProjectBoardUpdater(_ budClientRef: BudClient) async throws -> ProjectBoardUpdater {
+    // BudClient.setUp()
+    await budClientRef.setUp()
+    let authBoard = try #require(await budClientRef.authBoard)
+    let authBoardRef = try #require(await authBoard.ref)
     
-    let projectBoard = await budClientRef.projectBoard!
-    let projectBoardRef = await projectBoard.ref!
+    // AuthBoard.setUpForms()
+    await authBoardRef.setUpForms()
+    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInFormRef = try #require(await signInForm.ref)
     
+    // SignInForm.setUpSignUpForm()
+    await signInFormRef.setUpSignUpForm()
+    let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
+    
+    // SignUpForm.signUp()
+    let testEmail = Email.random().value
+    let testPassword = Password.random().value
+    await MainActor.run {
+        signUpFormRef.email = testEmail
+        signUpFormRef.password = testPassword
+        signUpFormRef.passwordCheck = testPassword
+    }
+    
+    await signUpFormRef.signUp()
+    
+    // ProjectBoard
+    let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
     return await projectBoardRef.updater
 }
 
