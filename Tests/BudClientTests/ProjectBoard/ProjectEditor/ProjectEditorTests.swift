@@ -128,10 +128,7 @@ struct ProjectEditorTests {
         @Test func updateNameByUpdater() async throws {
             // given
             let testName = "TEST_PROJECT_NAME"
-            let projectHubRef = try #require(await editorRef.config.budServer.ref?.projectHub.ref)
-            
-            let randomObject = ObjectID()
-            let user = editorRef.config.user
+            let projectBoardRef = try #require(await editorRef.config.parent.ref)
             
             await MainActor.run {
                 editorRef.nameInput = testName
@@ -140,18 +137,11 @@ struct ProjectEditorTests {
             // then
             await withCheckedContinuation { con in
                 Task {
-                    await projectHubRef.setHandler(
-                        requester: randomObject,
-                        user: user,
-                        handler: .init({ event in
-                            switch event {
-                            case .modified(let diff):
-                                #expect(diff.name == testName)
-                                con.resume()
-                            default:
-                                Issue.record()
-                            }
-                        }))
+                    await projectBoardRef.setCallback {
+                        con.resume()
+                    }
+                    
+                    await projectBoardRef.subscribe()
                     
                     // when
                     await editorRef.pushName()
@@ -159,6 +149,7 @@ struct ProjectEditorTests {
             }
             
             // then
+            await projectBoardRef.unsubscribe()
             await #expect(editorRef.name == testName)
         }
     }

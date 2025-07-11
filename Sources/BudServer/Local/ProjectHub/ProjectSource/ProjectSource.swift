@@ -27,6 +27,7 @@ package final class ProjectSource: ProjectSourceInterface {
     }
     
     // MARK: state
+    private let logger = Logger(subsystem: "BudClient", category: "ProjectSource")
     package nonisolated let id: ID
     nonisolated let target: ProjectID
     nonisolated let parent: ProjectHub.ID
