@@ -111,7 +111,7 @@ struct ProjectEditorTests {
             let issue = try #require(await editorRef.issue)
             #expect(issue.reason == "editorIsDeleted")
         }
-        @Test func whenNameIsNil() async throws {
+        @Test func whenNameInputIsEmpty() async throws {
             // given
             await MainActor.run {
                 editorRef.nameInput = ""
@@ -121,8 +121,21 @@ struct ProjectEditorTests {
             await editorRef.pushName()
             
             // then
-            let issue = try #require(await editorRef.issue)
+            let issue = try #require(await editorRef.issue as? KnownIssue)
             #expect(issue.reason == "nameInputIsEmpty")
+        }
+        @Test func whenNameInputAndNameIsSampe() async throws {
+            await MainActor.run {
+                editorRef.nameInput = "TEST"
+                editorRef.name = "TEST"
+            }
+            
+            // when
+            await editorRef.pushName()
+            
+            // then
+            let issue = try #require(await editorRef.issue as? KnownIssue)
+            #expect(issue.reason == "pushWithSameValue")
         }
         
         @Test func updateNameByUpdater() async throws {

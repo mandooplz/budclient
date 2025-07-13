@@ -90,6 +90,12 @@ public final class ProjectEditor: Debuggable {
             logger.failure(Error.nameInputIsEmpty)
             return
         }
+        guard self.nameInput != self.name else {
+            setIssue(Error.pushWithSameValue)
+            logger.failure(Error.pushWithSameValue)
+            return
+        }
+        
         let projectSource = self.source
         let target = self.target
         let config = self.config
@@ -97,21 +103,15 @@ public final class ProjectEditor: Debuggable {
         
         
         // compute
-        do {
-            try await withThrowingDiscardingTaskGroup { group in
-                group.addTask {
-                    guard let projectSourceRef = await projectSource.ref else { return }
-                    guard let budServerRef = await config.budServer.ref,
-                          let projectHubRef = await budServerRef.projectHub.ref else { return }
-                    
-                    await projectSourceRef.setName(nameInput)
-                    await projectHubRef.notifyNameChanged(target)
-                }
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let projectSourceRef = await projectSource.ref else { return }
+                guard let budServerRef = await config.budServer.ref,
+                      let projectHubRef = await budServerRef.projectHub.ref else { return }
+                
+                await projectSourceRef.setName(nameInput)
+                await projectHubRef.notifyNameChanged(target)
             }
-        } catch {
-            setUnknownIssue(error)
-            logger.failure(error)
-            return
         }
     }
     
@@ -156,6 +156,7 @@ public final class ProjectEditor: Debuggable {
         case editorIsDeleted
         case alreadySetUp
         case nameInputIsEmpty
+        case pushWithSameValue
     }
 }
 
