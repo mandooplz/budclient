@@ -8,6 +8,8 @@ import Foundation
 import Values
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "SystemBoard")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -47,6 +49,8 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     
     // MARK: action
     public func subscribe() async {
+        logger.start()
+        
         await self.subscribe(captureHook: nil)
     }
     func subscribe(captureHook: Hook?) async {
@@ -87,6 +91,8 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     }
     
     public func unsubscribe() async {
+        logger.start()
+        
         // capture
         let me = ObjectID(id.value)
         let projectSource = self.config.parent.ref!.source
@@ -102,6 +108,8 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     }
     
     public func createFirstSystem() async {
+        logger.start()
+        
         await self.createFirstSystem(captureHook: nil)
     }
     func createFirstSystem(captureHook: Hook?) async {
@@ -122,7 +130,9 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                 }
             }
         } catch {
-            setUnknownIssue(error); return
+            setUnknownIssue(error)
+            logger.failure(error)
+            return
         }
     }
     

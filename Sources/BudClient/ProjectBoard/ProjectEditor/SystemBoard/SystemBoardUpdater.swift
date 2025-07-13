@@ -8,7 +8,8 @@ import Foundation
 import Values
 import Collections
 import BudServer
-import os
+
+private let logger = WorkFlow.getLogger(for: "SystemBoardUpdater")
 
 
 // MARK: Object
@@ -29,6 +30,8 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
     
     // MARK: action
     func update() async {
+        logger.start()
+        
         // mutate
         let config = self.config
         let systemBoardRef = config.parent.ref!
@@ -38,7 +41,9 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
             switch event {
             case .added(let diff):
                 if systemBoardRef.isExist(diff.target) {
-                    setIssue(Error.alreadyAdded); return
+                    setIssue(Error.alreadyAdded)
+                    logger.failure(Error.alreadyAdded)
+                    return
                 }
                 
                 let systemModelRef = SystemModel(config: config,
@@ -47,7 +52,9 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
                 systemBoardRef.models[diff.location] = systemModelRef.id
             case .removed(let diff):
                 guard systemBoardRef.isExist(diff.target) else {
-                    setIssue(Error.alreadyRemoved); return
+                    setIssue(Error.alreadyRemoved)
+                    logger.failure(Error.alreadyRemoved)
+                    return
                 }
                 
                 let systemModel = systemBoardRef.models.values
@@ -57,7 +64,9 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
                 systemBoardRef.models[diff.location] = nil
             case .modified(let diff):
                 guard let systemModel = systemBoardRef.getSystemModel(diff.target) else{
-                    setIssue(Error.alreadyRemoved); return
+                    setIssue(Error.alreadyRemoved)
+                    logger.failure(Error.alreadyRemoved)
+                    return
                 }
                 let systemModelRef = systemModel.ref!
                 

@@ -92,6 +92,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     }
     
     public func unsubscribe() async {
+        logger.start()
+        
         // capture
         let systemSource = self.source
         let me = ObjectID(id.value)
@@ -105,6 +107,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     }
     
     public func pushName() async {
+        logger.start()
+        
         await self.pushName(captureHook: nil)
     }
     func pushName(captureHook: Hook?) async {
@@ -126,6 +130,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     }
     
     func addSystemRight(captureHook: Hook?) async {
+        logger.start()
+        
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
@@ -141,6 +147,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         }
     }
     func addSystemLeft(captureHook: Hook?) async {
+        logger.start()
+        
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
@@ -155,6 +163,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         }
     }
     func addSystemTop(captureHook: Hook?) async {
+        logger.start()
+        
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
@@ -169,6 +179,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         }
     }
     func addSystemBottom(captureHook: Hook?) async {
+        logger.start()
+        
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
@@ -184,6 +196,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     }
     
     public func remove() async {
+        logger.start()
+        
         await self.remove(captureHook: nil)
     }
     func remove(captureHook: Hook?) async {

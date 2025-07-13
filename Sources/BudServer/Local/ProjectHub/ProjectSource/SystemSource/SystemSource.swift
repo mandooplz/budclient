@@ -116,19 +116,29 @@ package final class SystemSource: SystemSourceInterface {
     
     // MARK: action
     package func addSystemTop() async {
+        logger.start()
+        
         fatalError()
     }
     package func addSystemLeft() async {
+        logger.start()
+        
         fatalError()
     }
     package func addSystemRight() async {
+        logger.start()
+        
         fatalError()
     }
     package func addSystemBottom() async {
+        logger.start()
+        
         fatalError()
     }
     
     package func remove() async {
+        logger.start()
+        
         fatalError()
     }
     

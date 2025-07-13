@@ -108,8 +108,9 @@ public final class ProjectEditor: Debuggable {
                 }
             }
         } catch {
+            setUnknownIssue(error)
             logger.failure(error)
-            setUnknownIssue(error); return
+            return
         }
     }
     
