@@ -21,6 +21,7 @@ public extension Debuggable {
     func setIssue<E: RawRepresentable<String>>(_ error: E) {
         self.issue = KnownIssue(error)
     }
+    
     func setUnknownIssue(_ error: Error, location: String = #function) {
         Logger().error("UnknownIssue is occurred(location)\n \(String(reflecting: error))")
         self.issue = UnknownIssue(error)

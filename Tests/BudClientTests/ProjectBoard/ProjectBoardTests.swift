@@ -48,7 +48,7 @@ struct ProjectBoardTests {
         }
         
         @Test func setHandlerInProjectHub() async throws {
-            try await WorkFlow.create {
+            try await WorkFlow {
                 // given
                 let config = projectBoardRef.config
                 let projectHubRef = try #require(await config.budServer.ref?.projectHub.ref)

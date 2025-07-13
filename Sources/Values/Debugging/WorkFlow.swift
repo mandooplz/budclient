@@ -8,29 +8,21 @@ import Foundation
 
 
 // MARK: WorkFlow
-public enum WorkFlow: Sendable {
+public struct WorkFlow: Sendable {
     static let system = "Bud"
     @TaskLocal public static var id: ID = ID()
     
     
     // MARK: core
-    public static func with(_ id: WorkFlow.ID, task: @Sendable @escaping () async throws -> Void) async rethrows {
-        try await WorkFlow.$id.withValue(id) {
-            try await task()
+    @discardableResult
+        public init(id: WorkFlow.ID? = nil, task: @Sendable @escaping () async throws -> Void) async rethrows {
+            let workflow = id ?? WorkFlow.ID(value: UUID())
+            
+            try await WorkFlow.$id.withValue(workflow) {
+                try await task()
+            }
         }
-    }
-    
-    public static func create(_ location: String = "", task: @Sendable @escaping () async throws -> Void) async rethrows {
-        let newWorkFlow = WorkFlow.ID(value: UUID())
 
-        try await WorkFlow.$id.withValue(newWorkFlow) {
-            let logger = WorkFlow.getLogger(for: location)
-            logger.start()
-            try await task()
-            logger.end()
-        }
-    }
-    
     public static func getLogger(for objectName: String) -> BudLogger {
         .init(objectName: objectName)
     }
@@ -48,20 +40,6 @@ public enum WorkFlow: Sendable {
                 return value.uuidString.prefix(8).description
             } else {
                 return "--------"
-            }
-        }
-    }
-    
-    public enum RoutineResult: CustomStringConvertible {
-        case success(detail: String? = nil)
-        case failure(reason: String)
-        
-        public var description: String {
-            switch self {
-            case .success(let detail):
-                return "success\(detail ?? "")"
-            case .failure(let reason):
-                return "failure(\(reason))"
             }
         }
     }

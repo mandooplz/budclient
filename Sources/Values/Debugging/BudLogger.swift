@@ -13,7 +13,7 @@ public struct BudLogger: Sendable {
     // MARK: rawValue
     private let objectName: String
     private let logger: Logger
-    internal init(objectName: String) {
+    init(objectName: String) {
         self.objectName = objectName
         self.logger = Logger(subsystem: "Bud", category: objectName)
     }
@@ -28,21 +28,21 @@ public struct BudLogger: Sendable {
         logger.debug("[\(workflow)] 💨 end")
     }
     
-    public func success(_ info: Info? = nil,
+    public func success(_ description: String? = nil,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ routine: String = #function) {
         
-        if let info {
-            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) success(\(info))")
+        if let description {
+            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) success\n\(description)")
         } else {
             logger.debug("[\(workflow)] ✅ \(objectName).\(routine) success")
         }
     }
     
-    public func failure(_ info: Info,
+    public func failure(_ description: String,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ routine: String = #function) {
-        logger.error("[\(workflow)] ⚠️ \(objectName).\(routine) failure(\(info))")
+        logger.error("[\(workflow)] ⚠️ \(objectName).\(routine) failure\n\(description)")
     }
     
     public func failure(_ error: Error,
@@ -51,13 +51,15 @@ public struct BudLogger: Sendable {
         self.failure(error.localizedDescription, workflow, routine)
     }
     
-    public func critical(_ info: Info,
+    public func critical(_ description: String,
                          _ workflow: WorkFlow.ID = WorkFlow.id,
                          _ routine: String = #function) {
-        logger.fault("[\(workflow)] 🚨 \(objectName).\(routine) critical(\(info))")
+        logger.fault("[\(workflow)] 🚨 \(objectName).\(routine) critical\n\(description)")
     }
     
-    
-    // MARK: value
-    public typealias Info = String
+    public func critical(_ error: Error,
+                         _ workflow: WorkFlow.ID = WorkFlow.id,
+                         _ routine: String = #function) {
+        self.critical(error.localizedDescription, workflow, routine)
+    }
 }

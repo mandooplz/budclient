@@ -76,7 +76,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                     user: config.user,
                     handler: .init({ event, workflow in
                         Task {
-                            await WorkFlow.with(workflow) {
+                            await WorkFlow(id: workflow) {
                                 guard let updaterRef = await projectBoard.ref?.updater else {
                                     logger.failure("ProjectBoard가 존재하지 않음")
                                     return
@@ -93,6 +93,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
             }
         }
         
+        // logging
         logger.success()
     }
     
@@ -146,8 +147,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 }
             }
         } catch {
-            logger.failure(error)
             setUnknownIssue(error)
+            logger.failure(error)
             return
         }
         logger.success()

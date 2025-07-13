@@ -8,7 +8,8 @@ import Foundation
 import Values
 import BudServer
 import BudCache
-import os
+
+private let logger = WorkFlow.getLogger(for: "BudClient")
 
 
 // MARK: System
@@ -33,7 +34,6 @@ public final class BudClient: Debuggable {
     nonisolated let id = ID()
     nonisolated let mode: SystemMode
     nonisolated let system = SystemID()
-    private let logger = Logger(subsystem: "BudClient", category: "BudClient")
     
     private nonisolated let plistPath: String
     
@@ -51,7 +51,11 @@ public final class BudClient: Debuggable {
     public func setUp() async {
         // capture
         guard authBoard == nil && projectBoard == nil && profileBoard == nil
-        else { setIssue(Error.alreadySetUp); return }
+        else {
+            setIssue(Error.alreadySetUp)
+            logger.failure(Error.alreadySetUp)
+            return
+        }
         
         // compute
         let budServer: any BudServerIdentity
@@ -66,13 +70,18 @@ public final class BudClient: Debuggable {
                 budCache = await BudCache().id
             }
         } catch {
-            issue = UnknownIssue(error); return
+            setUnknownIssue(error)
+            logger.failure(error)
+            return
         }
         
         // mutate
         let tempConfig = TempConfig(id, mode, system, budServer, budCache)
         let authBoardRef = AuthBoard(tempConfig: tempConfig)
         self.authBoard = authBoardRef.id
+        
+        // logging
+        logger.success()
     }
     
     
