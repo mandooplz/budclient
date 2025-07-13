@@ -60,9 +60,7 @@ package final class ProjectHubMock: ProjectHubInterface {
     
     
     // MARK: action
-    package func createNewProject() async {
-        let workflow = WorkFlow.id
-        
+    package func createNewProject() async {        
         // mutate
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()

@@ -52,8 +52,6 @@ package final class ProjectHub: ProjectHubInterface {
                     return
                 }
                 
-                let isSourcesEmpty = self.projectSources.isEmpty
-                
                 snapshot.documentChanges.forEach { diff in
                     let documentId = diff.document.documentID
                     let projectSource = ProjectSource.ID(documentId)
@@ -104,6 +102,8 @@ package final class ProjectHub: ProjectHubInterface {
             }
     }
     package func removeHandler(requester: ObjectID) {
+        logger.start()
+        
         self.listeners[requester]?.remove()
         self.listeners[requester] = nil
     }
@@ -113,22 +113,25 @@ package final class ProjectHub: ProjectHubInterface {
     }
     
     // MARK: action
-    package func createNewProject() throws {
+    package func createNewProject() {
         logger.start()
         
         let db = Firestore.firestore()
-        let workflow = WorkFlow.id
         
-        while tickets.isEmpty == false {
-            let ticket = tickets.removeFirst()
-            
-            // create ProjectSource in Firestore
-            let data = ProjectSource.Data(name: ticket.name,
-                                          creator: ticket.creator,
-                                          target: ticket.target,
-                                          systemModelCount: 0)
-            
-            try db.collection(ProjectSources.name).addDocument(from: data)
+        do {
+            while tickets.isEmpty == false {
+                let ticket = tickets.removeFirst()
+                
+                // create ProjectSource in Firestore
+                let data = ProjectSource.Data(name: ticket.name,
+                                              creator: ticket.creator,
+                                              target: ticket.target,
+                                              systemModelCount: 0)
+                try db.collection(ProjectSources.name).addDocument(from: data)
+            }
+        } catch {
+            let log = logger.getLog(error)
+            logger.raw.error("\(log)")
         }
     }
     

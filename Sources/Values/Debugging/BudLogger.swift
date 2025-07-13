@@ -62,4 +62,10 @@ public struct BudLogger: Sendable {
                           _ routine: String = #function) -> String {
         return "[\(workflow)] ❌ \(objectName).\(routine) critical\n\(description)"
     }
+    
+    public func getLog(_ error: Error,
+                       _ workflow: WorkFlow.ID = WorkFlow.id,
+                       _ routine: String = #function) -> String {
+        return self.getLog("\(error)", workflow, routine)
+    }
 }

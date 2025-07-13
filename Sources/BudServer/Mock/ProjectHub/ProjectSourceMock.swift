@@ -82,7 +82,6 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         let diff = ProjectSourceDiff(id: self.id,
                                      target: self.target,
                                      name: self.name)
-        let workflow = WorkFlow.id
 
         for (_, eventHandler) in projectHubRef.eventHandlers {
             eventHandler.execute(.removed(diff))

@@ -69,7 +69,7 @@ public final class BudClient: Debuggable {
                 budCache = await BudCacheMock().id
             case .real:
                 budServer = try await BudServer(plistPath: plistPath).id
-                budCache = await BudCache().id
+                budCache = BudCache().id
             }
         } catch {
             setUnknownIssue(error)

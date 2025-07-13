@@ -22,7 +22,7 @@ package protocol ProjectSourceInterface: Sendable {
     func removeHandler(requester: ObjectID) async;
     
     // MARK: action
-    func createFirstSystem() async throws
+    func createFirstSystem() async
     func remove() async
 }
 

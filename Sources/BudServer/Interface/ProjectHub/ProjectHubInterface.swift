@@ -27,7 +27,7 @@ package protocol ProjectHubInterface: Sendable {
     
     
     // MARK: action
-    func createNewProject() async throws
+    func createNewProject() async
 }
 
 package protocol ProjectHubIdentity: Sendable, Hashable {

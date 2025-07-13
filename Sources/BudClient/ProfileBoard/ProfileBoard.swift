@@ -50,18 +50,12 @@ public final class ProfileBoard: Debuggable {
         
         // compute
         let tempConfig = config.getTempConfig(config.parent)
-        do {
-            try await withThrowingDiscardingTaskGroup { group in
-                group.addTask {
-                    guard let budCacheRef = await config.budCache.ref else { return }
-                    
-                    try await budCacheRef.removeUser()
-                }
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let budCacheRef = await config.budCache.ref else { return }
+                
+                await budCacheRef.removeUser()
             }
-        } catch {
-            setUnknownIssue(error)
-            logger.failure(error)
-            return
         }
 
         

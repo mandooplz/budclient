@@ -119,7 +119,7 @@ package final class ProjectSource: ProjectSourceInterface {
     
     
     // MARK: action
-    package func createFirstSystem() async throws  {
+    package func createFirstSystem() async  {
         // database
         let db = Firestore.firestore()
         
@@ -144,8 +144,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     let newSystemSourceRef = systemSourcesRef.document()
                     let newData = SystemSource.Data(target: SystemID(),
                                                     name: "First System",
-                                                    location: .origin,
-                                                    updateBy: WorkFlow.id)
+                                                    location: .origin)
                     
                     try transaction.setData(from: newData, forDocument: newSystemSourceRef)
                     
@@ -162,7 +161,8 @@ package final class ProjectSource: ProjectSourceInterface {
                 }
             }
         } catch {
-            logger.failure("트랜잭션 실패\n\(error)")
+            let log = logger.getLog("트랜잭션 실패\n\(error)")
+            logger.raw.error("\(log)")
             return
         }
     }

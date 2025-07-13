@@ -80,7 +80,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                         Task { @MainActor in
                             guard let updaterRef = systemBoard.ref?.updater else { return }
                             
-                            await updaterRef.appendEvent(event)
+                            updaterRef.appendEvent(event)
                             await updaterRef.update()
                             
                             await callback?()
@@ -117,22 +117,15 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
         guard models.isEmpty else { setIssue(Error.systemAlreadyExist); return }
-        let project = config.parent
         let projectSource = self.config.parent.ref!.source
         
         // compute
-        do {
-            try await withThrowingDiscardingTaskGroup { group in
-                group.addTask {
-                    guard let projectSourceRef = await projectSource.ref else { return }
-                    
-                    try await projectSourceRef.createFirstSystem()
-                }
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let projectSourceRef = await projectSource.ref else { return }
+                
+                await projectSourceRef.createFirstSystem()
             }
-        } catch {
-            setUnknownIssue(error)
-            logger.failure(error)
-            return
         }
     }
     

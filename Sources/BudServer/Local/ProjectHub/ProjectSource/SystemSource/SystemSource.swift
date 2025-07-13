@@ -38,8 +38,6 @@ package final class SystemSource: SystemSourceInterface {
         logger.start()
         
         // compute
-        guard let projectSourceRef = parent.ref else { return }
-        
         let db = Firestore.firestore()
         let docRef = db.collection(ProjectSources.name)
             .document(parent.value)
@@ -47,9 +45,9 @@ package final class SystemSource: SystemSourceInterface {
             .document(id.value)
         
         let updateData: [String: Any] = [
-            "name": value,
-            "updateBy" : ["value": WorkFlow.id.value?.uuidString]
+            "name": value
         ]
+        
         docRef.updateData(updateData)
     }
     
@@ -77,7 +75,7 @@ package final class SystemSource: SystemSourceInterface {
                 
                 snapshot.documentChanges.forEach { changed in
                     let documentId = changed.document.documentID
-                    let rootSource = RootSource.ID(documentId)
+                    let _ = RootSource.ID(documentId)
                     
                     switch changed.type {
                     case .added:
@@ -91,7 +89,7 @@ package final class SystemSource: SystemSourceInterface {
             }
         
         // objectSource listener
-        let objectSource = db.collection(ProjectSources.name)
+        let objectSourceListener = db.collection(ProjectSources.name)
             .document(parent.value)
             .collection(ProjectSources.SystemSources.name)
             .document(id.value)
@@ -108,6 +106,10 @@ package final class SystemSource: SystemSourceInterface {
                     let _ = RootSource.ID(documentId)
                 }
             }
+        
+        let listener = Listener(rootSource: rootSourceListener,
+                                objectSource: objectSourceListener)
+        self.listeners[requester] = listener
     }
     package func removeHandler(requester: ObjectID) {
         listeners[requester]?.rootSource.remove()
@@ -175,19 +177,13 @@ package final class SystemSource: SystemSourceInterface {
         var name: String
         var location: Location
         var rootModel: Root?
-        var updateBy: WorkFlow.ID
         
         struct Root: Hashable, Codable {
             let target: ObjectID
             let name: String
             let states: [StateID]
             let actions: [ActionID]
-            let updateBy: WorkFlow.ID
         }
-    }
-    enum State: Sendable, Hashable {
-        static let name = "name"
-        static let location = "location"
     }
 }
 
