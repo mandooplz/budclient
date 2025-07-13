@@ -65,10 +65,10 @@ struct SignUpFormTests {
             await #expect(budClientRef.isUserSignedIn == false)
         }
         
-        @Test func failsWhenEmailIsNil() async throws {
+        @Test func failsWhenEmailIsEmpty() async throws {
             // given
             await MainActor.run {
-                signUpFormRef.email = nil
+                signUpFormRef.email = ""
             }
             
             // when
@@ -76,13 +76,13 @@ struct SignUpFormTests {
             
             // then
             let issue = try #require(await signUpFormRef.issue as? KnownIssue)
-            #expect(issue.reason == "emailIsNil")
+            #expect(issue.reason == "emailIsEmpty")
         }
-        @Test func failsWhenPasswordIsNil() async throws {
+        @Test func failsWhenPasswordIsEmpty() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = Email.random().value
-                signUpFormRef.password = nil
+                signUpFormRef.password = ""
             }
             
             // when
@@ -90,14 +90,14 @@ struct SignUpFormTests {
             
             // then
             let issue = try #require(await signUpFormRef.issue as? KnownIssue)
-            #expect(issue.reason == "passwordIsNil")
+            #expect(issue.reason == "passwordIsEmpty")
         }
-        @Test func failsWhenPasswordCheckIsNil() async throws {
+        @Test func failsWhenPasswordCheckIsEmpty() async throws {
             // given
             await MainActor.run {
                 signUpFormRef.email = Email.random().value
                 signUpFormRef.password = Password.random().value
-                signUpFormRef.passwordCheck = nil
+                signUpFormRef.passwordCheck = ""
             }
             
             // when
@@ -105,7 +105,7 @@ struct SignUpFormTests {
             
             // then
             let issue = try #require(await signUpFormRef.issue as? KnownIssue)
-            #expect(issue.reason == "passwordCheckIsNil")
+            #expect(issue.reason == "passsworCheckIsEmpty")
             
         }
         @Test func failsWhenPasswordsDoNotMatch() async throws {

@@ -24,11 +24,9 @@ public struct WorkFlow: Sendable {
             } else {
                 let newWorkflow = WorkFlow.ID(value: UUID())
                 
-                BudLogger.start(newWorkflow)
                 try await WorkFlow.$id.withValue(newWorkflow) {
                     try await task()
                 }
-                BudLogger.end(newWorkflow)
             }
         }
 

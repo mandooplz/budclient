@@ -38,7 +38,7 @@ public final class ProjectEditor: Debuggable {
     nonisolated let source: any ProjectSourceIdentity
     
     public internal(set) var name: String
-    public internal(set) var nameInput: String?
+    public internal(set) var nameInput: String = ""
     public func setNameInput(_ value: String) {
         self.nameInput = value
     }
@@ -85,14 +85,15 @@ public final class ProjectEditor: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard let nameInput else {
-            setIssue(Error.nameInputIsNil)
-            logger.failure(Error.nameInputIsNil)
+        guard self.nameInput.isEmpty == false else {
+            setIssue(Error.nameInputIsEmpty)
+            logger.failure(Error.nameInputIsEmpty)
             return
         }
         let projectSource = self.source
         let target = self.target
         let config = self.config
+        let nameInput = self.nameInput
         
         
         // compute
@@ -154,7 +155,7 @@ public final class ProjectEditor: Debuggable {
     public enum Error: String, Swift.Error {
         case editorIsDeleted
         case alreadySetUp
-        case nameInputIsNil
+        case nameInputIsEmpty
     }
 }
 

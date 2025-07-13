@@ -19,10 +19,10 @@ public final class SignInForm: Debuggable {
     init(tempConfig: TempConfig<AuthBoard.ID>) {
         self.tempConfig = tempConfig
         
-        EmailFormManager.register(self)
+        SignInFormManager.register(self)
     }
     func delete() {
-        EmailFormManager.unregister(self.id)
+        SignInFormManager.unregister(self.id)
     }
     
     
@@ -83,13 +83,13 @@ public final class SignInForm: Debuggable {
         await captureHook?()
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
         guard email.isEmpty == false else {
-            setIssue(Error.emailIsNil)
-            logger.failure(Error.emailIsNil)
+            setIssue(Error.emailIsEmpty)
+            logger.failure(Error.emailIsEmpty)
             return
         }
         guard password.isEmpty == false else {
-            setIssue(Error.passwordIsNil)
-            logger.failure(Error.passwordIsNil)
+            setIssue(Error.passwordIsEmpty)
+            logger.failure(Error.passwordIsEmpty)
             return
         }
         
@@ -186,16 +186,16 @@ public final class SignInForm: Debuggable {
         }
         
         internal var isExist: Bool {
-            EmailFormManager.container[self] != nil
+            SignInFormManager.container[self] != nil
         }
         public var ref: SignInForm? {
-            EmailFormManager.container[self]
+            SignInFormManager.container[self]
         }
     }
     public enum Error: String, Swift.Error {
         case signInFormIsDeleted
         case signUpFormAlreadyExist
-        case emailIsNil, passwordIsNil
+        case emailIsEmpty, passwordIsEmpty
         case userNotFound, wrongPassword
         case userIsNilInCache
     }
@@ -204,7 +204,7 @@ public final class SignInForm: Debuggable {
 
 // MARK: Object Manager
 @MainActor @Observable
-fileprivate final class EmailFormManager: Sendable {
+fileprivate final class SignInFormManager: Sendable {
     // MARK: state
     fileprivate static var container: [SignInForm.ID: SignInForm] = [:]
     fileprivate static func register(_ object: SignInForm) {

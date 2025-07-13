@@ -30,9 +30,9 @@ public final class SignUpForm: Debuggable {
     public nonisolated let id = ID()
     public nonisolated let tempConfig: TempConfig<SignInForm.ID>
     
-    public var email: String?
-    public var password: String?
-    public var passwordCheck: String?
+    public var email: String = ""
+    public var password: String = ""
+    public var passwordCheck: String = ""
     
     public var issue: (any Issuable)?
     
@@ -46,19 +46,19 @@ public final class SignUpForm: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
-        guard let email else {
-            setIssue(Error.emailIsNil)
-            logger.failure(Error.emailIsNil)
+        guard email.isEmpty == false else {
+            setIssue(Error.emailIsEmpty)
+            logger.failure(Error.emailIsEmpty)
             return
         }
-        guard let password else {
-            setIssue(Error.passwordIsNil)
-            logger.failure(Error.passwordIsNil)
+        guard password.isEmpty == false else {
+            setIssue(Error.passwordIsEmpty)
+            logger.failure(Error.passwordIsEmpty)
             return
         }
-        guard let passwordCheck else {
-            setIssue(Error.passwordCheckIsNil)
-            logger.failure(Error.passwordCheckIsNil)
+        guard passwordCheck.isEmpty == false else {
+            setIssue(Error.passsworCheckIsEmpty)
+            logger.failure(Error.passsworCheckIsEmpty)
             return
         }
         guard password == passwordCheck else {
@@ -166,7 +166,7 @@ public final class SignUpForm: Debuggable {
     }
     public enum Error: String, Swift.Error {
         case signUpFormIsDeleted
-        case emailIsNil, passwordIsNil, passwordCheckIsNil
+        case emailIsEmpty, passwordIsEmpty, passsworCheckIsEmpty
         case passwordsDoNotMatch
     }
 }

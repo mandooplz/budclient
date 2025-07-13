@@ -296,7 +296,7 @@ struct SignInFormTests {
             await #expect(budClientRef.isUserSignedIn == false)
         }
         
-        @Test func whenEmailIsNil() async throws {
+        @Test func whenEmailIsEmpty() async throws {
             // given
             await MainActor.run {
                 signInFormRef.email = ""
@@ -307,9 +307,9 @@ struct SignInFormTests {
             
             // then
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
-            #expect(issue.reason == "emailIsNil")
+            #expect(issue.reason == "emailIsEmpty")
         }
-        @Test func whenPasswordIsNil() async throws {
+        @Test func whenPasswordIsEmpty() async throws {
             await MainActor.run {
                 signInFormRef.email = validEmail
                 signInFormRef.password = ""
@@ -320,7 +320,7 @@ struct SignInFormTests {
             
             // then
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
-            #expect(issue.reason == "passwordIsNil")
+            #expect(issue.reason == "passwordIsEmpty")
         }
         @Test func whenUserNotFound() async throws {
             // given

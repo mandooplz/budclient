@@ -74,7 +74,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 let isSubscribed = await projectHubRef.hasHandler(requester: me)
                 guard isSubscribed == false else {
                     await projectBoard.ref?.setIssue(Error.alreadySubscribed)
-                    logger.failure(Error.alreadySubscribed)
+                    let log = logger.getLog(Error.alreadySubscribed)
+                    logger.raw.error("\(log)")
                     return
                 }
                 

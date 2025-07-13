@@ -46,7 +46,7 @@ public struct BudLogger: Sendable {
     public func failure(_ description: String,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ routine: String = #function) {
-        logger.error("[\(workflow)] ⚠️ \(objectName).\(routine) failure\n\(description)")
+        logger.error("[\(workflow)] \(objectName).\(routine) failure\n\(description)")
     }
     
     public func failure(_ error: Error,
@@ -60,7 +60,7 @@ public struct BudLogger: Sendable {
     public func getLog(_ description: String,
                           _ workflow: WorkFlow.ID = WorkFlow.id,
                           _ routine: String = #function) -> String {
-        return "[\(workflow)] ❌ \(objectName).\(routine) critical\n\(description)"
+        return "[\(workflow)] \(objectName).\(routine) critical\n\(description)"
     }
     
     public func getLog(_ error: Error,
