@@ -48,6 +48,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     // MARK: action
     public func subscribe() async {
+        logger.start()
+        
         await self.subscribe(captureHook: nil)
     }
     func subscribe(captureHook: Hook?) async {
@@ -63,11 +65,14 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.projectHub.ref else { return }
+                      let projectHubRef = await budServerRef.projectHub.ref else {
+                    logger.critical("ProjectHub가 존재하지 않습니다.")
+                    return
+                }
                 
                 let isSubscribed = await projectHubRef.hasHandler(requester: me)
                 guard isSubscribed == false else {
-                    await projectBoard.ref?.setIssue(Error.alreadySubscribed);
+                    logger.failure(Error.alreadySubscribed)
                     return
                 }
                 
@@ -78,7 +83,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                         Task {
                             await WorkFlow(id: workflow) {
                                 guard let updaterRef = await projectBoard.ref?.updater else {
-                                    logger.failure("ProjectBoard가 존재하지 않음")
                                     return
                                 }
                                 
@@ -92,12 +96,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 )
             }
         }
-        
-        // logging
-        logger.success()
     }
     
     public func unsubscribe() async {
+        logger.start()
+        
         // capture
         let config = self.config
         let me = ObjectID(id.value)
@@ -112,11 +115,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 await projectHubRef.removeHandler(requester: me)
             }
         }
-        
-        logger.success()
     }
     
     public func createNewProject() async {
+        logger.start()
+        
         await self.createProject(captureHook: nil)
     }
     func createProject(captureHook: Hook?) async {
@@ -151,7 +154,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
             logger.failure(error)
             return
         }
-        logger.success()
     }
     
     

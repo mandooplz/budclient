@@ -8,6 +8,8 @@ import Foundation
 import Values
 import FirebaseAuth
 
+private let logger = WorkFlow.getLogger(for: "GoogleRegisterForm")
+
 
 // MARK: Object
 @MainActor
@@ -38,6 +40,8 @@ package final class GoogleRegisterForm: GoogleRegisterFormInterface {
     
     // MARK: action
     package func submit() async throws {
+        logger.start()
+        
         // capture
         guard let token else { throw Error.tokenIsNil }
         guard id.isExist else { throw Error.googleRegisterFormIsDeleted }
@@ -48,6 +52,8 @@ package final class GoogleRegisterForm: GoogleRegisterFormInterface {
         try await Auth.auth().signIn(with: googleCredential)
     }
     package func remove() {
+        logger.start()
+        
         accountHub.ref?.googleRegisterForms[ticket] = nil
         self.delete()
     }

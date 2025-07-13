@@ -8,8 +8,6 @@ import Foundation
 import Values
 import Collections
 
-private let logger = WorkFlow.getLogger(for: "ProjectHubMock")
-
 
 // MARK: Object
 @Server
@@ -48,7 +46,6 @@ package final class ProjectHubMock: ProjectHubInterface {
             $0.ref?.target == project
         }
         guard let projectSourceRef = projectSource?.ref else {
-            logger.failure("ProjectSourceMock 존재하지 않음")
             return
         }
         let workflow = WorkFlow.id

@@ -7,6 +7,8 @@
 import Foundation
 import Values
 
+private let logger = WorkFlow.getLogger(for: "AuthBoard")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -34,6 +36,8 @@ public final class AuthBoard: Debuggable {
     
     // MARK: action
     public func setUpForms() async {
+        logger.start()
+        
         await setUpForms(beforeMutate: nil)
     }
     func setUpForms(beforeMutate: Hook?) async {
@@ -43,7 +47,11 @@ public final class AuthBoard: Debuggable {
         // mutate
         await beforeMutate?()
         guard id.isExist else { setIssue(Error.authBoardIsDeleted); return }
-        guard signInForm == nil && googleForm == nil else { setIssue(Error.alreadySetUp); return }
+        guard signInForm == nil && googleForm == nil else {
+            setIssue(Error.alreadySetUp)
+            logger.failure(Error.alreadySetUp)
+            return
+        }
         
         let emailFormRef = SignInForm(tempConfig: myConfig)
         let googleFormRef = GoogleForm(tempConfig: myConfig)

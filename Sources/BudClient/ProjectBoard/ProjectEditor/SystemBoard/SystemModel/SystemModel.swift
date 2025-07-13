@@ -8,6 +8,8 @@ import Foundation
 import Values
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "SystemModel")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -48,6 +50,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     // MARK: action
     public func subscribe() async {
+        logger.start()
+        
         await subscribe(captureHook: nil)
     }
     func subscribe(captureHook: Hook?) async {

@@ -41,7 +41,6 @@ public final class ProjectEditor: Debuggable {
     public internal(set) var nameInput: String?
     public func setNameInput(_ value: String) {
         self.nameInput = value
-        logger.success(value)
     }
     
     
@@ -54,13 +53,18 @@ public final class ProjectEditor: Debuggable {
     
     // MARK: action
     public func setUp() async {
+        logger.start()
+        
         await setUp(mutateHook: nil)
     }
     func setUp(mutateHook:Hook?) async {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard systemBoard == nil && flowBoard == nil && valueBoard == nil else { setIssue(Error.alreadySetUp); return }
+        guard systemBoard == nil && flowBoard == nil && valueBoard == nil else { setIssue(Error.alreadySetUp)
+            logger.failure(Error.alreadySetUp)
+            return
+        }
         let myConfig = self.config.setParent(id)
         
         let systemBoardRef = SystemBoard(config: myConfig)
@@ -73,13 +77,19 @@ public final class ProjectEditor: Debuggable {
     }
     
     public func pushName() async {
+        logger.start()
+        
         await self.pushName(captureHook: nil)
     }
     func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard let nameInput else { setIssue(Error.nameInputIsNil); return}
+        guard let nameInput else {
+            setIssue(Error.nameInputIsNil)
+            logger.failure(Error.nameInputIsNil)
+            return
+        }
         let projectSource = self.source
         let target = self.target
         let config = self.config
@@ -101,10 +111,11 @@ public final class ProjectEditor: Debuggable {
             logger.failure(error)
             setUnknownIssue(error); return
         }
-        logger.success(nameInput)
     }
     
     public func removeProject() async {
+        logger.start()
+        
         await self.removeProject(captureHook: nil)
     }
     func removeProject(captureHook: Hook?) async {

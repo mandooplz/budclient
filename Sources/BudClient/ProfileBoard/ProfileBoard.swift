@@ -8,6 +8,8 @@ import Foundation
 import Values
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "ProfileBoard")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -32,6 +34,8 @@ public final class ProfileBoard: Debuggable {
     
     // MARK: action
     public func signOut() async {
+        logger.start()
+        
         await signOut(captureHook: nil, mutateHook: nil)
     }
     func signOut(captureHook: Hook?, mutateHook: Hook?) async {
@@ -55,7 +59,9 @@ public final class ProfileBoard: Debuggable {
                 }
             }
         } catch {
-            setUnknownIssue(error); return
+            setUnknownIssue(error)
+            logger.failure(error)
+            return
         }
 
         

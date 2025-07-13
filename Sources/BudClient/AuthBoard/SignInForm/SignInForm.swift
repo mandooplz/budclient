@@ -9,6 +9,8 @@ import Values
 import BudServer
 import BudCache
 
+private let logger = WorkFlow.getLogger(for: "SignInForm")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -38,6 +40,8 @@ public final class SignInForm: Debuggable {
     
     // MARK: action
     public func signInByCache() async {
+        logger.start()
+        
         await signInByCache(captureHook: nil,
                             mutateHook: nil)
     }
@@ -56,7 +60,9 @@ public final class SignInForm: Debuggable {
             return await budCacheRef.getUser()
         }()
         guard let user = await result else {
-            setIssue(Error.userIsNilInCache); return
+            setIssue(Error.userIsNilInCache)
+            logger.failure(Error.userIsNilInCache)
+            return
         }
         
         // mutate
@@ -68,14 +74,24 @@ public final class SignInForm: Debuggable {
     }
     
     public func signIn() async {
+        logger.start()
+        
         await self.signIn(captureHook: nil, mutateHook: nil)
     }
     func signIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
-        guard email.isEmpty == false else { setIssue(Error.emailIsNil); return }
-        guard password.isEmpty == false else { setIssue(Error.passwordIsNil); return }
+        guard email.isEmpty == false else {
+            setIssue(Error.emailIsNil)
+            logger.failure(Error.emailIsNil)
+            return
+        }
+        guard password.isEmpty == false else {
+            setIssue(Error.passwordIsNil)
+            logger.failure(Error.passwordIsNil)
+            return
+        }
         
         let authBoardRef = self.tempConfig.parent.ref!
         let budClientRef = authBoardRef.tempConfig.parent.ref!
@@ -93,14 +109,19 @@ public final class SignInForm: Debuggable {
             user = try await userFromServer
             
             await budCacheRef.setUser(user)
-        } catch(let error as AccountHubError) {
-            switch error {
-            case .userNotFound: setIssue(Error.userNotFound)
-            case .wrongPassword: setIssue(Error.wrongPassword)
-            }
-            return
         } catch {
-            setUnknownIssue(error); return
+            logger.failure(error)
+            
+            if error is AccountHubError {
+                switch error as! AccountHubError {
+                case .userNotFound: setIssue(Error.userNotFound)
+                case .wrongPassword: setIssue(Error.wrongPassword)
+                }
+            } else {
+                setUnknownIssue(error)
+            }
+            
+            return
         }
         
         // mutate
@@ -135,13 +156,18 @@ public final class SignInForm: Debuggable {
     }
     
     public func setUpSignUpForm() async {
+        logger.start()
+        
         await setUpSignUpForm(mutateHook: nil)
     }
     func setUpSignUpForm(mutateHook: Hook?) async {
         // mutate
         await mutateHook?()
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
-        guard signUpForm == nil else { return }
+        guard signUpForm == nil else {
+            logger.failure(Error.signUpFormAlreadyExist)
+            return
+        }
         
         let myConfig = tempConfig.setParent(self.id)
         
@@ -168,6 +194,7 @@ public final class SignInForm: Debuggable {
     }
     public enum Error: String, Swift.Error {
         case signInFormIsDeleted
+        case signUpFormAlreadyExist
         case emailIsNil, passwordIsNil
         case userNotFound, wrongPassword
         case userIsNilInCache

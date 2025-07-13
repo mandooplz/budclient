@@ -44,11 +44,11 @@ package final class ProjectHub: ProjectHubInterface {
         
         let db = Firestore.firestore()
         self.listeners[requester] = db.collection(ProjectSources.name)
-            .whereField(ProjectSource.State.creator.rawValue,
+            .whereField("creator",
                         isEqualTo: user.encode())
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    print("Error fetching snapshots: \(error!)")
+                    logger.critical(error!)
                     return
                 }
                 
@@ -58,8 +58,11 @@ package final class ProjectHub: ProjectHubInterface {
                     let documentId = diff.document.documentID
                     let projectSource = ProjectSource.ID(documentId)
                     
-                    guard let data = try? diff.document.data(as: ProjectSource.Data.self) else {
-                        logger.failure("ProjectSource.Data decode 실패")
+                    let data: ProjectSource.Data
+                    do {
+                        data = try diff.document.data(as: ProjectSource.Data.self)
+                    } catch {
+                        logger.critical("ProjectSource 디코딩 실패\n\(error)")
                         return
                     }
                     
@@ -76,14 +79,14 @@ package final class ProjectHub: ProjectHubInterface {
                                                      target: projectSourceRef.target,
                                                      name: data.name)
                         
-                        handler.execute(.added(diff), isSourcesEmpty ? workflow : data.metadata.create)
+                        handler.execute(.added(diff), isSourcesEmpty ? workflow : data.createBy)
                     case .modified:
                         // serve event
                         let diff = ProjectSourceDiff(id: projectSource,
                                                       target: data.target,
                                                       name: data.name)
                         
-                        handler.execute(.modified(diff), data.metadata.update!)
+                        handler.execute(.modified(diff), data.updateBy!)
                     case .removed:
                         // remove ProjectSource
                         projectSource.ref?.delete()
@@ -94,7 +97,7 @@ package final class ProjectHub: ProjectHubInterface {
                                                      target: data.target,
                                                      name: data.name)
                         
-                        handler.execute(.removed(diff), data.metadata.remove!)
+                        handler.execute(.removed(diff), data.removedBy!)
                     }
                 }
             }
@@ -110,6 +113,8 @@ package final class ProjectHub: ProjectHubInterface {
     
     // MARK: action
     package func createNewProject() throws {
+        logger.start()
+        
         let db = Firestore.firestore()
         let workflow = WorkFlow.id
         
@@ -117,14 +122,13 @@ package final class ProjectHub: ProjectHubInterface {
             let ticket = tickets.removeFirst()
             
             // create ProjectSource in Firestore
-            let metadata = ProjectSource.Data.MetaData(create: workflow,
-                                                       update: nil,
-                                                       remove: nil)
             let data = ProjectSource.Data(name: ticket.name,
                                           creator: ticket.creator,
                                           target: ticket.target,
                                           systemModelCount: 0,
-                                          metadata: metadata)
+                                          createBy: workflow,
+                                          updateBy: nil,
+                                          removedBy: nil)
             
             try db.collection(ProjectSources.name).addDocument(from: data)
         }

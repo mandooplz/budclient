@@ -9,9 +9,11 @@ import Values
 import BudServer
 import FirebaseAuth
 
+private let logger = WorkFlow.getLogger(for: "BudCache")
+
 
 // MARK: Object
-@Server
+@MainActor
 package final class BudCache: BudCacheInterface {
     // MARK: core
     package init() {
@@ -31,13 +33,15 @@ package final class BudCache: BudCacheInterface {
     package func setUser(_ user: UserID?) {
         return
     }
-    @MainActor package func removeUser() throws {
+    package func removeUser() throws {
+        logger.start()
+        
         try Auth.auth().signOut()
     }
     
     
     // MARK: value
-    @Server
+    @MainActor
     package struct ID: BudCacheIdentity {
         let value = "BudCache"
         nonisolated init() { }
@@ -53,7 +57,7 @@ package final class BudCache: BudCacheInterface {
 
 
 // MARK: ObjectManager
-@Server
+@MainActor
 fileprivate final class BudCacheManager: Sendable {
     // MARK: state
     fileprivate static var container: [BudCache.ID: BudCache] = [:]

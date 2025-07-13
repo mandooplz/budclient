@@ -9,6 +9,8 @@ import Values
 import BudServer
 import BudCache
 
+private let logger = WorkFlow.getLogger(for: "SignUpForm")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -37,16 +39,33 @@ public final class SignUpForm: Debuggable {
     
     // MARK: action
     public func signUp() async {
+        logger.start()
         await signUp(captureHook: nil, mutateHook: nil)
     }
     func signUp(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
-        guard let email else { setIssue(Error.emailIsNil); return }
-        guard let password else { setIssue(Error.passwordIsNil); return }
-        guard let passwordCheck else { setIssue(Error.passwordCheckIsNil); return }
-        if password != passwordCheck { setIssue(Error.passwordsDoNotMatch); return }
+        guard let email else {
+            setIssue(Error.emailIsNil)
+            logger.failure(Error.emailIsNil)
+            return
+        }
+        guard let password else {
+            setIssue(Error.passwordIsNil)
+            logger.failure(Error.passwordIsNil)
+            return
+        }
+        guard let passwordCheck else {
+            setIssue(Error.passwordCheckIsNil)
+            logger.failure(Error.passwordCheckIsNil)
+            return
+        }
+        guard password == passwordCheck else {
+            setIssue(Error.passwordsDoNotMatch)
+            logger.failure(Error.passwordsDoNotMatch)
+            return
+        }
         
         let signInFormRef = self.tempConfig.parent.ref!
         let authBoardRef = signInFormRef.tempConfig.parent.ref!
@@ -80,12 +99,12 @@ public final class SignUpForm: Debuggable {
             user = try await accountHubRef.getUser(email: email,
                                                    password: password)
             
-//            user = try await result
-            
             // setUserId
             await budCacheRef.setUser(user)
         } catch {
-            setUnknownIssue(error); return
+            setUnknownIssue(error)
+            logger.failure(error)
+            return
         }
         
         // compute
@@ -114,6 +133,8 @@ public final class SignUpForm: Debuggable {
     }
     
     public func remove() async {
+        logger.start()
+        
         await remove(mutateHook: nil)
     }
     internal func remove(mutateHook: Hook?) async {

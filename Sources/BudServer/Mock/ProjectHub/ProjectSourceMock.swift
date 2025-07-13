@@ -42,7 +42,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     private(set) var name: String
     package func setName(_ value: String) {
         self.name = value
-        logger.success(value)
+        logger.start(value)
     }
     
     private(set) var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]

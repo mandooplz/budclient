@@ -9,6 +9,8 @@ import Values
 import BudCache
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "GoogleForm")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -38,6 +40,8 @@ public final class GoogleForm: Debuggable {
     
     // MARK: action
     public func fetchGoogleClientId() async {
+        logger.start()
+        
         await self.fetchGoogleClientId(mutateHook: nil)
     }
     func fetchGoogleClientId(mutateHook: Hook?) async {
@@ -59,6 +63,8 @@ public final class GoogleForm: Debuggable {
     }
     
     public func signUpAndSignIn() async {
+        logger.start()
+        
         await signUpAndSignIn(captureHook: nil, mutateHook: nil)
     }
     func signUpAndSignIn(captureHook: Hook?, mutateHook: Hook?) async {
@@ -105,7 +111,9 @@ public final class GoogleForm: Debuggable {
             // save in BudCache
             await budCacheRef.setUser(user)
         } catch {
-            setUnknownIssue(error); return
+            setUnknownIssue(error)
+            logger.failure(error)
+            return
         }
         
         // compute

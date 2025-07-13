@@ -10,6 +10,8 @@ import Collections
 import FirebaseAuth
 import FirebaseCore
 
+private let logger = WorkFlow.getLogger(for: "AccountHub")
+
 
 // MARK: Object
 @MainActor
@@ -48,6 +50,8 @@ package final class AccountHub: AccountHubInterface {
         return true
     }
     package func getUser(email: String, password: String) async throws -> UserID {
+        logger.start()
+        
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             return UserID(result.user.uid)
@@ -67,6 +71,8 @@ package final class AccountHub: AccountHubInterface {
         }
     }
     package func getUser(token: GoogleToken) async throws -> UserID {
+        logger.start()
+        
         if let user = Auth.auth().currentUser {
             return UserID(user.uid)
         }
@@ -96,6 +102,8 @@ package final class AccountHub: AccountHubInterface {
     
     // MARK: action
     package func createFormsFromTickets() {
+        logger.start()
+        
         // capture
         let accountHub = self.id
         

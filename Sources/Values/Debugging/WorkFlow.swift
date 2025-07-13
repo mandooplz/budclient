@@ -16,10 +16,19 @@ public struct WorkFlow: Sendable {
     // MARK: core
     @discardableResult
         public init(id: WorkFlow.ID? = nil, task: @Sendable @escaping () async throws -> Void) async rethrows {
-            let workflow = id ?? WorkFlow.ID(value: UUID())
             
-            try await WorkFlow.$id.withValue(workflow) {
-                try await task()
+            if let workflow = id {
+                try await WorkFlow.$id.withValue(workflow) {
+                    try await task()
+                }
+            } else {
+                let newWorkflow = WorkFlow.ID(value: UUID())
+                
+                BudLogger.start(newWorkflow)
+                try await WorkFlow.$id.withValue(newWorkflow) {
+                    try await task()
+                }
+                BudLogger.end(newWorkflow)
             }
         }
 

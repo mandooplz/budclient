@@ -20,22 +20,22 @@ public struct BudLogger: Sendable {
     
     
     // MARK: log
-    func start(_ workflow: WorkFlow.ID = WorkFlow.id) {
-        logger.debug("[\(workflow)] 🚀 start")
+    static func start(_ workflow: WorkFlow.ID = WorkFlow.id) {
+        Logger(subsystem: "Bud", category: "").debug("[\(workflow)] start")
     }
     
-    func end(_ workflow: WorkFlow.ID = WorkFlow.id) {
-        logger.debug("[\(workflow)] 💨 end")
+    static func end(_ workflow: WorkFlow.ID = WorkFlow.id) {
+        Logger(subsystem: "Bud", category: "").debug("[\(workflow)] end")
     }
     
-    public func success(_ description: String? = nil,
-                        _ workflow: WorkFlow.ID = WorkFlow.id,
-                        _ routine: String = #function) {
+    public func start(_ description: String? = nil,
+                      _ workflow: WorkFlow.ID = WorkFlow.id,
+                      _ routine: String = #function) {
         
         if let description {
-            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) success\n\(description)")
+            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) start\n\(description)")
         } else {
-            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) success")
+            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) start")
         }
     }
     
@@ -48,18 +48,18 @@ public struct BudLogger: Sendable {
     public func failure(_ error: Error,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ routine: String = #function) {
-        self.failure(error.localizedDescription, workflow, routine)
+        self.failure(error, workflow, routine)
     }
     
     public func critical(_ description: String,
                          _ workflow: WorkFlow.ID = WorkFlow.id,
                          _ routine: String = #function) {
-        logger.fault("[\(workflow)] 🚨 \(objectName).\(routine) critical\n\(description)")
+        logger.fault("[\(workflow)] ❌ \(objectName).\(routine) critical\n\(description)")
     }
     
     public func critical(_ error: Error,
                          _ workflow: WorkFlow.ID = WorkFlow.id,
                          _ routine: String = #function) {
-        self.critical(error.localizedDescription, workflow, routine)
+        self.critical(error, workflow, routine)
     }
 }

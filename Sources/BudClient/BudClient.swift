@@ -49,6 +49,8 @@ public final class BudClient: Debuggable {
     
     // MARK: action
     public func setUp() async {
+        logger.start()
+        
         // capture
         guard authBoard == nil && projectBoard == nil && profileBoard == nil
         else {
@@ -79,9 +81,6 @@ public final class BudClient: Debuggable {
         let tempConfig = TempConfig(id, mode, system, budServer, budCache)
         let authBoardRef = AuthBoard(tempConfig: tempConfig)
         self.authBoard = authBoardRef.id
-        
-        // logging
-        logger.success()
     }
     
     
