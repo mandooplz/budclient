@@ -7,6 +7,7 @@
 import Foundation
 import Values
 import BudServer
+import Collections
 
 private let logger = WorkFlow.getLogger(for: "SystemBoard")
 
@@ -29,7 +30,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectEditor.ID>
     
-    public internal(set) var models: [Location: SystemModel.ID] = [:]
+    public internal(set) var models = OrderedDictionary<Location,SystemModel.ID>()
     func isExist(_ target: SystemID) -> Bool {
         self.models.values.lazy
             .compactMap { $0.ref }

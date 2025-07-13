@@ -219,12 +219,12 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
-        let value: UUID
+        public let value: UUID
         nonisolated init(value: UUID = UUID()) {
             self.value = value
         }
         
-        var isExist: Bool {
+        public var isExist: Bool {
             SystemModelManager.container[self] != nil
         }
         public var ref: SystemModel? {
