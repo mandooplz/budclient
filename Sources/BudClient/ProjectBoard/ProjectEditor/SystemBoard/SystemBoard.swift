@@ -76,11 +76,11 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                 
                 await projectSourceRef.setHandler(
                     requester: me,
-                    handler: .init({ event, workflow in
+                    handler: .init({ event in
                         Task { @MainActor in
                             guard let updaterRef = systemBoard.ref?.updater else { return }
                             
-                            updaterRef.queue.append(event)
+                            await updaterRef.appendEvent(event)
                             await updaterRef.update()
                             
                             await callback?()

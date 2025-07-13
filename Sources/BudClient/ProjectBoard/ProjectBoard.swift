@@ -66,12 +66,14 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
             group.addTask {
                 guard let budServerRef = await config.budServer.ref,
                       let projectHubRef = await budServerRef.projectHub.ref else {
-                    logger.critical("ProjectHub가 존재하지 않습니다.")
+                    let log = logger.getLog("ProjectHub가 존재하지 않습니다.")
+                    logger.raw.fault("\(log)")
                     return
                 }
                 
                 let isSubscribed = await projectHubRef.hasHandler(requester: me)
                 guard isSubscribed == false else {
+                    await projectBoard.ref?.setIssue(Error.alreadySubscribed)
                     logger.failure(Error.alreadySubscribed)
                     return
                 }
@@ -79,9 +81,9 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                 await projectHubRef.setHandler(
                     requester: me,
                     user: config.user,
-                    handler: .init({ event, workflow in
+                    handler: .init({ event in
                         Task {
-                            await WorkFlow(id: workflow) {
+                            await WorkFlow {
                                 guard let updaterRef = await projectBoard.ref?.updater else {
                                     return
                                 }

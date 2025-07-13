@@ -40,7 +40,6 @@ package final class ProjectHub: ProjectHubInterface {
                             user: UserID,
                             handler: Handler<ProjectHubEvent>) {
         guard listeners[requester] == nil else { return }
-        let workflow = WorkFlow.id
         
         let db = Firestore.firestore()
         self.listeners[requester] = db.collection(ProjectSources.name)
@@ -48,7 +47,8 @@ package final class ProjectHub: ProjectHubInterface {
                         isEqualTo: user.encode())
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    logger.critical(error!)
+                    let log = logger.getLog("\(error!)")
+                    logger.raw.fault("\(log)")
                     return
                 }
                 
@@ -62,7 +62,8 @@ package final class ProjectHub: ProjectHubInterface {
                     do {
                         data = try diff.document.data(as: ProjectSource.Data.self)
                     } catch {
-                        logger.critical("ProjectSource 디코딩 실패\n\(error)")
+                        let log = logger.getLog("ProjetSource 디코딩 실패\n\(error)")
+                        logger.raw.fault("\(log)")
                         return
                     }
                     
@@ -79,14 +80,14 @@ package final class ProjectHub: ProjectHubInterface {
                                                      target: projectSourceRef.target,
                                                      name: data.name)
                         
-                        handler.execute(.added(diff), isSourcesEmpty ? workflow : data.createBy)
+                        handler.execute(.added(diff))
                     case .modified:
                         // serve event
                         let diff = ProjectSourceDiff(id: projectSource,
                                                       target: data.target,
                                                       name: data.name)
                         
-                        handler.execute(.modified(diff), data.updateBy!)
+                        handler.execute(.modified(diff))
                     case .removed:
                         // remove ProjectSource
                         projectSource.ref?.delete()
@@ -97,7 +98,7 @@ package final class ProjectHub: ProjectHubInterface {
                                                      target: data.target,
                                                      name: data.name)
                         
-                        handler.execute(.removed(diff), data.removedBy!)
+                        handler.execute(.removed(diff))
                     }
                 }
             }
@@ -125,10 +126,7 @@ package final class ProjectHub: ProjectHubInterface {
             let data = ProjectSource.Data(name: ticket.name,
                                           creator: ticket.creator,
                                           target: ticket.target,
-                                          systemModelCount: 0,
-                                          createBy: workflow,
-                                          updateBy: nil,
-                                          removedBy: nil)
+                                          systemModelCount: 0)
             
             try db.collection(ProjectSources.name).addDocument(from: data)
         }

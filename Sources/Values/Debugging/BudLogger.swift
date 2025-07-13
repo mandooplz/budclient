@@ -18,6 +18,10 @@ public struct BudLogger: Sendable {
         self.logger = Logger(subsystem: "Bud", category: objectName)
     }
     
+    public var raw: Logger {
+        return self.logger
+    }
+    
     
     // MARK: log
     static func start(_ workflow: WorkFlow.ID = WorkFlow.id) {
@@ -33,9 +37,9 @@ public struct BudLogger: Sendable {
                       _ routine: String = #function) {
         
         if let description {
-            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) start\n\(description)")
+            logger.debug("[\(workflow)] \(objectName).\(routine) start\n\(description)")
         } else {
-            logger.debug("[\(workflow)] ✅ \(objectName).\(routine) start")
+            logger.debug("[\(workflow)] \(objectName).\(routine) start")
         }
     }
     
@@ -48,18 +52,14 @@ public struct BudLogger: Sendable {
     public func failure(_ error: Error,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ routine: String = #function) {
-        self.failure(error, workflow, routine)
+        self.failure("\(error)", workflow, routine)
     }
     
-    public func critical(_ description: String,
-                         _ workflow: WorkFlow.ID = WorkFlow.id,
-                         _ routine: String = #function) {
-        logger.fault("[\(workflow)] ❌ \(objectName).\(routine) critical\n\(description)")
-    }
     
-    public func critical(_ error: Error,
-                         _ workflow: WorkFlow.ID = WorkFlow.id,
-                         _ routine: String = #function) {
-        self.critical(error, workflow, routine)
+    // MARK: Message
+    public func getLog(_ description: String,
+                          _ workflow: WorkFlow.ID = WorkFlow.id,
+                          _ routine: String = #function) -> String {
+        return "[\(workflow)] ❌ \(objectName).\(routine) critical\n\(description)"
     }
 }

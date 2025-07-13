@@ -56,7 +56,6 @@ package final class SystemSourceMock: SystemSourceInterface {
         guard id.isExist else { return }
         guard let projectSourceRef = parent.ref else { return }
         let eventHandlers = projectSourceRef.eventHandlers
-        let workflow = WorkFlow.id
         
         let diff = SystemSourceDiff(id: id,
                                     target: target,
@@ -64,7 +63,7 @@ package final class SystemSourceMock: SystemSourceInterface {
                                     location: location)
         
         for (_, handler) in eventHandlers {
-            handler.execute(.modified(diff), workflow)
+            handler.execute(.modified(diff))
         }
     }
     

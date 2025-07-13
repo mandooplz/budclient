@@ -75,9 +75,9 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                 
                 await systemSourceRef.setHandler(
                     requester: me,
-                    handler: .init({ event, workflow in
+                    handler: .init({ event in
                         Task {
-                            await WorkFlow(id: workflow) {
+                            await WorkFlow {
                                 guard let updaterRef = await systemModel.ref?.updater else { return }
                                 
                                 await updaterRef.appendEvent(event)

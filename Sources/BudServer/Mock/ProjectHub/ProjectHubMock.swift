@@ -48,14 +48,13 @@ package final class ProjectHubMock: ProjectHubInterface {
         guard let projectSourceRef = projectSource?.ref else {
             return
         }
-        let workflow = WorkFlow.id
         
         let diff = ProjectSourceDiff(id: projectSourceRef.id,
                                      target: projectSourceRef.target,
                                      name: projectSourceRef.name)
         
         for (_, handler) in eventHandlers {
-            handler.execute(.modified(diff), workflow)
+            handler.execute(.modified(diff))
         }
     }
     
@@ -83,7 +82,7 @@ package final class ProjectHubMock: ProjectHubInterface {
             
             let event = ProjectHubEvent.added(diff)
             for handler in eventHandlers.values {
-                handler.execute(event, workflow)
+                handler.execute(event)
             }
         }
     }

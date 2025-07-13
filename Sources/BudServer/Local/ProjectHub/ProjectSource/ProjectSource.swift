@@ -9,7 +9,7 @@ import Values
 import Collections
 import FirebaseFirestore
 
-private nonisolated let logger = WorkFlow.getLogger(for: "ProjectSource")
+private let logger = WorkFlow.getLogger(for: "ProjectSource")
 
 
 // MARK: Object
@@ -42,10 +42,7 @@ package final class ProjectSource: ProjectSourceInterface {
         let docRef = db.collection(ProjectSources.name).document(id.value)
         
         let updateData: [String: Any] = [
-            "name": value,
-            "updateBy": [
-                "value": WorkFlow.id.value?.uuidString
-                ]
+            "name": value
         ]
         
         docRef.updateData(updateData)
@@ -61,7 +58,6 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // 중복 방지
         guard self.listeners[requester] == nil else { return }
-        let workflow = WorkFlow.id
         
         let db = Firestore.firestore()
         self.listeners[requester] = db.collection(ProjectSources.name)
@@ -69,7 +65,8 @@ package final class ProjectSource: ProjectSourceInterface {
             .collection(ProjectSources.SystemSources.name)
             .addSnapshotListener({ snapshot, error in
                 guard let snapshot else {
-                    logger.critical(error!)
+                    let log = logger.getLog("\(error!)")
+                    logger.raw.fault("\(log)")
                     return
                 }
                 
@@ -81,7 +78,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     do {
                         data = try changed.document.data(as: SystemSource.Data.self)
                     } catch {
-                        logger.critical("SystemSource 디코딩 실패 \n\(error)")
+                        logger.raw.fault("SystemSource 디코딩 실패\n\(error)")
                         return
                     }
                     
@@ -100,15 +97,15 @@ package final class ProjectSource: ProjectSourceInterface {
                         self.systemSources.insert(systemSourceRef.id)
 
                         // serve event
-                        handler.execute(.added(diff), data.updateBy)
+                        handler.execute(.added(diff))
                     case .modified:
-                        handler.execute(.modified(diff), data.updateBy)
+                        handler.execute(.modified(diff))
                     case .removed:
                         // delete SystemSource
                         systemSource.ref?.delete()
                         
                         // serve event
-                        handler.execute(.removed(diff), data.updateBy)
+                        handler.execute(.removed(diff))
                     }
                 }
             })
@@ -133,7 +130,7 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // transaction
         do {
-            try await db.runTransaction { @Sendable transaction, errorPointer in
+            let _ = try await db.runTransaction { @Sendable transaction, errorPointer in
                 do {
                     // check ProjectSource.systemModelCoun
                     let data = try transaction.getDocument(projectSourceRef)
@@ -206,10 +203,6 @@ package final class ProjectSource: ProjectSourceInterface {
         package var creator: UserID
         package var target: ProjectID
         package var systemModelCount: Int
-        
-        package var createBy: WorkFlow.ID
-        package var updateBy: WorkFlow.ID?
-        package var removedBy: WorkFlow.ID?
     }
 }
 

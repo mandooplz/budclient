@@ -8,13 +8,13 @@
 
 // MARK: Handler
 package struct Handler<Event>: Sendable where Event: Sendable {
-    package let routine: @Sendable (Event, WorkFlow.ID) -> Void
+    package let routine: @Sendable (Event) -> Void
     
-    package func execute(_ event: Event, _ workflow: WorkFlow.ID) {
-        self.routine(event, workflow)
+    package func execute(_ event: Event) {
+        self.routine(event)
     }
     
-    package init(_ routine: @Sendable @escaping (Event, WorkFlow.ID) -> Void) {
+    package init(_ routine: @Sendable @escaping (Event) -> Void) {
         self.routine = routine
     }
 }

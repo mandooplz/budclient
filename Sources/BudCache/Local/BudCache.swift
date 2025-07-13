@@ -33,10 +33,15 @@ package final class BudCache: BudCacheInterface {
     package func setUser(_ user: UserID?) {
         return
     }
-    package func removeUser() throws {
+    package func removeUser() {
         logger.start()
         
-        try Auth.auth().signOut()
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            let log = logger.getLog("\(error)")
+            logger.raw.fault("\(log)")
+        }
     }
     
     

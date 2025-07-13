@@ -35,6 +35,8 @@ package final class SystemSource: SystemSourceInterface {
     nonisolated let parent: ProjectSource.ID
     
     package func setName(_ value: String) {
+        logger.start()
+        
         // compute
         guard let projectSourceRef = parent.ref else { return }
         
@@ -56,6 +58,8 @@ package final class SystemSource: SystemSourceInterface {
         listeners[requester] != nil
     }
     package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) {
+        logger.start()
+        
         let db = Firestore.firestore()
         
         // rootSource listener
@@ -66,7 +70,8 @@ package final class SystemSource: SystemSourceInterface {
             .collection(ProjectSources.SystemSources.RootSources.name)
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    print("Error fetching snapshots: \(error!)")
+                    let report = logger.getLog("\(error!)")
+                    logger.raw.fault("\(report)")
                     return
                 }
                 
@@ -93,7 +98,8 @@ package final class SystemSource: SystemSourceInterface {
             .collection(ProjectSources.SystemSources.ObjectSources.name)
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    print("Error fetching snapshots: \(error!)")
+                    let report = logger.getLog("\(error!)")
+                    logger.raw.fault("\(report)")
                     return
                 }
                 

@@ -16,7 +16,7 @@ package protocol BudCacheInterface: Sendable {
     
     func getUser() async -> UserID?
     func setUser(_ user: UserID?) async
-    func removeUser() async throws
+    func removeUser() async
 }
 
 package protocol BudCacheIdentity: Sendable, Hashable {
