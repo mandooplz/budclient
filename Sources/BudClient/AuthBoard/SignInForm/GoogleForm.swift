@@ -16,7 +16,7 @@ private let logger = WorkFlow.getLogger(for: "GoogleForm")
 @MainActor @Observable
 public final class GoogleForm: Debuggable {
     // MARK: core
-    init(tempConfig: TempConfig<AuthBoard.ID>) {
+    init(tempConfig: TempConfig<SignInForm.ID>) {
         self.tempConfig = tempConfig
         
         GoogleFormManager.register(self)
@@ -28,7 +28,7 @@ public final class GoogleForm: Debuggable {
     
     // MARK: state
     public nonisolated let id = ID()
-    public nonisolated let tempConfig: TempConfig<AuthBoard.ID>
+    public nonisolated let tempConfig: TempConfig<SignInForm.ID>
     
     public private(set) var googleClientId: String?
     
@@ -75,7 +75,7 @@ public final class GoogleForm: Debuggable {
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
         
         let config = tempConfig
-        let authBoardRef = config.parent.ref!
+        let authBoardRef = config.parent.ref!.tempConfig.parent.ref!
         let budClientRef = authBoardRef.tempConfig.parent.ref!
         
         // compute

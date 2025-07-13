@@ -173,8 +173,11 @@ struct SignUpFormTests {
         }
         @Test func deleteGoogleForm() async throws {
             // given
-            let authBoardRef = await budClientRef.authBoard!.ref!
-            let googleForm = await authBoardRef.googleForm!
+            let authBoardRef = try #require(await budClientRef.authBoard?.ref)
+            let signInFormRef = try #require(await authBoardRef.signInForm?.ref)
+            await signInFormRef.setUpGoogleForm()
+            
+            let googleForm = try #require(await signInFormRef.googleForm)
             
             await MainActor.run {
                 signUpFormRef.email = testEmail
@@ -190,6 +193,7 @@ struct SignUpFormTests {
             
             await #expect(googleForm.isExist == false)
         }
+        
         @Test func setAuthBoard() async throws {
             // given
             await MainActor.run {

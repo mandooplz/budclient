@@ -35,7 +35,6 @@ struct AuthBoardTests {
             #expect(issue.reason == "authBoardIsDeleted")
             
             await #expect(authBoardRef.signInForm == nil)
-            await #expect(authBoardRef.googleForm == nil)
         }
         
         @Test func setSignInForm() async throws {
@@ -60,44 +59,19 @@ struct AuthBoardTests {
             await #expect(emailForm.isExist == true)
         }
         
-        @Test func setGoogleForm() async throws {
-            // given
-            try await #require(authBoardRef.googleForm == nil)
-            
-            // when
-            await authBoardRef.setUpForms()
-            
-            // then
-            await #expect(authBoardRef.googleForm != nil)
-        }
-        @Test func createGoogleForm() async throws {
-            // given
-            try await #require(authBoardRef.googleForm == nil)
-            
-            // when
-            await authBoardRef.setUpForms()
-            
-            // then
-            let googleForm = try #require(await authBoardRef.googleForm)
-            await #expect(googleForm.isExist == true)
-        }
-        
         @Test func whenFormsAlreadySetUp() async throws {
             // given
             try await #require(authBoardRef.signInForm == nil)
-            try await #require(authBoardRef.googleForm == nil)
             
             await authBoardRef.setUpForms()
             
             let emailForm = try #require(await authBoardRef.signInForm)
-            let googleForm = try #require(await authBoardRef.googleForm)
             
             // when
             await authBoardRef.setUpForms()
             
             // then
             await #expect(authBoardRef.signInForm == emailForm)
-            await #expect(authBoardRef.googleForm == googleForm)
         }
     }
 }

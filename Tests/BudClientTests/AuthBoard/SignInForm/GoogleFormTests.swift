@@ -17,9 +17,9 @@ struct GoogleFormTests {
     struct FetchGoogleClientId {
         let budClientRef: BudClient
         let googleFormRef: GoogleForm
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.googleFormRef = await getGoogleForm(budClientRef)
+            self.googleFormRef = try await getGoogleForm(budClientRef)
         }
         
         @Test func whenGoogleFormIsDeleted() async throws {
@@ -53,10 +53,10 @@ struct GoogleFormTests {
         let budClientRef: BudClient
         let authBoardRef: AuthBoard
         let googleFormRef: GoogleForm
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.googleFormRef = await getGoogleForm(budClientRef)
-            self.authBoardRef = await googleFormRef.tempConfig.parent.ref!
+            self.googleFormRef = try await getGoogleForm(budClientRef)
+            self.authBoardRef = await googleFormRef.tempConfig.parent.ref!.tempConfig.parent.ref!
         }
         
         @Test func whenGoogleFormIsDeletedBeforeCapture() async throws {
@@ -277,16 +277,18 @@ struct GoogleFormTests {
 
 
 // MARK: Helphers
-private func getGoogleForm(_ budClientRef: BudClient) async -> GoogleForm {
+private func getGoogleForm(_ budClientRef: BudClient) async throws -> GoogleForm {
     await budClientRef.setUp()
     
-    let authBoard = await budClientRef.authBoard!
-    let authBoardRef = await authBoard.ref!
+    let authBoard = try #require(await budClientRef.authBoard)
+    let authBoardRef = try #require(await authBoard.ref)
     
     await authBoardRef.setUpForms()
     
-    let googleForm = await authBoardRef.googleForm!
-    let googleFormRef = await googleForm.ref!
+    let signInFormRef = try #require(await authBoardRef.signInForm?.ref)
+    await signInFormRef.setUpGoogleForm()
+    
+    let googleFormRef = try #require(await signInFormRef.googleForm?.ref)
     
     return googleFormRef
 }

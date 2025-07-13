@@ -23,7 +23,7 @@ struct SignInFormTests {
             self.signInFormRef = await getEmailForm(budClientRef)
         }
         
-        @Test func whenSignInFormIsDeletedBeforeMutate() async throws {
+        @Test func whenSignInFormIsDeleted() async throws {
             // given
             try await #require(signInFormRef.id.isExist == true)
             
@@ -73,6 +73,51 @@ struct SignInFormTests {
             
             // then
             await #expect(signInFormRef.signUpForm == signUpForm)
+        }
+    }
+    
+    struct SetUpGoogleForm {
+        let budClientRef: BudClient
+        let signInFormRef: SignInForm
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.signInFormRef = await getEmailForm(budClientRef)
+        }
+        
+        @Test func whenSignInFormIsDeleted() async throws {
+            // given
+            try await #require(signInFormRef.id.isExist == true)
+            
+            // when
+            await signInFormRef.setUpGoogleForm {
+                await signInFormRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
+        }
+        
+        @Test func setGoogleForm() async throws {
+            // given
+            try await #require(signInFormRef.googleForm == nil)
+            
+            // when
+            await signInFormRef.setUpGoogleForm()
+            
+            // then
+            await #expect(signInFormRef.googleForm != nil)
+        }
+        @Test func createGoogleForm() async throws {
+            // given
+            try await #require(signInFormRef.googleForm == nil)
+            
+            // when
+            await signInFormRef.setUpGoogleForm()
+            
+            // then
+            let googleForm = try #require(await signInFormRef.googleForm)
+            await #expect(googleForm.isExist == true)
         }
     }
     
@@ -213,8 +258,10 @@ struct SignInFormTests {
         
         @Test func deleteGoogleForm() async throws {
             // given
-            let authBoardRef = await signInFormRef.tempConfig.parent.ref!
-            let googleForm = await authBoardRef.googleForm!
+            await signInFormRef.setUpGoogleForm()
+            
+            let googleForm = try #require(await signInFormRef.googleForm)
+            try await #require(googleForm.isExist == true)
             
             // when
             await signInFormRef.signInByCache()
@@ -401,8 +448,10 @@ struct SignInFormTests {
         }
         @Test func deleteGoogleForm() async throws {
             // given
-            let authBoardRef = try #require(await signInFormRef.tempConfig.parent.ref)
-            let googleForm = try #require(await authBoardRef.googleForm)
+            await signInFormRef.setUpGoogleForm()
+            
+            let googleForm = try #require(await signInFormRef.googleForm)
+            try await #require(googleForm.isExist == true)
             
             await MainActor.run {
                 signInFormRef.email = validEmail

@@ -29,7 +29,6 @@ public final class AuthBoard: Debuggable {
     public nonisolated let tempConfig: TempConfig<BudClient.ID>
     
     public internal(set) var signInForm: SignInForm.ID?
-    public internal(set) var googleForm: GoogleForm.ID?
     
     public var issue: (any Issuable)?
     
@@ -38,26 +37,24 @@ public final class AuthBoard: Debuggable {
     public func setUpForms() async {
         logger.start()
         
-        await setUpForms(beforeMutate: nil)
+        await setUpForms(mutateHook: nil)
     }
-    func setUpForms(beforeMutate: Hook?) async {
+    func setUpForms(mutateHook: Hook?) async {
         // compute
         let myConfig = tempConfig.setParent(self.id)
         
         // mutate
-        await beforeMutate?()
+        await mutateHook?()
         guard id.isExist else { setIssue(Error.authBoardIsDeleted); return }
-        guard signInForm == nil && googleForm == nil else {
+        guard signInForm == nil else {
             setIssue(Error.alreadySetUp)
             logger.failure(Error.alreadySetUp)
             return
         }
         
         let emailFormRef = SignInForm(tempConfig: myConfig)
-        let googleFormRef = GoogleForm(tempConfig: myConfig)
         
         self.signInForm = emailFormRef.id
-        self.googleForm = googleFormRef.id
     }
     
     

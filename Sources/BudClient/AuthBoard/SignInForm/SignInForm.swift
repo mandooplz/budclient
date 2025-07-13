@@ -34,6 +34,7 @@ public final class SignInForm: Debuggable {
     public var password: String = ""
     
     public internal(set) var signUpForm: SignUpForm.ID?
+    public internal(set) var googleForm: GoogleForm.ID?
     
     public var issue: (any Issuable)?
     
@@ -135,7 +136,6 @@ public final class SignInForm: Debuggable {
                                  user: UserID) {
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return  }
         guard budClientRef.isUserSignedIn == false else { return }
-        let googleForm = authBoardRef.googleForm
         
         let config = tempConfig.getConfig(budClientRef.id, user: user)
         let projectBoardRef = ProjectBoard(config: config)
@@ -151,7 +151,7 @@ public final class SignInForm: Debuggable {
         authBoardRef.signInForm = nil
         authBoardRef.delete()
         signUpForm?.ref?.delete()
-        googleForm?.ref?.delete()
+        self.googleForm?.ref?.delete()
         self.delete()
     }
     
@@ -173,6 +173,24 @@ public final class SignInForm: Debuggable {
         
         let signUpFormRef = SignUpForm(tempConfig: myConfig)
         self.signUpForm = signUpFormRef.id
+    }
+    
+    public func setUpGoogleForm() async {
+        logger.start()
+        
+        await setUpGoogleForm(mutateHook: nil)
+    }
+    func setUpGoogleForm(mutateHook: Hook?) async {
+        // capture
+        let signInForm = self.id
+        let config = self.tempConfig
+        
+        // mutate
+        await mutateHook?()
+        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
+        let googleFormRef = GoogleForm(tempConfig: config.setParent(signInForm))
+        
+        self.googleForm = googleFormRef.id
     }
     
     

@@ -70,7 +70,6 @@ public final class SignUpForm: Debuggable {
         let signInFormRef = self.tempConfig.parent.ref!
         let authBoardRef = signInFormRef.tempConfig.parent.ref!
         let budClientRef = authBoardRef.tempConfig.parent.ref!
-        let googleFormRef = authBoardRef.googleForm!.ref!
         let tempConfig = self.tempConfig
 
         
@@ -125,9 +124,9 @@ public final class SignUpForm: Debuggable {
         budClientRef.user = user
 
         self.delete()
-        googleFormRef.delete()
         signInFormRef.delete()
         signInFormRef.signUpForm = nil
+        signInFormRef.googleForm?.ref?.delete()
         authBoardRef.delete()
         authBoardRef.signInForm = nil
     }
