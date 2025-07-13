@@ -25,8 +25,7 @@ let package = Package(
             .upToNextMajor(from: "11.0.0")
         ),
         .package(
-          url: "https://github.com/apple/swift-collections.git",
-          .upToNextMinor(from: "1.0.4")
+          url: "https://github.com/apple/swift-collections.git", from: "1.0.4"
         )
     ],
     targets: [

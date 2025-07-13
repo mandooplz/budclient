@@ -17,9 +17,15 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<SystemBoard.ID>,
          target: SystemID,
+         name: String,
+         location: Location,
          source: any SystemSourceIdentity) {
         self.config = config
         self.target = target
+        
+        self.name = name
+        self.nameInput = name
+        self.location = location
         self.source = source
         
         SystemModelManager.register(self)
@@ -34,10 +40,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     nonisolated let target: SystemID
     nonisolated let source: any SystemSourceIdentity
     
-    public internal(set) var name: String?
-    public var nameInput: String?
+    public internal(set) var name: String
+    public var nameInput: String
     
-    public var location: Location?
+    public var location: Location
     
     public var rootModel: RootModel.ID?
     public var objectModels: Set<ObjectModel.ID> = []
@@ -45,7 +51,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     var updater = SystemModelUpdater()
     
     public var issue: (any Issuable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     
     // MARK: action
@@ -115,9 +121,9 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.systemModelIsDeleted); return }
-        guard let nameInput else { setIssue(Error.nameInputIsNil); return }
         guard name != nameInput else { setIssue(Error.noChangesToPush); return }
         let systemSource = self.source
+        let nameInput = self.nameInput
         
         await withDiscardingTaskGroup { group in
             group.addTask {
@@ -129,6 +135,9 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         }
     }
     
+    public func addSystemRight() async {
+        await addSystemRight(captureHook: nil)
+    }
     func addSystemRight(captureHook: Hook?) async {
         logger.start()
         
@@ -146,6 +155,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             }
         }
     }
+    
+    public func addSystemLeft() async {
+        await addSystemLeft(captureHook: nil)
+    }
     func addSystemLeft(captureHook: Hook?) async {
         logger.start()
         
@@ -162,6 +175,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             }
         }
     }
+    
+    public func addSystemTop() async {
+        await addSystemTop(captureHook: nil)
+    }
     func addSystemTop(captureHook: Hook?) async {
         logger.start()
         
@@ -177,6 +194,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                 await systemSourceRef.addSystemTop()
             }
         }
+    }
+    
+    public func addSystemBottom() async {
+        await addSystemBottom(captureHook: nil)
     }
     func addSystemBottom(captureHook: Hook?) async {
         logger.start()
@@ -235,7 +256,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         case systemModelIsDeleted
         case systemAlreadyExist
         case alreadySubscribed
-        case nameInputIsNil
         case noChangesToPush
     }
 }

@@ -48,6 +48,8 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
                 
                 let systemModelRef = SystemModel(config: config,
                                                  target: diff.target,
+                                                 name: diff.name,
+                                                 location: diff.location,
                                                  source: diff.id)
                 systemBoardRef.models[diff.location] = systemModelRef.id
             case .removed(let diff):

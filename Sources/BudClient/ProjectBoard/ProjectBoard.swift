@@ -43,7 +43,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     }
     
     public var issue: (any Issuable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     
     // MARK: action

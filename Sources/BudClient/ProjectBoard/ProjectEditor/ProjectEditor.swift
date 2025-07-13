@@ -22,6 +22,7 @@ public final class ProjectEditor: Debuggable {
         self.config = config
         self.target = target
         self.name = name
+        self.nameInput = name
         self.source = source
         
         ProjectManager.register(self)
@@ -38,7 +39,7 @@ public final class ProjectEditor: Debuggable {
     nonisolated let source: any ProjectSourceIdentity
     
     public internal(set) var name: String
-    public internal(set) var nameInput: String = ""
+    public var nameInput: String
     public func setNameInput(_ value: String) {
         self.nameInput = value
     }
@@ -60,9 +61,13 @@ public final class ProjectEditor: Debuggable {
     func setUp(mutateHook:Hook?) async {
         // mutate
         await mutateHook?()
-        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
+        guard id.isExist else {
+            setIssue(Error.editorIsDeleted)
+            logger.failure("ProjectEditor가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         guard systemBoard == nil && flowBoard == nil && valueBoard == nil else { setIssue(Error.alreadySetUp)
-            logger.failure(Error.alreadySetUp)
+            logger.failure("이미 setUp된 상태입니다.")
             return
         }
         let myConfig = self.config.setParent(id)
@@ -84,15 +89,20 @@ public final class ProjectEditor: Debuggable {
     func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.editorIsDeleted); return }
-        guard self.nameInput.isEmpty == false else {
-            setIssue(Error.nameInputIsEmpty)
-            logger.failure(Error.nameInputIsEmpty)
+        guard id.isExist else {
+            setIssue(Error.editorIsDeleted)
+            logger.failure("ProjectEditor가 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard self.nameInput.isEmpty == false else {
+            setIssue(Error.nameInputIsEmpty)
+            logger.failure("nameInput이 nil으로 비어있습니다.")
+            return
+        }
+        
         guard self.nameInput != self.name else {
             setIssue(Error.pushWithSameValue)
-            logger.failure(Error.pushWithSameValue)
+            logger.failure("nameInput과 name이 동일합니다.")
             return
         }
         
@@ -105,14 +115,25 @@ public final class ProjectEditor: Debuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let projectSourceRef = await projectSource.ref else { return }
-                guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.projectHub.ref else { return }
+                guard let projectSourceRef = await projectSource.ref else {
+                    logger.failure("ProjectSouce를 찾을 수 없습니다")
+                    return
+                }
+                guard let budServerRef = await config.budServer.ref else {
+                    logger.failure("BudServer를 찾을 수 없습니다.")
+                    return
+                }
+                guard let projectHubRef = await budServerRef.projectHub.ref else {
+                    logger.failure("ProjectHub를 찾을 수 없습니다.")
+                    return
+                }
                 
                 await projectSourceRef.setName(nameInput)
                 await projectHubRef.notifyNameChanged(target)
             }
         }
+        
+        logger.finished()
     }
     
     public func removeProject() async {

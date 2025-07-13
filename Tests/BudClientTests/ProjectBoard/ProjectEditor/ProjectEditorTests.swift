@@ -124,7 +124,8 @@ struct ProjectEditorTests {
             let issue = try #require(await editorRef.issue as? KnownIssue)
             #expect(issue.reason == "nameInputIsEmpty")
         }
-        @Test func whenNameInputAndNameIsSampe() async throws {
+        @Test func whenNameInputIsSameWithName() async throws {
+            // given
             await MainActor.run {
                 editorRef.nameInput = "TEST"
                 editorRef.name = "TEST"

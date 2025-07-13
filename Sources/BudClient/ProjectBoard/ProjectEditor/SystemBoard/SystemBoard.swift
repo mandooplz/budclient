@@ -57,7 +57,11 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     func subscribe(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
+        guard id.isExist else {
+            setIssue(Error.systemBoardIsDeleted)
+            logger.failure("SystemBoard가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         
         let projectEditorRef = config.parent.ref!
         let projectSource = projectEditorRef.source
@@ -72,6 +76,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                 let isSubscribed = await projectSourceRef.hasHandler(requester: me)
                 guard isSubscribed == false else {
                     await systemBoard.ref?.setIssue(Error.alreadySubscribed)
+                    logger.failure("SystemBoard에 이미 구독이 되어있습니다.")
                     return
                 }
                 
@@ -79,7 +84,10 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                     requester: me,
                     handler: .init({ event in
                         Task { @MainActor in
-                            guard let updaterRef = systemBoard.ref?.updater else { return }
+                            guard let updaterRef = systemBoard.ref?.updater else {
+                                logger.failure("SystemBoard가 존재하지 않아 update가 취소됩니다.")
+                                return
+                            }
                             
                             updaterRef.appendEvent(event)
                             await updaterRef.update()
@@ -101,7 +109,10 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let projectSourceRef = await projectSource.ref else { return }
+                guard let projectSourceRef = await projectSource.ref else {
+                    logger.failure("ProjectSource를 찾을 수 없어 실행 중단됩니다.")
+                    return
+                }
                 
                 await projectSourceRef.removeHandler(requester: me)
             }
@@ -116,8 +127,16 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
     func createFirstSystem(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.systemBoardIsDeleted); return }
-        guard models.isEmpty else { setIssue(Error.systemAlreadyExist); return }
+        guard id.isExist else {
+            setIssue(Error.systemBoardIsDeleted)
+            logger.failure("SystemBoard가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard models.isEmpty else {
+            setIssue(Error.systemAlreadyExist)
+            logger.failure("첫번째 System이 이미 존재합니다.")
+            return
+        }
         let projectSource = self.config.parent.ref!.source
         
         // compute

@@ -43,6 +43,16 @@ public struct BudLogger: Sendable {
         }
     }
     
+    public func finished(_ description: String? = nil,
+                        _ workflow: WorkFlow.ID = WorkFlow.id,
+                        _ routine: String = #function) {
+        if let description {
+            logger.debug("[\(workflow)] \(objectName).\(routine) finished\n\(description)")
+        } else {
+            logger.debug("[\(workflow)] \(objectName).\(routine) finished")
+        }
+    }
+    
     public func failure(_ description: String,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ routine: String = #function) {
