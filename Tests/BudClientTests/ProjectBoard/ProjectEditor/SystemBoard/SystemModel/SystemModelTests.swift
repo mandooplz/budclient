@@ -93,7 +93,6 @@ struct SystemModelTests {
         init() async throws {
             self.budClientRef = await BudClient()
             self.systemModelRef = try await getSystemModel(budClientRef)
-
         }
         
         @Test func whenSystemModelIsDeleted() async throws {
@@ -135,7 +134,7 @@ struct SystemModelTests {
                 systemModelRef.nameInput = testName
             }
             
-            try await #require(systemModelRef.name == nil)
+            try await #require(systemModelRef.name != testName)
             try await #require(systemModelRef.id.isExist == true)
             
             // when
@@ -156,6 +155,19 @@ struct SystemModelTests {
             
             // then
             await #expect(systemModelRef.name == testName)
+        }
+    }
+    
+    struct AddSystemRight {
+        let budClientRef: BudClient
+        let systemModelRef: SystemModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.systemModelRef = try await getSystemModel(budClientRef)
+        }
+        
+        @Test func whenSystemModelIsDeleted() async throws {
+            
         }
     }
     
