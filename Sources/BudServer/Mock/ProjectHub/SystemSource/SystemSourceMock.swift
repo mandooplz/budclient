@@ -7,6 +7,8 @@
 import Foundation
 import Values
 
+private let logger = WorkFlow.getLogger(for: "SystemSourceMock")
+
 
 // MARK: Object
 @Server
@@ -69,22 +71,160 @@ package final class SystemSourceMock: SystemSourceInterface {
     
     
     // MARK: action
-    package func addSystemTop() async {
-        // 이를 어떻게 구현할 것인가. 
-        fatalError()
+    package func addSystemRight() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let rightLocation = self.location.getRight()
+        let projectSourceRef = self.parent.ref!
+        let eventHandlers = projectSourceRef.eventHandlers
+        
+        // mutate
+        guard projectSourceRef.isLocationExist(rightLocation) == false else {
+            logger.failure("이미 오른쪽에 SystemSource가 존재합니다.")
+            return
+        }
+        let systemSourceRef = SystemSourceMock(name: "New System",
+                                               location: rightLocation,
+                                               parent: self.parent)
+        projectSourceRef.systems.insert(systemSourceRef.id)
+        
+        // notify
+        let diff = SystemSourceDiff(
+            id: systemSourceRef.id,
+            target: systemSourceRef.target,
+            name: systemSourceRef.name,
+            location: systemSourceRef.location)
+        for (_, eventHandler) in eventHandlers {
+            eventHandler.execute(.added(diff))
+        }
+        
     }
     package func addSystemLeft() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let leftLocation = self.location.getLeft()
+        let projectSourceRef = self.parent.ref!
+        let eventHandlers = projectSourceRef.eventHandlers
+        
+        // mutate
+        guard projectSourceRef.isLocationExist(leftLocation) == false else {
+            logger.failure("이미 왼쪽에 SystemSource가 존재합니다.")
+            return
+        }
+        let systemSourceRef = SystemSourceMock(name: "New System",
+                                               location: leftLocation,
+                                               parent: self.parent)
+        projectSourceRef.systems.insert(systemSourceRef.id)
+        
+        // notify
+        let diff = SystemSourceDiff(
+            id: systemSourceRef.id,
+            target: systemSourceRef.target,
+            name: systemSourceRef.name,
+            location: systemSourceRef.location)
+        for (_, eventHandler) in eventHandlers {
+            eventHandler.execute(.added(diff))
+        }
     }
-    package func addSystemRight() async {
-        fatalError()
+    package func addSystemTop() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let topLocation = self.location.getTop()
+        let projectSourceRef = self.parent.ref!
+        let eventHandlers = projectSourceRef.eventHandlers
+        
+        // mutate
+        guard projectSourceRef.isLocationExist(topLocation) == false else {
+            logger.failure("이미 위쪽에 SystemSource가 존재합니다.")
+            return
+        }
+        let systemSourceRef = SystemSourceMock(name: "New System",
+                                               location: topLocation,
+                                               parent: self.parent)
+        projectSourceRef.systems.insert(systemSourceRef.id)
+        
+        // notify
+        let diff = SystemSourceDiff(
+            id: systemSourceRef.id,
+            target: systemSourceRef.target,
+            name: systemSourceRef.name,
+            location: systemSourceRef.location)
+        for (_, eventHandler) in eventHandlers {
+            eventHandler.execute(.added(diff))
+        }
     }
     package func addSystemBottom() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let bottomLocation = self.location.getBotttom()
+        let projectSourceRef = self.parent.ref!
+        let eventHandlers = projectSourceRef.eventHandlers
+        
+        // mutate
+        guard projectSourceRef.isLocationExist(bottomLocation) == false else {
+            logger.failure("이미 아래쪽에 SystemSource가 존재합니다.")
+            return
+        }
+        let systemSourceRef = SystemSourceMock(name: "New System",
+                                               location: bottomLocation,
+                                               parent: self.parent)
+        projectSourceRef.systems.insert(systemSourceRef.id)
+        
+        // notify
+        let diff = SystemSourceDiff(
+            id: systemSourceRef.id,
+            target: systemSourceRef.target,
+            name: systemSourceRef.name,
+            location: systemSourceRef.location)
+        for (_, eventHandler) in eventHandlers {
+            eventHandler.execute(.added(diff))
+        }
     }
     
+    
     package func remove() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let projectSourceRef = self.parent.ref!
+        let eventHandlers = projectSourceRef.eventHandlers
+        let diff = SystemSourceDiff(id: self.id,
+                                    target: self.target,
+                                    name: self.name,
+                                    location: self.location)
+        
+        // mutate
+        projectSourceRef.systems.remove(self.id)
+        self.delete()
+        
+        // notify
+        for (_, eventHandler) in eventHandlers {
+            eventHandler.execute(.removed(diff))
+        }
     }
     
     

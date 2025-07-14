@@ -32,11 +32,11 @@ public extension Location {
         return .init(x: self.x - 1, y: self.y)
     }
     
-    func getUp() -> Self {
+    func getTop() -> Self {
         return .init(x: self.x, y: self.y + 1)
     }
     
-    func getDown() -> Self {
+    func getBotttom() -> Self {
         return .init(x: self.x, y: self.y - 1)
     }
 }

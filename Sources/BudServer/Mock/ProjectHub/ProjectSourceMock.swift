@@ -34,7 +34,13 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     nonisolated let target: ProjectID
     nonisolated let projectHub: ProjectHubMock.ID
     
-    private(set) var systems: Set<SystemSourceMock.ID> = []
+    var systems: Set<SystemSourceMock.ID> = []
+    func isLocationExist(_ location: Location) -> Bool {
+        self.systems
+            .compactMap { $0.ref }
+            .contains { $0.location == location }
+    }
+    
     package var creator: UserID
     
     private(set) var name: String

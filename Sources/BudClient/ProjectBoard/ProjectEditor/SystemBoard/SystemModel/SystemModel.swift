@@ -177,7 +177,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let systemSourceRef = await systemSource.ref else { return }
+                guard let systemSourceRef = await systemSource.ref else {
+                    logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
                 
                 await systemSourceRef.addSystemRight()
             }
@@ -227,7 +230,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let systemSourceRef = await systemSource.ref else { return }
+                guard let systemSourceRef = await systemSource.ref else {
+                    logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
                 
                 await systemSourceRef.addSystemTop()
             }
@@ -251,7 +257,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let systemSourceRef = await systemSource.ref else { return }
+                guard let systemSourceRef = await systemSource.ref else {
+                    logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
                 
                 await systemSourceRef.addSystemBottom()
             }
@@ -275,7 +284,10 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let systemSourceRef = await systemSource.ref else { return }
+                guard let systemSourceRef = await systemSource.ref else {
+                    logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
                 
                 await systemSourceRef.remove()
             }
