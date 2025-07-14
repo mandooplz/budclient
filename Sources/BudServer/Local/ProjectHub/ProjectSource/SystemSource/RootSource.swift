@@ -8,6 +8,8 @@ import Foundation
 import Values
 import FirebaseFirestore
 
+private let logger = WorkFlow.getLogger(for: "RootSource")
+
 
 // MARK: Object
 @MainActor
@@ -26,8 +28,18 @@ package final class RootSource: RootSourceInterface {
     // MARK: state
     package nonisolated let id: ID
     
+    package func setName(_ value: String) async {
+        fatalError()
+    }
+    
     
     // MARK: action
+    package func createState() async {
+        fatalError()
+    }
+    package func createAction() async {
+        fatalError()
+    }
     
     
     // MARK: value

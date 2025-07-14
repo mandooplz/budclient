@@ -12,7 +12,13 @@ import Values
 @Server
 package final class RootSourceMock: RootSourceInterface {
     // MARK: core
-    init() {
+    init(name: String,
+         parent: SystemSourceMock.ID,
+         target: ObjectID = ObjectID()) {
+        self.name = name
+        self.parent = parent
+        self.target = target
+        
         RootSourceMockManager.register(self)
     }
     func delete() {
@@ -22,9 +28,26 @@ package final class RootSourceMock: RootSourceInterface {
     
     // MARK: state
     package nonisolated let id = ID()
+    package nonisolated let parent: SystemSourceMock.ID
+    package nonisolated let target: ObjectID
+    var name: String
+    package func setName(_ value: String) async {
+        self.name = value
+    }
+    
+    
+    package var actions: [RootActionSourceMock.ID] = []
+    package var states: [RootStateSourceMock.ID] = []
     
     
     // MARK: action
+    package func createAction() async {
+        fatalError()
+    }
+    package func createState() async {
+        fatalError()
+    }
+    
     
     
     // MARK: value

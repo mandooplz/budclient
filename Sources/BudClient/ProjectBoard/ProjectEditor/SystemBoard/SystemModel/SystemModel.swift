@@ -312,7 +312,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case systemModelIsDeleted
-        case systemAlreadyExist
+        case systemAlreadyExist // addSystem의 capture에서 검증
         case alreadySubscribed
         case noChangesToPush
     }

@@ -65,6 +65,8 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     package func createFirstSystem() {
         // mutate
         guard systems.isEmpty else { return }
+        
+        
         let systemSourceRef = SystemSourceMock(name: "First System",
                                                location: .origin,
                                                parent: self.id)

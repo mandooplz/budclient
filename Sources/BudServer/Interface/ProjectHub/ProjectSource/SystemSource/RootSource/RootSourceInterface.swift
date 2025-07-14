@@ -11,6 +11,13 @@ import Values
 // MARK: Interface
 package protocol RootSourceInterface: Sendable {
     associatedtype ID: RootSourceIdentity where ID.Object == Self
+    
+    // MARK: state
+    func setName(_ value: String) async
+    
+    // MARK: action
+    func createAction() async
+    func createState() async
 }
 
 

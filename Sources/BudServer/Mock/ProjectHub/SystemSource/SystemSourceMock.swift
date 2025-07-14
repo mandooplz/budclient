@@ -17,11 +17,15 @@ package final class SystemSourceMock: SystemSourceInterface {
     init(name: String,
          location: Location,
          parent: ProjectSourceMock.ID,
-         target: SystemID = SystemID()) {
+         target: SystemID = SystemID()
+    ) {
         self.name = name
         self.location = location
         self.parent = parent
         self.target = target
+        
+        self.rootSourceRef = RootSourceMock(name: name,
+                                            parent: self.id)
         
         SystemSourceMockManager.register(self)
     }
@@ -41,6 +45,8 @@ package final class SystemSourceMock: SystemSourceInterface {
     }
     
     package var location: Location
+    package nonisolated let rootSourceRef: RootSourceMock
+    
     
     package var eventHandlers: [ObjectID: Handler<SystemSourceEvent>] = [:]
     package func hasHandler(requester: ObjectID) -> Bool {
@@ -88,6 +94,8 @@ package final class SystemSourceMock: SystemSourceInterface {
             logger.failure("이미 오른쪽에 SystemSource가 존재합니다.")
             return
         }
+
+        
         let systemSourceRef = SystemSourceMock(name: "New System",
                                                location: rightLocation,
                                                parent: self.parent)
