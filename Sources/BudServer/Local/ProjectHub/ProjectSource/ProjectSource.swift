@@ -78,22 +78,28 @@ package final class ProjectSource: ProjectSourceInterface {
                     do {
                         data = try changed.document.data(as: SystemSource.Data.self)
                     } catch {
-                        logger.raw.fault("SystemSource 디코딩 실패\n\(error)")
+                        let log = logger.getLog("SystemSource 디코딩 실패\n\(error)")
+                        logger.raw.fault("\(log)")
                         return
                     }
                     
-                    let diff = SystemSourceDiff(id: systemSource,
-                                                target: data.target,
-                                                name: data.name,
-                                                location: data.location)
+                    guard let diff = SystemSourceDiff(from: data) else {
+                        let log = logger.getLog("SystemSourceDiff 변환 실패")
+                        logger.raw.fault("\(log)")
+                        return
+                    }
                     
                     
                     switch changed.type {
                     case .added:
                         // create SystemSource
+                        let rootSource = RootSource.ID(data.rootSource.id)
+                        let rootSourceRef = RootSource(id: rootSource)
+                        
                         let systemSourceRef = SystemSource(id: systemSource,
                                                            target: data.target,
-                                                           parent: self.id)
+                                                           parent: self.id,
+                                                           rootSourceRef: rootSourceRef)
                         self.systemSources.insert(systemSourceRef.id)
 
                         // serve event
@@ -132,7 +138,7 @@ package final class ProjectSource: ProjectSourceInterface {
         do {
             let _ = try await db.runTransaction { @Sendable transaction, errorPointer in
                 do {
-                    // check ProjectSource.systemModelCoun
+                    // check ProjectSource.systemModelCount
                     let data = try transaction.getDocument(projectSourceRef)
                         .data(as: ProjectSource.Data.self)
                     guard data.systemModelCount == 0 else {
@@ -140,11 +146,14 @@ package final class ProjectSource: ProjectSourceInterface {
                         return
                     }
                     
-                    // create SystemSource
+                    // create SystemSource & RootSource
                     let newSystemSourceRef = systemSourcesRef.document()
+                    
+                    let newRootSourceData = SystemSource.Data.RootSource(name: "First System")
                     let newData = SystemSource.Data(target: SystemID(),
                                                     name: "First System",
-                                                    location: .origin)
+                                                    location: .origin,
+                                                    rootSource: newRootSourceData)
                     
                     try transaction.setData(from: newData, forDocument: newSystemSourceRef)
                     
@@ -203,6 +212,13 @@ package final class ProjectSource: ProjectSourceInterface {
         package var creator: UserID
         package var target: ProjectID
         package var systemModelCount: Int
+        
+        init(name: String, creator: UserID) {
+            self.name = name
+            self.creator = creator
+            self.target = ProjectID()
+            self.systemModelCount = 0
+        }
     }
 }
 

@@ -66,10 +66,10 @@ package final class ProjectHubMock: ProjectHubInterface {
             let ticket = tickets.removeFirst()
             
             let projectSourceRef = ProjectSourceMock(
-                projectHub: self.id,
-                target: ticket.target,
+                name: ticket.name,
                 creator: ticket.creator,
-                name: ticket.name)
+                projectHubMockRef: self.id
+            )
 
             projectSources.insert(projectSourceRef.id)
             

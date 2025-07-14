@@ -124,9 +124,8 @@ package final class ProjectHub: ProjectHubInterface {
                 
                 // create ProjectSource in Firestore
                 let data = ProjectSource.Data(name: ticket.name,
-                                              creator: ticket.creator,
-                                              target: ticket.target,
-                                              systemModelCount: 0)
+                                              creator: ticket.creator)
+                
                 try db.collection(ProjectSources.name).addDocument(from: data)
             }
         } catch {

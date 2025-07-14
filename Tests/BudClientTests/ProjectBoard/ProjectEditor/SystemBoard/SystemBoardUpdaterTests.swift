@@ -28,13 +28,12 @@ struct SystemBoardUpdaterTests {
             // given
             try await #require(systemBoardRef.models.count == 0)
             
-            let newSystemSource = SystemSourceMock.ID()
-            let newSystem = SystemID()
-            
-            let diff = SystemSourceDiff(id: newSystemSource,
-                                        target: newSystem,
-                                        name: "",
-                                        location: .init(x: 999, y: 999))
+            let newSystemSourceMockRef = await SystemSourceMock(
+                name: "",
+                location: .origin,
+                parent: .init()
+            )
+            let diff = await SystemSourceDiff(newSystemSourceMockRef)
             
             await updaterRef.appendEvent(.added(diff))
             
@@ -49,13 +48,12 @@ struct SystemBoardUpdaterTests {
         }
         @Test func whenAlreadyAdded() async throws {
             // given
-            let newSystemSource = SystemSourceMock.ID()
-            let newSystem = SystemID()
-            
-            let diff = SystemSourceDiff(id: newSystemSource,
-                                        target: newSystem,
-                                        name: "",
-                                        location: .init(x: 999, y: 999))
+            let newSystemSourceMockRef = await SystemSourceMock(
+                name: "",
+                location: .origin,
+                parent: .init()
+            )
+            let diff = await SystemSourceDiff(newSystemSourceMockRef)
             
             await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
@@ -73,13 +71,12 @@ struct SystemBoardUpdaterTests {
         
         @Test func deleteSystemModel() async throws {
             // given
-            let newSystemSource = SystemSourceMock.ID()
-            let newSystem = SystemID()
-            
-            let diff = SystemSourceDiff(id: newSystemSource,
-                                        target: newSystem,
-                                        name: "",
-                                        location: .init(x: 999, y: 999))
+            let newSystemSourceMockRef = await SystemSourceMock(
+                name: "",
+                location: .origin,
+                parent: .init()
+            )
+            let diff = await SystemSourceDiff(newSystemSourceMockRef)
             
             await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
@@ -104,7 +101,8 @@ struct SystemBoardUpdaterTests {
             let diff = SystemSourceDiff(id: newSystemSource,
                                         target: .init(),
                                         name: "",
-                                        location: .init(x: 1, y: 1))
+                                        location: .init(x: 1, y: 1),
+                                        rootSource: .init())
             
             await updaterRef.appendEvent(.removed(diff))
             
@@ -126,7 +124,8 @@ struct SystemBoardUpdaterTests {
             let diff = SystemSourceDiff(id: newSystemSource,
                                         target: newSystem,
                                         name: "",
-                                        location: .init(x: 88, y: 88))
+                                        location: .init(x: 88, y: 88),
+                                        rootSource: .init())
             
             await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
@@ -140,7 +139,8 @@ struct SystemBoardUpdaterTests {
             let newDiff = SystemSourceDiff(id: newSystemSource,
                                            target: newSystem,
                                            name: testName,
-                                           location: testLocation)
+                                           location: testLocation,
+                                           rootSource: .init())
             
             await updaterRef.appendEvent(.modified(newDiff))
             await updaterRef.update()
@@ -155,7 +155,8 @@ struct SystemBoardUpdaterTests {
             let diff = SystemSourceDiff(id: newSystemSource,
                                         target: .init(),
                                         name: "",
-                                        location: .init(x: 88, y: 88))
+                                        location: .init(x: 88, y: 88),
+                                        rootSource: .init())
 
             // when
             await updaterRef.appendEvent(.modified(diff))

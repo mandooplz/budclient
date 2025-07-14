@@ -35,33 +35,30 @@ package protocol ProjectSourceIdentity: Sendable, Hashable {
 }
 
 
-// MARK: Value
-package enum ProjectSourceEvent: Sendable {
-    case added(SystemSourceDiff)
-    case modified(SystemSourceDiff)
-    case removed(SystemSourceDiff)
-}
 
 
-package struct SystemSourceDiff: Sendable {
-    package let id: any SystemSourceIdentity
-    package let target: SystemID
+
+
+package struct RootSourceDiff: Sendable {
+    package let id: any RootSourceIdentity
+    package let target: ObjectID
     package let name: String
-    package let location: Location
     
-    package init(id: any SystemSourceIdentity,
-                 target: SystemID,
-                 name: String,
-                 location: Location) {
+    // for testing
+    init(id: RootSourceMock.ID = .init(),
+         target: ObjectID = .init(),
+         name: String = UUID().uuidString) {
         self.id = id
         self.target = target
         self.name = name
-        self.location = location
     }
     
-    package func getEvent() -> ProjectSourceEvent {
-        .modified(self)
+    package init(id: any RootSourceIdentity,
+                 target: ObjectID,
+                 name: String) {
+        self.id = id
+        self.target = target
+        self.name = name
     }
 }
-
 

@@ -11,8 +11,11 @@ import Values
 // MARK: Interface
 package protocol SystemSourceInterface: Sendable {
     associatedtype ID: SystemSourceIdentity where ID.Object == Self
+    associatedtype RootSource: RootSourceInterface
     
     // MARK: state
+    nonisolated var rootSourceRef: RootSource { get }
+    
     func setName(_ value: String) async
     
     func hasHandler(requester: ObjectID) async -> Bool
@@ -40,29 +43,9 @@ package protocol SystemSourceIdentity: Sendable, Hashable {
 
 // MARK: Value
 package enum SystemSourceEvent: Sendable {
-    case root(RootEvent)
-    case object(ObjectEvent)
-    
-    package enum RootEvent: Sendable {
-        case created(RootSourceDiff)
-        case modified(RootSourceDiff)
-        case deleted(RootSourceDiff)
-    }
-    
-    package enum ObjectEvent: Sendable {
-        case added(ObjectSourceDiff)
-        case modified(ObjectSourceDiff)
-        case removed(ObjectSourceDiff)
-    }
-}
-
-
-
-// MARK: RootSourceDiff
-package struct RootSourceDiff: Sendable {
-    package let id: any RootSourceIdentity
-    package let target: ObjectID
-    package let name: String
+    case added(ObjectSourceDiff)
+    case modified(ObjectSourceDiff)
+    case removed(ObjectSourceDiff)
 }
 
 

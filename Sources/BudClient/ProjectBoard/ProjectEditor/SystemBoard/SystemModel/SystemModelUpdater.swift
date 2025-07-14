@@ -29,24 +29,12 @@ final class SystemModelUpdater: Sendable, Debuggable, UpdaterInterface {
             let event = queue.removeFirst()
             
             switch event {
-            case .root(let rootEvent):
-                switch rootEvent {
-                case .created:
-                    fatalError()
-                case .modified:
-                    fatalError()
-                case .deleted:
-                    fatalError()
-                }
-            case .object(let objectEvent):
-                switch objectEvent {
-                case .added:
-                    fatalError()
-                case .modified:
-                    fatalError()
-                case .removed:
-                    fatalError()
-                }
+            case .added:
+                fatalError()
+            case .modified:
+                fatalError()
+            case .removed:
+                fatalError()
             }
         }
     }

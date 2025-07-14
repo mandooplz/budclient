@@ -65,10 +65,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         guard let projectSourceRef = parent.ref else { return }
         let eventHandlers = projectSourceRef.eventHandlers
         
-        let diff = SystemSourceDiff(id: id,
-                                    target: target,
-                                    name: name,
-                                    location: location)
+        let diff = SystemSourceDiff(self)
         
         for (_, handler) in eventHandlers {
             handler.execute(.modified(diff))
@@ -102,11 +99,8 @@ package final class SystemSourceMock: SystemSourceInterface {
         projectSourceRef.systems.insert(systemSourceRef.id)
         
         // notify
-        let diff = SystemSourceDiff(
-            id: systemSourceRef.id,
-            target: systemSourceRef.target,
-            name: systemSourceRef.name,
-            location: systemSourceRef.location)
+        let diff = SystemSourceDiff(systemSourceRef)
+        
         for (_, eventHandler) in eventHandlers {
             eventHandler.execute(.added(diff))
         }
@@ -135,11 +129,8 @@ package final class SystemSourceMock: SystemSourceInterface {
         projectSourceRef.systems.insert(systemSourceRef.id)
         
         // notify
-        let diff = SystemSourceDiff(
-            id: systemSourceRef.id,
-            target: systemSourceRef.target,
-            name: systemSourceRef.name,
-            location: systemSourceRef.location)
+        let diff = SystemSourceDiff(systemSourceRef)
+        
         for (_, eventHandler) in eventHandlers {
             eventHandler.execute(.added(diff))
         }
@@ -167,11 +158,8 @@ package final class SystemSourceMock: SystemSourceInterface {
         projectSourceRef.systems.insert(systemSourceRef.id)
         
         // notify
-        let diff = SystemSourceDiff(
-            id: systemSourceRef.id,
-            target: systemSourceRef.target,
-            name: systemSourceRef.name,
-            location: systemSourceRef.location)
+        let diff = SystemSourceDiff(systemSourceRef)
+        
         for (_, eventHandler) in eventHandlers {
             eventHandler.execute(.added(diff))
         }
@@ -199,11 +187,8 @@ package final class SystemSourceMock: SystemSourceInterface {
         projectSourceRef.systems.insert(systemSourceRef.id)
         
         // notify
-        let diff = SystemSourceDiff(
-            id: systemSourceRef.id,
-            target: systemSourceRef.target,
-            name: systemSourceRef.name,
-            location: systemSourceRef.location)
+        let diff = SystemSourceDiff(systemSourceRef)
+        
         for (_, eventHandler) in eventHandlers {
             eventHandler.execute(.added(diff))
         }
@@ -220,10 +205,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         }
         let projectSourceRef = self.parent.ref!
         let eventHandlers = projectSourceRef.eventHandlers
-        let diff = SystemSourceDiff(id: self.id,
-                                    target: self.target,
-                                    name: self.name,
-                                    location: self.location)
+        let diff = SystemSourceDiff(self)
         
         // mutate
         projectSourceRef.systems.remove(self.id)

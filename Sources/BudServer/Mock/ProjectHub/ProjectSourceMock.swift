@@ -12,14 +12,13 @@ import Values
 @Server
 package final class ProjectSourceMock: ProjectSourceInterface {
     // MARK: core
-    package init(projectHub: ProjectHubMock.ID,
-                 target: ProjectID,
+    package init(name: String,
                  creator: UserID,
-                 name: String) {
-        self.target = target
-        self.projectHub = projectHub
-        self.creator = creator
+                 projectHubMockRef: ProjectHubMock.ID) {
         self.name = name
+        self.creator = creator
+        self.projectHub = projectHubMockRef
+        self.target = ProjectID()
         
         ProjectSourceMockManager.register(self)
     }
@@ -41,12 +40,12 @@ package final class ProjectSourceMock: ProjectSourceInterface {
             .contains { $0.location == location }
     }
     
-    package var creator: UserID
-    
     private(set) var name: String
     package func setName(_ value: String) {
         self.name = value
     }
+    
+    package var creator: UserID
     
     private(set) var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
     package func hasHandler(requester: ObjectID) async -> Bool {
@@ -70,13 +69,20 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         let systemSourceRef = SystemSourceMock(name: "First System",
                                                location: .origin,
                                                parent: self.id)
+        let rootSourceRef = systemSourceRef.rootSourceRef
+        
         self.systems.insert(systemSourceRef.id)
         
         // notify
         let diff = SystemSourceDiff(id: systemSourceRef.id,
                                     target: systemSourceRef.target,
                                     name: systemSourceRef.name,
-                                    location: systemSourceRef.location)
+                                    location: systemSourceRef.location,
+                                    rootSource: .init(
+                                        id: rootSourceRef.id,
+                                        target: rootSourceRef.target,
+                                        name: rootSourceRef.name
+                                    ))
         
         for (_, handler) in eventHandlers {
             handler.execute(.added(diff))

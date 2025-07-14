@@ -17,10 +17,12 @@ package final class SystemSource: SystemSourceInterface {
     // MARK: core
     init(id: ID,
          target: SystemID,
-         parent: ProjectSource.ID) {
+         parent: ProjectSource.ID,
+         rootSourceRef: RootSource) {
         self.id = id
         self.target = target
         self.parent = parent
+        self.rootSourceRef = rootSourceRef
         
         SystemSourceManager.register(self)
     }
@@ -33,6 +35,7 @@ package final class SystemSource: SystemSourceInterface {
     nonisolated let id: ID
     nonisolated let target: SystemID
     nonisolated let parent: ProjectSource.ID
+    package nonisolated let rootSourceRef: RootSource
     
     package func setName(_ value: String) {
         logger.start()
@@ -176,13 +179,19 @@ package final class SystemSource: SystemSourceInterface {
         var target: SystemID
         var name: String
         var location: Location
-        var rootModel: Root?
         
-        struct Root: Hashable, Codable {
+        var rootSource: RootSource
+        
+        struct RootSource: Hashable, Codable {
+            let id: String
             let target: ObjectID
             let name: String
-            let states: [StateID]
-            let actions: [ActionID]
+            
+            init(name: String) {
+                self.id = UUID().uuidString
+                self.target = ObjectID()
+                self.name = name
+            }
         }
     }
 }

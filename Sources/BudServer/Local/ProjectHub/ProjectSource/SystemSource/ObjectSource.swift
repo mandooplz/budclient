@@ -8,6 +8,8 @@ import Foundation
 import Values
 import FirebaseFirestore
 
+private let logger = WorkFlow.getLogger(for: "ObjectSource")
+
 
 // MARK: Object
 @MainActor
