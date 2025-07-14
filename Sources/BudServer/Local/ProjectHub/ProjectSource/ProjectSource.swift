@@ -108,6 +108,7 @@ package final class ProjectSource: ProjectSourceInterface {
                         handler.execute(.modified(diff))
                     case .removed:
                         // delete SystemSource
+                        self.systemSources.remove(systemSource)
                         systemSource.ref?.delete()
                         
                         // serve event

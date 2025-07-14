@@ -69,20 +69,11 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         let systemSourceRef = SystemSourceMock(name: "First System",
                                                location: .origin,
                                                parent: self.id)
-        let rootSourceRef = systemSourceRef.rootSourceRef
         
         self.systems.insert(systemSourceRef.id)
         
         // notify
-        let diff = SystemSourceDiff(id: systemSourceRef.id,
-                                    target: systemSourceRef.target,
-                                    name: systemSourceRef.name,
-                                    location: systemSourceRef.location,
-                                    rootSource: .init(
-                                        id: rootSourceRef.id,
-                                        target: rootSourceRef.target,
-                                        name: rootSourceRef.name
-                                    ))
+        let diff = SystemSourceDiff(systemSourceRef)
         
         for (_, handler) in eventHandlers {
             handler.execute(.added(diff))

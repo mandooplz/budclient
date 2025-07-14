@@ -30,6 +30,8 @@ package protocol SystemSourceInterface: Sendable {
     func addSystemTop() async
     func addSystemBottom() async
     
+    func createNewObject() async
+    
     func remove() async
 }
 
@@ -54,6 +56,21 @@ package struct ObjectSourceDiff: Sendable {
     package let id: any ObjectSourceIdentity
     package let target: ObjectID
     package let name: String
+    
+    @Server
+    init(_ object: ObjectSourceMock) {
+        self.id = object.id
+        self.target = object.target
+        self.name = object.name
+    }
+    
+    init(id: any ObjectSourceIdentity,
+         target: ObjectID,
+         name: String) {
+        self.id = id
+        self.target = target
+        self.name = name
+    }
 }
 
 

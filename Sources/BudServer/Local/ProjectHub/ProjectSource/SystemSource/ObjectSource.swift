@@ -48,6 +48,18 @@ package final class ObjectSource: ObjectSourceInterface {
             ObjectSourceManager.container[self]
         }
     }
+    
+    package struct Data: Codable {
+        @DocumentID var id: String?
+        package var name: String
+        package var target: ObjectID
+        
+        
+        init(name: String) {
+            self.name = name
+            self.target = ObjectID()
+        }
+    }
 }
 
 

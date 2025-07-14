@@ -9,6 +9,8 @@ import Values
 import Collections
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "SystemModelUpdater")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -29,12 +31,12 @@ final class SystemModelUpdater: Sendable, Debuggable, UpdaterInterface {
             let event = queue.removeFirst()
             
             switch event {
-            case .added:
-                fatalError()
+            case .added(let diff):
+                logger.failure("added 처리 미구현")
             case .modified:
-                fatalError()
+                logger.failure("modified 처리 미구현")
             case .removed:
-                fatalError()
+                logger.failure("removed 처리 미구현")
             }
         }
     }

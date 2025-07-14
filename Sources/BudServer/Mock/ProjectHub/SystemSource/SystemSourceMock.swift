@@ -194,6 +194,23 @@ package final class SystemSourceMock: SystemSourceInterface {
         }
     }
     
+    package func createNewObject() async {
+        logger.start()
+        
+        // mutate
+        guard id.isExist else {
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let objectSourceRef = ObjectSourceMock(name: "New Object",
+                                               parentRef: self)
+        let diff = ObjectSourceDiff(objectSourceRef)
+        
+        eventHandlers.values.forEach { handler in
+            handler.execute(.added(diff))
+        }
+    }
     
     package func remove() async {
         logger.start()

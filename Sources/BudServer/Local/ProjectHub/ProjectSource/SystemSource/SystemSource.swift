@@ -54,7 +54,7 @@ package final class SystemSource: SystemSourceInterface {
         docRef.updateData(updateData)
     }
     
-    private var listeners: [ObjectID: Listener] = [:]
+    private var listeners: [ObjectID: ListenerRegistration] = [:]
     package func hasHandler(requester: ObjectID) -> Bool {
         listeners[requester] != nil
     }
@@ -63,36 +63,8 @@ package final class SystemSource: SystemSourceInterface {
         
         let db = Firestore.firestore()
         
-        // rootSource listener
-        let rootSourceListener = db.collection(ProjectSources.name)
-            .document(parent.value)
-            .collection(ProjectSources.SystemSources.name)
-            .document(id.value)
-            .collection(ProjectSources.SystemSources.RootSources.name)
-            .addSnapshotListener { snapshot, error in
-                guard let snapshot else {
-                    let report = logger.getLog("\(error!)")
-                    logger.raw.fault("\(report)")
-                    return
-                }
-                
-                snapshot.documentChanges.forEach { changed in
-                    let documentId = changed.document.documentID
-                    let _ = RootSource.ID(documentId)
-                    
-                    switch changed.type {
-                    case .added:
-                        fatalError()
-                    case .modified:
-                        fatalError()
-                    case .removed:
-                        fatalError()
-                    }
-                }
-            }
-        
         // objectSource listener
-        let objectSourceListener = db.collection(ProjectSources.name)
+        self.listeners[requester] = db.collection(ProjectSources.name)
             .document(parent.value)
             .collection(ProjectSources.SystemSources.name)
             .document(id.value)
@@ -105,18 +77,45 @@ package final class SystemSource: SystemSourceInterface {
                 }
                 
                 snapshot.documentChanges.forEach { changed in
+                    // get ObjectSource & data
                     let documentId = changed.document.documentID
-                    let _ = RootSource.ID(documentId)
+                    let objectSource = ObjectSource.ID(documentId)
+                    let data: ObjectSource.Data
+                    do {
+                        data = try changed.document.data(as: ObjectSource.Data.self)
+                    } catch {
+                        let log = logger.getLog("ObjectSource.Data 디코딩 실패\n\(error)")
+                        logger.raw.fault("\(log)")
+                        return
+                    }
+                    
+                    let diff = ObjectSourceDiff(
+                        id: objectSource,
+                        target: data.target,
+                        name: data.name)
+                    
+                    // ObjectSources 컬렉션 이벤트 처리
+                    switch changed.type {
+                    case .added:
+                        // create ObjectSource
+                        let objectSourceRef = ObjectSource(id: objectSource)
+                        
+                        handler.execute(.added(diff))
+                        return
+                    case .modified:
+                        handler.execute(.modified(diff))
+                        return
+                    case .removed:
+                        objectSource.ref?.delete()
+                        
+                        handler.execute(.removed(diff))
+                        return
+                    }
                 }
             }
-        
-        let listener = Listener(rootSource: rootSourceListener,
-                                objectSource: objectSourceListener)
-        self.listeners[requester] = listener
     }
     package func removeHandler(requester: ObjectID) {
-        listeners[requester]?.rootSource.remove()
-        listeners[requester]?.objectSource.remove()
+        listeners[requester]?.remove()
         listeners[requester] = nil
     }
     
@@ -147,6 +146,10 @@ package final class SystemSource: SystemSourceInterface {
         fatalError()
     }
     
+    package func createNewObject() async {
+        fatalError()
+    }
+    
     package func remove() async {
         logger.start()
         
@@ -169,10 +172,6 @@ package final class SystemSource: SystemSourceInterface {
         package var ref: SystemSource? {
             SystemSourceManager.container[self]
         }
-    }
-    private struct Listener {
-        let rootSource: ListenerRegistration
-        let objectSource: ListenerRegistration
     }
     struct Data: Hashable, Codable {
         @DocumentID var id: String?

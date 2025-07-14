@@ -49,7 +49,7 @@ public final class ObjectModel: Sendable {
     // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
-        let value: UUID
+        public let value: UUID
         nonisolated init(value: UUID = UUID()) {
             self.value = value
         }

@@ -46,7 +46,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public var location: Location
     
     public var rootModel: RootModel.ID?
-    public var objectModels: Set<ObjectModel.ID> = []
+    public var objectModels: [ObjectModel.ID] = []
     
     var updater = SystemModelUpdater()
     
@@ -172,6 +172,12 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard let systemBoardRef = config.parent.ref,
+              systemBoardRef.models[location.getRight()] == nil else {
+                  setIssue(Error.systemAlreadyExist)
+                  logger.failure("오른쪽에 시스템이 이미 존재합니다.")
+                  return
+        }
         
         let systemSource = self.source
         
@@ -202,6 +208,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard let systemBoardRef = config.parent.ref,
+              systemBoardRef.models[location.getLeft()] == nil else {
+                  setIssue(Error.systemAlreadyExist)
+                  logger.failure("왼쪽에 시스템이 이미 존재합니다.")
+                  return
+        }
+        
         let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
@@ -225,6 +238,12 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             setIssue(Error.systemModelIsDeleted)
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
+        }
+        guard let systemBoardRef = config.parent.ref,
+              systemBoardRef.models[location.getTop()] == nil else {
+                  setIssue(Error.systemAlreadyExist)
+                  logger.failure("위쪽에 시스템이 이미 존재합니다.")
+                  return
         }
         let systemSource = self.source
         
@@ -253,6 +272,12 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard let systemBoardRef = config.parent.ref,
+              systemBoardRef.models[location.getBotttom()] == nil else {
+                  setIssue(Error.systemAlreadyExist)
+                  logger.failure("아래쪽에 시스템이 이미 존재합니다.")
+                  return
+        }
         let systemSource = self.source
         
         await withDiscardingTaskGroup { group in
@@ -263,6 +288,33 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                 }
                 
                 await systemSourceRef.addSystemBottom()
+            }
+        }
+    }
+    
+    public func createObjectModel() async {
+        logger.start()
+        
+        await self.createObjectModel(mutateHook: nil)
+    }
+    func createObjectModel(mutateHook: Hook?) async {
+        // mutate
+        await mutateHook?()
+        guard id.isExist else {
+            setIssue(Error.systemModelIsDeleted)
+            logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let systemSource = self.source
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let systemSourceRef = await systemSource.ref else {
+                    logger.failure("SystemSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await systemSourceRef.createNewObject()
             }
         }
     }

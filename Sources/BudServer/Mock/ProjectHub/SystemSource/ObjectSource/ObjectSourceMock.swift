@@ -12,7 +12,11 @@ import Values
 @Server
 package final class ObjectSourceMock: ObjectSourceInterface {
     // MARK: core
-    init() {
+    init(name: String,
+         parentRef: SystemSourceMock) {
+        self.name = name
+        self.parentRef = parentRef
+        
         ObjectSourceMockManager.register(self)
     }
     func delete() {
@@ -22,6 +26,9 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     
     // MARK: state
     package nonisolated let id = ID()
+    package nonisolated let parentRef: SystemSourceMock
+    package nonisolated let target = ObjectID()
+    package var name: String
     
     
     // MARK: action
