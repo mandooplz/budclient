@@ -451,6 +451,18 @@ struct SystemModelTests {
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "systemModelIsDeleted")
         }
+        
+        @Test func removeSystemSource() async throws {
+            // given
+            let systemSource = systemModelRef.source
+            try await #require(systemSource.isExist == true)
+            
+            // when
+            await systemModelRef.remove()
+            
+            // then
+            await #expect(systemSource.isExist == false)
+        }
     }
 }
 
