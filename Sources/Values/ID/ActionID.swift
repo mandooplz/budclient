@@ -8,7 +8,16 @@ import Foundation
 
 
 // MARK: GetterID
-public struct ActionID: Sendable, Hashable, Codable {
+public struct ActionID: Identity {
     public let value: UUID
 }
 
+
+public struct ValueTypeID: Identity {
+    public let value: String
+}
+
+
+public struct ObjectTypeID: Identity {
+    public let value: String
+}

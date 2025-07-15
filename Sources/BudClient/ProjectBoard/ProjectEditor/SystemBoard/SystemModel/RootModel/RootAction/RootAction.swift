@@ -13,8 +13,14 @@ import BudServer
 @MainActor @Observable
 public final class RootAction: Sendable {
     // MARK: core
-    init(target: ActionID) {
+    init(name: String,
+         config: Config<RootState.ID>,
+         target: ActionID) {
+        self.config = config
         self.target = target
+        
+        self.name = name
+        self.nameInput = name
         
         RootActionManager.register(self)
     }
@@ -25,7 +31,11 @@ public final class RootAction: Sendable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<RootState.ID>
     nonisolated let target: ActionID
+    
+    public var name: String
+    public var nameInput: String
     
     
     // MARK: action

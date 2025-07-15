@@ -8,12 +8,20 @@ import Foundation
 import Values
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "RootState")
+
 
 // MARK: Object
 @MainActor @Observable
 public final class RootState: Sendable {
     // MARK: core
-    init(target: StateID) {
+    init(name: String,
+         config: Config<RootModel.ID>,
+         target: StateID) {
+        self.name = name
+        self.nameInput = name
+        
+        self.config = config
         self.target = target
         
         RootStateManager.register(self)
@@ -25,10 +33,35 @@ public final class RootState: Sendable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<RootModel.ID>
     nonisolated let target: StateID
+    
+    var name: String
+    var nameInput: String
+    
+    // State의 Value를 어떻게 편집하며 이들을 어떻게 관리할 것인가. 
     
     
     // MARK: action
+    public func pushName() async {
+        logger.start()
+        
+        await self.pushName(captureHook: nil)
+    }
+    func pushName(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            return
+        }
+    }
+    
+    public func createGetter() async { }
+    public func createSetter() async { }
+    
+    public func subscribeValueTypes() async {
+        //
+    }
     
     
     // MARK: value

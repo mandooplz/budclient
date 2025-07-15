@@ -13,10 +13,14 @@ private let logger = WorkFlow.getLogger(for: "SystemModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class RootModel: Sendable {
+public final class RootModel: Sendable, Debuggable {
     // MARK: core
-    init(target: ObjectID,
+    init(name: String,
+         target: ObjectID,
          config: Config<SystemModel.ID>) {
+        self.name = name
+        self.nameInput = name
+        
         self.target = target
         self.config = config
         
@@ -32,24 +36,61 @@ public final class RootModel: Sendable {
     nonisolated let config: Config<SystemModel.ID>
     nonisolated let target: ObjectID
     
-    public var name: String?
+    public internal(set) var name: String
+    public var nameInput: String
     
     public var states: [RootState.ID] = []
     public var actions: [RootAction.ID] = []
     
+    public var issue: (any Issuable)?
+    
     
     // MARK: action
     public func pushName() async {
+        logger.start()
+        
+        await self.pushName(captureHook: nil)
     }
     func pushName(captureHook: Hook?) async {
-        
-        
         // capture
         await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.rootModelIsDeleted)
+            logger.failure("RootModel이 삭제되어 실행 취소됩니다.")
+            return
+        }
+        
+        logger.failure("미구현")
     }
     
-    public func createAction() async { }
-    public func createState() async { }
+    public func createAction() async {
+        logger.start()
+        
+        await self.createAction(captureHook: nil)
+    }
+    func createAction(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.rootModelIsDeleted)
+            logger.failure("RootModel이 삭제되어 실행 취소됩니다.")
+            return
+        }
+    }
+    
+    public func createState() async {
+        logger.start()
+        
+        await self.createState(captureHook: nil)
+    }
+    func createState(captureHook: Hook?) async {
+        // capture
+        guard id.isExist else {
+            setIssue(Error.rootModelIsDeleted)
+            logger.failure("RootModel이 삭제되어 실행 취소됩니다.")
+            return
+        }
+    }
     
     
     // MARK: value
@@ -66,6 +107,9 @@ public final class RootModel: Sendable {
         public var ref: RootModel? {
             nil
         }
+    }
+    public enum Error: String, Swift.Error {
+        case rootModelIsDeleted
     }
 }
 

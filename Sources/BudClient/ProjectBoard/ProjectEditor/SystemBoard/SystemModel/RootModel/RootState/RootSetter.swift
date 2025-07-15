@@ -13,8 +13,14 @@ import BudServer
 @MainActor @Observable
 public final class RootSetter: Sendable {
     // MARK: core
-    init(target: SetterID) {
+    init(name: String,
+         config: Config<RootState.ID>,
+         target: SetterID) {
+        self.config = config
         self.target = target
+        
+        self.name = name
+        self.nameInput = name
         
         RootSetterManager.register(self)
     }
@@ -25,7 +31,11 @@ public final class RootSetter: Sendable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<RootState.ID>
     nonisolated let target: SetterID
+    
+    public internal(set) var name: String
+    public var nameInput: String
     
     
     // MARK: action
