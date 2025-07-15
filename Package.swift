@@ -26,7 +26,8 @@ let package = Package(
         ),
         .package(
           url: "https://github.com/apple/swift-collections.git", from: "1.0.4"
-        )
+        ),
+        .package(url: "https://github.com/mandooplz/budmacro.git", branch: "main")
     ],
     targets: [
         // MARK: BudClient
@@ -56,7 +57,8 @@ let package = Package(
                 "Values",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
-                .product(name: "Collections", package: "swift-collections")
+                .product(name: "Collections", package: "swift-collections"),
+                .product(name: "BudMacro", package: "budmacro")
             ]
         ),
         

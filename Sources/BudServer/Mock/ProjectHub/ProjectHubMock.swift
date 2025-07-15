@@ -65,8 +65,10 @@ package final class ProjectHubMock: ProjectHubInterface {
         while tickets.isEmpty == false {
             let ticket = tickets.removeFirst()
             
+            
+            let newProjectName = "Project \(Int.random(in: 1..<1000))"
             let projectSourceRef = ProjectSourceMock(
-                name: ticket.name,
+                name: newProjectName,
                 creator: ticket.creator,
                 projectHubMockRef: self.id
             )

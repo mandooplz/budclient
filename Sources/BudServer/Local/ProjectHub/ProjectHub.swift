@@ -42,8 +42,8 @@ package final class ProjectHub: ProjectHubInterface {
         guard listeners[requester] == nil else { return }
         
         let db = Firestore.firestore()
-        self.listeners[requester] = db.collection(ProjectSources.name)
-            .whereField("creator",
+        self.listeners[requester] = db.collection(DB.projectSources)
+            .whereField(ProjectSource.Data.creator,
                         isEqualTo: user.encode())
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
@@ -122,11 +122,14 @@ package final class ProjectHub: ProjectHubInterface {
             while tickets.isEmpty == false {
                 let ticket = tickets.removeFirst()
                 
+                let newProjectName = "Project \(Int.random(in: 1..<1000))"
+                
                 // create ProjectSource in Firestore
-                let data = ProjectSource.Data(name: ticket.name,
+                let data = ProjectSource.Data(name: newProjectName,
                                               creator: ticket.creator)
                 
-                try db.collection(ProjectSources.name).addDocument(from: data)
+                try db.collection(DB.projectSources)
+                    .addDocument(from: data)
             }
         } catch {
             let log = logger.getLog(error)

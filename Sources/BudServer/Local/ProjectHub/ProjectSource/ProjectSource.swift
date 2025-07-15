@@ -8,6 +8,7 @@ import Foundation
 import Values
 import Collections
 import FirebaseFirestore
+import BudMacro
 
 private let logger = WorkFlow.getLogger(for: "ProjectSource")
 
@@ -39,10 +40,10 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // set ProjectSource.name
         let db = Firestore.firestore()
-        let docRef = db.collection(ProjectSources.name).document(id.value)
+        let docRef = db.collection(DB.projectSources).document(id.value)
         
         let updateData: [String: Any] = [
-            "name": value
+            Data.name: value
         ]
         
         docRef.updateData(updateData)
@@ -60,9 +61,9 @@ package final class ProjectSource: ProjectSourceInterface {
         guard self.listeners[requester] == nil else { return }
         
         let db = Firestore.firestore()
-        self.listeners[requester] = db.collection(ProjectSources.name)
+        self.listeners[requester] = db.collection(DB.projectSources)
             .document(id.value)
-            .collection(ProjectSources.SystemSources.name)
+            .collection(DB.systemSources)
             .addSnapshotListener({ snapshot, error in
                 guard let snapshot else {
                     let log = logger.getLog("\(error!)")
@@ -139,11 +140,11 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // get ref
         let projectSourceDocRef = firebaseDB
-            .collection(ProjectSources.name)
+            .collection(DB.projectSources)
             .document(id.value)
         
         let systemSourceCollectionRef = projectSourceDocRef
-            .collection(ProjectSources.SystemSources.name)
+            .collection(DB.systemSources)
         
         // transaction
         do {
@@ -176,7 +177,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     let newSystemLocationSet: Set<Location> = [newSystemSourceData.location]
                     
                     transaction.updateData([
-                        "systemLocations" : newSystemLocationSet.encode()
+                        Data.systemLocations : newSystemLocationSet.encode()
                     ], forDocument: projectSourceDocRef)
                     
                     return
@@ -207,7 +208,9 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // remove ProjectSourceDocument in FireStore
         let db = Firestore.firestore()
-        db.collection(ProjectSources.name).document(id.value).delete()
+        db.collection(DB.projectSources)
+            .document(id.value)
+            .delete()
     }
     
     
@@ -226,6 +229,8 @@ package final class ProjectSource: ProjectSourceInterface {
             ProjectSourceManager.container[self]
         }
     }
+    
+    @ShowState
     struct Data: Hashable, Codable {
         @DocumentID var id: String?
         package var name: String

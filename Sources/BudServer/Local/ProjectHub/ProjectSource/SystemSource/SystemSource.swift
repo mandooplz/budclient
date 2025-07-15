@@ -7,6 +7,7 @@
 import Foundation
 import Values
 import FirebaseFirestore
+import BudMacro
 
 private let logger = WorkFlow.getLogger(for: "SystemSource")
 
@@ -42,13 +43,13 @@ package final class SystemSource: SystemSourceInterface {
         
         // compute
         let db = Firestore.firestore()
-        let docRef = db.collection(ProjectSources.name)
+        let docRef = db.collection(DB.projectSources)
             .document(parent.value)
-            .collection(ProjectSources.SystemSources.name)
+            .collection(DB.systemSources)
             .document(id.value)
         
         let updateData: [String: Any] = [
-            "name": value
+            Data.name : value
         ]
         
         docRef.updateData(updateData)
@@ -64,11 +65,11 @@ package final class SystemSource: SystemSourceInterface {
         let db = Firestore.firestore()
         
         // objectSource listener
-        self.listeners[requester] = db.collection(ProjectSources.name)
+        self.listeners[requester] = db.collection(DB.projectSources)
             .document(parent.value)
-            .collection(ProjectSources.SystemSources.name)
+            .collection(DB.systemSources)
             .document(id.value)
-            .collection(ProjectSources.SystemSources.ObjectSources.name)
+            .collection(DB.objectSources)
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     let report = logger.getLog("\(error!)")
@@ -137,53 +138,59 @@ package final class SystemSource: SystemSourceInterface {
         }
         
         // db & ref
-        let db = Firestore.firestore()
-        let projectSourceDocument = db.collection(ProjectSources.name)
-            .document(parent.value)
-        let systemSourceCollection = db.collection(ProjectSources.name)
-            .document(parent.value)
-            .collection(ProjectSources.SystemSources.name)
+        let firebaseDB = Firestore.firestore()
         
-        let systemSourceRef = systemSourceCollection.document(id.value)
+        let projectSourceDocRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+        
+        let systemSourceCollectionRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+            .collection(DB.systemSources)
+        
+        let systemSourceDocRef = systemSourceCollectionRef
+            .document(id.value)
         
         // transaction
         do {
-            let _ = try await db.runTransaction { @Sendable transaction, errorPointer in
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
                 do {
                     // get systemSourceData, projectSourceData
-                    let systemSourceData = try transaction.getDocument(systemSourceRef)
+                    let systemSourceData = try transaction.getDocument(systemSourceDocRef)
                         .data(as: Data.self)
                     
-                    let projectSourceData = try transaction.getDocument(projectSourceDocument)
+                    let projectSourceData = try transaction.getDocument(projectSourceDocRef)
                         .data(as: ProjectSource.Data.self)
             
-                    // get rightLocation
-                    let rightLocation = systemSourceData.location.getRight()
+                    // compute topLocation
+                    let topLocation = systemSourceData.location.getTop()
                     
                     
                     // check SystemSource(rightLocation) alreadyExist
                     let systemLocations = projectSourceData.systemLocations
-                    guard systemLocations.contains(rightLocation) == false else {
-                        let log = logger.getLog("Top 방향에 이미 SystemSource가 존재합니다")
+                    
+                    guard systemLocations.contains(topLocation) == false else {
+                        let log = logger.getLog("위쪽에 이미 SystemSource가 존재합니다")
                         logger.raw.error("\(log)")
                         return
                     }
                     
                     // create SystemSource in rightLocation
-                    let newSystemSourceDoc = systemSourceCollection.document()
+                    let newSystemSourceDocRef = systemSourceCollectionRef.document()
                     
                     let newSystemSourceData = SystemSource.Data(name: "New System",
-                                                                location: rightLocation)
+                                                                location: topLocation)
                     
                     try transaction.setData(from: newSystemSourceData,
-                                            forDocument: newSystemSourceDoc)
+                                            forDocument: newSystemSourceDocRef)
                     
                     // update ProjectSource.systemLocations
-                    let newSystemLocations = systemLocations.union([rightLocation])
+                    let newSystemLocations = systemLocations.union([topLocation])
                     
                     transaction.updateData(
-                        ["systemLocations": newSystemLocations.encode()],
-                        forDocument: projectSourceDocument
+                        [ProjectSource.Data.systemLocations: newSystemLocations.encode()],
+                        forDocument: projectSourceDocRef
                     )
                     
                 } catch {
@@ -208,7 +215,75 @@ package final class SystemSource: SystemSourceInterface {
             return
         }
         
-        logger.failure("미구현")
+        // db & ref
+        let firebaseDB = Firestore.firestore()
+        
+        let projectSourceDocRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+        
+        let systemSourceCollectionRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+            .collection(DB.systemSources)
+        
+        let systemSourceDocRef = systemSourceCollectionRef
+            .document(id.value)
+        
+        // transaction
+        do {
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
+                do {
+                    // get systemSourceData, projectSourceData
+                    let systemSourceData = try transaction.getDocument(systemSourceDocRef)
+                        .data(as: Data.self)
+                    
+                    let projectSourceData = try transaction.getDocument(projectSourceDocRef)
+                        .data(as: ProjectSource.Data.self)
+            
+                    // compute leftLocation
+                    let leftLocation = systemSourceData.location.getLeft()
+                    
+                    
+                    // check SystemSource(rightLocation) alreadyExist
+                    let systemLocations = projectSourceData.systemLocations
+                    
+                    guard systemLocations.contains(leftLocation) == false else {
+                        let log = logger.getLog("Left 방향에 이미 SystemSource가 존재합니다")
+                        logger.raw.error("\(log)")
+                        return
+                    }
+                    
+                    // create SystemSource in rightLocation
+                    let newSystemSourceDocRef = systemSourceCollectionRef.document()
+                    
+                    let newSystemSourceData = SystemSource.Data(name: "New System",
+                                                                location: leftLocation)
+                    
+                    try transaction.setData(from: newSystemSourceData,
+                                            forDocument: newSystemSourceDocRef)
+                    
+                    // update ProjectSource.systemLocations
+                    let newSystemLocations = systemLocations.union([leftLocation])
+                    
+                    transaction.updateData(
+                        [ProjectSource.Data.systemLocations: newSystemLocations.encode()],
+                        forDocument: projectSourceDocRef
+                    )
+                    
+                } catch {
+                    let log = logger.getLog("\(error)")
+                    logger.raw.fault("\(log)")
+                    return
+                }
+                
+                return
+            }
+        } catch {
+            let log = logger.getLog("\(error)")
+            logger.raw.fault("\(log)")
+            return
+        }
     }
     package func addSystemRight() async {
         logger.start()
@@ -218,7 +293,75 @@ package final class SystemSource: SystemSourceInterface {
             return
         }
         
-        logger.failure("미구현")
+        // db & ref
+        let firebaseDB = Firestore.firestore()
+        
+        let projectSourceDocRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+        
+        let systemSourceCollectionRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+            .collection(DB.systemSources)
+        
+        let systemSourceDocRef = systemSourceCollectionRef
+            .document(id.value)
+        
+        // transaction
+        do {
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
+                do {
+                    // get systemSourceData, projectSourceData
+                    let systemSourceData = try transaction.getDocument(systemSourceDocRef)
+                        .data(as: Data.self)
+                    
+                    let projectSourceData = try transaction.getDocument(projectSourceDocRef)
+                        .data(as: ProjectSource.Data.self)
+            
+                    // compute rightLocation
+                    let rightLocation = systemSourceData.location.getRight()
+                    
+                    
+                    // check SystemSource(rightLocation) alreadyExist
+                    let systemLocations = projectSourceData.systemLocations
+                    
+                    guard systemLocations.contains(rightLocation) == false else {
+                        let log = logger.getLog("Right 방향에 이미 SystemSource가 존재합니다")
+                        logger.raw.error("\(log)")
+                        return
+                    }
+                    
+                    // create SystemSource in rightLocation
+                    let newSystemSourceDocRef = systemSourceCollectionRef.document()
+                    
+                    let newSystemSourceData = SystemSource.Data(name: "New System",
+                                                                location: rightLocation)
+                    
+                    try transaction.setData(from: newSystemSourceData,
+                                            forDocument: newSystemSourceDocRef)
+                    
+                    // update ProjectSource.systemLocations
+                    let newSystemLocations = systemLocations.union([rightLocation])
+                    
+                    transaction.updateData(
+                        [ProjectSource.Data.systemLocations: newSystemLocations.encode()],
+                        forDocument: projectSourceDocRef
+                    )
+                    
+                } catch {
+                    let log = logger.getLog("\(error)")
+                    logger.raw.fault("\(log)")
+                    return
+                }
+                
+                return
+            }
+        } catch {
+            let log = logger.getLog("\(error)")
+            logger.raw.fault("\(log)")
+            return
+        }
     }
     package func addSystemBottom() async {
         logger.start()
@@ -228,7 +371,75 @@ package final class SystemSource: SystemSourceInterface {
             return
         }
         
-        logger.failure("미구현")
+        // db & ref
+        let firebaseDB = Firestore.firestore()
+        
+        let projectSourceDocRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+        
+        let systemSourceCollectionRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+            .collection(DB.systemSources)
+        
+        let systemSourceDocRef = systemSourceCollectionRef
+            .document(id.value)
+        
+        // transaction
+        do {
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
+                do {
+                    // get systemSourceData, projectSourceData
+                    let systemSourceData = try transaction.getDocument(systemSourceDocRef)
+                        .data(as: Data.self)
+                    
+                    let projectSourceData = try transaction.getDocument(projectSourceDocRef)
+                        .data(as: ProjectSource.Data.self)
+            
+                    // compute bottomLocation
+                    let bottomLocation = systemSourceData.location.getBotttom()
+                    
+                    
+                    // check SystemSource(rightLocation) alreadyExist
+                    let systemLocations = projectSourceData.systemLocations
+                    
+                    guard systemLocations.contains(bottomLocation) == false else {
+                        let log = logger.getLog("Bottom 방향에 이미 SystemSource가 존재합니다")
+                        logger.raw.error("\(log)")
+                        return
+                    }
+                    
+                    // create SystemSource in rightLocation
+                    let newSystemSourceDocRef = systemSourceCollectionRef.document()
+                    
+                    let newSystemSourceData = SystemSource.Data(name: "New System",
+                                                                location: bottomLocation)
+                    
+                    try transaction.setData(from: newSystemSourceData,
+                                            forDocument: newSystemSourceDocRef)
+                    
+                    // update ProjectSource.systemLocations
+                    let newSystemLocations = systemLocations.union([bottomLocation])
+                    
+                    transaction.updateData(
+                        [ProjectSource.Data.systemLocations: newSystemLocations.encode()],
+                        forDocument: projectSourceDocRef
+                    )
+                    
+                } catch {
+                    let log = logger.getLog("\(error)")
+                    logger.raw.fault("\(log)")
+                    return
+                }
+                
+                return
+            }
+        } catch {
+            let log = logger.getLog("\(error)")
+            logger.raw.fault("\(log)")
+            return
+        }
     }
     
     package func createNewObject() async {
@@ -239,7 +450,24 @@ package final class SystemSource: SystemSourceInterface {
             return
         }
         
-        logger.failure("미구현")
+        // db & ref
+        let firebaseDB = Firestore.firestore()
+        
+        let objectSourceCollectionRef = firebaseDB
+            .collection(DB.projectSources)
+            .document(parent.value)
+            .collection(DB.systemSources)
+        
+        do {
+            let data = ObjectSource.Data(name: "New Object")
+            
+            try objectSourceCollectionRef.addDocument(from: data)
+        } catch {
+            let log = logger.getLog("새로운 SystemSource Document 생성 실패\n\(error)")
+            logger.raw.error("\(log)")
+            return
+        }
+        
     }
     
     package func remove() async {
@@ -250,7 +478,19 @@ package final class SystemSource: SystemSourceInterface {
             return
         }
         
-        logger.failure("미구현")
+        // db & docRef
+        let systemSourceDocRef = Firestore.firestore()
+            .collection(DB.projectSources)
+            .document(parent.value)
+            .collection(DB.systemSources)
+            .document(id.value)
+        
+        do {
+            try await systemSourceDocRef.delete()
+        } catch {
+            let log = logger.getLog("SystemSource Document 삭제 실패\n\(error)")
+            logger.raw.error("\(log)")
+        }
     }
     
     
@@ -270,6 +510,8 @@ package final class SystemSource: SystemSourceInterface {
             SystemSourceManager.container[self]
         }
     }
+    
+    @ShowState
     struct Data: Hashable, Codable {
         @DocumentID var id: String?
         var target: SystemID
@@ -278,6 +520,7 @@ package final class SystemSource: SystemSourceInterface {
         
         var rootSource: RootSource
         
+        @ShowState
         struct RootSource: Hashable, Codable {
             let id: String
             let target: ObjectID

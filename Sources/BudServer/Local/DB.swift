@@ -7,27 +7,11 @@
 
 
 // MARK: DB
-struct ProjectSources {
-    static let name = "ProjectSources"
-    private init() { }
+enum DB: Sendable {
+    static let projectSources = "ProjectSources"
+    static let systemSources = "SystemSources"
+    static let objectSources = "ObjectSources"
     
-    struct SystemSources {
-        static let name = "SystemSources"
-        private init() { }
-        
-        struct RootSources {
-            static let name = "RootSources"
-            private init() { }
-        }
-        
-        struct ObjectSources {
-            static let name = "ObjectSources"
-            private init() { }
-        }
-    }
-    
-    struct ValueSources {
-        static let name = "ValueSources"
-        private init() { }
-    }
+    static let valueSources = "ValueSources"
 }
+

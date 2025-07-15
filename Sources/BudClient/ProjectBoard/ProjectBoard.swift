@@ -135,10 +135,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                let newName = "Project \(Int.random(in: 1..<1000))"
-                
-            
-                async let ticket = CreateProject(name: newName, creator: config.user)
+                async let ticket = CreateProject(by: config.user)
                 
                 guard let budServerRef = await config.budServer.ref,
                       let projectHubRef = await budServerRef.projectHub.ref else { return }

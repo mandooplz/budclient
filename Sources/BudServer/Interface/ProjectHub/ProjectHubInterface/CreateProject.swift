@@ -10,11 +10,10 @@ import Values
 
 // MARK: Value
 package struct CreateProject: Sendable, Hashable {
-    package let name: String
+    package let id = UUID()
     package let creator: UserID
     
-    package init(name: String, creator: UserID) {
-        self.name = name
+    package init(by creator: UserID) {
         self.creator = creator
     }
 }
