@@ -12,7 +12,10 @@ import Values
 @MainActor @Observable
 public final class ObjectModel: Sendable {
     // MARK: core
-    init(target: ObjectID, config: Config<SystemModel.ID>) {
+    init(name: String,
+         target: ObjectID,
+         config: Config<SystemModel.ID>) {
+        self.name = name
         self.target = target
         self.config = config
         
@@ -28,20 +31,31 @@ public final class ObjectModel: Sendable {
     nonisolated let config: Config<SystemModel.ID>
     nonisolated let target: ObjectID
     
+    public var name: String
+    
     public var type: Relationship = .oneToOne // Object가 상위 Object와 어떻게 연결되어있는지를 표현
     
     
     // MARK: action
-    public func subscribe() { }
-    public func unsubscribe() { }
+    public func subscribe() {
+        // ObjectAction, ObjectState를 Subscribe
+    }
+    public func unsubscribe() {
+        
+    }
+    
+    public func pushName() async { }
+    func pushName(captureHook: Hook?) async { }
     
     public func appendChild() { }
     public func appendParent() { }
     
-    public func newState() { }
-    public func newAction() { }
+    public func createState() { }
+    public func createAction() { }
     
-    public func makeFlow() { }
+    public func makeFlow() {
+        // makeFlow는 어떤 액션인가.
+    }
     
     public func remove() { }
     

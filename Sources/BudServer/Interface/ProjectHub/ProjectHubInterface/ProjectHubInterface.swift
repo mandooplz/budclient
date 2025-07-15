@@ -30,9 +30,4 @@ package protocol ProjectHubInterface: Sendable {
     func createNewProject() async
 }
 
-package protocol ProjectHubIdentity: Sendable, Hashable {
-    associatedtype Object: ProjectHubInterface where Object.ID == Self
-    
-    var isExist: Bool { get async }
-    var ref: Object? { get async }
-}
+

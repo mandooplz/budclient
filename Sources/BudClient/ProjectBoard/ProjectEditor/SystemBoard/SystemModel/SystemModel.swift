@@ -28,6 +28,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         self.location = location
         self.source = source
         
+        self.updater = SystemModelUpdater(config: config.setParent(self.id))
+        
         SystemModelManager.register(self)
     }
     func delete() {
@@ -47,8 +49,19 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     public var rootModel: RootModel.ID?
     public var objectModels: [ObjectModel.ID] = []
+    func isObjectExist(_ target: ObjectID) -> Bool {
+        self.objectModels
+            .compactMap { $0.ref }
+            .contains { $0.target == target }
+    }
+    func getObjectModel(_ target: ObjectID) -> ObjectModel.ID? {
+        self.objectModels
+            .first { objectModel in
+                objectModel.ref?.target == target
+            }
+    }
     
-    var updater = SystemModelUpdater()
+    var updater: SystemModelUpdater
     
     public var issue: (any Issuable)?
     public var callback: Callback?

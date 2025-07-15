@@ -40,6 +40,7 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
             let event = queue.removeFirst()
             switch event {
             case .added(let diff):
+                // create SystemModel
                 if systemBoardRef.isExist(diff.target) {
                     setIssue(Error.alreadyAdded)
                     logger.failure(Error.alreadyAdded)
@@ -53,6 +54,7 @@ final class SystemBoardUpdater: Sendable, Debuggable, UpdaterInterface {
                                                  source: diff.id)
                 systemBoardRef.models[diff.location] = systemModelRef.id
             case .removed(let diff):
+                // remove SystemModel
                 guard systemBoardRef.isExist(diff.target) else {
                     setIssue(Error.alreadyRemoved)
                     logger.failure(Error.alreadyRemoved)
