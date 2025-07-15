@@ -98,14 +98,16 @@ package final class SystemSource: SystemSourceInterface {
                     switch changed.type {
                     case .added:
                         // create ObjectSource
-                        let objectSourceRef = ObjectSource(id: objectSource)
+                        let _ = ObjectSource(id: objectSource)
                         
                         handler.execute(.added(diff))
                         return
                     case .modified:
+                        // modify ObjectSource
                         handler.execute(.modified(diff))
                         return
                     case .removed:
+                        // remove ObjectSource
                         objectSource.ref?.delete()
                         
                         handler.execute(.removed(diff))
@@ -128,32 +130,127 @@ package final class SystemSource: SystemSourceInterface {
     package func addSystemTop() async {
         logger.start()
         
-        fatalError()
+        // mutate
+        guard id.isExist else {
+            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        // db & ref
+        let db = Firestore.firestore()
+        let projectSourceDocument = db.collection(ProjectSources.name)
+            .document(parent.value)
+        let systemSourceCollection = db.collection(ProjectSources.name)
+            .document(parent.value)
+            .collection(ProjectSources.SystemSources.name)
+        
+        let systemSourceRef = systemSourceCollection.document(id.value)
+        
+        // transaction
+        do {
+            let _ = try await db.runTransaction { @Sendable transaction, errorPointer in
+                do {
+                    // get systemSourceData, projectSourceData
+                    let systemSourceData = try transaction.getDocument(systemSourceRef)
+                        .data(as: Data.self)
+                    
+                    let projectSourceData = try transaction.getDocument(projectSourceDocument)
+                        .data(as: ProjectSource.Data.self)
+            
+                    // get rightLocation
+                    let rightLocation = systemSourceData.location.getRight()
+                    
+                    
+                    // check SystemSource(rightLocation) alreadyExist
+                    let systemLocations = projectSourceData.systemLocations
+                    guard systemLocations.contains(rightLocation) == false else {
+                        let log = logger.getLog("Top 방향에 이미 SystemSource가 존재합니다")
+                        logger.raw.error("\(log)")
+                        return
+                    }
+                    
+                    // create SystemSource in rightLocation
+                    let newSystemSourceDoc = systemSourceCollection.document()
+                    
+                    let newSystemSourceData = SystemSource.Data(name: "New System",
+                                                                location: rightLocation)
+                    
+                    try transaction.setData(from: newSystemSourceData,
+                                            forDocument: newSystemSourceDoc)
+                    
+                    // update ProjectSource.systemLocations
+                    let newSystemLocations = systemLocations.union([rightLocation])
+                    
+                    transaction.updateData(
+                        ["systemLocations": newSystemLocations.encode()],
+                        forDocument: projectSourceDocument
+                    )
+                    
+                } catch {
+                    let log = logger.getLog("\(error)")
+                    logger.raw.fault("\(log)")
+                    return
+                }
+                
+                return
+            }
+        } catch {
+            let log = logger.getLog("\(error)")
+            logger.raw.fault("\(log)")
+            return
+        }
     }
     package func addSystemLeft() async {
         logger.start()
         
-        fatalError()
+        guard id.isExist else {
+            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        logger.failure("미구현")
     }
     package func addSystemRight() async {
         logger.start()
         
-        fatalError()
+        guard id.isExist else {
+            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        logger.failure("미구현")
     }
     package func addSystemBottom() async {
         logger.start()
         
-        fatalError()
+        guard id.isExist else {
+            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        logger.failure("미구현")
     }
     
     package func createNewObject() async {
-        fatalError()
+        logger.start()
+        
+        guard id.isExist else {
+            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        logger.failure("미구현")
     }
     
     package func remove() async {
         logger.start()
         
-        fatalError()
+        guard id.isExist else {
+            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        logger.failure("미구현")
     }
     
     
@@ -191,6 +288,17 @@ package final class SystemSource: SystemSourceInterface {
                 self.target = ObjectID()
                 self.name = name
             }
+        }
+        
+        init(id: String? = nil,
+             target: SystemID = SystemID(),
+             name: String,
+             location: Location) {
+            self.id = id
+            self.target = target
+            self.name = name
+            self.location = location
+            self.rootSource = RootSource(name: name)
         }
     }
 }

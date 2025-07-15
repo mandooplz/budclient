@@ -127,66 +127,85 @@ package final class ProjectSource: ProjectSourceInterface {
     
     // MARK: action
     package func createFirstSystem() async  {
-        // database
-        let db = Firestore.firestore()
+        logger.start()
         
-        // reference
-        let projectSourceRef = db.collection(ProjectSources.name)
+        guard id.isExist else {
+            logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        // database
+        let firebaseDB = Firestore.firestore()
+        
+        // get ref
+        let projectSourceDocRef = firebaseDB
+            .collection(ProjectSources.name)
             .document(id.value)
-        let systemSourcesRef = projectSourceRef.collection(ProjectSources.SystemSources.name)
+        
+        let systemSourceCollectionRef = projectSourceDocRef
+            .collection(ProjectSources.SystemSources.name)
         
         // transaction
         do {
-            let _ = try await db.runTransaction { @Sendable transaction, errorPointer in
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
                 do {
-                    // check ProjectSource.systemModelCount
-                    let data = try transaction.getDocument(projectSourceRef)
-                        .data(as: ProjectSource.Data.self)
-                    guard data.systemModelCount == 0 else {
-                        logger.failure("FirstSystem이 이미 존재합니다.")
+                    // get ProjectSource.Data
+                    let projectSourceData = try transaction
+                        .getDocument(projectSourceDocRef)
+                        .data(as: Data.self)
+                    
+                    // check System alreadyExist
+                    guard projectSourceData.systemLocations.isEmpty else {
+                        let log = logger.getLog("(0,0) 위치에 첫 번째 System이 이미 존재합니다.")
+                        logger.raw.error("\(log)")
                         return
                     }
                     
-                    // create SystemSource & RootSource
-                    let newSystemSourceRef = systemSourcesRef.document()
+                    // create SystemSource
+                    let newSystemSourceDocRef = systemSourceCollectionRef
+                        .document()
                     
-                    let newRootSourceData = SystemSource.Data.RootSource(name: "First System")
-                    let newData = SystemSource.Data(target: SystemID(),
-                                                    name: "First System",
-                                                    location: .origin,
-                                                    rootSource: newRootSourceData)
+                    let newSystemSourceData = SystemSource.Data(name: "First System",
+                                                                location: .origin)
                     
-                    try transaction.setData(from: newData, forDocument: newSystemSourceRef)
+                    try transaction.setData(from: newSystemSourceData,
+                                            forDocument: newSystemSourceDocRef)
                     
                     
-                    // increase ProjectSource.systemModelCount
+                    // update ProjectSource.systemLocations
+                    let newSystemLocationSet: Set<Location> = [newSystemSourceData.location]
+                    
                     transaction.updateData([
-                        "systemModelCount" : FieldValue.increment(Int64(1))
-                    ], forDocument: projectSourceRef)
+                        "systemLocations" : newSystemLocationSet.encode()
+                    ], forDocument: projectSourceDocRef)
                     
                     return
                 } catch(let error as NSError) {
-                    logger.failure(error)
+                    let log = logger.getLog("\(error)")
+                    logger.raw.fault("\(log)")
                     return nil
                 }
             }
         } catch {
             let log = logger.getLog("트랜잭션 실패\n\(error)")
-            logger.raw.error("\(log)")
+            logger.raw.fault("\(log)")
             return
         }
     }
     package func remove() {
         logger.start()
         
-        guard id.isExist else { return }
-        guard let projectHubRef = parent.ref else { return }
+        guard id.isExist else {
+            logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let projectHubRef = parent.ref!
         
-        // ProjectSource 인스턴스 제거
+        // delete ProjectSource
         projectHubRef.projectSources.remove(self.id)
         self.delete()
         
-        // FireStore에서 문서 삭제
+        // remove ProjectSourceDocument in FireStore
         let db = Firestore.firestore()
         db.collection(ProjectSources.name).document(id.value).delete()
     }
@@ -212,13 +231,14 @@ package final class ProjectSource: ProjectSourceInterface {
         package var name: String
         package var creator: UserID
         package var target: ProjectID
-        package var systemModelCount: Int
+        
+        package var systemLocations: Set<Location>
         
         init(name: String, creator: UserID) {
             self.name = name
             self.creator = creator
             self.target = ProjectID()
-            self.systemModelCount = 0
+            self.systemLocations = []
         }
     }
 }

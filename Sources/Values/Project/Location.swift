@@ -21,9 +21,7 @@ public extension Location {
     static var origin: Self {
         .init(x: 0, y: 0)
     }
-}
-
-public extension Location {
+    
     func getRight() -> Self {
         return .init(x: self.x + 1, y: self.y)
     }
@@ -38,5 +36,19 @@ public extension Location {
     
     func getBotttom() -> Self {
         return .init(x: self.x, y: self.y - 1)
+    }
+}
+
+public extension Location {
+    func encode() -> [String: Int] {
+        return ["x": self.x, "y": self.y]
+    }
+}
+
+
+// MARK: Set<Location>
+public extension Set<Location> {
+    func encode() -> [[String: Int]] {
+        self.map { $0.encode() }
     }
 }
