@@ -84,15 +84,17 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
                     requester: me,
                     handler: .init({ event in
                         Task { @MainActor in
-                            guard let updaterRef = systemBoard.ref?.updater else {
-                                logger.failure("SystemBoard가 존재하지 않아 update가 취소됩니다.")
-                                return
+                            await WorkFlow {
+                                guard let updaterRef = await systemBoard.ref?.updater else {
+                                    logger.failure("SystemBoard가 존재하지 않아 update가 취소됩니다.")
+                                    return
+                                }
+                                
+                                await updaterRef.appendEvent(event)
+                                await updaterRef.update()
+                                
+                                await callback?()
                             }
-                            
-                            updaterRef.appendEvent(event)
-                            await updaterRef.update()
-                            
-                            await callback?()
                         }
                     }))
             }

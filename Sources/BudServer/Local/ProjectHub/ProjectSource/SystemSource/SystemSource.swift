@@ -85,7 +85,7 @@ package final class SystemSource: SystemSourceInterface {
                     do {
                         data = try changed.document.data(as: ObjectSource.Data.self)
                     } catch {
-                        let log = logger.getLog("ObjectSource.Data 디코딩 실패\n\(error)")
+                        let log = logger.getLog("ObjectSource.Data 디코딩 실패 \(documentId)\n\(error)")
                         logger.raw.fault("\(log)")
                         return
                     }
@@ -457,6 +457,8 @@ package final class SystemSource: SystemSourceInterface {
             .collection(DB.projectSources)
             .document(parent.value)
             .collection(DB.systemSources)
+            .document(id.value)
+            .collection(DB.objectSources)
         
         do {
             let data = ObjectSource.Data(name: "New Object")
@@ -479,14 +481,40 @@ package final class SystemSource: SystemSourceInterface {
         }
         
         // db & docRef
-        let systemSourceDocRef = Firestore.firestore()
+        let firebaseDB = Firestore.firestore()
+        let projectSourceDocRef = firebaseDB
             .collection(DB.projectSources)
             .document(parent.value)
+        let systemSourceDocRef = projectSourceDocRef
             .collection(DB.systemSources)
             .document(id.value)
         
         do {
-            try await systemSourceDocRef.delete()
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
+                // get SystemSource location
+                let location: Location
+                do {
+                    location = try transaction
+                        .getDocument(systemSourceDocRef)
+                        .data(as: SystemSource.Data.self)
+                        .location
+                } catch {
+                    let log = logger.getLog("SystemSource 디코딩 실패\n\(error)")
+                    logger.raw.fault("\(log)")
+                    return
+                }
+                
+                // remove location in ProjectSource.systemLocations
+                transaction.updateData([
+                    ProjectSource.Data.systemLocations: FieldValue.arrayRemove([location.encode()])
+                ], forDocument: projectSourceDocRef)
+                
+                
+                // delete SystemSource
+                transaction.deleteDocument(systemSourceDocRef)
+                
+                return
+            }
         } catch {
             let log = logger.getLog("SystemSource Document 삭제 실패\n\(error)")
             logger.raw.error("\(log)")

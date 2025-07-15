@@ -8,6 +8,8 @@ import Foundation
 import Values
 import BudServer
 
+private let logger = WorkFlow.getLogger(for: "SystemModel")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -37,6 +39,17 @@ public final class RootModel: Sendable {
     
     
     // MARK: action
+    public func pushName() async {
+    }
+    func pushName(captureHook: Hook?) async {
+        
+        
+        // capture
+        await captureHook?()
+    }
+    
+    public func createAction() async { }
+    public func createState() async { }
     
     
     // MARK: value

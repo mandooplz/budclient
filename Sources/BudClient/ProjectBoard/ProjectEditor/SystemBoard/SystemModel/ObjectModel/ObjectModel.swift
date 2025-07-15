@@ -37,13 +37,6 @@ public final class ObjectModel: Sendable {
     
     
     // MARK: action
-    public func subscribe() {
-        // ObjectAction, ObjectState를 Subscribe
-    }
-    public func unsubscribe() {
-        
-    }
-    
     public func pushName() async { }
     func pushName(captureHook: Hook?) async { }
     

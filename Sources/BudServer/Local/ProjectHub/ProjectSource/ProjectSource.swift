@@ -79,7 +79,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     do {
                         data = try changed.document.data(as: SystemSource.Data.self)
                     } catch {
-                        let log = logger.getLog("SystemSource 디코딩 실패\n\(error)")
+                        let log = logger.getLog("SystemSource 디코딩 실패 \(documentId)\n\(error)")
                         logger.raw.fault("\(log)")
                         return
                     }

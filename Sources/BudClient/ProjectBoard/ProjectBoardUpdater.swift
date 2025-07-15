@@ -55,12 +55,16 @@ final class ProjectBoardUpdater: Debuggable, UpdaterInterface {
                                                      source: diff.id)
                 
                 projectBoardRef.editors.append(projectEditorRef.id)
+                
+                logger.finished("added \(diff.id)")
             case .modified(let diff):
                 // update ProjectEditor
                 guard let projectEditor = projectBoardRef.getProjectEditor(diff.target),
                       let projectEditorRef = projectEditor.ref else { return }
                 
                 projectEditorRef.name = diff.name
+                
+                logger.finished("modified \(diff.id)")
             case .removed(let diff):
                 // remove ProjectEditor
                 guard let projectEditor = projectBoardRef.getProjectEditor(diff.target),
@@ -72,6 +76,8 @@ final class ProjectBoardUpdater: Debuggable, UpdaterInterface {
                 
                 projectEditorRef.delete()
                 projectBoardRef.editors.removeAll { $0 == projectEditor }
+                
+                logger.finished("removed \(diff.id)")
             }
         }
     }
