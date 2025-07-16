@@ -139,7 +139,7 @@ public final class SystemBoard: Sendable, Debuggable, EventDebuggable {
             logger.failure("첫번째 System이 이미 존재합니다.")
             return
         }
-        let projectSource = self.config.parent.ref!.source
+        let projectSource = self.config.parent.ref!.source // projectSource
         
         // compute
         await withDiscardingTaskGroup { group in

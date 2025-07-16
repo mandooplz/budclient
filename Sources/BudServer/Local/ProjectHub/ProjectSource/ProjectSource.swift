@@ -25,6 +25,8 @@ package final class ProjectSource: ProjectSourceInterface {
         ProjectSourceManager.register(self)
     }
     func delete() {
+        
+        
         ProjectSourceManager.unregister(self.id)
     }
     
@@ -33,8 +35,9 @@ package final class ProjectSource: ProjectSourceInterface {
     nonisolated let target: ProjectID
     nonisolated let parent: ProjectHub.ID
     
-    var systemSources: Set<SystemSource.ID> = []
+    var systemSources: [SystemID: SystemSource.ID] = [:]
     
+    var name: String
     package func setName(_ value: String) {
         logger.start(value)
         
@@ -50,7 +53,7 @@ package final class ProjectSource: ProjectSourceInterface {
     }
     
     package var listeners: [ObjectID: ListenerRegistration] = [:]
-    
+    package var handlers: [Handler<ProjectSourceEvent>] = []
     package func hasHandler(requester: ObjectID) -> Bool {
         self.listeners[requester] != nil
     }
@@ -199,7 +202,7 @@ package final class ProjectSource: ProjectSourceInterface {
         let projectHubRef = parent.ref!
         
         // delete ProjectSource
-        projectHubRef.projectSources.remove(self.id)
+        projectHubRef.projectSources[target] = nil
         self.delete()
         
         // remove ProjectSourceDocument in FireStore

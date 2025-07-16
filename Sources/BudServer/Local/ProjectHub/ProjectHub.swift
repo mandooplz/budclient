@@ -24,14 +24,14 @@ package final class ProjectHub: ProjectHubInterface {
     // MARK: state
     package nonisolated let id = ID()
     
-    var projectSources: Set<ProjectSource.ID> = []
+    var projectSources: [ProjectID:ProjectSource.ID] = [:]
     
     private var tickets: Deque<CreateProject> = []
     package func insertTicket(_ ticket: CreateProject) async {
         tickets.append(ticket)
     }
     
-    private var listeners: [ObjectID:ListenerRegistration] = [:]
+    var listeners: [ObjectID:ListenerRegistration] = [:]
     package func hasHandler(requester: ObjectID) async -> Bool {
         listeners[requester] != nil
     }
@@ -39,12 +39,17 @@ package final class ProjectHub: ProjectHubInterface {
     package func setHandler(requester: ObjectID,
                             user: UserID,
                             handler: Handler<ProjectHubEvent>) {
-        guard listeners[requester] == nil else { return }
+        guard listeners[requester] == nil else {
+            logger.failure("이미 Handler가 등록된 상태입니다. ")
+            return
+        }
         
         let db = Firestore.firestore()
-        self.listeners[requester] = db.collection(DB.projectSources)
-            .whereField(ProjectSource.Data.creator,
-                        isEqualTo: user.encode())
+        let projectSourcesCollectionRef = db.collection(DB.projectSources)
+            .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
+        
+        
+        self.listeners[requester] = projectSourcesCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     let log = logger.getLog("\(error!)")
@@ -71,7 +76,7 @@ package final class ProjectHub: ProjectHubInterface {
                         let projectSourceRef = ProjectSource(id: projectSource,
                                                              target: data.target,
                                                              parent: self.id)
-                        self.projectSources.insert(projectSourceRef.id)
+                        self.projectSources[data.target] = projectSourceRef.id
                         
                         // serve event
                         let diff = ProjectSourceDiff(id: projectSource,
@@ -81,22 +86,34 @@ package final class ProjectHub: ProjectHubInterface {
                         handler.execute(.added(diff))
                     case .modified:
                         // serve event
-                        let diff = ProjectSourceDiff(id: projectSource,
-                                                      target: data.target,
-                                                      name: data.name)
-                        
-                        handler.execute(.modified(diff))
-                    case .removed:
-                        // remove ProjectSource
-                        projectSource.ref?.delete()
-                        self.projectSources.remove(projectSource)
-                        
-                        // serve event
-                        let diff = ProjectSourceDiff(id: projectSource,
+                        let projectSourceDiff = ProjectSourceDiff(id: projectSource,
                                                      target: data.target,
                                                      name: data.name)
+                        guard let projectSourceRef = projectSource.ref else {
+                            logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
+                            return
+                        }
                         
-                        handler.execute(.removed(diff))
+                        projectSourceRef.handlers.forEach { handler in
+                            handler.execute(.modified(projectSourceDiff))
+                        }
+                    case .removed:
+                        guard let projectSourceRef = projectSource.ref else {
+                            logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
+                            return
+                        }
+                        
+                        // serve event
+                        let projectSourceDiff = ProjectSourceDiff(id: projectSource,
+                                                                  target: data.target,
+                                                                  name: data.name)
+                        projectSourceRef.handlers.forEach { handler in
+                            handler.execute(.removed(projectSourceDiff))
+                        }
+                        
+                        // remove ProjectSource
+                        projectSourceRef.delete()
+                        self.projectSources[data.target] = nil
                     }
                 }
             }

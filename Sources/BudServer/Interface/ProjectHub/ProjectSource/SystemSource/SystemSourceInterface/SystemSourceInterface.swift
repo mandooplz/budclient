@@ -29,3 +29,12 @@ package protocol SystemSourceInterface: Sendable {
     
     func remove() async
 }
+
+
+package protocol SystemSourceIdentity: Sendable, Hashable {
+    associatedtype Object: SystemSourceInterface where Object.ID == Self
+    
+    var isExist: Bool { get async }
+    var ref: Object? { get async }
+}
+

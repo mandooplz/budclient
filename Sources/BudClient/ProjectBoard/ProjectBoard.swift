@@ -17,7 +17,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<BudClient.ID>) {
         self.config = config
-        self.updater = ProjectBoardUpdater(config: config.setParent(self.id))
+        self.updater = Updater(owner: self.id)
         
         ProjectBoardManager.register(self)
     }
@@ -27,17 +27,16 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     
     
     // MARK: state
-    public nonisolated let id = ID()
-    public nonisolated let config: Config<BudClient.ID>
+    nonisolated let id = ID()
+    nonisolated let config: Config<BudClient.ID>
+    nonisolated let updater: Updater
     
-    var updater: ProjectBoardUpdater
-    
-    public internal(set) var editors: [ProjectEditor.ID] = []
-    func getProjectEditor(_ target: ProjectID) -> ProjectEditor.ID? {
-        self.editors.first { $0.ref?.target == target }
+    public internal(set) var projects: [ProjectModel.ID] = []
+    func getProjectEditor(_ target: ProjectID) -> ProjectModel.ID? {
+        self.projects.first { $0.ref?.target == target }
     }
     func isEditorExist(target: ProjectID) -> Bool {
-        self.editors.lazy
+        self.projects.lazy
             .compactMap { $0.ref }
             .contains { $0.target == target }
     }
@@ -120,7 +119,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         }
     }
     
-    public func createNewProject() async {
+    public func createProject() async {
         logger.start()
         
         await self.createProject(captureHook: nil)

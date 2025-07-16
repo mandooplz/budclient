@@ -10,14 +10,23 @@ import Foundation
 // MARK: GetterID
 public struct ActionID: Identity {
     public let value: UUID
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
 
 
 public struct ValueTypeID: Identity {
-    public let value: String
+    public let value: UUID
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
 
 
 public struct ObjectTypeID: Identity {
-    public let value: String
+    public let value: UUID
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
