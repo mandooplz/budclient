@@ -11,11 +11,8 @@ import Values
 // MARK: Interface
 package protocol SystemSourceInterface: Sendable {
     associatedtype ID: SystemSourceIdentity where ID.Object == Self
-    associatedtype RootSource: RootSourceInterface
     
     // MARK: state
-    nonisolated var rootSourceRef: RootSource { get }
-    
     func setName(_ value: String) async
     
     func hasHandler(requester: ObjectID) async -> Bool

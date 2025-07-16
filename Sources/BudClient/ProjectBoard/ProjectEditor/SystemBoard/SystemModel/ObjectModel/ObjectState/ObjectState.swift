@@ -7,6 +7,8 @@
 import Foundation
 import Values
 
+private let logger = WorkFlow.getLogger(for: "ObjectState")
+
 
 // MARK: Object
 @MainActor @Observable
@@ -29,11 +31,47 @@ public final class ObjectState: Sendable {
     public var permission: StatePermission = .readWrite
     
     
-    // MARK: action
-    public func createGetter() async { }
-    public func createSetter() async { }
+    // 상태를 표현하는 값의 종류(ValueType)
+    var valueName: String = ""
+    var valueType: ValueTypeID? = nil
+    var valueSource: Any? = nil
     
-    public func remove() { }
+    
+    // MARK: action
+    public func pushName() async {
+        logger.start()
+        
+        await self.pushName(captureHook: nil)
+    }
+    func pushName(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            return
+        }
+    }
+    
+    public func createGetter() async {
+        logger.start()
+        
+        await self.createGetter(captureHook: nil)
+    }
+    func createGetter(captureHook: Hook?) async {
+        
+    }
+    
+    public func createSetter() async {
+        logger.start()
+        
+        await self.createSetter(captureHook: nil)
+    }
+    func createSetter(captureHook: Hook?) async {
+        // capture
+    }
+    
+    public func remove() async {
+        
+    }
     
     
     // MARK: value

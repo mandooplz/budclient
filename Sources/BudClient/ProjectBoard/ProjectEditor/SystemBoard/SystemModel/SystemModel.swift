@@ -47,7 +47,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     public var location: Location
     
-    public var rootModel: RootModel.ID?
+    public var rootModel: ObjectModel.ID?
     public var objectModels: [ObjectModel.ID] = []
     func isObjectExist(_ target: ObjectID) -> Bool {
         self.objectModels

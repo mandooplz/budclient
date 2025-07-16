@@ -1,32 +1,31 @@
 //
-//  SetterModel.swift
+//  ObjectGetter.swift
 //  BudClient
 //
 //  Created by 김민우 on 7/7/25.
 //
 import Foundation
 import Values
+import BudServer
 
 
 // MARK: Object
 @MainActor @Observable
-public final class ObjectSetter: Sendable {
-    // MARK:  Core
-    init(target: StateID) {
+public final class StateRoutine: Sendable {
+    // MARK: core
+    init(target: GetterID) {
         self.target = target
         
-        ObjectSetterManager.register(self)
+        StateRoutineManager.register(self)
     }
     func delete() {
-        ObjectSetterManager.unregister(self.id)
+        StateRoutineManager.unregister(self.id)
     }
-    
-    
     
     // MARK: state
     nonisolated let id = ID()
-    nonisolated let target: StateID
-
+    nonisolated let target: GetterID
+    
     
     // MARK: action
     public func remove() async { }
@@ -41,10 +40,10 @@ public final class ObjectSetter: Sendable {
         }
         
         var isExist: Bool {
-            ObjectSetterManager.container[self] != nil
+            StateRoutineManager.container[self] != nil
         }
-        public var ref: ObjectSetter? {
-            ObjectSetterManager.container[self]
+        public var ref: StateRoutine? {
+            StateRoutineManager.container[self]
         }
     }
 }
@@ -52,13 +51,13 @@ public final class ObjectSetter: Sendable {
 
 // MARK: Object Manager
 @MainActor @Observable
-fileprivate final class ObjectSetterManager: Sendable {
+fileprivate final class StateRoutineManager: Sendable {
     // MARK: state
-    fileprivate static var container: [ObjectSetter.ID: ObjectSetter] = [:]
-    fileprivate static func register(_ object: ObjectSetter) {
+    fileprivate static var container: [StateRoutine.ID: StateRoutine] = [:]
+    fileprivate static func register(_ object: StateRoutine) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ObjectSetter.ID) {
+    fileprivate static func unregister(_ id: StateRoutine.ID) {
         container[id] = nil
     }
 }

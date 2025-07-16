@@ -13,9 +13,11 @@ import Values
 public final class ObjectModel: Sendable {
     // MARK: core
     init(name: String,
+         role: Role,
          target: ObjectID,
          config: Config<SystemModel.ID>) {
         self.name = name
+        self.role = role
         self.target = target
         self.config = config
         
@@ -33,7 +35,7 @@ public final class ObjectModel: Sendable {
     
     public var name: String
     
-    public var type: Relationship = .oneToOne // Object가 상위 Object와 어떻게 연결되어있는지를 표현
+    public var role: Role
     
     
     // MARK: action
@@ -67,6 +69,10 @@ public final class ObjectModel: Sendable {
         var ref: ObjectModel? {
             ObjectModelManager.container[self]
         }
+    }
+    public enum Role: Sendable {
+        case root
+        case node(Relationship)
     }
 }
 
