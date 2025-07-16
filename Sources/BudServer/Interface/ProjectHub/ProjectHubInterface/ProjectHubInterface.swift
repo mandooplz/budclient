@@ -18,10 +18,7 @@ package protocol ProjectHubInterface: Sendable {
     func insertTicket(_: CreateProject) async;
     
     func hasHandler(requester: ObjectID) async -> Bool
-    func setHandler(requester: ObjectID,
-                    user: UserID,
-                    handler: Handler<ProjectHubEvent>) async
-    func removeHandler(requester: ObjectID) async;
+    func setHandler(requester: ObjectID, user: UserID, handler: Handler<ProjectHubEvent>) async
     
     func notifyNameChanged(_: ProjectID) async;
     

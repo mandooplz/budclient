@@ -16,9 +16,7 @@ private let logger = WorkFlow.getLogger(for: "SystemSource")
 @MainActor
 package final class SystemSource: SystemSourceInterface {
     // MARK: core
-    init(id: ID,
-         target: SystemID,
-         parent: ProjectSource.ID) {
+    init(id: ID, target: SystemID, parent: ProjectSource.ID) {
         self.id = id
         self.target = target
         self.parent = parent
@@ -26,6 +24,8 @@ package final class SystemSource: SystemSourceInterface {
         SystemSourceManager.register(self)
     }
     func delete() {
+        listener?.remove()
+        
         SystemSourceManager.unregister(self.id)
     }
     
@@ -52,21 +52,24 @@ package final class SystemSource: SystemSourceInterface {
         docRef.updateData(updateData)
     }
     
-    private var listeners: [ObjectID: ListenerRegistration] = [:]
+    var listener: ListenerRegistration
+    var handlers: [ObjectID: EventHandler]
+    
     package func hasHandler(requester: ObjectID) -> Bool {
-        listeners[requester] != nil
+        
     }
-    package func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) {
+    package func setHandler(requester: ObjectID, handler: EventHandler) {
         logger.start()
         
         let db = Firestore.firestore()
-        
-        // objectSource listener
-        self.listeners[requester] = db.collection(DB.projectSources)
+        let objectSourceCollectionRef = db.collection(DB.projectSources)
             .document(parent.value)
             .collection(DB.systemSources)
             .document(id.value)
             .collection(DB.objectSources)
+        
+        // set listener
+        self.listener = objectSourceCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     let report = logger.getLog("\(error!)")
@@ -116,8 +119,9 @@ package final class SystemSource: SystemSourceInterface {
             }
     }
     package func removeHandler(requester: ObjectID) {
-        listeners[requester]?.remove()
-        listeners[requester] = nil
+        logger.start()
+        
+        handlers[requester] = nil
     }
     
     package func notifyNameChanged() async {
@@ -526,6 +530,8 @@ package final class SystemSource: SystemSourceInterface {
             self.location = location
         }
     }
+    
+    package typealias EventHandler = Handler<SystemSourceEvent>
 }
 
 

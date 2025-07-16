@@ -24,32 +24,32 @@ package final class ProjectHub: ProjectHubInterface {
     // MARK: state
     package nonisolated let id = ID()
     
-    var projectSources: [ProjectID:ProjectSource.ID] = [:]
+    var projectSources: [ProjectID: ProjectSource.ID] = [:]
     
     private var tickets: Deque<CreateProject> = []
     package func insertTicket(_ ticket: CreateProject) async {
         tickets.append(ticket)
     }
     
-    var listeners: [ObjectID:ListenerRegistration] = [:]
+    var listener: ListenerRegistration?
+    var handlers: [ObjectID: EventHandler] = [:]
     package func hasHandler(requester: ObjectID) async -> Bool {
-        listeners[requester] != nil
+        handlers[requester] != nil
     }
-    
-    package func setHandler(requester: ObjectID,
-                            user: UserID,
-                            handler: Handler<ProjectHubEvent>) {
-        guard listeners[requester] == nil else {
+    package func setHandler(requester: ObjectID, user: UserID, handler: EventHandler) {
+        guard handlers[requester] == nil else {
             logger.failure("이미 Handler가 등록된 상태입니다. ")
             return
         }
+        
+        self.handlers[requester] = handler
         
         let db = Firestore.firestore()
         let projectSourcesCollectionRef = db.collection(DB.projectSources)
             .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
         
         
-        self.listeners[requester] = projectSourcesCollectionRef
+        self.listener = projectSourcesCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     let log = logger.getLog("\(error!)")
@@ -74,6 +74,7 @@ package final class ProjectHub: ProjectHubInterface {
                     case .added:
                         // create ProjectSource
                         let projectSourceRef = ProjectSource(id: projectSource,
+                                                             name: data.name,
                                                              target: data.target,
                                                              parent: self.id)
                         self.projectSources[data.target] = projectSourceRef.id
@@ -94,7 +95,10 @@ package final class ProjectHub: ProjectHubInterface {
                             return
                         }
                         
-                        projectSourceRef.handlers.forEach { handler in
+                        // modify ProjectSource
+                        projectSourceRef.name = data.name
+                        
+                        projectSourceRef.handlers.values.forEach { handler in
                             handler.execute(.modified(projectSourceDiff))
                         }
                     case .removed:
@@ -107,7 +111,7 @@ package final class ProjectHub: ProjectHubInterface {
                         let projectSourceDiff = ProjectSourceDiff(id: projectSource,
                                                                   target: data.target,
                                                                   name: data.name)
-                        projectSourceRef.handlers.forEach { handler in
+                        projectSourceRef.handlers.values.forEach { handler in
                             handler.execute(.removed(projectSourceDiff))
                         }
                         
@@ -117,12 +121,6 @@ package final class ProjectHub: ProjectHubInterface {
                     }
                 }
             }
-    }
-    package func removeHandler(requester: ObjectID) {
-        logger.start()
-        
-        self.listeners[requester]?.remove()
-        self.listeners[requester] = nil
     }
     
     package func notifyNameChanged(_ project: ProjectID) async {
@@ -158,7 +156,7 @@ package final class ProjectHub: ProjectHubInterface {
     // MARK: value
     @MainActor
     package struct ID: ProjectHubIdentity {
-        let value: String = "ProjectHub"
+        let value: UUID = UUID()
         nonisolated init() { }
         
         package var isExist: Bool {
@@ -168,6 +166,8 @@ package final class ProjectHub: ProjectHubInterface {
             ProjectHubManager.container[self]
         }
     }
+    
+    package typealias EventHandler = Handler<ProjectHubEvent>
 }
 
 

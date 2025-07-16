@@ -17,15 +17,17 @@ private let logger = WorkFlow.getLogger(for: "ProjectSource")
 @MainActor
 package final class ProjectSource: ProjectSourceInterface {
     // MARK: core
-    init(id: ID, target: ProjectID, parent: ProjectHub.ID) {
+    init(id: ID, name: String, target: ProjectID, parent: ProjectHub.ID) {
         self.id = id
         self.target = target
         self.parent = parent
         
+        self.name = name
+        
         ProjectSourceManager.register(self)
     }
     func delete() {
-        
+        self.listener?.remove()
         
         ProjectSourceManager.unregister(self.id)
     }
@@ -52,21 +54,25 @@ package final class ProjectSource: ProjectSourceInterface {
         docRef.updateData(updateData)
     }
     
-    package var listeners: [ObjectID: ListenerRegistration] = [:]
-    package var handlers: [Handler<ProjectSourceEvent>] = []
+    // objectID마다 있어야 하는가?
+    package var listener: ListenerRegistration?
+    package var handlers: [ObjectID: EventHandler] = [:]
     package func hasHandler(requester: ObjectID) -> Bool {
-        self.listeners[requester] != nil
+        self.handlers[requester] != nil
     }
-    package func setHandler(requester: ObjectID, handler: Handler<ProjectSourceEvent>) {
+    package func setHandler(requester: ObjectID, handler: EventHandler) {
         logger.start()
         
         // 중복 방지
-        guard self.listeners[requester] == nil else { return }
+        guard self.handlers[requester] == nil else { return }
+        self.handlers[requester] = handler
         
         let db = Firestore.firestore()
-        self.listeners[requester] = db.collection(DB.projectSources)
+        let systemSourceCollectionRef = db.collection(DB.projectSources)
             .document(id.value)
             .collection(DB.systemSources)
+        
+        self.listener = systemSourceCollectionRef
             .addSnapshotListener({ snapshot, error in
                 guard let snapshot else {
                     let log = logger.getLog("\(error!)")
@@ -100,19 +106,33 @@ package final class ProjectSource: ProjectSourceInterface {
                         let systemSourceRef = SystemSource(id: systemSource,
                                                            target: data.target,
                                                            parent: self.id)
-                        self.systemSources.insert(systemSourceRef.id)
+                        
+                        self.systemSources[data.target] = systemSourceRef.id
 
                         // serve event
                         handler.execute(.added(diff))
                     case .modified:
-                        handler.execute(.modified(diff))
-                    case .removed:
-                        // delete SystemSource
-                        self.systemSources.remove(systemSource)
-                        systemSource.ref?.delete()
+                        guard let systemSourceRef = systemSource.ref else {
+                            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+                            return
+                        }
                         
-                        // serve event
-                        handler.execute(.removed(diff))
+                        systemSourceRef.handlers.values.forEach { handler in
+                            handler.execute(.modified(diff))
+                        }
+                    case .removed:
+                        guard let systemSourceRef = systemSource.ref else {
+                            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+                            return
+                        }
+                        
+                        systemSourceRef.handlers.values.forEach { handler in
+                            handler.execute(.removed(diff))
+                        }
+                        
+                        // delete SystemSource
+                        self.systemSources[data.target] = nil
+                        systemSource.ref?.delete()
                     }
                 }
             })
@@ -120,8 +140,7 @@ package final class ProjectSource: ProjectSourceInterface {
     package func removeHandler(requester: ObjectID) {
         logger.start()
         
-        listeners[requester]?.remove()
-        listeners[requester] = nil
+        handlers[requester] = nil
     }
     
     
@@ -245,6 +264,7 @@ package final class ProjectSource: ProjectSourceInterface {
             self.systemLocations = []
         }
     }
+    package typealias EventHandler = Handler<ProjectSourceEvent>
 }
 
 
