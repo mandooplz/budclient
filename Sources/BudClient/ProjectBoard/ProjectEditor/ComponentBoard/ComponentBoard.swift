@@ -26,8 +26,7 @@ public final class ComponentBoard: Sendable {
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectEditor.ID>
     
-    var valueBoard: ValueBoard.ID?
-    var objectBoard: ObjectBoard.ID?
+    
     
     
     // MARK: action

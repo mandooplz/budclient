@@ -68,6 +68,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     
     // MARK: action
+    // 무엇을 Subscribe하는 것인가.
     public func subscribe() async {
         logger.start()
         
@@ -301,33 +302,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                 }
                 
                 await systemSourceRef.addSystemBottom()
-            }
-        }
-    }
-    
-    public func createObjectModel() async {
-        logger.start()
-        
-        await self.createObjectModel(mutateHook: nil)
-    }
-    func createObjectModel(mutateHook: Hook?) async {
-        // mutate
-        await mutateHook?()
-        guard id.isExist else {
-            setIssue(Error.systemModelIsDeleted)
-            logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        let systemSource = self.source
-        
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                guard let systemSourceRef = await systemSource.ref else {
-                    logger.failure("SystemSource가 존재하지 않습니다.")
-                    return
-                }
-                
-                await systemSourceRef.createNewObject()
             }
         }
     }

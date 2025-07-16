@@ -54,10 +54,13 @@ package final class ObjectSource: ObjectSourceInterface {
         package var name: String
         package var target: ObjectID
         
+        package var role: ObjectRole
         
-        init(name: String) {
+        
+        init(name: String, role: ObjectRole) {
             self.name = name
             self.target = ObjectID()
+            self.role = role
         }
     }
 }

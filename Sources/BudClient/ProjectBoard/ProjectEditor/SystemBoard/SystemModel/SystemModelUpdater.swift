@@ -56,8 +56,13 @@ final class SystemModelUpdater: Sendable, Debuggable, UpdaterInterface {
                 }
                 
                 let objectModelRef = ObjectModel(name: diff.name,
+                                                 role: diff.role,
                                                  target: diff.target,
                                                  config: config)
+                
+                if diff.role == .root {
+                    systemModelRef.rootModel = objectModelRef.id
+                }
                 
                 systemModelRef.objectModels.append(objectModelRef.id)
                 

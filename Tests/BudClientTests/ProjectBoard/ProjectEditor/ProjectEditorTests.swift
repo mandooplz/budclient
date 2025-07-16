@@ -77,16 +77,16 @@ struct ProjectEditorTests {
             let flowBoard = try #require(await editorRef.flowBoard)
             await #expect(flowBoard.isExist == true)
         }
-        @Test func createValueBoard() async throws {
+        @Test func createComponentBoard() async throws {
             // given
-            try await #require(editorRef.valueBoard == nil)
+            try await #require(editorRef.componentBoard == nil)
             
             // when
             await editorRef.setUp()
             
             // then
-            let valueBoard = try #require(await editorRef.valueBoard)
-            await #expect(valueBoard.isExist == true)
+            let componentBoard = try #require(await editorRef.componentBoard)
+            await #expect(componentBoard.isExist == true)
         }
     }
     

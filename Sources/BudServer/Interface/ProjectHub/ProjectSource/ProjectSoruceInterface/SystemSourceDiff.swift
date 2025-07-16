@@ -15,14 +15,11 @@ package struct SystemSourceDiff: Sendable {
     package let name: String
     package let location: Location
     
-    package let rootSource: RootSourceDiff
-    
-    package init(id: any SystemSourceIdentity, target: SystemID, name: String, location: Location, rootSource: RootSourceDiff) {
+    package init(id: any SystemSourceIdentity, target: SystemID, name: String, location: Location) {
         self.id = id
         self.target = target
         self.name = name
         self.location = location
-        self.rootSource = rootSource
     }
 }
 
@@ -33,12 +30,6 @@ extension SystemSourceDiff {
         self.target = object.target
         self.name = object.name
         self.location = object.location
-        
-        let rootSourceRef = object.rootSourceRef
-        self.rootSource = .init(
-            id: rootSourceRef.id,
-            target: rootSourceRef.target,
-            name: rootSourceRef.name)
     }
     
     init?(from data: SystemSource.Data) {
@@ -48,11 +39,5 @@ extension SystemSourceDiff {
         self.target = data.target
         self.name = data.name
         self.location = data.location
-        
-        let rootSource = data.rootSource
-        self.rootSource = .init(
-            id: RootSource.ID(rootSource.id),
-            target: rootSource.target,
-            name: rootSource.name)
     }
 }

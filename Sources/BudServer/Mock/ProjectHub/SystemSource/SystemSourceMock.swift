@@ -24,9 +24,6 @@ package final class SystemSourceMock: SystemSourceInterface {
         self.parent = parent
         self.target = target
         
-        self.rootSourceRef = RootSourceMock(name: name,
-                                            parent: self.id)
-        
         SystemSourceMockManager.register(self)
     }
     func delete() {
@@ -45,7 +42,6 @@ package final class SystemSourceMock: SystemSourceInterface {
     }
     
     package var location: Location
-    package nonisolated let rootSourceRef: RootSourceMock
     
     
     package var eventHandlers: [ObjectID: Handler<SystemSourceEvent>] = [:]
@@ -191,24 +187,6 @@ package final class SystemSourceMock: SystemSourceInterface {
         
         for (_, eventHandler) in eventHandlers {
             eventHandler.execute(.added(diff))
-        }
-    }
-    
-    package func createNewObject() async {
-        logger.start()
-        
-        // mutate
-        guard id.isExist else {
-            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        
-        let objectSourceRef = ObjectSourceMock(name: "New Object",
-                                               parentRef: self)
-        let diff = ObjectSourceDiff(objectSourceRef)
-        
-        eventHandlers.values.forEach { handler in
-            handler.execute(.added(diff))
         }
     }
     

@@ -18,12 +18,10 @@ package final class SystemSource: SystemSourceInterface {
     // MARK: core
     init(id: ID,
          target: SystemID,
-         parent: ProjectSource.ID,
-         rootSourceRef: RootSource) {
+         parent: ProjectSource.ID) {
         self.id = id
         self.target = target
         self.parent = parent
-        self.rootSourceRef = rootSourceRef
         
         SystemSourceManager.register(self)
     }
@@ -36,7 +34,6 @@ package final class SystemSource: SystemSourceInterface {
     nonisolated let id: ID
     nonisolated let target: SystemID
     nonisolated let parent: ProjectSource.ID
-    package nonisolated let rootSourceRef: RootSource
     
     package func setName(_ value: String) {
         logger.start()
@@ -93,7 +90,8 @@ package final class SystemSource: SystemSourceInterface {
                     let diff = ObjectSourceDiff(
                         id: objectSource,
                         target: data.target,
-                        name: data.name)
+                        name: data.name,
+                        role: data.role)
                     
                     // ObjectSources 컬렉션 이벤트 처리
                     switch changed.type {
@@ -442,36 +440,6 @@ package final class SystemSource: SystemSourceInterface {
         }
     }
     
-    package func createNewObject() async {
-        logger.start()
-        
-        guard id.isExist else {
-            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        
-        // db & ref
-        let firebaseDB = Firestore.firestore()
-        
-        let objectSourceCollectionRef = firebaseDB
-            .collection(DB.projectSources)
-            .document(parent.value)
-            .collection(DB.systemSources)
-            .document(id.value)
-            .collection(DB.objectSources)
-        
-        do {
-            let data = ObjectSource.Data(name: "New Object")
-            
-            try objectSourceCollectionRef.addDocument(from: data)
-        } catch {
-            let log = logger.getLog("새로운 SystemSource Document 생성 실패\n\(error)")
-            logger.raw.error("\(log)")
-            return
-        }
-        
-    }
-    
     package func remove() async {
         logger.start()
         
@@ -544,22 +512,9 @@ package final class SystemSource: SystemSourceInterface {
         @DocumentID var id: String?
         var target: SystemID
         var name: String
+        
         var location: Location
-        
-        var rootSource: RootSource
-        
-        @ShowState
-        struct RootSource: Hashable, Codable {
-            let id: String
-            let target: ObjectID
-            let name: String
-            
-            init(name: String) {
-                self.id = UUID().uuidString
-                self.target = ObjectID()
-                self.name = name
-            }
-        }
+        var root: ObjectID?
         
         init(id: String? = nil,
              target: SystemID = SystemID(),
@@ -569,7 +524,6 @@ package final class SystemSource: SystemSourceInterface {
             self.target = target
             self.name = name
             self.location = location
-            self.rootSource = RootSource(name: name)
         }
     }
 }

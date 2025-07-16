@@ -94,13 +94,9 @@ package final class ProjectSource: ProjectSourceInterface {
                     switch changed.type {
                     case .added:
                         // create SystemSource
-                        let rootSource = RootSource.ID(data.rootSource.id)
-                        let rootSourceRef = RootSource(id: rootSource)
-                        
                         let systemSourceRef = SystemSource(id: systemSource,
                                                            target: data.target,
-                                                           parent: self.id,
-                                                           rootSourceRef: rootSourceRef)
+                                                           parent: self.id)
                         self.systemSources.insert(systemSourceRef.id)
 
                         // serve event

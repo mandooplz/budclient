@@ -13,8 +13,10 @@ import Values
 package final class ObjectSourceMock: ObjectSourceInterface {
     // MARK: core
     init(name: String,
+         role: ObjectRole,
          parentRef: SystemSourceMock) {
         self.name = name
+        self.role = role
         self.parentRef = parentRef
         
         ObjectSourceMockManager.register(self)
@@ -28,7 +30,9 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     package nonisolated let id = ID()
     package nonisolated let parentRef: SystemSourceMock
     package nonisolated let target = ObjectID()
+    
     package var name: String
+    package nonisolated let role: ObjectRole
     
     
     // MARK: action

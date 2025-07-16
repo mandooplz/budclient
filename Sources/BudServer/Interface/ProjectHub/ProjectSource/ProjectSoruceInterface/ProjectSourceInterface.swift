@@ -34,31 +34,3 @@ package protocol ProjectSourceIdentity: Sendable, Hashable {
     var ref: Object? { get async }
 }
 
-
-
-
-
-
-package struct RootSourceDiff: Sendable {
-    package let id: any RootSourceIdentity
-    package let target: ObjectID
-    package let name: String
-    
-    // for testing
-    init(id: RootSourceMock.ID = .init(),
-         target: ObjectID = .init(),
-         name: String = UUID().uuidString) {
-        self.id = id
-        self.target = target
-        self.name = name
-    }
-    
-    package init(id: any RootSourceIdentity,
-                 target: ObjectID,
-                 name: String) {
-        self.id = id
-        self.target = target
-        self.name = name
-    }
-}
-

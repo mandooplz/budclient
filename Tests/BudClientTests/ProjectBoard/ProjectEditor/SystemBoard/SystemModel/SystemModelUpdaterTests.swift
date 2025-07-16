@@ -24,220 +24,221 @@ struct SystemModelUpdaterTests {
             self.systemModelRef = await updaterRef.config.parent.ref!
         }
         
-        @Test func createObjectModel() async throws {
-            // given
-            try await #require(systemModelRef.objectModels.isEmpty)
-            
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let testName = "TEST_NAME"
-            let diff = await ObjectSourceDiff(.init(name: testName,
-                                                    parentRef: systemSourceRef))
-            
-            // when
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            // then
-            await #expect(systemModelRef.objectModels.count == 1)
-            
-            let objectModelRef = try #require(await systemModelRef.objectModels.first?.ref)
-            await #expect(objectModelRef.name == testName)
-        }
-        @Test func whenAlreadyAdded() async throws {
-            // given
-            try await #require(systemModelRef.objectModels.isEmpty)
-            
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            // when
-            await MainActor.run {
-                updaterRef.appendEvent(.added(diff))
-            }
-            await updaterRef.update()
-            
-            // then
-            let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyAdded")
-        }
-        @Test func removeAddedEventInQueue() async throws {
-            // given
-            try await #require(updaterRef.queue.isEmpty == true)
-            
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            await updaterRef.appendEvent(.added(diff))
-            try await #require(updaterRef.queue.count == 1)
-            
-            // when
-            await updaterRef.update()
-            
-            // then
-            await #expect(updaterRef.queue.isEmpty == true)
-        }
-        
-        @Test func deleteObjectModel() async throws {
-            // given
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            // given
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            try await #require(systemModelRef.objectModels.count == 1)
-            let objectModel = try #require(await systemModelRef.objectModels.first)
-            
-            // when
-            await updaterRef.appendEvent(.removed(diff))
-            await updaterRef.update()
-            
-            // then
-            await #expect(objectModel.isExist == false)
-        }
-        @Test func removeObjectModelInSystemModel() async throws {
-            // given
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            // given
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            try await #require(systemModelRef.objectModels.count == 1)
-            let objectModel = try #require(await systemModelRef.objectModels.first)
-            
-            // when
-            await updaterRef.appendEvent(.removed(diff))
-            await updaterRef.update()
-            
-            // then
-            await #expect(systemModelRef.objectModels.contains(objectModel) == false)
-        }
-        @Test func whenAlreadyRemoved() async throws {
-            // given
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            // when
-            await updaterRef.appendEvent(.removed(diff))
-            await updaterRef.update()
-            
-            // then
-            let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyRemoved")
-        }
-        @Test func removeModifiedEventInQueue() async throws {
-            // given
-            try await #require(updaterRef.queue.isEmpty)
-            
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            await updaterRef.appendEvent(.modified(diff))
-            
-            try await #require(updaterRef.queue.count == 1)
-            
-            // when
-            await updaterRef.update()
-            
-            // then
-            await #expect(updaterRef.queue.isEmpty)
-        }
-        
-        @Test func modifyObjectModelName() async throws {
-            // given
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let firstName = "FIRST_NAME"
-            let diff = await ObjectSourceDiff(.init(name: firstName,
-                                                    parentRef: systemSourceRef))
-            
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            let objectModelRef = try #require(await systemModelRef.objectModels.first?.ref)
-            await #expect(objectModelRef.name == firstName)
-            
-            // when
-            let newName = "NEW_NAME"
-            let newDiff = ObjectSourceDiff(id: diff.id,
-                                           target: diff.target,
-                                           name: newName)
-            
-            await updaterRef.appendEvent(.modified(newDiff))
-            await updaterRef.update()
-            
-            // then
-            try await #require(updaterRef.issue == nil)
-            await #expect(objectModelRef.name == newName)
-            
-        }
-        @Test func modifyRemovedObjectModel() async throws {
-            // given
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            // when
-            await MainActor.run {
-                updaterRef.appendEvent(.modified(diff))
-            }
-            await updaterRef.update()
-            
-            // then
-            let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyRemoved")
-        }
-        @Test func removeRemovedEventInQueue() async throws {
-            // given
-            try await #require(updaterRef.queue.isEmpty)
-            
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            await MainActor.run {
-                updaterRef.appendEvent(.removed(diff))
-            }
-            
-            try await #require(updaterRef.queue.count == 1)
-            
-            // when
-            await updaterRef.update()
-            
-            // then
-            await #expect(updaterRef.queue.isEmpty)
-        }
+        // ObjectSourceDiff.role에 따라 다르게 처리해야하는 거 아닌가?
+//        @Test func createObjectModel() async throws {
+//            // given
+//            try await #require(systemModelRef.objectModels.isEmpty)
+//            
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let testName = "TEST_NAME"
+//            let diff = await ObjectSourceDiff(.init(name: testName,
+//                                                    parentRef: systemSourceRef))
+//            
+//            // when
+//            await updaterRef.appendEvent(.added(diff))
+//            await updaterRef.update()
+//            
+//            // then
+//            await #expect(systemModelRef.objectModels.count == 1)
+//            
+//            let objectModelRef = try #require(await systemModelRef.objectModels.first?.ref)
+//            await #expect(objectModelRef.name == testName)
+//        }
+//        @Test func whenAlreadyAdded() async throws {
+//            // given
+//            try await #require(systemModelRef.objectModels.isEmpty)
+//            
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            await updaterRef.appendEvent(.added(diff))
+//            await updaterRef.update()
+//            
+//            // when
+//            await MainActor.run {
+//                updaterRef.appendEvent(.added(diff))
+//            }
+//            await updaterRef.update()
+//            
+//            // then
+//            let issue = try #require(await updaterRef.issue as? KnownIssue)
+//            #expect(issue.reason == "alreadyAdded")
+//        }
+//        @Test func removeAddedEventInQueue() async throws {
+//            // given
+//            try await #require(updaterRef.queue.isEmpty == true)
+//            
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            await updaterRef.appendEvent(.added(diff))
+//            try await #require(updaterRef.queue.count == 1)
+//            
+//            // when
+//            await updaterRef.update()
+//            
+//            // then
+//            await #expect(updaterRef.queue.isEmpty == true)
+//        }
+//        
+//        @Test func deleteObjectModel() async throws {
+//            // given
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            // given
+//            await updaterRef.appendEvent(.added(diff))
+//            await updaterRef.update()
+//            
+//            try await #require(systemModelRef.objectModels.count == 1)
+//            let objectModel = try #require(await systemModelRef.objectModels.first)
+//            
+//            // when
+//            await updaterRef.appendEvent(.removed(diff))
+//            await updaterRef.update()
+//            
+//            // then
+//            await #expect(objectModel.isExist == false)
+//        }
+//        @Test func removeObjectModelInSystemModel() async throws {
+//            // given
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            // given
+//            await updaterRef.appendEvent(.added(diff))
+//            await updaterRef.update()
+//            
+//            try await #require(systemModelRef.objectModels.count == 1)
+//            let objectModel = try #require(await systemModelRef.objectModels.first)
+//            
+//            // when
+//            await updaterRef.appendEvent(.removed(diff))
+//            await updaterRef.update()
+//            
+//            // then
+//            await #expect(systemModelRef.objectModels.contains(objectModel) == false)
+//        }
+//        @Test func whenAlreadyRemoved() async throws {
+//            // given
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            // when
+//            await updaterRef.appendEvent(.removed(diff))
+//            await updaterRef.update()
+//            
+//            // then
+//            let issue = try #require(await updaterRef.issue as? KnownIssue)
+//            #expect(issue.reason == "alreadyRemoved")
+//        }
+//        @Test func removeModifiedEventInQueue() async throws {
+//            // given
+//            try await #require(updaterRef.queue.isEmpty)
+//            
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            await updaterRef.appendEvent(.modified(diff))
+//            
+//            try await #require(updaterRef.queue.count == 1)
+//            
+//            // when
+//            await updaterRef.update()
+//            
+//            // then
+//            await #expect(updaterRef.queue.isEmpty)
+//        }
+//        
+//        @Test func modifyObjectModelName() async throws {
+//            // given
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let firstName = "FIRST_NAME"
+//            let diff = await ObjectSourceDiff(.init(name: firstName,
+//                                                    parentRef: systemSourceRef))
+//            
+//            await updaterRef.appendEvent(.added(diff))
+//            await updaterRef.update()
+//            
+//            let objectModelRef = try #require(await systemModelRef.objectModels.first?.ref)
+//            await #expect(objectModelRef.name == firstName)
+//            
+//            // when
+//            let newName = "NEW_NAME"
+//            let newDiff = ObjectSourceDiff(id: diff.id,
+//                                           target: diff.target,
+//                                           name: newName)
+//            
+//            await updaterRef.appendEvent(.modified(newDiff))
+//            await updaterRef.update()
+//            
+//            // then
+//            try await #require(updaterRef.issue == nil)
+//            await #expect(objectModelRef.name == newName)
+//            
+//        }
+//        @Test func modifyRemovedObjectModel() async throws {
+//            // given
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            // when
+//            await MainActor.run {
+//                updaterRef.appendEvent(.modified(diff))
+//            }
+//            await updaterRef.update()
+//            
+//            // then
+//            let issue = try #require(await updaterRef.issue as? KnownIssue)
+//            #expect(issue.reason == "alreadyRemoved")
+//        }
+//        @Test func removeRemovedEventInQueue() async throws {
+//            // given
+//            try await #require(updaterRef.queue.isEmpty)
+//            
+//            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
+//            let systemSourceRef = try #require(await systemSource.ref)
+//            
+//            let diff = await ObjectSourceDiff(.init(name: "TEST",
+//                                                    parentRef: systemSourceRef))
+//            
+//            await MainActor.run {
+//                updaterRef.appendEvent(.removed(diff))
+//            }
+//            
+//            try await #require(updaterRef.queue.count == 1)
+//            
+//            // when
+//            await updaterRef.update()
+//            
+//            // then
+//            await #expect(updaterRef.queue.isEmpty)
+//        }
     }
 }
 

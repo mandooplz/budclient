@@ -27,7 +27,5 @@ package protocol SystemSourceInterface: Sendable {
     func addSystemTop() async
     func addSystemBottom() async
     
-    func createNewObject() async
-    
     func remove() async
 }

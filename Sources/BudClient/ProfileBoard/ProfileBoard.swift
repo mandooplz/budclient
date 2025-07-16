@@ -83,7 +83,7 @@ public final class ProfileBoard: Debuggable {
             
             projectEditor.ref?.systemBoard?.ref?.delete()
             projectEditor.ref?.flowBoard?.ref?.delete()
-            projectEditor.ref?.valueBoard?.ref?.delete()
+            projectEditor.ref?.componentBoard?.ref?.delete()
             
             projectEditor.ref?.delete()
         }

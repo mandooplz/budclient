@@ -13,7 +13,7 @@ import Values
 public final class ObjectModel: Sendable {
     // MARK: core
     init(name: String,
-         role: Role,
+         role: ObjectRole,
          target: ObjectID,
          config: Config<SystemModel.ID>) {
         self.name = name
@@ -35,7 +35,7 @@ public final class ObjectModel: Sendable {
     
     public var name: String
     
-    public var role: Role
+    public var role: ObjectRole
     
     
     // MARK: action
@@ -69,10 +69,6 @@ public final class ObjectModel: Sendable {
         var ref: ObjectModel? {
             ObjectModelManager.container[self]
         }
-    }
-    public enum Role: Sendable {
-        case root
-        case node(Relationship)
     }
 }
 

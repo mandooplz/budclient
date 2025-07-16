@@ -101,8 +101,7 @@ struct SystemBoardUpdaterTests {
             let diff = SystemSourceDiff(id: newSystemSource,
                                         target: .init(),
                                         name: "",
-                                        location: .init(x: 1, y: 1),
-                                        rootSource: .init())
+                                        location: .init(x: 1, y: 1))
             
             await updaterRef.appendEvent(.removed(diff))
             
@@ -124,8 +123,7 @@ struct SystemBoardUpdaterTests {
             let diff = SystemSourceDiff(id: newSystemSource,
                                         target: newSystem,
                                         name: "",
-                                        location: .init(x: 88, y: 88),
-                                        rootSource: .init())
+                                        location: .init(x: 88, y: 88))
             
             await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
@@ -139,8 +137,7 @@ struct SystemBoardUpdaterTests {
             let newDiff = SystemSourceDiff(id: newSystemSource,
                                            target: newSystem,
                                            name: testName,
-                                           location: testLocation,
-                                           rootSource: .init())
+                                           location: testLocation)
             
             await updaterRef.appendEvent(.modified(newDiff))
             await updaterRef.update()
@@ -155,8 +152,7 @@ struct SystemBoardUpdaterTests {
             let diff = SystemSourceDiff(id: newSystemSource,
                                         target: .init(),
                                         name: "",
-                                        location: .init(x: 88, y: 88),
-                                        rootSource: .init())
+                                        location: .init(x: 88, y: 88))
 
             // when
             await updaterRef.appendEvent(.modified(diff))

@@ -47,7 +47,7 @@ public final class ProjectEditor: Debuggable {
     
     public var systemBoard: SystemBoard.ID?
     public var flowBoard: FlowBoard.ID?
-    public var valueBoard: ValueBoard.ID?
+    public var componentBoard: ComponentBoard.ID?
     
     public var issue: (any Issuable)?
     
@@ -66,7 +66,9 @@ public final class ProjectEditor: Debuggable {
             logger.failure("ProjectEditor가 존재하지 않아 실행 취소됩니다.")
             return
         }
-        guard systemBoard == nil && flowBoard == nil && valueBoard == nil else { setIssue(Error.alreadySetUp)
+        guard systemBoard == nil &&
+                flowBoard == nil &&
+                componentBoard == nil else { setIssue(Error.alreadySetUp)
             logger.failure("이미 setUp된 상태입니다.")
             return
         }
@@ -74,11 +76,11 @@ public final class ProjectEditor: Debuggable {
         
         let systemBoardRef = SystemBoard(config: myConfig)
         let flowBoardRef = FlowBoard(config: myConfig)
-        let valueBoardRef = ValueBoard(config: myConfig)
+        let componentBoardRef = ComponentBoard(config: myConfig)
         
         self.systemBoard = systemBoardRef.id
         self.flowBoard = flowBoardRef.id
-        self.valueBoard = valueBoardRef.id
+        self.componentBoard = componentBoardRef.id
     }
     
     public func pushName() async {
