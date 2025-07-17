@@ -7,6 +7,8 @@
 import Foundation
 import Values
 
+private let logger = WorkFlow.getLogger(for: "ProjectSourceMock")
+
 
 // MARK: Object
 @Server
@@ -47,21 +49,22 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     
     package var creator: UserID
     
-    private(set) var eventHandlers: [ObjectID: Handler<ProjectSourceEvent>] = [:]
-    package func hasHandler(requester: ObjectID) async -> Bool {
-        eventHandlers[requester] != nil
-    }
-    package func setHandler(requester: ObjectID, handler: Handler<ProjectSourceEvent>) {
-        eventHandlers[requester] = handler
-    }
-    package func removeHandler(requester: ObjectID) async {
-        eventHandlers[requester] = nil
+    var handler: EventHandler?
+    package func setHandler(_ handler: EventHandler) {
+        self.handler = handler
     }
     
+    package func notifyNameChanged() {
+        let diff = ProjectSourceDiff(id: self.id,
+                                     target: self.target,
+                                     name: self.name)
+        
+        handler?.execute(.modified(diff))
+    }
     
     
     // MARK: action
-    package func createFirstSystem() {
+    package func createSystem() {
         // mutate
         guard systems.isEmpty else { return }
         
@@ -74,12 +77,9 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         
         // notify
         let diff = SystemSourceDiff(systemSourceRef)
-        
-        for (_, handler) in eventHandlers {
-            handler.execute(.added(diff))
-        }
+        self.handler?.execute(.added(diff))
     }
-    package func remove() {
+    package func removeProject() {
         // mutate
         guard id.isExist else { return }
         guard let projectHubRef = projectHub.ref else { return }
@@ -88,9 +88,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
                                      target: self.target,
                                      name: self.name)
 
-        for (_, eventHandler) in projectHubRef.eventHandlers {
-            eventHandler.execute(.removed(diff))
-        }
+        handler?.execute(.removed(diff))
         
         projectHubRef.projectSources.remove(self.id)
         self.delete()
@@ -110,6 +108,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
             ProjectSourceMockManager.container[self]
         }
     }
+    package typealias EventHandler = Handler<ProjectSourceEvent>
 }
 
 

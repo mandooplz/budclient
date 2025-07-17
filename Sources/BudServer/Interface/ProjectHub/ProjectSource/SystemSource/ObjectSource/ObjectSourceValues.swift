@@ -9,16 +9,16 @@ import Values
 
 
 // MARK: ObjectSourceEvent
-package enum ObjectSourceEvent: Sendable {
+public enum ObjectSourceEvent: Sendable {
     case modified(ObjectSourceDiff)
     case removed(ObjectSourceDiff)
     
-    case addedState(StateSouce)
+    case addedState(StateSourceDiff)
 }
 
 
 // MARK: ObjectSourceDiff
-package struct ObjectSourceDiff: Sendable {
+public struct ObjectSourceDiff: Sendable {
     package let id: any ObjectSourceIdentity
     package let target: ObjectID
     
@@ -42,4 +42,11 @@ package struct ObjectSourceDiff: Sendable {
         self.name = name
         self.role = role
     }
+}
+
+
+
+// MARK: StateSourceDiff
+public struct StateSourceDiff: Sendable {
+    
 }

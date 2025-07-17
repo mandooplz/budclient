@@ -14,10 +14,7 @@ package protocol SystemSourceInterface: Sendable {
     
     // MARK: state
     func setName(_ value: String) async
-    
-    func hasHandler(requester: ObjectID) async -> Bool
-    func setHandler(requester: ObjectID, handler: Handler<SystemSourceEvent>) async
-    func removeHandler(requester: ObjectID) async
+    func setHandler(_ handler: Handler<SystemSourceEvent>) async
     
     func notifyNameChanged() async
     
@@ -27,7 +24,7 @@ package protocol SystemSourceInterface: Sendable {
     func addSystemTop() async
     func addSystemBottom() async
     
-    func remove() async
+    func removeSystem() async
 }
 
 

@@ -82,16 +82,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                     return
                 }
                 
-                let isSubscribed = await systemSourceRef.hasHandler(requester: me)
-                guard isSubscribed == false else {
-                    await systemModel.ref?.setIssue(Error.alreadySubscribed);
-                    logger.failure("이미 구독 중인 상태입니다.")
-                    return
-                }
-                
                 await systemSourceRef.setHandler(
-                    requester: me,
-                    handler: .init({ event in
+                    .init({ event in
                         Task {
                             await WorkFlow {
                                 guard let updaterRef = await systemModel.ref?.updater else {
@@ -106,21 +98,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                             }
                         }
                     }))
-            }
-        }
-    }
-    
-    public func unsubscribe() async {
-        logger.start()
-        
-        // capture
-        let systemSource = self.source
-        let me = ObjectID(id.value)
-        
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                guard let systemSourceRef = await systemSource.ref else { return }
-                await systemSourceRef.removeHandler(requester: me)
             }
         }
     }
@@ -174,8 +151,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
-        guard let systemBoardRef = config.parent.ref,
-              systemBoardRef.models[location.getRight()] == nil else {
+        guard let projectModelRef = config.parent.ref,
+              projectModelRef.systemLocations.contains(location.getRight()) == false else {
                   setIssue(Error.systemAlreadyExist)
                   logger.failure("오른쪽에 시스템이 이미 존재합니다.")
                   return
@@ -210,8 +187,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
-        guard let systemBoardRef = config.parent.ref,
-              systemBoardRef.models[location.getLeft()] == nil else {
+        guard let projectModelRef = config.parent.ref,
+              projectModelRef.systemLocations.contains(location.getLeft()) == false else {
                   setIssue(Error.systemAlreadyExist)
                   logger.failure("왼쪽에 시스템이 이미 존재합니다.")
                   return
@@ -241,8 +218,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
-        guard let systemBoardRef = config.parent.ref,
-              systemBoardRef.models[location.getTop()] == nil else {
+        guard let projectModelRef = config.parent.ref,
+              projectModelRef.systemLocations.contains(location.getTop()) == false else {
                   setIssue(Error.systemAlreadyExist)
                   logger.failure("위쪽에 시스템이 이미 존재합니다.")
                   return
@@ -274,8 +251,8 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
-        guard let systemBoardRef = config.parent.ref,
-              systemBoardRef.models[location.getBotttom()] == nil else {
+        guard let projectModelRef = config.parent.ref,
+              projectModelRef.systemLocations.contains(location.getBotttom()) == false else {
                   setIssue(Error.systemAlreadyExist)
                   logger.failure("아래쪽에 시스템이 이미 존재합니다.")
                   return
@@ -321,7 +298,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                     return
                 }
                 
-                await systemSourceRef.remove()
+                await systemSourceRef.removeSystem()
             }
         }
     }

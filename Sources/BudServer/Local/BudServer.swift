@@ -28,17 +28,23 @@ package final class BudServer: BudServerInterface {
     }
     
     
-    
     // MARK: state
     nonisolated package let id = ID()
     
     private let accountHubRef = AccountHub()
-    private let projectHubRef = ProjectHub()
     package var accountHub: AccountHub.ID {
         self.accountHubRef.id
     }
-    package var projectHub: ProjectHub.ID {
-        self.projectHubRef.id
+    
+    private var projectHubRef: ProjectHub?
+    package func getProjectHub(_ user: UserID) -> ProjectHub.ID {
+        guard let projectHubRef else {
+            let newProjectHubRef = ProjectHub(user: user)
+            self.projectHubRef = newProjectHubRef
+            return newProjectHubRef.id
+        }
+        
+        return projectHubRef.id
     }
     
     
@@ -67,8 +73,5 @@ fileprivate final class BudServerManager: Sendable {
     fileprivate static var container: [BudServer.ID: BudServer] = [:]
     fileprivate static func register(_ object: BudServer) {
         container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: BudServer.ID) {
-        container[id] = nil
     }
 }

@@ -34,6 +34,10 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     package var name: String
     package nonisolated let role: ObjectRole
     
+    package var handler: EventHandler?
+    package func setHandler(_ handler: EventHandler) {
+        self.handler = handler
+    }
     
     // MARK: action
 
@@ -52,6 +56,7 @@ package final class ObjectSourceMock: ObjectSourceInterface {
             ObjectSourceMockManager.container[self]
         }
     }
+    package typealias EventHandler = Handler<ObjectSourceEvent>
 }
 
 

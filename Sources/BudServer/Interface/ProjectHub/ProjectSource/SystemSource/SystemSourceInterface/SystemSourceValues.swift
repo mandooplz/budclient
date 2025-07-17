@@ -9,7 +9,7 @@ import Values
 
 
 // MARK: SystemSourceEvent
-package enum SystemSourceEvent: Sendable {
+public enum SystemSourceEvent: Sendable {
     case modified(SystemSourceDiff)
     case removed(SystemSourceDiff)
     
@@ -19,7 +19,7 @@ package enum SystemSourceEvent: Sendable {
 
 
 // MARK: SystemSourceDiff
-package struct SystemSourceDiff: Sendable {
+public struct SystemSourceDiff: Sendable {
     package let id: any SystemSourceIdentity
     package let target: SystemID
     package let name: String

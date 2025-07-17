@@ -64,7 +64,7 @@ public final class ProfileBoard: Debuggable {
         guard self.id.isExist else { setIssue(Error.profileBoardIsDeleted); return }
         let budClientRef = self.config.parent.ref!
         let projectBoardRef = projectBoard!.ref!
-        let projectEditors = projectBoardRef.editors
+        let projectModels = projectBoardRef.projects
         let communityRef = community!.ref!
         let authBoardRef = AuthBoard(tempConfig: tempConfig)
         
@@ -73,19 +73,18 @@ public final class ProfileBoard: Debuggable {
         budClientRef.profileBoard = nil
         budClientRef.user = nil
         
-        for projectEditor in projectEditors {
-            let systemBoardRef = projectEditor.ref?.systemBoard?.ref
-            systemBoardRef?.models.values.forEach { systemModel in
+        for projectModel in projectModels.values {
+            projectModel.ref?.systems.values.forEach { systemModel in
                 systemModel.ref?.delete()
             }
             
-            systemBoardRef?.delete()
+            projectModel.ref?.workflows.values.forEach { workflowModel in
+                workflowModel.ref?.delete()
+            }
             
-            projectEditor.ref?.systemBoard?.ref?.delete()
-            projectEditor.ref?.flowBoard?.ref?.delete()
-            projectEditor.ref?.componentBoard?.ref?.delete()
-            
-            projectEditor.ref?.delete()
+            projectModel.ref?.valueTypes.values.forEach { valueTypeModel in
+                valueTypeModel.ref?.delete()
+            }
         }
         
         projectBoardRef.delete()

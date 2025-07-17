@@ -17,9 +17,7 @@ package protocol BudServerInterface: Sendable {
     // MARK: state
     nonisolated var id: ID { get }
     
-    // accountHub가 과연 필요한가.
     var accountHub: AccountHubID { get async }
-    
     func getProjectHub(_ user: UserID) async -> ProjectHubID
 }
 

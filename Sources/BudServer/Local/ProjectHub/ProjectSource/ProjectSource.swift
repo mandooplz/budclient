@@ -57,7 +57,6 @@ package final class ProjectSource: ProjectSourceInterface {
     // objectID마다 있어야 하는가?
     package var listener: ListenerRegistration?
     package var handler: EventHandler?
-    
     package func setHandler(_ handler: EventHandler) {
         logger.start()
         
@@ -112,18 +111,14 @@ package final class ProjectSource: ProjectSourceInterface {
                             return
                         }
                         
-                        systemSourceRef.handlers.values.forEach { handler in
-                            handler.execute(.modified(diff))
-                        }
+                        systemSourceRef.handler?.execute(.modified(diff))
                     case .removed:
                         guard let systemSourceRef = systemSource.ref else {
                             logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
                             return
                         }
                         
-                        systemSourceRef.handlers.values.forEach { handler in
-                            handler.execute(.removed(diff))
-                        }
+                        systemSourceRef.handler?.execute(.removed(diff))
                         
                         // delete SystemSource
                         self.systemSources[data.target] = nil

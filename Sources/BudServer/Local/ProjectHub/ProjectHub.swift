@@ -37,7 +37,7 @@ package final class ProjectHub: ProjectHubInterface {
         
         let db = Firestore.firestore()
         let projectSourcesCollectionRef = db.collection(DB.projectSources)
-            .whereField(ProjectSource.Data, isEqualTo: user.encode())
+            .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
         
         
         guard self.listener == nil else {

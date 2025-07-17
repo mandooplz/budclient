@@ -11,6 +11,8 @@ import Values
 // MARK: Interface
 package protocol ObjectSourceInterface: Sendable {
     associatedtype ID: ObjectSourceIdentity where ID.Object == Self
+    
+    func setHandler(_ handler: Handler<ObjectSourceEvent>) async
 }
 
 

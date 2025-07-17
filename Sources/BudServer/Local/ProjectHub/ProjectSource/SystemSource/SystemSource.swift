@@ -52,15 +52,15 @@ package final class SystemSource: SystemSourceInterface {
         docRef.updateData(updateData)
     }
     
-    var listener: ListenerRegistration
-    var handlers: [ObjectID: EventHandler]
+    package var objects: [ObjectID: ObjectSource.ID] = [:]
     
-    package func hasHandler(requester: ObjectID) -> Bool {
-        
-    }
-    package func setHandler(requester: ObjectID, handler: EventHandler) {
+    var listener: ListenerRegistration?
+    var handler: EventHandler?
+    
+    package func setHandler(_ handler: EventHandler) {
         logger.start()
         
+        // capture
         let db = Firestore.firestore()
         let objectSourceCollectionRef = db.collection(DB.projectSources)
             .document(parent.value)
@@ -69,6 +69,13 @@ package final class SystemSource: SystemSourceInterface {
             .collection(DB.objectSources)
         
         // set listener
+        guard self.listener == nil else {
+            let log = logger.getLog("Firebase 리스너가 이미 등록되어 있습니다.")
+            logger.raw.error("\(log)")
+            return
+        }
+        
+        // objectSource의 컬렉션
         self.listener = objectSourceCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
@@ -100,28 +107,22 @@ package final class SystemSource: SystemSourceInterface {
                     switch changed.type {
                     case .added:
                         // create ObjectSource
-                        let _ = ObjectSource(id: objectSource)
+                        let objectSourceRef = ObjectSource(id: objectSource)
+                        self.objects[diff.target] = objectSourceRef.id
                         
-                        handler.execute(.added(diff))
+                        handler.execute(.objectAdded(diff))
                         return
                     case .modified:
                         // modify ObjectSource
-                        handler.execute(.modified(diff))
-                        return
+                        objectSource.ref?.handler?.execute(.modified(diff))
                     case .removed:
                         // remove ObjectSource
                         objectSource.ref?.delete()
-                        
-                        handler.execute(.removed(diff))
+                        objectSource.ref?.handler?.execute(.removed(diff))
                         return
                     }
                 }
             }
-    }
-    package func removeHandler(requester: ObjectID) {
-        logger.start()
-        
-        handlers[requester] = nil
     }
     
     package func notifyNameChanged() async {
@@ -444,7 +445,7 @@ package final class SystemSource: SystemSourceInterface {
         }
     }
     
-    package func remove() async {
+    package func removeSystem() async {
         logger.start()
         
         guard id.isExist else {

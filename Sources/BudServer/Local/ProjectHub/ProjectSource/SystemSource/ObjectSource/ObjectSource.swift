@@ -28,12 +28,20 @@ package final class ObjectSource: ObjectSourceInterface {
     // MARK: state
     package nonisolated let id: ID
     
+    var listener: ListenerRegistration?
+    var handler: EventHandler?
+    package func setHandler(_ handler: EventHandler) {
+        // Firebase를 통해 구독 구현
+    }
+    
     
     // MARK: action
 
     
     
     // MARK: value
+    package typealias EventHandler = Handler<ObjectSourceEvent>
+    
     @MainActor
     package struct ID: ObjectSourceIdentity {
         let value: String
@@ -51,9 +59,9 @@ package final class ObjectSource: ObjectSourceInterface {
     
     package struct Data: Codable {
         @DocumentID var id: String?
-        package var name: String
         package var target: ObjectID
         
+        package var name: String
         package var role: ObjectRole
         
         

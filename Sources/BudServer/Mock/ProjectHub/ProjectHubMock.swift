@@ -13,78 +13,43 @@ import Collections
 @Server
 package final class ProjectHubMock: ProjectHubInterface {
     // MARK: core
-    init() {
+    init(user: UserID) {
+        self.user = user
+        
         ProjectHubMockManager.register(self)
     }
     
     
     // MARK: state
     package nonisolated let id: ID = ID()
+    package nonisolated let user: UserID
     
     package var projectSources: Set<ProjectSourceMock.ID> = []
     
-    private var tickets: Deque<CreateProject> = []
-    package func insertTicket(_ ticket: CreateProject) async {
-        tickets.append(ticket)
-    }
-    
-    var eventHandlers: [ObjectID:Handler<ProjectHubEvent>] = [:]
-    package func hasHandler(requester: ObjectID) -> Bool {
-        eventHandlers[requester] != nil
-    }
-    package func setHandler(requester: ObjectID,
-                            user: UserID,
-                            handler: Handler<ProjectHubEvent>) {
-        eventHandlers[requester] = handler
-    }
-    package func removeHandler(requester: ObjectID) async {
-        eventHandlers[requester] = nil
-    }
-    
-    package func notifyNameChanged(_ project: ProjectID) {
-        let projectSource = projectSources.first {
-            $0.ref?.target == project
-        }
-        guard let projectSourceRef = projectSource?.ref else {
-            return
-        }
-        
-        let diff = ProjectSourceDiff(id: projectSourceRef.id,
-                                     target: projectSourceRef.target,
-                                     name: projectSourceRef.name)
-        
-        for (_, handler) in eventHandlers {
-            handler.execute(.modified(diff))
-        }
+    private var handler: EventHandler?
+    package func setHandler(_ handler: EventHandler) {
+        self.handler = handler
     }
     
     
     // MARK: action
-    package func createNewProject() async {        
+    package func createProject() async {
         // mutate
-        while tickets.isEmpty == false {
-            let ticket = tickets.removeFirst()
-            
-            
-            let newProjectName = "Project \(Int.random(in: 1..<1000))"
-            let projectSourceRef = ProjectSourceMock(
-                name: newProjectName,
-                creator: ticket.creator,
-                projectHubMockRef: self.id
-            )
+        let newProjectName = "Project \(Int.random(in: 1..<1000))"
+        let projectSourceRef = ProjectSourceMock(
+            name: newProjectName,
+            creator: user,
+            projectHubMockRef: self.id
+        )
 
-            projectSources.insert(projectSourceRef.id)
-            
-            // notify
-            let diff = ProjectSourceDiff(id: projectSourceRef.id,
-                                         target: projectSourceRef.target,
-                                         name: projectSourceRef.name)
-            
-            let event = ProjectHubEvent.added(diff)
-            for handler in eventHandlers.values {
-                handler.execute(event)
-            }
-        }
+        projectSources.insert(projectSourceRef.id)
+        
+        // notify
+        let diff = ProjectSourceDiff(id: projectSourceRef.id,
+                                     target: projectSourceRef.target,
+                                     name: projectSourceRef.name)
+        
+        handler?.execute(.added(diff))
     }
     
     
@@ -101,6 +66,7 @@ package final class ProjectHubMock: ProjectHubInterface {
             ProjectHubMockManager.container[self]
         }
     }
+    package typealias EventHandler = Handler<ProjectHubEvent>
 }
 
 

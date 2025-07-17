@@ -8,4 +8,4 @@ import Foundation
 
 
 // MARK: Value
-package struct FlowSourceDiff: Sendable { }
+public struct FlowSourceDiff: Sendable { }

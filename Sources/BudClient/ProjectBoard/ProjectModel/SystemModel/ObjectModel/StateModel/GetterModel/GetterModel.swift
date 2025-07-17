@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 import BudServer
 
 private let logger = WorkFlow.getLogger(for: "GetterModel")
@@ -15,8 +16,11 @@ private let logger = WorkFlow.getLogger(for: "GetterModel")
 @MainActor @Observable
 public final class GetterModel: Sendable {
     // MARK: core
-    init(target: GetterID) {
+    init(name: String, target: GetterID) {
         self.target = target
+        
+        self.name = name
+        self.nameInput = name
         
         GetterModelManager.register(self)
     }
@@ -29,8 +33,9 @@ public final class GetterModel: Sendable {
     nonisolated let target: GetterID
     
     public var name: String
+    public var nameInput: String
     
-    public var paremeters: [ParameterValue] = []
+    public var paremeters = OrderedDictionary<ValueTypeID, ParameterValue>()
     public var result: ResultValue = .AnyValue
     
     

@@ -8,11 +8,8 @@ import Foundation
 import Values
 
 
-// ProjectSourceEvent를 더이상 받지 않겠다.
-// modified와 removed에 대한 수신을 중단하겠다.
-// 
 // MARK: ProjectSourceEvent
-package enum ProjectSourceEvent: Sendable {
+public enum ProjectSourceEvent: Sendable {
     case modified(ProjectSourceDiff)
     case removed(ProjectSourceDiff)
     
@@ -21,7 +18,7 @@ package enum ProjectSourceEvent: Sendable {
 
 
 // MARK: ProjectSourceDiff
-package struct ProjectSourceDiff: Sendable {
+public struct ProjectSourceDiff: Sendable {
     package let id: any ProjectSourceIdentity
     package let target: ProjectID
     package let name: String

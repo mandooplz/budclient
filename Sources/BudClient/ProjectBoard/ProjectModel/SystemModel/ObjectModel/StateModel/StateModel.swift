@@ -15,9 +15,12 @@ private let logger = WorkFlow.getLogger(for: "StateModel")
 @MainActor @Observable
 public final class StateModel: Sendable {
     // MARK: core
-    init(target: StateID) {
+    init(name: String, target: StateID) {
         self.target = target
         self.updater = Updater(owner: self.id)
+        
+        self.name = name
+        self.nameInput = name
         
         StateModelManager.register(self)
     }
