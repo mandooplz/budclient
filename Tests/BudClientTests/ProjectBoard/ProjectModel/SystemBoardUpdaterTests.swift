@@ -24,51 +24,6 @@ struct SystemBoardUpdaterTests {
             self.systemBoardRef = await updaterRef.config.parent.ref!
         }
         
-        @Test func createSystemModel() async throws {
-            // given
-            try await #require(systemBoardRef.models.count == 0)
-            
-            let newSystemSourceMockRef = await SystemSourceMock(
-                name: "",
-                location: .origin,
-                parent: .init()
-            )
-            let diff = await SystemSourceDiff(newSystemSourceMockRef)
-            
-            await updaterRef.appendEvent(.added(diff))
-            
-            // when
-            await updaterRef.update()
-            
-            // then
-            try await #require(systemBoardRef.models.count == 1)
-            try await #require(updaterRef.queue.isEmpty)
-            
-            await #expect(systemBoardRef.models.values.first?.isExist == true)
-        }
-        @Test func whenAlreadyAdded() async throws {
-            // given
-            let newSystemSourceMockRef = await SystemSourceMock(
-                name: "",
-                location: .origin,
-                parent: .init()
-            )
-            let diff = await SystemSourceDiff(newSystemSourceMockRef)
-            
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            // when
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            // then
-            try await #require(updaterRef.queue.isEmpty)
-            
-            let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyAdded")
-        }
-        
         @Test func deleteSystemModel() async throws {
             // given
             let newSystemSourceMockRef = await SystemSourceMock(

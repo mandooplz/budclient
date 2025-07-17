@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 import BudServer
 
 private let logger = WorkFlow.getLogger(for: "ProjectModel")
@@ -13,7 +14,7 @@ private let logger = WorkFlow.getLogger(for: "ProjectModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectModel: Debuggable {
+public final class ProjectModel: Debuggable, EventDebuggable {
     // MARK: core
     init(config: Config<ProjectBoard.ID>,
          target: ProjectID,
@@ -22,7 +23,7 @@ public final class ProjectModel: Debuggable {
         self.config = config
         self.target = target
         self.source = source
-        self.updaterRef = Updater(parent: self.id)
+        self.updaterRef = Updater(owner: self.id)
         
         self.name = name
         self.nameInput = name
@@ -44,14 +45,67 @@ public final class ProjectModel: Debuggable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public internal(set) var systems: [SystemModel.ID] = []
-    public internal(set) var workflows: [WorkflowModel.ID] = []
-    public internal(set) var valueTypes: [ValueModel.ID] = []
+    public internal(set) var systems = OrderedDictionary<SystemID, SystemModel.ID>()
+    public var systemLocations: some Collection<Location> {
+        self.systems.values
+            .compactMap { $0.ref }
+            .map { $0.location }
+    }
+    public internal(set) var workflows = OrderedDictionary<WorkflowID, WorkflowModel.ID>()
+    public internal(set) var valueTypes = OrderedDictionary<ValueTypeID, ValueModel.ID>()
         
     public var issue: (any Issuable)?
-    
+    package var callback: Callback?
     
     // MARK: action
+    public func startUpdating() async {
+        logger.start()
+        
+        await self.startUpdating(captureHook: nil)
+    }
+    func startUpdating(captureHook: Hook?) async {
+        // capture
+        await captureHook?()
+        guard self.id.isExist else {
+            setIssue(Error.projectModelIsDeleted)
+            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let projectSource = self.source
+        let projectModel = self.id
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let projectSourceRef = await projectSource.ref else {
+                    let log = logger.getLog("ProjectSource가 존재하지 않습니다. -> ProjectSource 삭제 로직 구현 필요")
+                    logger.raw.fault("\(log)")
+                    return
+                }
+                
+                await projectSourceRef.setHandler(
+                    .init({ event in
+                        Task {
+                            await WorkFlow {
+                                guard let projectModelRef = await projectModel.ref else {
+                                    return
+                                }
+                                
+                                let updaterRef = projectModelRef.updaterRef
+                                
+                                await updaterRef.appendEvent(event)
+                                await updaterRef.update()
+                                
+                                await projectModelRef.callback?()
+                            }
+                        }
+                    }))
+            }
+        }
+        
+    }
+    
     public func pushName() async {
         logger.start()
         
@@ -94,13 +148,13 @@ public final class ProjectModel: Debuggable {
                     logger.failure("BudServer를 찾을 수 없습니다.")
                     return
                 }
-                guard let projectHubRef = await budServerRef.projectHub.ref else {
+                guard let projectHubRef = await budServerRef.getProjectHub(config.user).ref else {
                     logger.failure("ProjectHub를 찾을 수 없습니다.")
                     return
                 }
                 
                 await projectSourceRef.setName(nameInput)
-                await projectHubRef.notifyNameChanged(target)
+                await projectSourceRef.notifyNameChanged()
             }
         }
         
@@ -160,7 +214,7 @@ public final class ProjectModel: Debuggable {
                     return
                 }
                 
-                await projectSourceRef.createFirstSystem()
+                await projectSourceRef.createSystem()
             }
         }
     }

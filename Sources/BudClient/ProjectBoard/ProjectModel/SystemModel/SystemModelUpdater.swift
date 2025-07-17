@@ -33,7 +33,8 @@ extension SystemModel {
         func update(mutateHook: Hook? = nil) async {
             // capture
             await mutateHook?()
-            guard let systemModelRef = owner.ref else {
+            guard let systemModelRef = owner.ref,
+                let projectModelRef = systemModelRef.config.parent.ref else {
                 setIssue(Error.systemModelIsDeleted)
                 logger.failure("SystemModel이 존재하지 않아 update 취소됩니다.")
                 return
@@ -45,9 +46,24 @@ extension SystemModel {
                 let event = queue.removeFirst()
                 
                 switch event {
-                case .added(let diff):
+                case .removed(let diff):
+                    // remove SystemModel -> SystemModel.Updater
+                    guard projectModelRef.systems[diff.target] != nil else {
+                        setIssue(Error.alreadyRemoved)
+                        logger.failure(Error.alreadyRemoved)
+                        return
+                    }
+                    
+                    projectModelRef.systems[diff.target] = nil
+                    systemModelRef.delete()
+                case .modified(let diff):
+                    // modified SystemModel -> SystemModel.updater
+                    systemModelRef.name = diff.name
+                    systemModelRef.location = diff.location
+                
+                case .objectAdded(let diff):
                     // create ObjectModel
-                    guard systemModelRef.isObjectExist(diff.target) == false else {
+                    guard systemModelRef.objects[diff.target] == nil else {
                         setIssue(Error.alreadyAdded)
                         logger.failure("\(diff.target)에 대응되는 ObjectModel이 이미 존재합니다.")
                         return
@@ -59,38 +75,13 @@ extension SystemModel {
                                                      config: config)
                     
                     if diff.role == .root {
-                        systemModelRef.rootModel = objectModelRef.id
+                        systemModelRef.root = objectModelRef.id
                     }
                     
-                    systemModelRef.objectModels.append(objectModelRef.id)
+                    systemModelRef.objects[diff.target] = objectModelRef.id
                     
-                case .modified(let diff):
-                    // modify ObjectModel
-                    guard let objectModel = systemModelRef.getObjectModel(diff.target) else {
-                        setIssue(Error.alreadyRemoved)
-                        logger.failure("\(diff.target)에 대응되는 ObjectModel이 이미 삭제된 상태입니다.")
-                        return
-                    }
-                    
-                    objectModel.ref?.name = diff.name
-                    
-                case .removed(let diff):
-                    // remove ObjectModel
-                    guard systemModelRef.isObjectExist(diff.target) == true else {
-                        setIssue(Error.alreadyRemoved)
-                        logger.failure("\(diff.target)에 대응되는 ObjectModel이 이미 삭제된 상태입니다.")
-                        return
-                    }
-                    
-                    for (idx, objectModel) in systemModelRef.objectModels.enumerated() {
-                        if let objectModelRef = objectModel.ref,
-                           objectModelRef.target == diff.target {
-                            systemModelRef.objectModels.remove(at: idx)
-                            objectModelRef.delete()
-                            break
-                        }
-                    }
-                    
+                case .flowAdded(let diff):
+                    return
                 }
             }
         }

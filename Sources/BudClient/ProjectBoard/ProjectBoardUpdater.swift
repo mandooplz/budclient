@@ -45,42 +45,22 @@ extension ProjectBoard {
                 let event = queue.removeFirst()
                 switch event {
                 case .added(let diff):
-                    if projectBoardRef.isEditorExist(target: diff.target) {
+                    guard projectBoardRef.projects[diff.target] == nil else {
                         setIssue(Error.alreadyAdded)
                         logger.failure(Error.alreadyAdded)
                         return
                     }
+
+                    // create ProjectModel
+                    let projectModelRef = ProjectModel(
+                        config: config,
+                        target: diff.target,
+                        name: diff.name,
+                        source: diff.id)
                     
-                    // create ProjectEditor
-                    let projectModelRef = ProjectEditor(config: config,
-                                                         target: diff.target,
-                                                         name: diff.name,
-                                                         source: diff.id)
-                    
-                    projectBoardRef.projects.append(projectModelRef.id)
-                    
+                    projectBoardRef.projects[diff.target] = projectModelRef.id
+
                     logger.finished("added \(diff.id)")
-                case .modified(let diff):
-                    // update ProjectEditor
-                    guard let projectEditor = projectBoardRef.getProjectEditor(diff.target),
-                          let projectEditorRef = projectEditor.ref else { return }
-                    
-                    projectEditorRef.name = diff.name
-                    
-                    logger.finished("modified \(diff.id)")
-                case .removed(let diff):
-                    // remove ProjectEditor
-                    guard let projectEditor = projectBoardRef.getProjectEditor(diff.target),
-                          let projectEditorRef = projectEditor.ref else {
-                        setIssue(Error.alreadyRemoved)
-                        logger.failure(Error.alreadyRemoved)
-                        return
-                    }
-                    
-                    projectEditorRef.delete()
-                    projectBoardRef.editors.removeAll { $0 == projectEditor }
-                    
-                    logger.finished("removed \(diff.id)")
                 }
             }
         }

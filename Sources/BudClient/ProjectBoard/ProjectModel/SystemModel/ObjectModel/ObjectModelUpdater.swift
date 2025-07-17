@@ -26,7 +26,34 @@ extension ObjectModel {
         
         
         // MARK: action
-        func update(mutateHook: Hook? = nil) async { }
+        func update(mutateHook: Hook? = nil) async {
+        case .modified(let diff):
+            // modify ObjectModel
+            guard let objectModel = systemModelRef.getObjectModel(diff.target) else {
+                setIssue(Error.alreadyRemoved)
+                logger.failure("\(diff.target)에 대응되는 ObjectModel이 이미 삭제된 상태입니다.")
+                return
+            }
+            
+            objectModel.ref?.name = diff.name
+            
+        case .removed(let diff):
+            // remove ObjectModel
+            guard systemModelRef.isObjectExist(diff.target) == true else {
+                setIssue(Error.alreadyRemoved)
+                logger.failure("\(diff.target)에 대응되는 ObjectModel이 이미 삭제된 상태입니다.")
+                return
+            }
+            
+            for (idx, objectModel) in systemModelRef.objectModels.enumerated() {
+                if let objectModelRef = objectModel.ref,
+                   objectModelRef.target == diff.target {
+                    systemModelRef.objectModels.remove(at: idx)
+                    objectModelRef.delete()
+                    break
+                }
+            }
+        }
         
         
         // MARK: value

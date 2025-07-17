@@ -48,7 +48,7 @@ package final class ProjectSource: ProjectSourceInterface {
         let docRef = db.collection(DB.projectSources).document(id.value)
         
         let updateData: [String: Any] = [
-            Data.name: value
+            ProjectSource.Data.name: value
         ]
         
         docRef.updateData(updateData)
@@ -56,21 +56,16 @@ package final class ProjectSource: ProjectSourceInterface {
     
     // objectID마다 있어야 하는가?
     package var listener: ListenerRegistration?
-    package var handlers: [ObjectID: EventHandler] = [:]
-    package func hasHandler(requester: ObjectID) -> Bool {
-        self.handlers[requester] != nil
-    }
-    package func setHandler(requester: ObjectID, handler: EventHandler) {
+    package var handler: EventHandler?
+    
+    package func setHandler(_ handler: EventHandler) {
         logger.start()
-        
-        // 중복 방지
-        guard self.handlers[requester] == nil else { return }
-        self.handlers[requester] = handler
         
         let db = Firestore.firestore()
         let systemSourceCollectionRef = db.collection(DB.projectSources)
             .document(id.value)
             .collection(DB.systemSources)
+        self.handler = handler
         
         self.listener = systemSourceCollectionRef
             .addSnapshotListener({ snapshot, error in
@@ -137,15 +132,14 @@ package final class ProjectSource: ProjectSourceInterface {
                 }
             })
     }
-    package func removeHandler(requester: ObjectID) {
-        logger.start()
-        
-        handlers[requester] = nil
+    
+    package func notifyNameChanged() async {
+        return
     }
     
     
     // MARK: action
-    package func createFirstSystem() async  {
+    package func createSystem() async  {
         logger.start()
         
         guard id.isExist else {
@@ -211,7 +205,7 @@ package final class ProjectSource: ProjectSourceInterface {
             return
         }
     }
-    package func remove() {
+    package func removeProject() {
         logger.start()
         
         guard id.isExist else {

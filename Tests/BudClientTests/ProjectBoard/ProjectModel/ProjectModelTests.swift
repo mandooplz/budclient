@@ -1,5 +1,5 @@
 //
-//  ProjectTests.swift
+//  ProjectModelTests.swift
 //  BudClient
 //
 //  Created by 김민우 on 7/1/25.
@@ -12,14 +12,14 @@ import Values
 
 
 // MARK: Tests
-@Suite("ProjectEditor", .timeLimit(.minutes(1)))
-struct ProjectEditorTests {
+@Suite("ProjectModel", .timeLimit(.minutes(1)))
+struct ProjectModelTests {
     struct SetUp {
         let budClientRef: BudClient
         let editorRef: ProjectEditor
         init() async throws {
             self.budClientRef = await BudClient()
-            self.editorRef = try await getProjectEditor(budClientRef)
+            self.editorRef = try await getProjectModel(budClientRef)
         }
         
         @Test func wnenAlreadySetUp() async throws {
@@ -252,7 +252,7 @@ struct ProjectEditorTests {
 
 
 // MARK: Helphers
-private func getProjectEditor(_ budClientRef: BudClient) async throws -> ProjectEditor {
+private func getProjectModel(_ budClientRef: BudClient) async throws -> ProjectModel {
     // BudClient.setUp()
     await budClientRef.setUp()
     let authBoard = try #require(await budClientRef.authBoard)

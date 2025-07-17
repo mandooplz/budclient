@@ -15,16 +15,10 @@ package protocol ProjectHubInterface: Sendable {
     // MARK: state
     nonisolated var id: ID { get }
     
-    func insertTicket(_: CreateProject) async;
-    
-    func hasHandler(requester: ObjectID) async -> Bool
-    func setHandler(requester: ObjectID, user: UserID, handler: Handler<ProjectHubEvent>) async
-    
-    func notifyNameChanged(_: ProjectID) async;
-    
+    func setHandler(_ handler: Handler<ProjectHubEvent>) async
     
     // MARK: action
-    func createNewProject() async
+    func createProject() async
 }
 
 

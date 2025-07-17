@@ -7,6 +7,7 @@
 import Foundation
 import Values
 import BudServer
+import Collections
 
 private let logger = WorkFlow.getLogger(for: "SystemModel")
 
@@ -15,7 +16,7 @@ private let logger = WorkFlow.getLogger(for: "SystemModel")
 @MainActor @Observable
 public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     // MARK: core
-    init(config: Config<SystemBoard.ID>,
+    init(config: Config<ProjectModel.ID>,
          target: SystemID,
          name: String,
          location: Location,
@@ -37,7 +38,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     // MARK: state
     nonisolated let id = ID()
-    nonisolated let config: Config<SystemBoard.ID>
+    nonisolated let config: Config<ProjectModel.ID>
     nonisolated let target: SystemID
     nonisolated let source: any SystemSourceIdentity
     nonisolated let updater: Updater
@@ -49,19 +50,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     // TODO: ObjectModel을 옮기기 위해 해야하는 작업은?
     public var root: ObjectModel.ID?
-    public var objects: [ObjectModel.ID] = []
-    
-    func isObjectExist(_ target: ObjectID) -> Bool {
-        self.objects
-            .compactMap { $0.ref }
-            .contains { $0.target == target }
-    }
-    func getObjectModel(_ target: ObjectID) -> ObjectModel.ID? {
-        self.objects
-            .first { objectModel in
-                objectModel.ref?.target == target
-            }
-    }
+    public var objects = OrderedDictionary<ObjectID, ObjectModel.ID>()
     
     public var issue: (any Issuable)?
     public var callback: Callback?

@@ -8,7 +8,7 @@ import Foundation
 import Values
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: <#T##String#>)
+private let logger = WorkFlow.getLogger(for: "ObjectModel")
 
 
 // MARK: Object

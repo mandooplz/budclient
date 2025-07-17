@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 import BudServer
 
 private let logger = WorkFlow.getLogger(for: "ProjectBoard")
@@ -31,90 +32,57 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     nonisolated let config: Config<BudClient.ID>
     nonisolated let updater: Updater
     
-    public internal(set) var projects: [ProjectModel.ID] = []
-    func getProjectEditor(_ target: ProjectID) -> ProjectModel.ID? {
-        self.projects.first { $0.ref?.target == target }
-    }
-    func isEditorExist(target: ProjectID) -> Bool {
-        self.projects.lazy
-            .compactMap { $0.ref }
-            .contains { $0.target == target }
-    }
+    public internal(set) var projects = OrderedDictionary<ProjectID, ProjectModel.ID>()
     
     public var issue: (any Issuable)?
-    public var callback: Callback?
+    package var callback: Callback?
     
     
     // MARK: action
-    public func subscribe() async {
+    public func startUpdating() async {
         logger.start()
         
-        await self.subscribe(captureHook: nil)
+        await self.startUpdating(captureHook: nil)
     }
-    func subscribe(captureHook: Hook?) async {
+    func startUpdating(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard self.id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
-        let config = self.config
-        let callback = self.callback
-        let me = ObjectID(id.value)
+        guard self.id.isExist else {
+            setIssue(Error.projectBoardIsDeleted)
+            logger.failure("ProjectBoard가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         let projectBoard = self.id
+        let config = self.config
         
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.projectHub.ref else {
+                      let projectHubRef = await budServerRef.getProjectHub(config.user).ref else {
                     let log = logger.getLog("ProjectHub가 존재하지 않습니다.")
                     logger.raw.fault("\(log)")
                     return
                 }
                 
-                let isSubscribed = await projectHubRef.hasHandler(requester: me)
-                guard isSubscribed == false else {
-                    await projectBoard.ref?.setIssue(Error.alreadySubscribed)
-                    let log = logger.getLog(Error.alreadySubscribed)
-                    logger.raw.error("\(log)")
-                    return
-                }
-                
                 await projectHubRef.setHandler(
-                    requester: me,
-                    user: config.user,
-                    handler: .init({ event in
+                    .init({ event in
                         Task {
                             await WorkFlow {
-                                guard let updaterRef = await projectBoard.ref?.updater else {
+                                guard let projectBoardRef = await projectBoard.ref else {
                                     return
                                 }
+                                
+                                let updaterRef = projectBoardRef.updater
                                 
                                 await updaterRef.appendEvent(event)
                                 await updaterRef.update()
                                 
-                                await callback?()
+                                await projectBoardRef.callback?()
                             }
                         }
                     })
                 )
-            }
-        }
-    }
-    
-    public func unsubscribe() async {
-        logger.start()
-        
-        // capture
-        let config = self.config
-        let me = ObjectID(id.value)
-        
-        // compute
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.projectHub.ref else {
-                    return }
-                
-                await projectHubRef.removeHandler(requester: me)
             }
         }
     }
@@ -134,14 +102,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                async let ticket = CreateProject(by: config.user)
-                
                 guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.projectHub.ref else { return }
+                      let projectHubRef = await budServerRef.getProjectHub(config.user).ref else { return }
                 
-                
-                await projectHubRef.insertTicket(ticket)
-                await projectHubRef.createNewProject()
+                await projectHubRef.createProject()
             }
         }
     }
@@ -182,4 +146,3 @@ fileprivate final class ProjectBoardManager: Sendable {
         container[id] = nil
     }
 }
-

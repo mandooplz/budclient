@@ -9,10 +9,10 @@ import Values
 
 
 // MARK: ProjectID
-package struct ProjectID: Identity {
-    package let value: UUID
+public struct ProjectID: Identity {
+    public let value: UUID
     
-    package init(value: UUID = UUID()) {
+    public init(value: UUID = UUID()) {
         self.value = value
     }
     
@@ -23,7 +23,7 @@ package struct ProjectID: Identity {
 
 
 // MARK: ProjectHubEvent
-package enum ProjectHubEvent: Sendable {
+public enum ProjectHubEvent: Sendable {
     case added(ProjectSourceDiff)
 }
 

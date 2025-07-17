@@ -7,36 +7,94 @@
 import Foundation
 import Values
 import BudServer
+import Collections
 
-private let logger = WorkFlow.getLogger(for: "ProjectModel,pdate")
+private let logger = WorkFlow.getLogger(for: "ProjectModel.Updater")
 
 
 // MARK: Object
 extension ProjectModel {
     @MainActor @Observable
-    final class Updater: Sendable, Identifiable {
+    final class Updater: Sendable, UpdaterInterface, Debuggable {
         // MARK: core
-        init(parent: ProjectModel.ID) {
-            self.parent = parent
+        init(owner: ProjectModel.ID) {
+            self.owner = owner
         }
         
         
         // MARK: state
         nonisolated let id = UUID()
-        nonisolated let parent: ProjectModel.ID
+        nonisolated let owner: ProjectModel.ID
         
-        // 어떤 이벤트를 받아야 하는가.
+        var queue: Deque<ProjectSourceEvent> = []
+        var issue: (any Issuable)?
         
         
         // MARK: action
-        func update() {
+        func update(captureHook: Hook? = nil) async {
+            logger.start()
+            
+            // capture
+            await captureHook?()
+            guard let projectModelRef = owner.ref else {
+                setIssue(Error.projectModelIsDeleted)
+                logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+                return
+            }
+            
+            // mutate
+            while queue.isEmpty == false {
+                let event = queue.removeFirst()
+                
+                switch event {
+                // modify ProjectModel
+                case .modified(let diff):
+                    projectModelRef.name = diff.name
+                    
+                    logger.finished("modified ProjectModel")
+                    
+                // remove ProjectModel
+                case .removed(let diff):
+                    projectModelRef.delete()
+                    
+                    guard let projectBoardRef = projectModelRef.config.parent.ref else {
+                        return
+                    }
+                    projectBoardRef.projects[diff.target] = nil
+                    
+                    logger.finished("removed ProjectModel")
+                    
+                // create SystemModel
+                case .added(let sysDiff):
+                    guard projectModelRef.systems[sysDiff.target] == nil else {
+                        logger.failure("SystemModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    let newConfig = projectModelRef.config.setParent(owner)
+                    
+                    let systemModelRef = SystemModel(
+                        config: newConfig,
+                        target: sysDiff.target,
+                        name: sysDiff.name,
+                        location: sysDiff.location,
+                        source: sysDiff.id)
+                    
+                    projectModelRef.systems[sysDiff.target] = systemModelRef.id
+                    
+                    logger.finished("added SystemModel")
+                    
+                }
+                
+            }
+            
             
         }
         
         
         // MARK: value
-        enum Event: Sendable, Hashable {
-            
+        enum Error: String, Swift.Error {
+            case projectModelIsDeleted
         }
     }
 }

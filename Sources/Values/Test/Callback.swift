@@ -13,13 +13,17 @@ public typealias Callback = @Sendable () async -> Void
 
 // MARK: EventDebuggable
 @MainActor
-public protocol EventDebuggable: AnyObject {
+package protocol EventDebuggable: AnyObject {
     var callback: Callback? { get set }
 }
 
-public extension EventDebuggable {
+package extension EventDebuggable {
     func setCallback(_ handler: @escaping Callback) {
         self.callback = nil
         self.callback = handler
+    }
+    
+    func setCallbackNil() {
+        self.callback = nil
     }
 }

@@ -10,8 +10,10 @@ import Values
 
 // MARK: ObjectSourceEvent
 package enum ObjectSourceEvent: Sendable {
-    case modifiedObject(ObjectSourceDiff)
-    case removedObject(ObjectSourceDiff)
+    case modified(ObjectSourceDiff)
+    case removed(ObjectSourceDiff)
+    
+    case addedState(StateSouce)
 }
 
 

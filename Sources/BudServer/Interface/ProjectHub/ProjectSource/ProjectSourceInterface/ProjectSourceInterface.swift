@@ -16,14 +16,13 @@ package protocol ProjectSourceInterface: Sendable {
     nonisolated var id: ID { get }
     
     func setName(_ value: String) async;
+    func setHandler(_ handler: Handler<ProjectSourceEvent>) async
     
-    func hasHandler(requester: ObjectID) async -> Bool
-    func setHandler(requester: ObjectID, handler: Handler<ProjectSourceEvent>) async
-    func removeHandler(requester: ObjectID) async;
+    func notifyNameChanged() async;
     
     // MARK: action
-    func createFirstSystem() async
-    func remove() async
+    func createSystem() async
+    func removeProject() async
 }
 
 

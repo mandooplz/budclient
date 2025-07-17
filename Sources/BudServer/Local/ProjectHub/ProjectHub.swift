@@ -16,39 +16,34 @@ private let logger = WorkFlow.getLogger(for: "ProjectHub")
 @MainActor
 package final class ProjectHub: ProjectHubInterface {
     // MARK: core
-    init() {
+    init(user: UserID) {
+        self.user = user
+        
         ProjectHubManager.register(self)
     }
     
     
     // MARK: state
     package nonisolated let id = ID()
+    nonisolated let user: UserID
     
     var projectSources: [ProjectID: ProjectSource.ID] = [:]
     
-    private var tickets: Deque<CreateProject> = []
-    package func insertTicket(_ ticket: CreateProject) async {
-        tickets.append(ticket)
-    }
-    
     var listener: ListenerRegistration?
-    var handlers: [ObjectID: EventHandler] = [:]
-    package func hasHandler(requester: ObjectID) async -> Bool {
-        handlers[requester] != nil
-    }
-    package func setHandler(requester: ObjectID, user: UserID, handler: EventHandler) {
-        guard handlers[requester] == nil else {
-            logger.failure("이미 Handler가 등록된 상태입니다. ")
-            return
-        }
-        
-        self.handlers[requester] = handler
+    var handler: EventHandler?
+    package func setHandler(_ handler: EventHandler) {
+        // capture
+        let projectHub = self.id
         
         let db = Firestore.firestore()
         let projectSourcesCollectionRef = db.collection(DB.projectSources)
-            .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
+            .whereField(ProjectSource.Data, isEqualTo: user.encode())
         
         
+        guard self.listener == nil else {
+            logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
+            return
+        }
         self.listener = projectSourcesCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
@@ -84,7 +79,7 @@ package final class ProjectHub: ProjectHubInterface {
                                                      target: projectSourceRef.target,
                                                      name: data.name)
                         
-                        handler.execute(.added(diff))
+                        projectHub.ref?.handler?.execute(.added(diff))
                     case .modified:
                         // serve event
                         let projectSourceDiff = ProjectSourceDiff(id: projectSource,
@@ -97,10 +92,7 @@ package final class ProjectHub: ProjectHubInterface {
                         
                         // modify ProjectSource
                         projectSourceRef.name = data.name
-                        
-                        projectSourceRef.handlers.values.forEach { handler in
-                            handler.execute(.modified(projectSourceDiff))
-                        }
+                        projectSourceRef.handler?.execute(.modified(projectSourceDiff))
                     case .removed:
                         guard let projectSourceRef = projectSource.ref else {
                             logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
@@ -111,9 +103,8 @@ package final class ProjectHub: ProjectHubInterface {
                         let projectSourceDiff = ProjectSourceDiff(id: projectSource,
                                                                   target: data.target,
                                                                   name: data.name)
-                        projectSourceRef.handlers.values.forEach { handler in
-                            handler.execute(.removed(projectSourceDiff))
-                        }
+                        
+                        projectSourceRef.handler?.execute(.removed(projectSourceDiff))
                         
                         // remove ProjectSource
                         projectSourceRef.delete()
@@ -128,27 +119,24 @@ package final class ProjectHub: ProjectHubInterface {
     }
     
     // MARK: action
-    package func createNewProject() {
+    package func createProject() {
         logger.start()
         
         let db = Firestore.firestore()
         
         do {
-            while tickets.isEmpty == false {
-                let ticket = tickets.removeFirst()
-                
-                let newProjectName = "Project \(Int.random(in: 1..<1000))"
-                
-                // create ProjectSource in Firestore
-                let data = ProjectSource.Data(name: newProjectName,
-                                              creator: ticket.creator)
-                
-                try db.collection(DB.projectSources)
-                    .addDocument(from: data)
-            }
+            let newProjectName = "Project \(Int.random(in: 1..<1000))"
+            
+            // create ProjectSource in Firestore
+            let data = ProjectSource.Data(name: newProjectName,
+                                          creator: self.user)
+            
+            try db.collection(DB.projectSources)
+                .addDocument(from: data)
         } catch {
             let log = logger.getLog(error)
             logger.raw.error("\(log)")
+            return
         }
     }
     
