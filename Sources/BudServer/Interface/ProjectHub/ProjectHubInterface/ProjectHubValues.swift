@@ -27,14 +27,3 @@ package enum ProjectHubEvent: Sendable {
     case added(ProjectSourceDiff)
 }
 
-
-// MARK: CreateProject
-package struct CreateProject: Sendable, Hashable {
-    package let id = UUID()
-    package let creator: UserID
-    
-    package init(by creator: UserID) {
-        self.creator = creator
-    }
-}
-
