@@ -15,7 +15,7 @@ private let logger = WorkFlow.getLogger(for: "ObjectModel.Updater")
 // MARK: Object
 extension ObjectModel {
     @MainActor @Observable
-    final class Updater: Sendable, UpdaterInterface {
+    final class Updater: Sendable, UpdaterInterface, Debuggable {
         // MARK: core
         init(owner: ObjectModel.ID) {
             self.owner = owner
@@ -26,7 +26,8 @@ extension ObjectModel {
         nonisolated let id = UUID()
         nonisolated let owner: ObjectModel.ID
         
-        var queue: Deque<Event> = []
+        var queue: Deque<ObjectSourceEvent> = []
+        var issue: (any Issuable)?
         
         
         // MARK: action

@@ -12,12 +12,12 @@ import Values
 
 
 // MARK: Tests
-@Suite("ProjectBoardUpdater", .timeLimit(.minutes(1)))
+@Suite("ProjectBoard.Updater", .timeLimit(.minutes(1)))
 struct ProjectBoardUpdaterTests {
     struct Update {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
-        let updaterRef: ProjectBoardUpdater
+        let updaterRef: ProjectBoard.Updater
         init() async throws {
             self.budClientRef = await BudClient()
             self.updaterRef = try await getProjectBoardUpdater(budClientRef)
@@ -178,7 +178,7 @@ struct ProjectBoardUpdaterTests {
 
 
 // MARK: Helpher
-private func getProjectBoardUpdater(_ budClientRef: BudClient) async throws -> ProjectBoardUpdater {
+private func getProjectBoardUpdater(_ budClientRef: BudClient) async throws -> ProjectBoard.Updater {
     // BudClient.setUp()
     await budClientRef.setUp()
     let authBoard = try #require(await budClientRef.authBoard)

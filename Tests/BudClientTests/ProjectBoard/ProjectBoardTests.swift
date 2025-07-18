@@ -13,7 +13,7 @@ import Values
 // MARK: Tests
 @Suite("ProjectBoard", .timeLimit(.minutes(1)))
 struct ProjectBoardTests {
-    struct Subscribe {
+    struct StartUpdating {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
         init() async throws {
@@ -62,31 +62,6 @@ struct ProjectBoardTests {
                 // then
                 await #expect(projectHubRef.hasHandler(requester: me) == true)
             }
-        }
-    }
-    
-    struct Unsubscribe {
-        let budClientRef: BudClient
-        let projectBoardRef: ProjectBoard
-        init() async throws {
-            self.budClientRef = await BudClient()
-            self.projectBoardRef = try await getProjectBoard(budClientRef)
-        }
-        
-        @Test func removeHandlerInProjectHub() async throws {
-            // given
-            let config = projectBoardRef.config
-            let projectHubRef = try #require(await config.budServer.ref?.projectHub.ref)
-            let me = await ObjectID(projectBoardRef.id.value)
-            
-            await projectBoardRef.subscribe()
-            try await #require(projectHubRef.hasHandler(requester: me) == true)
-            
-            // when
-            await projectBoardRef.unsubscribe()
-            
-            // then
-            await #expect(projectHubRef.hasHandler(requester: me) == false)
         }
     }
     

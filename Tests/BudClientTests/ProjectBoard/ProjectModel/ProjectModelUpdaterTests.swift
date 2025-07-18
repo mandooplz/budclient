@@ -8,6 +8,7 @@ import Foundation
 import Testing
 import Values
 @testable import BudClient
+@testable import BudServer
 
 
 // MARK: Tests
@@ -29,14 +30,13 @@ struct ProjectModelUpdaterTests {
         
         @Test func createSystemModel() async throws {
             // given
-            try await #require(systemBoardRef.models.count == 0)
+            try await #require(projectModelRef.systems.count == 0)
             
-            let newSystemSourceMockRef = await SystemSourceMock(
-                name: "",
-                location: .origin,
-                parent: .init()
-            )
-            let diff = await SystemSourceDiff(newSystemSourceMockRef)
+            let diff = SystemSourceDiff(
+                id: SystemSourceMock.ID(),
+                target: .init(),
+                name: "TEST_NAME",
+                location: .init(x: 999, y: 999))
             
             await updaterRef.appendEvent(.added(diff))
             
@@ -44,10 +44,10 @@ struct ProjectModelUpdaterTests {
             await updaterRef.update()
             
             // then
-            try await #require(systemBoardRef.models.count == 1)
+            try await #require(projectModelRef.systems.count == 1)
             try await #require(updaterRef.queue.isEmpty)
             
-            await #expect(systemBoardRef.models.values.first?.isExist == true)
+            await #expect(projectModelRef.systems.values.first?.isExist == true)
         }
         @Test func whenAlreadyAdded() async throws {
             // given
@@ -120,7 +120,7 @@ private func getProjectModel(_ budClientRef: BudClient) async throws -> ProjectM
     
     // ProjectEditor
     await #expect(projectBoardRef.projects.count == 1)
-    return try #require(await projectBoardRef.projects.first?.ref)
+    return try #require(await projectBoardRef.projects.values.first?.ref)
 }
 
 

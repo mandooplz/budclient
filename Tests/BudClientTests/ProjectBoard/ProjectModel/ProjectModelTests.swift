@@ -14,79 +14,12 @@ import Values
 // MARK: Tests
 @Suite("ProjectModel", .timeLimit(.minutes(1)))
 struct ProjectModelTests {
-    struct SetUp {
+    struct StartUpdating {
         let budClientRef: BudClient
-        let editorRef: ProjectEditor
+        let projectModelRef: ProjectModel
         init() async throws {
             self.budClientRef = await BudClient()
-            self.editorRef = try await getProjectModel(budClientRef)
-        }
-        
-        @Test func wnenAlreadySetUp() async throws {
-            // given
-            await editorRef.setUp()
-            let systemBoard = try #require(await editorRef.systemBoard)
-            let flowBoard = try #require(await editorRef.flowBoard)
-            
-            // when
-            await editorRef.setUp()
-            
-            // then
-            let issue = try #require(await editorRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadySetUp")
-            
-            let newSystemBoard = try #require(await editorRef.systemBoard)
-            #expect(newSystemBoard == systemBoard)
-            
-            let newFlowBoard = try #require(await editorRef.flowBoard)
-            #expect(newFlowBoard == flowBoard)
-        }
-        @Test func whenProjectEditorIsDeleted() async throws {
-            // given
-            try await #require(editorRef.id.isExist == true)
-            
-            // when
-            await editorRef.setUp {
-                await editorRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await editorRef.issue as? KnownIssue)
-            #expect(issue.reason == "editorIsDeleted")
-        }
-        
-        @Test func createSystemBoard() async throws {
-            // given
-            try await #require(editorRef.systemBoard == nil)
-            
-            // when
-            await editorRef.setUp()
-            
-            // then
-            let systemBoard = try #require(await editorRef.systemBoard)
-            await #expect(systemBoard.isExist == true)
-        }
-        @Test func createFlowBoard() async throws {
-            // given
-            try await #require(editorRef.flowBoard == nil)
-            
-            // when
-            await editorRef.setUp()
-            
-            // then
-            let flowBoard = try #require(await editorRef.flowBoard)
-            await #expect(flowBoard.isExist == true)
-        }
-        @Test func createComponentBoard() async throws {
-            // given
-            try await #require(editorRef.componentBoard == nil)
-            
-            // when
-            await editorRef.setUp()
-            
-            // then
-            let componentBoard = try #require(await editorRef.componentBoard)
-            await #expect(componentBoard.isExist == true)
+            self.projectModelRef = try await getProjectModel(budClientRef)
         }
     }
     
@@ -168,7 +101,7 @@ struct ProjectModelTests {
         }
     }
 
-    struct RemoveSource {
+    struct RemoveProject {
         let budClientRef: BudClient
         let editorRef: ProjectEditor
         init() async throws {
@@ -246,6 +179,90 @@ struct ProjectModelTests {
             
             // then
             await #expect(editorRef.id.isExist == false)
+        }
+    }
+    
+    struct CreateFirstSystem { // ProjectModelTests로 이동
+        let budClientRef: BudClient
+        let systemBoardRef: SystemBoard
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.systemBoardRef = try await getSystemBoard(budClientRef)
+        }
+        
+        @Test func whenSystemBoardIsDeleted() async throws {
+            // given
+            try await #require(systemBoardRef.id.isExist == true)
+            
+            // when
+            await systemBoardRef.createFirstSystem {
+                await systemBoardRef.delete()
+            }
+            
+            // then
+            let issue = try #require(await systemBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "systemBoardIsDeleted")
+        }
+        @Test func whenSystemAlreadyExist() async throws {
+            // given
+            await withCheckedContinuation { con in
+                Task {
+                    await systemBoardRef.setCallback {
+                        con.resume()
+                    }
+                    
+                    await systemBoardRef.subscribe()
+                    await systemBoardRef.createFirstSystem()
+                }
+            }
+            
+            try await #require(systemBoardRef.models.isEmpty == false)
+            try await #require(systemBoardRef.issue == nil)
+            
+            // when
+            await systemBoardRef.createFirstSystem()
+            
+            // then
+            let issue = try #require(await systemBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "systemAlreadyExist")
+        }
+        
+        @Test func createSystemModel() async throws {
+            // given
+            try await #require(systemBoardRef.models.isEmpty == true)
+            
+            await systemBoardRef.unsubscribe()
+            
+            // when
+            await withCheckedContinuation { con in
+                Task {
+                    await systemBoardRef.setCallback {
+                        con.resume()
+                    }
+                    await systemBoardRef.subscribe()
+                    
+                    await systemBoardRef.createFirstSystem()
+                }
+            }
+            
+            // then
+            try await #require(systemBoardRef.models.count == 1)
+            
+            let systemModel = try #require(await systemBoardRef.models.values.first)
+            await #expect(systemModel.isExist == true)
+        }
+        @Test func createSystemSource() async throws {
+            // given
+            let projectEditorRef = try #require(await systemBoardRef.config.parent.ref)
+            let projectSourceRef = try #require(await projectEditorRef.source.ref as? ProjectSourceMock)
+            
+            try await #require(projectSourceRef.systems.isEmpty == true)
+            
+            // when
+            await systemBoardRef.createFirstSystem()
+            
+            // then
+            await #expect(projectSourceRef.systems.count == 1)
         }
     }
 }

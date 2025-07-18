@@ -13,7 +13,7 @@ private let logger = WorkFlow.getLogger(for: "ObjectModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class ObjectModel: Sendable {
+public final class ObjectModel: Sendable, Debuggable {
     // MARK: core
     init(name: String,
          role: ObjectRole,
@@ -21,6 +21,7 @@ public final class ObjectModel: Sendable {
          config: Config<SystemModel.ID>) {
         self.target = target
         self.config = config
+        self.updaterRef = Updater(owner: self.id)
         
         self.role = role
         self.name = name
@@ -37,6 +38,7 @@ public final class ObjectModel: Sendable {
     nonisolated let id = ID()
     nonisolated let config: Config<SystemModel.ID>
     nonisolated let target: ObjectID
+    nonisolated let updaterRef: Updater
     
     public internal(set) var role: ObjectRole
     public internal(set) var name: String
@@ -44,6 +46,8 @@ public final class ObjectModel: Sendable {
     
     public internal(set) var states: [StateModel.ID] = []
     public internal(set) var actions: [ActionModel.ID] = []
+    
+    public var issue: (any Issuable)?
     
     
     // MARK: action
