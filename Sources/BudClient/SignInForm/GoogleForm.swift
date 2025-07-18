@@ -53,7 +53,13 @@ public final class GoogleForm: Debuggable {
             guard let budServerRef = await tempConfig.budServer.ref,
                   let accountHubRef = await budServerRef.accountHub.ref else { return nil }
             
-            return await accountHubRef.getGoogleClientID(for: "BudClient")
+            let budClientInfoFormRef = await accountHubRef.budClientInfoFormType.init()
+            await budClientInfoFormRef.fetchGoogleClientId()
+            let result = await budClientInfoFormRef.googleClientId
+            
+            await budClientInfoFormRef.delete()
+            
+            return result
         }()
         
         // mutate
@@ -75,70 +81,72 @@ public final class GoogleForm: Debuggable {
         guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
         
         let config = tempConfig
-        let authBoardRef = config.parent.ref!.tempConfig.parent.ref!
-        let budClientRef = authBoardRef.tempConfig.parent.ref!
+        let signInForm = config.parent
+        let budClientRef = config.parent.ref!.tempConfig.parent.ref!
+        let googleToken = GoogleToken(idToken: idToken, accessToken: accessToken)
         
-        // compute
-        let user: UserID
-        do {
-            // register
-            guard let budServerRef = await tempConfig.budServer.ref,
-                  let accountHubRef = await budServerRef.accountHub.ref,
-                    let budCacheRef = await tempConfig.budCache.ref else { return }
+        // compute - register
+        guard let budServerRef = await tempConfig.budServer.ref,
+              let accountHubRef = await budServerRef.accountHub.ref else { return }
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                let googleRegisterFormRef = await accountHubRef.googleRegisterFormType
+                    .init(token: googleToken)
+                
+                await googleRegisterFormRef.submit()
+            }
+        }
+        
+        
+        // compute - signIn
+        async let signInResult = {
+            let googleAuthFormRef = await accountHubRef.googleAuthFormType.init(token: googleToken)
             
-            async let result = {
-                let ticket = CreateFormTicket(formType: .google)
-                
-                await accountHubRef.appendTicket(ticket)
-                await accountHubRef.createFormsFromTickets()
-                
-                guard let googleRegisterFormRef = await accountHubRef.getGoogleRegisterForm(ticket: ticket)?.ref else {
-                    throw UnknownIssue(reason: "GoogleRegisterFormLink.updateGoogleForms() failed")
-                }
-                
-                let googleToken = GoogleToken(idToken: idToken, accessToken: accessToken)
-                await googleRegisterFormRef.setToken(googleToken)
-                
-                try await googleRegisterFormRef.submit()
-                await googleRegisterFormRef.remove()
-                
-                // signIn
-                return try await accountHubRef.getUser(token: googleToken)
-            }()
+            await googleAuthFormRef.submit()
             
-            user = try await result
-            
-            // save in BudCache
-            await budCacheRef.setUser(user)
-        } catch {
-            setUnknownIssue(error)
-            logger.failure(error)
+            return await googleAuthFormRef.result
+        }()
+
+        
+        
+        guard let result = await signInResult else {
+            logger.failure("GoogleAuthForm에서 result가 생성되지 않았습니다.")
             return
         }
         
+        // mutate
+        switch result {
+        case .success(let user):
+            await mutateHook?()
+            guard id.isExist else { setIssue(Error.googleFormIsDeleted); return }
+            mutateForSignIn(budClientRef, signInForm, user, config)
+        case .failure(let error):
+            setUnknownIssue(error)
+        }
+    }
+    private func mutateForSignIn(_ budClientRef: BudClient,
+                                 _ signInForm: SignInForm.ID,
+                                 _ user: UserID,
+                                 _ tempConfig: TempConfig<SignInForm.ID>) {
         // compute
-        let newConfig = config.getConfig(budClientRef.id,
+        let newConfig = tempConfig.getConfig(budClientRef.id,
                                          user: user)
         
         // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.googleFormIsDeleted); return }
-        
-        authBoardRef.signInForm?.ref?.signUpForm?.ref?.delete()
-        authBoardRef.signInForm?.ref?.delete()
+        signInForm.ref?.signUpForm?.ref?.delete()
+        signInForm.ref?.delete()
          
         let projectBoardRef = ProjectBoard(config: newConfig)
         let profileBoardRef = ProfileBoard(config: newConfig)
         let communityRef = Community(config: newConfig)
         
+        budClientRef.signInForm = nil
         budClientRef.projectBoard = projectBoardRef.id
         budClientRef.profileBoard = profileBoardRef.id
         budClientRef.community = communityRef.id
-        budClientRef.authBoard = nil
-        budClientRef.user = user
         
-        authBoardRef.signInForm = nil
-        authBoardRef.delete()
+        budClientRef.user = user
         
         self.delete()
     }

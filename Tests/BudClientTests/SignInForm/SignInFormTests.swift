@@ -20,7 +20,7 @@ struct SignInFormTests {
         let signInFormRef: SignInForm
         init() async throws {
             self.budClientRef = await BudClient()
-            self.signInFormRef = await getEmailForm(budClientRef)
+            self.signInFormRef = try await getSignInForm(budClientRef)
         }
         
         @Test func whenSignInFormIsDeleted() async throws {
@@ -81,7 +81,7 @@ struct SignInFormTests {
         let signInFormRef: SignInForm
         init() async throws {
             self.budClientRef = await BudClient()
-            self.signInFormRef = await getEmailForm(budClientRef)
+            self.signInFormRef = try await getSignInForm(budClientRef)
         }
         
         @Test func whenSignInFormIsDeleted() async throws {
@@ -126,7 +126,7 @@ struct SignInFormTests {
         let signInFormRef: SignInForm
         init() async throws {
             self.budClientRef = await BudClient()
-            self.signInFormRef = await getEmailForm(budClientRef)
+            self.signInFormRef = try await getSignInForm(budClientRef)
             
             await setUserIdInBudCache(budClientRef: budClientRef)
         }
@@ -182,14 +182,15 @@ struct SignInFormTests {
             await #expect(signInFormRef.issue == nil)
         }
         
-        @Test func setNilAuthBoardInBudCliet() async throws {
+        @Test func setNilSignInFormInBudCliet() async throws {
             // when
             await signInFormRef.signInByCache()
             
             // then
             await #expect(signInFormRef.issue == nil)
             try await #require(signInFormRef.isIssueOccurred == false)
-            await #expect(budClientRef.authBoard == nil)
+            
+            await #expect(budClientRef.signInForm == nil)
         }
         @Test func deleteEmailForm() async throws {
             // when
@@ -212,15 +213,15 @@ struct SignInFormTests {
             // then
             await #expect(signUpForm.isExist == false)
         }
-        @Test func deleteAuthBoard() async throws {
+        @Test func deleteSifnInForm() async throws {
             // given
-            let authBoard = try #require(await budClientRef.authBoard)
+            let signInForm = try #require(await budClientRef.signInForm)
             
             // when
             await signInFormRef.signInByCache()
             
             // then
-            await #expect(authBoard.isExist == false)
+            await #expect(signInForm.isExist == false)
         }
         @Test func createProjectBoard() async throws {
             // when
@@ -274,14 +275,13 @@ struct SignInFormTests {
         @Test func whenEmailCredentialIsMissingAtBudCache() async throws {
             // given
             let newBudClientRef = await BudClient()
-            
-            let emailFormRef = await getEmailForm(newBudClientRef)
+            let signInFormRef = try await getSignInForm(newBudClientRef)
             
             // when
-            await emailFormRef.signInByCache()
+            await signInFormRef.signInByCache()
             
             // then
-            let issue = try #require(await emailFormRef.issue as? KnownIssue)
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "userIsNilInCache")
         }
     }
@@ -293,7 +293,7 @@ struct SignInFormTests {
         let validPassword: String
         init() async throws {
             self.budClientRef = await BudClient()
-            self.signInFormRef = await getEmailForm(budClientRef)
+            self.signInFormRef = try await getSignInForm(budClientRef)
             
             self.validEmail = Email.random().value
             self.validPassword = Password.random().value
@@ -398,8 +398,10 @@ struct SignInFormTests {
             #expect(issue.reason == "wrongPassword")
         }
         
-        @Test func setNilAuthBoardInBudCliet() async throws {
+        @Test func setNilSignInFormInBudClient() async throws {
             // given
+            try await #require(budClientRef.signInForm != nil)
+            
             await MainActor.run {
                 signInFormRef.email = validEmail
                 signInFormRef.password = validPassword
@@ -410,7 +412,7 @@ struct SignInFormTests {
             
             // then
             try await #require(signInFormRef.isIssueOccurred == false)
-            await #expect(budClientRef.authBoard == nil)
+            await #expect(budClientRef.signInForm == nil)
         }
         
         @Test func deleteEmailForm() async throws {
@@ -466,20 +468,20 @@ struct SignInFormTests {
             
             await #expect(googleForm.isExist == false)
         }
-        @Test func deleteAuthBoard() async throws {
+        @Test func deleteSignInForm() async throws {
             // given
             await MainActor.run {
                 signInFormRef.email = validEmail
                 signInFormRef.password = validPassword
             }
             
-            let authBoard = try #require(await budClientRef.authBoard)
+            let signInForm = try #require(await budClientRef.signInForm)
             
             // when
             await signInFormRef.signIn()
             
             // then
-            await #expect(authBoard.isExist == false)
+            await #expect(signInForm.isExist == false)
         }
         @Test func createProjectBoard() async throws {
             // given
@@ -538,56 +540,27 @@ struct SignInFormTests {
             
             await #expect(budClientRef.isUserSignedIn == true)
         }
-        
-        @Test func setUserInBudCache() async throws {
-            // given
-            try await #require(signInFormRef.issue == nil)
-            try await #require(signInFormRef.issue == nil)
-            
-            await MainActor.run {
-                signInFormRef.email = validEmail
-                signInFormRef.password = validPassword
-            }
-            
-            await signInFormRef.signInByCache()
-            try await #require(signInFormRef.issue != nil)
-            
-            // when
-            await signInFormRef.signIn()
-            
-            // then
-            let budCacheRef = try #require(await signInFormRef.tempConfig.budCache.ref)
-            await #expect(budCacheRef.getUser() != nil)
-        }
     }
 }
 
 
 // MARK: Helphers
-internal func getEmailForm(_ budClientRef: BudClient) async -> SignInForm {
-    let authBoardRef = await getAuthBoard(budClientRef)
+internal func getSignInForm(_ budClientRef: BudClient) async throws -> SignInForm {
+    await budClientRef.setUp()
     
-    await authBoardRef.setUpForms()
-    let signInForm = await authBoardRef.signInForm!
-    return await signInForm.ref!
+    let signInFormRef = try #require(await budClientRef.signInForm?.ref)
+    return signInFormRef
 }
 private func register(budClientRef: BudClient, email: String, password: String) async {
     await budClientRef.setUp()
     
-    let budServerRef = await budClientRef.authBoard!.ref!.tempConfig.budServer.ref!
+    let budServerRef = await budClientRef.signInForm!.ref!.tempConfig.budServer.ref!
     let accountHubRef = await budServerRef.accountHub.ref!
     
-    let ticket = CreateFormTicket(formType: .email)
+    let emailRegisterFormRef = await accountHubRef.emailRegisterFormType
+        .init(email: email, password: password)
     
-    await accountHubRef.appendTicket(ticket)
-    await accountHubRef.createFormsFromTickets()
-    
-    let registerFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)!.ref!
-    await registerFormRef.setEmail(email)
-    await registerFormRef.setPassword(password)
-    
-    try! await registerFormRef.submit()
-    try! await registerFormRef.remove()
+    await emailRegisterFormRef.submit()
 }
 private func setUserIdInBudCache(budClientRef: BudClient) async {
     // email & password
@@ -597,26 +570,28 @@ private func setUserIdInBudCache(budClientRef: BudClient) async {
     // register
     await budClientRef.setUp()
     
-    let budServerRef = await budClientRef.authBoard!.ref!.tempConfig.budServer.ref!
+    let budServerRef = await budClientRef.signInForm!.ref!.tempConfig.budServer.ref!
     let accountHubRef = await budServerRef.accountHub.ref!
     
-    let ticket = CreateFormTicket(formType: .email)
-    await accountHubRef.appendTicket(ticket)
-    await accountHubRef.createFormsFromTickets()
+    let emailRegisterFormRef = await accountHubRef.emailRegisterFormType
+        .init(email: testEmail, password: testPassword)
     
-    let emailRegisterFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)!.ref!
-    await emailRegisterFormRef.setEmail(testEmail)
-    await emailRegisterFormRef.setPassword(testPassword)
-    
-    try! await emailRegisterFormRef.submit()
-    try! await emailRegisterFormRef.remove()
+    await emailRegisterFormRef.submit()
     
     // getUser
-    let user = try! await accountHubRef.getUser(email: testEmail, password: testPassword)
+    let emailAuthFormRef = await accountHubRef.emailAuthFormType
+        .init(email: testEmail, password: testPassword)
+    await emailAuthFormRef.submit()
+    
+    let result = await emailAuthFormRef.result!
+    
+    guard case .success(let user) = result else {
+        return
+    }
     
     
     // setUser
-    let budCacheRef = await budClientRef.authBoard!.ref!.tempConfig.budCache.ref!
+    let budCacheRef = await budClientRef.signInForm!.ref!.tempConfig.budCache.ref!
     await budCacheRef.setUser(user)
 }
 

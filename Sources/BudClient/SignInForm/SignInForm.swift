@@ -16,7 +16,7 @@ private let logger = WorkFlow.getLogger(for: "SignInForm")
 @MainActor @Observable
 public final class SignInForm: Debuggable {
     // MARK: core
-    init(tempConfig: TempConfig<AuthBoard.ID>) {
+    init(tempConfig: TempConfig<BudClient.ID>) {
         self.tempConfig = tempConfig
         
         SignInFormManager.register(self)
@@ -28,7 +28,7 @@ public final class SignInForm: Debuggable {
     
     // MARK: state
     public nonisolated let id = ID()
-    public nonisolated let tempConfig: TempConfig<AuthBoard.ID>
+    public nonisolated let tempConfig: TempConfig<BudClient.ID>
 
     public var email: String = ""
     public var password: String = ""
@@ -50,8 +50,7 @@ public final class SignInForm: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
-        let authBoardRef = self.tempConfig.parent.ref!
-        let budClientRef = authBoardRef.tempConfig.parent.ref!
+        let budClientRef = self.tempConfig.parent.ref!
         
         // compute
         async let result: UserID? = {
@@ -69,7 +68,6 @@ public final class SignInForm: Debuggable {
         // mutate
         await mutateHook?()
         mutateForSignIn(budClientRef: budClientRef,
-                        authBoardRef: authBoardRef,
                         user: user)
         
     }
@@ -94,45 +92,40 @@ public final class SignInForm: Debuggable {
             return
         }
         
-        let authBoardRef = self.tempConfig.parent.ref!
-        let budClientRef = authBoardRef.tempConfig.parent.ref!
-        let tempConfig = authBoardRef.tempConfig
+        let budClientRef = self.tempConfig.parent.ref!
+        let tempConfig = self.tempConfig
         
         // compute
-        let user: UserID
-        do {
-            guard let budServerRef = await tempConfig.budServer.ref,
-                    let accountHubRef = await budServerRef.accountHub.ref,
-                    let budCacheRef = await tempConfig.budCache.ref else { return }
-            
-            async let userFromServer = try await accountHubRef.getUser(email: email,
-                                                                       password: password)
-            user = try await userFromServer
-            
-            await budCacheRef.setUser(user)
-        } catch {
-            logger.failure(error)
-            
-            if error is AccountHubError {
-                switch error as! AccountHubError {
-                case .userNotFound: setIssue(Error.userNotFound)
-                case .wrongPassword: setIssue(Error.wrongPassword)
-                }
-            } else {
-                setUnknownIssue(error)
-            }
-            
+        guard let budServerRef = await tempConfig.budServer.ref,
+                let accountHubRef = await budServerRef.accountHub.ref else  { return }
+        
+        let emailAuthFormRef = await accountHubRef.emailAuthFormType.init(email: email, password: password)
+        
+        await emailAuthFormRef.submit()
+        
+        guard let result = await emailAuthFormRef.result else {
+            logger.failure("EmailAuthForm에서 result가 생성되지 않았습니다.")
             return
         }
         
+        await emailAuthFormRef.delete()
+        
+        
         // mutate
         await mutateHook?()
-        mutateForSignIn(budClientRef: budClientRef,
-                        authBoardRef: authBoardRef,
-                        user: user)
+        switch result {
+        case .success(let user):
+            mutateForSignIn(budClientRef: budClientRef, user: user)
+        case .failure(.userNotFound):
+            setIssue(Error.userNotFound)
+        case .failure(.wrongPassword):
+            setIssue(Error.wrongPassword)
+        case .failure(.unknown(let error)):
+            setUnknownIssue(error)
+        }
+        
     }
     private func mutateForSignIn(budClientRef: BudClient,
-                                 authBoardRef: AuthBoard,
                                  user: UserID) {
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return  }
         guard budClientRef.isUserSignedIn == false else { return }
@@ -142,14 +135,13 @@ public final class SignInForm: Debuggable {
         let profileBoardRef = ProfileBoard(config: config)
         let communityRef = Community(config: config)
         
+        budClientRef.signInForm = nil
         budClientRef.projectBoard = projectBoardRef.id
         budClientRef.profileBoard = profileBoardRef.id
         budClientRef.community = communityRef.id
-        budClientRef.authBoard = nil
+        
         budClientRef.user = user
         
-        authBoardRef.signInForm = nil
-        authBoardRef.delete()
         signUpForm?.ref?.delete()
         self.googleForm?.ref?.delete()
         self.delete()

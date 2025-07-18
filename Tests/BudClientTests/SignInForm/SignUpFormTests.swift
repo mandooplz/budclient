@@ -19,9 +19,9 @@ struct SignUpFormTests {
         let signUpFormRef: SignUpForm
         let testEmail: String
         let testPassword: String
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.signUpFormRef = await getSignUpForm(budClientRef)
+            self.signUpFormRef = try await getSignUpForm(budClientRef)
             self.testEmail = Email.random().value
             self.testPassword = Password.random().value
         }
@@ -173,8 +173,7 @@ struct SignUpFormTests {
         }
         @Test func deleteGoogleForm() async throws {
             // given
-            let authBoardRef = try #require(await budClientRef.authBoard?.ref)
-            let signInFormRef = try #require(await authBoardRef.signInForm?.ref)
+            let signInFormRef = try #require(await budClientRef.signInForm?.ref)
             await signInFormRef.setUpGoogleForm()
             
             let googleForm = try #require(await signInFormRef.googleForm)
@@ -194,8 +193,10 @@ struct SignUpFormTests {
             await #expect(googleForm.isExist == false)
         }
         
-        @Test func setAuthBoard() async throws {
+        @Test func setSignInFormNilInBudClient() async throws {
             // given
+            try await #require(budClientRef.signInForm != nil)
+            
             await MainActor.run {
                 signUpFormRef.email = testEmail
                 signUpFormRef.password = testPassword
@@ -206,24 +207,9 @@ struct SignUpFormTests {
             await signUpFormRef.signUp()
             
             // then
-            await #expect(budClientRef.authBoard == nil)
+            await #expect(budClientRef.signInForm == nil)
         }
-        @Test func deleteAuthBoad() async throws {
-            // given
-            await MainActor.run {
-                signUpFormRef.email = testEmail
-                signUpFormRef.password = testPassword
-                signUpFormRef.passwordCheck = testPassword
-            }
-            
-            let authBoard = try #require(await budClientRef.authBoard)
-            
-            // when
-            await signUpFormRef.signUp()
-            
-            // then
-            await #expect(authBoard.isExist == false)
-        }
+        
         @Test func createProjectBoard() async throws {
             // given
             await MainActor.run {
@@ -277,36 +263,14 @@ struct SignUpFormTests {
             let community = try #require(await budClientRef.community)
             await #expect(community.isExist == true)
         }
-        
-        @Test func setUserInBudCache() async throws {
-            // given
-            let budCacheRef = try #require(await signUpFormRef.tempConfig.budCache.ref)
-            
-            try await #require(budCacheRef.getUser() == nil)
-            
-            // given
-            try await #require(signUpFormRef.issue == nil)
-            
-            await MainActor.run {
-                signUpFormRef.email = testEmail
-                signUpFormRef.password = testPassword
-                signUpFormRef.passwordCheck = testPassword
-            }
-            
-            // when
-            await signUpFormRef.signUp()
-            
-            // then
-            await #expect(budCacheRef.getUser() != nil)
-        }
     }
     
     struct Remove {
         let budClientRef: BudClient
         let signUpFormRef: SignUpForm
-        init() async {
+        init() async throws {
             self.budClientRef = await BudClient()
-            self.signUpFormRef = await getSignUpForm(budClientRef)
+            self.signUpFormRef = try await getSignUpForm(budClientRef)
         }
         
         @Test func whenSignUpFormIsDeletedBeforeMutate() async throws {
@@ -356,11 +320,11 @@ struct SignUpFormTests {
 
 
 // MARK: Helphers
-func getSignUpForm(_ budClientRef: BudClient) async -> SignUpForm {
-    let signInForm = await getEmailForm(budClientRef)
+private func getSignUpForm(_ budClientRef: BudClient) async throws -> SignUpForm {
+    await budClientRef.setUp()
+    let signInFormRef = try #require(await budClientRef.signInForm?.ref)
     
-    await signInForm.setUpSignUpForm()
-    let signUpForm = try! #require(await signInForm.signUpForm)
-    let signUpFormRef = await signUpForm.ref!
+    await signInFormRef.setUpSignUpForm()
+    let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
     return signUpFormRef
 }

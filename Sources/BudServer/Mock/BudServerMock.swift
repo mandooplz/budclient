@@ -20,10 +20,7 @@ package final class BudServerMock: BudServerInterface {
     // MARK: state
     package nonisolated let id = ID()
     
-    private let accountHubRef = AccountHubMock()
-    package var accountHub: AccountHubMock.ID {
-        accountHubRef.id
-    }
+    package let accountHub = AccountHubMock.shared.id
     
     private var projectHubRef: ProjectHubMock?
     package func getProjectHub(_ user: UserID) -> ProjectHubMock.ID {

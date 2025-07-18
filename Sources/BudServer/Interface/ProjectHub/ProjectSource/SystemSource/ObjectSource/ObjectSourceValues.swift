@@ -25,6 +25,7 @@ public struct ObjectSourceDiff: Sendable {
     package let name: String
     package let role: ObjectRole
     
+    // MARK: core
     @Server
     init(_ object: ObjectSourceMock) {
         self.id = object.id
@@ -41,6 +42,12 @@ public struct ObjectSourceDiff: Sendable {
         self.target = target
         self.name = name
         self.role = role
+    }
+    
+    
+    // MARK: operator
+    func newName(_ value: String) -> Self {
+        .init(id: self.id, target: self.target, name: value, role: self.role)
     }
 }
 

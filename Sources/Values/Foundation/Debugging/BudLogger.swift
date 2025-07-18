@@ -43,6 +43,16 @@ public struct BudLogger: Sendable {
         }
     }
     
+    public func info(_ description: String? = nil,
+                     _ workflow: WorkFlow.ID = WorkFlow.id,
+                     _ routine: String = #function) {
+        if let description {
+            logger.debug("[\(workflow)] \(objectName).\(routine) INFO\n\(description)")
+        } else {
+            logger.debug("[\(workflow)] \(objectName).\(routine) INFO")
+        }
+    }
+    
     public func finished(_ description: String? = nil,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ routine: String = #function) {
@@ -58,6 +68,7 @@ public struct BudLogger: Sendable {
                         _ routine: String = #function) {
         logger.error("[\(workflow)] \(objectName).\(routine) failure\n\(description)")
     }
+    
     
     public func failure(_ error: Error,
                         _ workflow: WorkFlow.ID = WorkFlow.id,

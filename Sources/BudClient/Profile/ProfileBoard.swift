@@ -66,9 +66,10 @@ public final class ProfileBoard: Debuggable {
         let projectBoardRef = projectBoard!.ref!
         let projectModels = projectBoardRef.projects
         let communityRef = community!.ref!
-        let authBoardRef = AuthBoard(tempConfig: tempConfig)
         
-        budClientRef.authBoard = authBoardRef.id
+        let newSignInFormRef = SignInForm(tempConfig: tempConfig)
+        
+        budClientRef.signInForm = newSignInFormRef.id
         budClientRef.projectBoard = nil
         budClientRef.profileBoard = nil
         budClientRef.user = nil

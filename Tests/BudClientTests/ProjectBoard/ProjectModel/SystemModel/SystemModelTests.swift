@@ -415,12 +415,7 @@ struct SystemModelTests {
 private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemModel {
     // BudClient.setUp()
     await budClientRef.setUp()
-    let authBoard = try #require(await budClientRef.authBoard)
-    let authBoardRef = try #require(await authBoard.ref)
-    
-    // AuthBoard.setUpForms()
-    await authBoardRef.setUpForms()
-    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInForm = try #require(await budClientRef.signInForm)
     let signInFormRef = try #require(await signInForm.ref)
     
     // SignInForm.setUpSignUpForm()

@@ -36,8 +36,9 @@ public final class BudClient: Debuggable {
     nonisolated let system = SystemID()
     
     private nonisolated let plistPath: String
+    var tempConfig: TempConfig<BudClient.ID>?
     
-    public internal(set) var authBoard: AuthBoard.ID?
+    public internal(set) var signInForm: SignInForm.ID?
     public internal(set) var projectBoard: ProjectBoard.ID?
     public internal(set) var profileBoard: ProfileBoard.ID?
     public internal(set) var community: Community.ID?
@@ -52,7 +53,7 @@ public final class BudClient: Debuggable {
         logger.start()
         
         // capture
-        guard authBoard == nil && projectBoard == nil && profileBoard == nil
+        guard signInForm == nil && projectBoard == nil && profileBoard == nil
         else {
             setIssue(Error.alreadySetUp)
             logger.failure(Error.alreadySetUp)
@@ -79,8 +80,33 @@ public final class BudClient: Debuggable {
         
         // mutate
         let tempConfig = TempConfig(id, mode, system, budServer, budCache)
-        let authBoardRef = AuthBoard(tempConfig: tempConfig)
-        self.authBoard = authBoardRef.id
+        self.tempConfig = tempConfig
+        
+        let signInFormRef = SignInForm(tempConfig: tempConfig)
+        self.signInForm = signInFormRef.id
+    }
+    public func saveUserInCache() async {
+        // capture
+        guard let tempConfig else {
+            setIssue(Error.setUpRequired)
+            logger.failure("BudClient.setUp() 호출이 필요합니다.")
+            return
+        }
+        
+        
+        guard let user else {
+            setIssue(Error.signInRequired)
+            logger.failure("SignIn을 통해 User 정보를 가져와야 합니다.")
+            return
+        }
+        
+        // compute
+        guard let budCacheRef = await tempConfig.budCache.ref else {
+            logger.failure("BudCache가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        await budCacheRef.setUser(user)
     }
     
     
@@ -97,6 +123,7 @@ public final class BudClient: Debuggable {
     }
     
     public enum Error: String, Swift.Error {
+        case setUpRequired, signInRequired
         case alreadySetUp
         case invalidPlistPath
     }

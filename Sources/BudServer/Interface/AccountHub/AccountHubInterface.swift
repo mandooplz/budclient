@@ -11,25 +11,22 @@ import Values
 // MARK: Interface
 package protocol AccountHubInterface: Sendable {
     associatedtype ID: AccountHubIdentity where ID.Object == Self
-    associatedtype EmailRegisterFormID: EmailRegisterFormIdentity
-    associatedtype GoogleRegisterFormID: GoogleRegisterFormIdentity
+    associatedtype BudClientInfoFormObject: BudClientInfoFormInterface
+    associatedtype EmailRegisterFormObject: EmailRegisterFormInterface
+    associatedtype GoogleRegisterFormObject: GoogleRegisterFormInterface
+    associatedtype EmailAuthFormObject: EmailAuthFormInterface
+    associatedtype GoogleAuthFormObject: GoogleAuthFormInterface
     
     // MARK: state
-    nonisolated var id: ID { get }
+    nonisolated var id: ID { get async }
     
-    func getGoogleClientID(for: String) async -> String?;
+    nonisolated var budClientInfoFormType: BudClientInfoFormObject.Type { get }
     
-    func isExist(email: String, password: String) async throws -> Bool
-    func getUser(email: String, password: String) async throws -> UserID
-    func getUser(token: GoogleToken) async throws -> UserID;
+    nonisolated var emailRegisterFormType: EmailRegisterFormObject.Type { get }
+    nonisolated var googleRegisterFormType: GoogleRegisterFormObject.Type { get }
     
-    func appendTicket(_: CreateFormTicket) async
-    
-    func getEmailRegisterForm(ticket: CreateFormTicket) async -> EmailRegisterFormID?;
-    func getGoogleRegisterForm(ticket: CreateFormTicket) async -> GoogleRegisterFormID?;
-    
-    // MARK: action
-    func createFormsFromTickets() async
+    nonisolated var emailAuthFormType: EmailAuthFormObject.Type { get }
+    nonisolated var googleAuthFormType: GoogleAuthFormObject.Type { get }
 }
 
 
@@ -42,10 +39,6 @@ package protocol AccountHubIdentity: Sendable, Hashable {
 
 
 // MARK: Value
-package enum AccountHubError: String, Swift.Error {
-    case userNotFound, wrongPassword
-}
-
 package struct UserID: Identity {
     package let value: String
     
@@ -57,34 +50,3 @@ package struct UserID: Identity {
         self.value = UUID().uuidString
     }
 }
-
-package struct CreateFormTicket: Sendable, Hashable {
-    let value: UUID = UUID()
-    package let formType: FormType
-    
-    package init(formType: FormType) {
-        self.formType = formType
-    }
-    
-    package enum FormType: Sendable {
-        case email
-        case google
-    }
-}
-
-package struct CreateEmailForm: Sendable, Hashable {
-    let value: UUID
-    
-    package init(value: UUID = UUID()) {
-        self.value = value
-    }
-}
-
-package struct CreateGoogleForm: Sendable, Hashable {
-    let value: UUID
-    
-    package init(value: UUID = UUID()) {
-        self.value = value
-    }
-}
-

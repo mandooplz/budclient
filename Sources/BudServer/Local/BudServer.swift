@@ -31,10 +31,7 @@ package final class BudServer: BudServerInterface {
     // MARK: state
     nonisolated package let id = ID()
     
-    private let accountHubRef = AccountHub()
-    package var accountHub: AccountHub.ID {
-        self.accountHubRef.id
-    }
+    package var accountHub = AccountHub.shared.id
     
     private var projectHubRef: ProjectHub?
     package func getProjectHub(_ user: UserID) -> ProjectHub.ID {

@@ -67,68 +67,58 @@ public final class SignUpForm: Debuggable {
             return
         }
         
-        let signInFormRef = self.tempConfig.parent.ref!
-        let authBoardRef = signInFormRef.tempConfig.parent.ref!
-        let budClientRef = authBoardRef.tempConfig.parent.ref!
-        let tempConfig = self.tempConfig
+        let config = self.tempConfig
+        let signInFormRef = config.parent.ref!
+        let budClientRef = signInFormRef.tempConfig.parent.ref!
 
         
-        // compute
-        let user: UserID
-        do {
-            async let budServerRef = await tempConfig.budServer.ref!
-            let accountHubRef = await budServerRef.accountHub.ref!
-            async let budCacheRef = await tempConfig.budCache.ref!
-            
-            let ticket = CreateFormTicket(formType: .email)
-            
-            await accountHubRef.appendTicket(ticket)
-            await accountHubRef.createFormsFromTickets()
-            
-            guard let emailRegisterFormRef = await accountHubRef.getEmailRegisterForm(ticket: ticket)?.ref else {
-                throw UnknownIssue(reason: "AccountHubLink.updateEmailForms() failed")
-            }
-            await emailRegisterFormRef.setEmail(email)
-            await emailRegisterFormRef.setPassword(password)
-            
-            try await emailRegisterFormRef.submit()
-            try await emailRegisterFormRef.remove()
-            
-            // getUser
-            user = try await accountHubRef.getUser(email: email,
-                                                   password: password)
-            
-            // setUserId
-            await budCacheRef.setUser(user)
-        } catch {
-            setUnknownIssue(error)
-            logger.failure(error)
+        // compute - register
+        async let budServerRef = await config.budServer.ref!
+        let accountHubRef = await budServerRef.accountHub.ref!
+        
+        let emailRegisterFormRef = await accountHubRef.emailRegisterFormType.init(email: email, password: password)
+        
+        await emailRegisterFormRef.submit()
+        
+        // compute - signIn
+        let emailAuthFormRef = await accountHubRef.emailAuthFormType.init(email: email, password: password)
+        await emailAuthFormRef.submit()
+        
+        guard let result = await emailAuthFormRef.result else {
+            logger.failure("EmaiLAuthForm에서 result가 생성되지 않았습니다.")
             return
         }
         
-        // compute
-        let config = tempConfig.getConfig(budClientRef.id, user: user)
-        
         
         // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
-        let projectBoardRef = ProjectBoard(config: config)
-        let profileBoardRef = ProfileBoard(config: config)
-        let communityRef = Community(config: config)
-        
-        budClientRef.authBoard = nil
-        budClientRef.projectBoard = projectBoardRef.id
-        budClientRef.profileBoard = profileBoardRef.id
-        budClientRef.community = communityRef.id
-        budClientRef.user = user
+        switch result {
+        case .failure(let error):
+            setUnknownIssue(error)
+        case .success(let user):
+            // mutate
+            await mutateHook?()
+            guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
+            let newConfig = config.getConfig(budClientRef.id, user: user)
+            
+            let projectBoardRef = ProjectBoard(config: newConfig)
+            let profileBoardRef = ProfileBoard(config: newConfig)
+            let communityRef = Community(config: newConfig)
+            
+            budClientRef.signInForm = nil
+            budClientRef.projectBoard = projectBoardRef.id
+            budClientRef.profileBoard = profileBoardRef.id
+            budClientRef.community = communityRef.id
+            
+            budClientRef.user = user
 
-        self.delete()
-        signInFormRef.delete()
-        signInFormRef.signUpForm = nil
-        signInFormRef.googleForm?.ref?.delete()
-        authBoardRef.delete()
-        authBoardRef.signInForm = nil
+            self.delete()
+            signInFormRef.delete()
+            signInFormRef.signUpForm = nil
+            signInFormRef.googleForm?.ref?.delete()
+        }
+
+        
+        
     }
     
     public func remove() async {

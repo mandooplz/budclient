@@ -23,10 +23,11 @@ struct ProfileBoardTests {
         
         @Test func whenProfileBoardIsDeletedBeforeCapture() async throws {
             // given
+            
             try await #require(budClientRef.profileBoard?.isExist == true)
             
+            await budClientRef.saveUserInCache()
             let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
-            
             try await #require(budCacheRef.getUser() != nil)
             
             // when
@@ -47,6 +48,7 @@ struct ProfileBoardTests {
             // given
             try await #require(budClientRef.profileBoard?.isExist == true)
             
+            await budClientRef.saveUserInCache()
             let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
             try await #require(budCacheRef.getUser() != nil)
             
@@ -76,16 +78,27 @@ struct ProfileBoardTests {
             // then
             await #expect(budClientRef.isUserSignedIn == false)
         }
-        @Test func createAuthBoard() async throws {
+        
+        @Test func setSignInFormInBudClient() async throws {
             // given
-            try await #require(budClientRef.authBoard == nil)
+            try await #require(budClientRef.signInForm == nil)
             
             // when
             await profileBoardRef.signOut()
             
             // then
-            let authBoard = try #require(await budClientRef.authBoard)
-            await #expect(authBoard.isExist == true)
+            await #expect(budClientRef.signInForm != nil)
+        }
+        @Test func createSignInForm() async throws {
+            // given
+            try await #require(budClientRef.signInForm == nil)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            let signInForm = try #require(await budClientRef.signInForm)
+            await #expect(signInForm.isExist == true)
         }
         
         @Test func deleteProjectBoard() async throws {
@@ -184,6 +197,8 @@ struct ProfileBoardTests {
         
         @Test func setNilUserIdInBudCache() async throws {
             // given
+            await budClientRef.saveUserInCache()
+            
             let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
             try await #require(budCacheRef.getUser() != nil)
             
@@ -201,12 +216,7 @@ struct ProfileBoardTests {
 private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileBoard {
     // BudClient.setUp()
     await budClientRef.setUp()
-    let authBoard = try #require(await budClientRef.authBoard)
-    let authBoardRef = try #require(await authBoard.ref)
-    
-    // AuthBoard.setUpForms()
-    await authBoardRef.setUpForms()
-    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInForm = try #require(await budClientRef.signInForm)
     let signInFormRef = try #require(await signInForm.ref)
     
     // SignInForm.setUpSignUpForm()
