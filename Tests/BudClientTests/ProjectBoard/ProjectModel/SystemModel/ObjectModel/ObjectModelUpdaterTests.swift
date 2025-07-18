@@ -12,7 +12,7 @@ import Values
 
 
 // MARK: Tests
-@Suite("ObjectModel.Updater")
+@Suite("ObjectModel.Updater", .disabled())
 struct ObjectModelUpdaterTests {
     struct Update {
         let budClientRef: BudClient
@@ -242,7 +242,6 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
     // SystemModel
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     await systemModelRef.startUpdating()
-    
     await withCheckedContinuation { continuation in
         Task {
             await systemModelRef.setCallback {

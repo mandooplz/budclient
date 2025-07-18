@@ -132,7 +132,6 @@ public final class ProjectModel: Debuggable, EventDebuggable {
         }
         
         let projectSource = self.source
-        let target = self.target
         let config = self.config
         let nameInput = self.nameInput
         
@@ -142,14 +141,6 @@ public final class ProjectModel: Debuggable, EventDebuggable {
             group.addTask {
                 guard let projectSourceRef = await projectSource.ref else {
                     logger.failure("ProjectSouce를 찾을 수 없습니다")
-                    return
-                }
-                guard let budServerRef = await config.budServer.ref else {
-                    logger.failure("BudServer를 찾을 수 없습니다.")
-                    return
-                }
-                guard let projectHubRef = await budServerRef.getProjectHub(config.user).ref else {
-                    logger.failure("ProjectHub를 찾을 수 없습니다.")
                     return
                 }
                 

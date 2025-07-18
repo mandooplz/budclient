@@ -67,6 +67,7 @@ struct ProjectBoardTests {
             // when
             let runTime = 5
 
+            await projectBoardRef.startUpdating()
             for _ in 1...runTime {
                 await withCheckedContinuation { continuation in
                     Task {

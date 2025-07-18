@@ -70,7 +70,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             return
         }
         let systemSource = self.source
-        let callback = self.callback
         let systemModel = self.id
         
         await withDiscardingTaskGroup { group in
@@ -92,7 +91,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                                 await updaterRef.appendEvent(event)
                                 await updaterRef.update()
                                 
-                                await callback?()
+                                await systemModel.ref?.callback?()
                             }
                         }
                     }))

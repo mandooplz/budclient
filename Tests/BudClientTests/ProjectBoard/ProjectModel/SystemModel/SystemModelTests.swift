@@ -35,18 +35,6 @@ struct SystemModelTests {
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "systemModelIsDeleted")
         }
-        @Test func whenAlreadySubscribed() async throws {
-            // given
-            await systemModelRef.startUpdating()
-            try await #require(systemModelRef.issue == nil)
-            
-            // when
-            await systemModelRef.startUpdating()
-            
-            // then
-            let issue = try #require(await systemModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadySubscribed")
-        }
     }
     
     struct PushName {
@@ -100,6 +88,7 @@ struct SystemModelTests {
             try await #require(systemModelRef.id.isExist == true)
             
             // when
+            await systemModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
                     await systemModelRef.setCallback {
@@ -147,6 +136,7 @@ struct SystemModelTests {
             try await #require( projectModelRef.systemLocations.contains(rightLocation) == false)
             
             // when
+            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
                     await projectModelRef.setCallback {

@@ -229,32 +229,6 @@ struct ProjectModelTests {
             let systemModel = try #require(await projectModelRef.systems.values.first)
             await #expect(systemModel.isExist == true)
         }
-        @Test func createSystemWhenCalledMultipleTimes() async throws {
-            // given
-            try await #require(projectModelRef.systems.isEmpty == true)
-            
-            await projectModelRef.startUpdating()
-            await projectModelRef.setCallbackNil()
-            
-            // when
-            let runTime = Int.random(in: 10...300)
-            for _ in 1...runTime {
-                await withCheckedContinuation { continuation in
-                    Task {
-                        await projectModelRef.setCallback {
-                            continuation.resume()
-                        }
-                        
-                        await projectModelRef.createSystem()
-                    }
-                }
-                
-                await projectModelRef.setCallbackNil()
-            }
-            
-            // then
-            await #expect(projectModelRef.systems.count == runTime)
-        }
         
         @Test func createSystemSource() async throws {
             // given

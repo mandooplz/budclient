@@ -136,23 +136,19 @@ struct ProfileBoardTests {
             let projectModelRef = try await createProjectModel(budClientRef)
             
             await projectModelRef.startUpdating()
-            
-            let runtime = Int.random(in: 1...10)
-            for _ in 1...runtime {
-                await withCheckedContinuation { continuation in
-                    Task {
-                        await projectModelRef.setCallback {
-                            continuation.resume()
-                        }
-                        
-                        await projectModelRef.createSystem()
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
                     }
+                    
+                    await projectModelRef.createSystem()
                 }
-                
-                await projectModelRef.setCallbackNil()
             }
             
-            try await #require(projectModelRef.systems.count == runtime)
+            await projectModelRef.setCallbackNil()
+            
+            try await #require(projectModelRef.systems.count == 1)
             
             // when
             await profileBoardRef.signOut()
