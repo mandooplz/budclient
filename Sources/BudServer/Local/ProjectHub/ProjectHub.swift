@@ -39,6 +39,7 @@ package final class ProjectHub: ProjectHubInterface {
         let projectSourcesCollectionRef = db.collection(DB.projectSources)
             .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
         
+        self.handler = handler
         
         guard self.listener == nil else {
             logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")

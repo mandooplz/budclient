@@ -68,6 +68,10 @@ extension ProjectModel {
                         return
                     }
                     
+                    for systemModel in removedModelRef.systems.values {
+                        systemModel.ref?.delete()
+                    }
+                    
                     removedModelRef.delete()
                     projectBoardRef.projects[diff.target] = nil
                     

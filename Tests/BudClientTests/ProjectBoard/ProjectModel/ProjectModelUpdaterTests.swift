@@ -96,6 +96,10 @@ struct ProjectModelUpdaterTests {
             await #expect(projectBoardRef.projects[diff.target] == nil)
             await #expect(projectModel.isExist == false)
         }
+        @Test func removeSystemModels() async throws {
+            // ProjectModel의 모든 SystemModel 및 하위 객체들을 삭제해야 한다. 
+            Issue.record("미구현")
+        }
         
         @Test func createSystemModel() async throws {
             // given

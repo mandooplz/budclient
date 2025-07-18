@@ -64,7 +64,13 @@ package final class ProjectSource: ProjectSourceInterface {
         let systemSourceCollectionRef = db.collection(DB.projectSources)
             .document(id.value)
             .collection(DB.systemSources)
+        
         self.handler = handler
+        
+        guard self.listener == nil else {
+            logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
+            return
+        }
         
         self.listener = systemSourceCollectionRef
             .addSnapshotListener({ snapshot, error in

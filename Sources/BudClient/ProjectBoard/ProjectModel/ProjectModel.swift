@@ -36,7 +36,7 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     
     
     // MARK: state
-    nonisolated let id = ID()
+    public nonisolated let id = ID()
     nonisolated let config: Config<ProjectBoard.ID>
     nonisolated let target: ProjectID
     nonisolated let source: any ProjectSourceIdentity
@@ -219,7 +219,7 @@ public final class ProjectModel: Debuggable, EventDebuggable {
             self.value = value
         }
         
-        var isExist: Bool {
+        public var isExist: Bool {
             ProjectModelManager.container[self] != nil
         }
         public var ref: ProjectModel? {

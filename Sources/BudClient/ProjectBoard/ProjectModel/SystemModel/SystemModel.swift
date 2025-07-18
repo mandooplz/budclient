@@ -84,7 +84,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                         Task {
                             await WorkFlow {
                                 guard let updaterRef = await systemModel.ref?.updater else {
-                                    logger.failure("SystemModel이 존재하지 않아 update가 취소됩니ㅏ.")
+                                    logger.failure("SystemModel이 존재하지 않아 update가 취소됩니다.")
                                     return
                                 }
                                 
