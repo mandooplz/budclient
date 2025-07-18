@@ -9,7 +9,7 @@ import Values
 import Collections
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "SystemModel.Updater")
+private let logger = WorkFlow.getLogger(for: "SystemModelUpdater")
 
 
 // MARK: Object
@@ -47,20 +47,29 @@ extension SystemModel {
                 
                 switch event {
                 case .removed(let diff):
-                    // remove SystemModel -> SystemModel.Updater
-                    guard projectModelRef.systems[diff.target] != nil else {
+                    // remove SystemModel
+                    guard let removedModel = projectModelRef.systems[diff.target] else {
                         setIssue(Error.alreadyRemoved)
                         logger.failure(Error.alreadyRemoved)
                         return
                     }
                     
+                    removedModel.ref?.delete()
                     projectModelRef.systems[diff.target] = nil
-                    systemModelRef.delete()
+                    
+                    logger.finished("removed SystemModel")
                 case .modified(let diff):
                     // modified SystemModel -> SystemModel.updater
-                    systemModelRef.name = diff.name
-                    systemModelRef.location = diff.location
-                
+                    guard let modifiedModel = projectModelRef.systems[diff.target] else {
+                        setIssue(Error.alreadyRemoved)
+                        logger.failure(Error.alreadyRemoved)
+                        return
+                    }
+                    
+                    modifiedModel.ref?.name = diff.name
+                    modifiedModel.ref?.location = diff.location
+                    
+                    logger.finished("modified SystemModel")
                 case .objectAdded(let diff):
                     // create ObjectModel
                     guard systemModelRef.objects[diff.target] == nil else {
@@ -80,7 +89,8 @@ extension SystemModel {
                     
                     systemModelRef.objects[diff.target] = objectModelRef.id
                     
-                case .flowAdded(let diff):
+                case .flowAdded:
+                    logger.failure("미구현")
                     return
                 }
             }

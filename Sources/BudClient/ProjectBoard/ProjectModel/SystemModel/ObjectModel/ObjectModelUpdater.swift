@@ -15,7 +15,7 @@ private let logger = WorkFlow.getLogger(for: "ObjectModel.Updater")
 // MARK: Object
 extension ObjectModel {
     @MainActor @Observable
-    final class Updater: Sendable, UpdaterInterface, Debuggable {
+    final class Updater: UpdaterInterface {
         // MARK: core
         init(owner: ObjectModel.ID) {
             self.owner = owner

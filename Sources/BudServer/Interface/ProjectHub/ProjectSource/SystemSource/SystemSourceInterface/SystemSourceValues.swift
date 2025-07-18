@@ -31,6 +31,14 @@ public struct SystemSourceDiff: Sendable {
         self.name = name
         self.location = location
     }
+    
+    package func newName(_ value: String) -> Self {
+        .init(id: self.id, target: self.target, name: value, location: self.location)
+    }
+    
+    package func newLocation(_ value: Location) -> Self {
+        .init(id: self.id, target: self.target, name: self.name, location: value)
+    }
 }
 
 extension SystemSourceDiff {

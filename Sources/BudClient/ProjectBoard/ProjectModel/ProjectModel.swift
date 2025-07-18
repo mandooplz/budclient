@@ -132,7 +132,6 @@ public final class ProjectModel: Debuggable, EventDebuggable {
         }
         
         let projectSource = self.source
-        let config = self.config
         let nameInput = self.nameInput
         
         

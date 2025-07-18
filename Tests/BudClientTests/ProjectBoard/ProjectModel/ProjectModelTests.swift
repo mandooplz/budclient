@@ -31,7 +31,7 @@ struct ProjectModelTests {
             self.projectModelRef = try await getProjectModel(budClientRef)
         }
         
-        @Test func whenProjectEditorIsDeleted() async throws {
+        @Test func whenProjectModelIsDeleted() async throws {
             // given
             try await #require(projectModelRef.id.isExist == true)
             
@@ -42,7 +42,7 @@ struct ProjectModelTests {
             
             // then
             let issue = try #require(await projectModelRef.issue)
-            #expect(issue.reason == "editorIsDeleted")
+            #expect(issue.reason == "projectModelIsDeleted")
         }
         @Test func whenNameInputIsEmpty() async throws {
             // given
@@ -120,7 +120,7 @@ struct ProjectModelTests {
             
             // then
             let issue = try #require(await projectModelRef.issue)
-            #expect(issue.reason == "editorIsDeleted")
+            #expect(issue.reason == "projectModelIsDeleted")
         }
         
         @Test func removeProjectSource() async throws {
@@ -201,7 +201,7 @@ struct ProjectModelTests {
             
             // then
             let issue = try #require(await projectModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "systemBoardIsDeleted")
+            #expect(issue.reason == "projectModelIsDeleted")
         }
         
         @Test func createSystemModel() async throws {

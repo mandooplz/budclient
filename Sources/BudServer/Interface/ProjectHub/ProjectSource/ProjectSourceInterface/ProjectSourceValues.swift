@@ -28,4 +28,8 @@ public struct ProjectSourceDiff: Sendable {
         self.target = target
         self.name = name
     }
+    
+    package func changeName(_ value: String) -> Self {
+        .init(id: self.id, target: self.target, name: value)
+    }
 }

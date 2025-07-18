@@ -10,9 +10,11 @@ import Values
 @testable import BudClient
 @testable import BudServer
 
+private let logger = WorkFlow.getLogger(for: "SystemModelUpdaterTest")
+
 
 // MARK: Tests
-@Suite("SystemModel.Updater")
+@Suite("SystemModelUpdater")
 struct SystemModelUpdaterTests {
     struct Update {
         let budClientRef: BudClient
@@ -91,20 +93,23 @@ struct SystemModelUpdaterTests {
         @Test func deleteSystemModel() async throws {
             // given
             let projectModelRef = try #require(await systemModelRef.config.parent.ref)
+            try await #require(projectModelRef.systems.count == 1)
+            
             let projectModelUpdaterRef = projectModelRef.updaterRef
             
+            let target = SystemID()
             let diff = SystemSourceDiff(
                 id: SystemSourceMock.ID(),
-                target: .init(),
+                target: target,
                 name: "TEST_SYSTEM_SOURCE",
                 location: .init(x: 99, y: 99))
             
             await projectModelUpdaterRef.appendEvent(.added(diff))
             await projectModelUpdaterRef.update()
             
-            try await #require(projectModelRef.systems.count == 1)
+            try await #require(projectModelRef.systems.count == 2)
             
-            let systemModel = try #require(await projectModelRef.systems.values.first)
+            let systemModel = try #require(await projectModelRef.systems[target])
             try await #require(systemModel.isExist == true)
             
             // when
@@ -114,8 +119,8 @@ struct SystemModelUpdaterTests {
             // then
             try await #require(updaterRef.queue.isEmpty)
             
-            await #expect(systemModel.isExist == false)
             await #expect(projectModelRef.systems.values.contains(systemModel) == false)
+            await #expect(systemModel.isExist == false)
         }
         @Test func whenAlreadyRemoved() async throws {
             // given
@@ -136,39 +141,55 @@ struct SystemModelUpdaterTests {
             #expect(issue.reason == "alreadyRemoved")
         }
         
-        @Test func modifySystemModel() async throws {
+        @Test func modifyNameOfSystemModel() async throws {
             // given
             let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             let projectModelUpdaterRef = projectModelRef.updaterRef
             
-            let newSystemSource = SystemSourceMock.ID()
-            let newSystem = SystemID()
-            let testLocation = Location(x: 999, y: 999)
-            
-            let oldDiff = SystemSourceDiff(id: newSystemSource,
-                                        target: newSystem,
+            let diff = SystemSourceDiff(id: SystemSourceMock.ID(),
+                                        target: SystemID(),
                                         name: "",
-                                        location: testLocation)
+                                        location: .init(x: 99, y: 99))
             
-            await projectModelUpdaterRef.appendEvent(.added(oldDiff))
+            await projectModelUpdaterRef.appendEvent(.added(diff))
             await projectModelUpdaterRef.update()
             
-            let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
+            let systemModelRef = try #require(await projectModelRef.systems[diff.target]?.ref)
             
             // when
-            let testName = "MODIFIED_NAME"
-            
-            let newDiff = SystemSourceDiff(id: newSystemSource,
-                                           target: newSystem,
-                                           name: testName,
-                                           location: testLocation)
+            let newName = "NEW_NAME"
+            let newDiff = diff.newName(newName)
             
             await updaterRef.appendEvent(.modified(newDiff))
             await updaterRef.update()
             
             // then
-            await #expect(systemModelRef.name == testName)
-            await #expect(systemModelRef.location == testLocation)
+            await #expect(systemModelRef.name == newName)
+        }
+        @Test func modifyLocationOfSystemModel() async throws {
+            // given
+            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
+            let projectModelUpdaterRef = projectModelRef.updaterRef
+            
+            let diff = SystemSourceDiff(id: SystemSourceMock.ID(),
+                                        target: SystemID(),
+                                        name: "",
+                                        location: .init(x: 99, y: 99))
+            
+            await projectModelUpdaterRef.appendEvent(.added(diff))
+            await projectModelUpdaterRef.update()
+            
+            let systemModelRef = try #require(await projectModelRef.systems[diff.target]?.ref)
+            
+            // when
+            let newLocation = Location(x: 999, y: 999)
+            let newDiff = diff.newLocation(newLocation)
+            
+            await updaterRef.appendEvent(.modified(newDiff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(systemModelRef.location == newLocation)
         }
         @Test func modifySystemModelWhenAlreadyRemoved() async throws {
             // given
@@ -255,5 +276,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     
     // SystemModel and Updater
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
+    
+    logger.finished("테스트 준비 끝")
     return systemModelRef
 }

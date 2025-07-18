@@ -85,6 +85,8 @@ public final class ProfileBoard: Debuggable {
             projectModel.ref?.valueTypes.values.forEach { valueTypeModel in
                 valueTypeModel.ref?.delete()
             }
+            
+            projectModel.ref?.delete()
         }
         
         projectBoardRef.delete()

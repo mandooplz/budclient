@@ -1,27 +1,29 @@
 //
-//  ProjectValues.swift
+//  Location.swift
 //  BudClient
 //
 //  Created by 김민우 on 7/17/25.
 //
 
 
-// MARK: Location
+// MARK: Value
 public struct Location: Sendable, Hashable, Codable {
     public let x: Int
     public let y: Int
     
+    // MARK: core
     public init(x: Int, y: Int) {
         self.x = x
         self.y = y
     }
-}
-
-public extension Location {
-    static var origin: Self {
+    
+    public static var origin: Self {
         .init(x: 0, y: 0)
     }
-    
+}
+
+// MARK: Operators
+public extension Location {
     func getRight() -> Self {
         return .init(x: self.x + 1, y: self.y)
     }
@@ -37,14 +39,14 @@ public extension Location {
     func getBotttom() -> Self {
         return .init(x: self.x, y: self.y - 1)
     }
-}
-
-public extension Location {
+    
     func encode() -> [String: Int] {
         return ["x": self.x, "y": self.y]
     }
 }
 
+
+// MARK: Extension
 public extension Set<Location> {
     func encode() -> [[String: Int]] {
         self.map { $0.encode() }

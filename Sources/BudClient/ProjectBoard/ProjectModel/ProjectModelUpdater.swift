@@ -9,7 +9,7 @@ import Values
 import BudServer
 import Collections
 
-private let logger = WorkFlow.getLogger(for: "ProjectModel.Updater")
+private let logger = WorkFlow.getLogger(for: "ProjectModelUpdater")
 
 
 // MARK: Object
@@ -41,6 +41,7 @@ extension ProjectModel {
                 logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
                 return
             }
+            let projectBoardRef = projectModelRef.config.parent.ref!
             
             // mutate
             while queue.isEmpty == false {
@@ -49,17 +50,25 @@ extension ProjectModel {
                 switch event {
                 // modify ProjectModel
                 case .modified(let diff):
-                    projectModelRef.name = diff.name
+                    guard let modifiedModel = projectBoardRef.projects[diff.target] else {
+                        setIssue(Error.alreadyRemoved)
+                        logger.failure(Error.alreadyRemoved)
+                        return
+                    }
+                    
+                    modifiedModel.ref?.name = diff.name
                     
                     logger.finished("modified ProjectModel")
                     
                 // remove ProjectModel
                 case .removed(let diff):
-                    projectModelRef.delete()
-                    
-                    guard let projectBoardRef = projectModelRef.config.parent.ref else {
+                    guard let removedModelRef = projectBoardRef.projects[diff.target]?.ref else {
+                        setIssue(Error.alreadyRemoved)
+                        logger.failure(Error.alreadyRemoved)
                         return
                     }
+                    
+                    removedModelRef.delete()
                     projectBoardRef.projects[diff.target] = nil
                     
                     logger.finished("removed ProjectModel")
@@ -67,6 +76,7 @@ extension ProjectModel {
                 // create SystemModel
                 case .added(let sysDiff):
                     guard projectModelRef.systems[sysDiff.target] == nil else {
+                        setIssue(Error.alreadyAdded)
                         logger.failure("SystemModel이 이미 존재합니다.")
                         return
                     }
@@ -83,7 +93,6 @@ extension ProjectModel {
                     projectModelRef.systems[sysDiff.target] = systemModelRef.id
                     
                     logger.finished("added SystemModel")
-                    
                 }
                 
             }
@@ -95,6 +104,8 @@ extension ProjectModel {
         // MARK: value
         enum Error: String, Swift.Error {
             case projectModelIsDeleted
+            case alreadyAdded
+            case alreadyRemoved
         }
     }
 }
