@@ -35,7 +35,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     public internal(set) var projects = OrderedDictionary<ProjectID, ProjectModel.ID>()
     
     public var issue: (any Issuable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     
     // MARK: action
@@ -79,6 +79,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
                                 await updaterRef.update()
                                 
                                 await projectBoardRef.callback?()
+                                await projectBoardRef.setCallbackNil()
                             }
                         }
                     })

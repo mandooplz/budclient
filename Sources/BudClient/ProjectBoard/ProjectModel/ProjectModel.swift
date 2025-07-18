@@ -55,7 +55,7 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     }
         
     public var issue: (any Issuable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     // MARK: action
     public func startUpdating() async {
@@ -98,6 +98,7 @@ public final class ProjectModel: Debuggable, EventDebuggable {
                                 await updaterRef.update()
                                 
                                 await projectModelRef.callback?()
+                                await projectModelRef.setCallbackNil()
                             }
                         }
                     }))

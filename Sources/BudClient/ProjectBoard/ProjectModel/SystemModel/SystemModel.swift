@@ -92,6 +92,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                                 await updaterRef.update()
                                 
                                 await systemModel.ref?.callback?()
+                                await systemModel.ref?.setCallbackNil()
                             }
                         }
                     }))
