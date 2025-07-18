@@ -20,7 +20,7 @@ struct ObjectModelUpdaterTests {
         let updaterRef: ObjectModel.Updater
         init() async throws {
             self.budClientRef = await BudClient()
-            self.objectModelRef = try await getObjectModel(budClientRef)
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
             self.updaterRef = objectModelRef.updaterRef
         }
         
@@ -141,17 +141,14 @@ struct ObjectModelUpdaterTests {
         }
         @Test func modifyRemovedObjectModel() async throws {
             // given
-            let unknownDiff
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
+            let unknownDiff = ObjectSourceDiff(
+                id: ObjectSourceMock.ID(),
+                target: .init(),
+                name: "UNKNOWN_OBJECT",
+                role: .node)
             
             // when
-            await MainActor.run {
-                updaterRef.appendEvent(.modified(diff))
-            }
+            await updaterRef.appendEvent(.modified(unknownDiff))
             await updaterRef.update()
             
             // then
@@ -162,15 +159,13 @@ struct ObjectModelUpdaterTests {
             // given
             try await #require(updaterRef.queue.isEmpty)
             
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
+            let diff = ObjectSourceDiff(
+                id: ObjectSourceMock.ID(),
+                target: .init(),
+                name: "TEST_OBJECT",
+                role: .node)
             
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            await MainActor.run {
-                updaterRef.appendEvent(.removed(diff))
-            }
+            await updaterRef.appendEvent(.removed(diff))
             
             try await #require(updaterRef.queue.count == 1)
             
@@ -185,6 +180,80 @@ struct ObjectModelUpdaterTests {
 
 
 // MARK: Helphers
-private func getObjectModel(_ budClientRef: BudClient) async throws -> ObjectModel {
-    fatalError()
+private func getRootObjectModel(_ budClientRef: BudClient) async throws-> ObjectModel {
+    // BudClient.setUp()
+    await budClientRef.setUp()
+    let authBoard = try #require(await budClientRef.authBoard)
+    let authBoardRef = try #require(await authBoard.ref)
+    
+    // AuthBoard.setUpForms()
+    await authBoardRef.setUpForms()
+    let signInForm = try #require(await authBoardRef.signInForm)
+    let signInFormRef = try #require(await signInForm.ref)
+    
+    // SignInForm.setUpSignUpForm()
+    await signInFormRef.setUpSignUpForm()
+    let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
+    
+    // SignUpForm.signUp()
+    let testEmail = Email.random().value
+    let testPassword = Password.random().value
+    await MainActor.run {
+        signUpFormRef.email = testEmail
+        signUpFormRef.password = testPassword
+        signUpFormRef.passwordCheck = testPassword
+    }
+    
+    await signUpFormRef.signUp()
+    
+
+    // ProjectBoard.createProject
+    let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
+    
+    await projectBoardRef.startUpdating()
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectBoardRef.setCallback {
+                continuation.resume()
+            }
+            await projectBoardRef.createProject()
+        }
+    }
+    await projectBoardRef.setCallbackNil()
+    
+    await #expect(projectBoardRef.projects.count == 1)
+
+    // ProjectModel.createSystem
+    let projectModelRef = try #require(await projectBoardRef.projects.values.first?.ref)
+    
+    await projectModelRef.startUpdating()
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await projectModelRef.createSystem()
+        }
+    }
+    
+    await projectModelRef.setCallbackNil()
+    
+    // SystemModel
+    let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
+    await systemModelRef.startUpdating()
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await systemModelRef.createRoot()
+        }
+    }
+    await systemModelRef.setCallbackNil()
+    
+    let rootObjectModelRef = try #require(await systemModelRef.root?.ref)
+    return rootObjectModelRef
 }

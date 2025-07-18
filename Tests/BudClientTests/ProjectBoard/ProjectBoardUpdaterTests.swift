@@ -20,26 +20,27 @@ struct ProjectBoardUpdaterTests {
         let updaterRef: ProjectBoard.Updater
         init() async throws {
             self.budClientRef = await BudClient()
-            self.updaterRef = try await getProjectBoardUpdater(budClientRef)
-            self.projectBoardRef = await updaterRef.config.parent.ref!
+            self.projectBoardRef = try await getProjectBoard(budClientRef)
+            self.updaterRef = projectBoardRef.updater
         }
         
-        @Test func whenEditorAlreadyAdded() async throws {
+        @Test func whenProjectModelAlreadyAdded() async throws {
             // given
-            await withCheckedContinuation { con in
+            await projectBoardRef.startUpdating()
+            await projectBoardRef.setCallbackNil()
+            await withCheckedContinuation { continuation in
                 Task {
                     await projectBoardRef.setCallback {
-                        con.resume()
+                        continuation.resume()
                     }
                     
-                    await projectBoardRef.subscribe()
-                    await projectBoardRef.createNewProject()
+                    await projectBoardRef.createProject()
                 }
             }
             
-            try await #require(projectBoardRef.editors.count == 1)
+            try await #require(projectBoardRef.projects.count == 1)
             
-            let projectEditorRef = try #require(await projectBoardRef.editors.first?.ref)
+            let projectEditorRef = try #require(await projectBoardRef.projects.values.first?.ref)
             let projectSourceRef = try #require(await projectEditorRef.source.ref)
             
             // when
@@ -52,19 +53,17 @@ struct ProjectBoardUpdaterTests {
             await updaterRef.update()
             
             // then
-            await #expect(projectBoardRef.editors.count == 1)
+            await #expect(projectBoardRef.projects.count == 1)
             
             let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadyAdded")
         }
         @Test func createProject() async throws {
             // given
-            try await #require(projectBoardRef.editors.isEmpty == true)
+            try await #require(projectBoardRef.projects.isEmpty == true)
             
-            let newProjectSource = ProjectSourceMock.ID()
             let newProject = ProjectID()
-            
-            let diff = ProjectSourceDiff(id: newProjectSource,
+            let diff = ProjectSourceDiff(id: ProjectSourceMock.ID(),
                                          target: newProject,
                                          name: "")
             
@@ -76,11 +75,11 @@ struct ProjectBoardUpdaterTests {
             // then
             try await #require(updaterRef.issue == nil)
             
-            try await #require(projectBoardRef.editors.count == 1)
-            let projectEditor = try #require(await projectBoardRef.editors.first)
-            let projectEditorRef = try #require(await projectEditor.ref)
+            try await #require(projectBoardRef.projects.count == 1)
+            let projectModel = try #require(await projectBoardRef.projects.values.first)
+            let projectModelRef = try #require(await projectModel.ref)
             
-            #expect(projectEditorRef.target == newProject)
+            #expect(projectModelRef.target == newProject)
         }
         @Test func removeEventWhenAdded() async throws {
             // given
@@ -98,87 +97,12 @@ struct ProjectBoardUpdaterTests {
             // then
             await #expect(updaterRef.queue.isEmpty)
         }
-        
-        @Test func whenEditorAlreadyRemoved() async throws {
-            // given
-            try await #require(projectBoardRef.editors.isEmpty == true)
-            
-            let newProject = ProjectID()
-            let newProjectSource = ProjectSourceMock.ID()
-            
-            let diff = ProjectSourceDiff(id: newProjectSource,
-                                         target: newProject,
-                                         name: "")
-            
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
-            
-            try await #require(updaterRef.issue == nil)
-            try await #require(projectBoardRef.editors.count == 1)
-            try await #require(updaterRef.queue.isEmpty == true)
-            
-            let projectEditor = try #require(await projectBoardRef.editors.first)
-            
-            // given
-            let removedDiff = ProjectSourceDiff(id: newProjectSource,
-                                                target: newProject,
-                                                name: "")
-            
-            await updaterRef.appendEvent(.removed(removedDiff))
-            
-            await updaterRef.update()
-            
-            // when
-            await updaterRef.appendEvent(.removed(removedDiff))
-            await updaterRef.update()
-            
-            // then
-            await #expect(projectBoardRef.editors.isEmpty == true)
-            await #expect(projectEditor.isExist == false)
-            
-            let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyRemoved")
-        }
-        @Test func removeProjectEditor() async throws {
-            // given
-            try await #require(projectBoardRef.editors.isEmpty == true)
-            await withCheckedContinuation { con in
-                Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
-                    }
-                    
-                    await projectBoardRef.subscribe()
-                    await projectBoardRef.createNewProject()
-                }
-            }
-            
-            await projectBoardRef.unsubscribe()
-            try await #require(projectBoardRef.editors.count == 1)
-            
-            let projectEditor = try #require(await projectBoardRef.editors.first)
-            let projectEditorRef = try #require(await projectEditor.ref)
-            
-            let diff = ProjectSourceDiff(id: projectEditorRef.source,
-                                         target: projectEditorRef.target,
-                                         name: "")
-            
-            // when
-            await updaterRef.appendEvent(.removed(diff))
-            await updaterRef.update()
-            
-            // then
-            try await #require(projectBoardRef.issue == nil)
-            
-            await #expect(projectBoardRef.editors.isEmpty == true)
-            await #expect(projectEditor.isExist == false)
-        }
     }
 }
 
 
 // MARK: Helpher
-private func getProjectBoardUpdater(_ budClientRef: BudClient) async throws -> ProjectBoard.Updater {
+private func getProjectBoard(_ budClientRef: BudClient) async throws -> ProjectBoard {
     // BudClient.setUp()
     await budClientRef.setUp()
     let authBoard = try #require(await budClientRef.authBoard)
@@ -206,6 +130,6 @@ private func getProjectBoardUpdater(_ budClientRef: BudClient) async throws -> P
     
     // ProjectBoard
     let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
-    return await projectBoardRef.updater
+    return projectBoardRef
 }
 

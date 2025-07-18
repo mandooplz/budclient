@@ -48,7 +48,7 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     public internal(set) var systems = OrderedDictionary<SystemID, SystemModel.ID>()
     public internal(set) var workflows = OrderedDictionary<WorkflowID, WorkflowModel.ID>()
     public internal(set) var valueTypes = OrderedDictionary<ValueTypeID, ValueModel.ID>()
-    public var systemLocations: some Collection<Location> {
+    public var systemLocations: Array<Location> {
         self.systems.values
             .compactMap { $0.ref }
             .map { $0.location }

@@ -26,42 +26,13 @@ struct ProjectBoardTests {
             try await #require(projectBoardRef.id.isExist == true)
             
             // when
-            await projectBoardRef.subscribe(captureHook: {
+            await projectBoardRef.startUpdating {
                 await projectBoardRef.delete()
-            })
+            }
 
             // then
             let issue = try #require(await projectBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "projectBoardIsDeleted")
-        }
-        @Test func whenAlreadySubscribed() async throws {
-            // given
-            await projectBoardRef.subscribe()
-            try await #require(projectBoardRef.issue == nil)
-            
-            // when
-            await projectBoardRef.subscribe()
-            
-            // then
-            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadySubscribed")
-        }
-        
-        @Test func setHandlerInProjectHub() async throws {
-            try await WorkFlow {
-                // given
-                let config = projectBoardRef.config
-                let projectHubRef = try #require(await config.budServer.ref?.projectHub.ref)
-                let me = await ObjectID(projectBoardRef.id.value)
-                
-                try await #require(projectHubRef.hasHandler(requester: me) == false)
-                
-                // when
-                await projectBoardRef.subscribe()
-                
-                // then
-                await #expect(projectHubRef.hasHandler(requester: me) == true)
-            }
         }
     }
     
@@ -91,40 +62,27 @@ struct ProjectBoardTests {
         
         @Test func appendProject() async throws {
             // given
-            try await #require(projectBoardRef.editors.isEmpty)
+            try await #require(projectBoardRef.projects.isEmpty)
             
             // when
-            await withCheckedContinuation { con in
-                Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
+            let runTime = 5
+
+            for _ in 1...runTime {
+                await withCheckedContinuation { continuation in
+                    Task {
+                        await projectBoardRef.setCallback {
+                            continuation.resume()
+                        }
+                        
+                        await projectBoardRef.createProject()
                     }
-                    
-                    await projectBoardRef.subscribe()
-                    await projectBoardRef.createNewProject()
                 }
+                
+                await projectBoardRef.setCallbackNil()
             }
 
-            
             // then
-            await projectBoardRef.unsubscribe()
-            await #expect(projectBoardRef.editors.count == 1)
-            
-            // when
-            await withCheckedContinuation { con in
-                Task.detached {
-                    await projectBoardRef.setCallback {
-                        con.resume()
-                    }
-                    
-                    await projectBoardRef.subscribe()
-                    await projectBoardRef.createNewProject()
-                }
-            }
-            
-            
-            // then
-            await #expect(projectBoardRef.editors.count == 2)
+            await #expect(projectBoardRef.projects.count == runTime)
         }
     }
 }

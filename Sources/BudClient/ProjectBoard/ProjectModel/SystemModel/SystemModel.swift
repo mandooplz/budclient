@@ -48,7 +48,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     public internal(set) var location: Location
     
-    // TODO: ObjectModel을 옮기기 위해 해야하는 작업은?
     public var root: ObjectModel.ID?
     public var objects = OrderedDictionary<ObjectID, ObjectModel.ID>()
     
@@ -57,12 +56,12 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     
     // MARK: action
-    public func subscribe() async {
+    public func startUpdating() async {
         logger.start()
         
-        await subscribe(captureHook: nil)
+        await startUpdating(captureHook: nil)
     }
-    func subscribe(captureHook: Hook?) async {
+    func startUpdating(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -73,7 +72,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         let systemSource = self.source
         let callback = self.callback
         let systemModel = self.id
-        let me = ObjectID(id.value)
         
         await withDiscardingTaskGroup { group in
             group.addTask {
@@ -273,7 +271,17 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     
     // TODO: Root에 해당하는 Object를 생성
     public func createRoot() async {
+        logger.start()
         
+        await self.createRoot(captureHook: nil)
+    }
+    func createRoot(captureHook: Hook?) async {
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.systemModelIsDeleted)
+            logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
     }
     
     public func removeSystem() async {

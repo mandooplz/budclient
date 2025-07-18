@@ -12,7 +12,7 @@ import Values
 
 
 // MARK: Tests
-@Suite("SystemModelUpdater")
+@Suite("SystemModel.Updater")
 struct SystemModelUpdaterTests {
     struct Update {
         let budClientRef: BudClient
@@ -24,46 +24,43 @@ struct SystemModelUpdaterTests {
             self.updaterRef = systemModelRef.updater
         }
 
-        
-        // ObjectSourceDiff.role에 따라 다르게 처리해야하는 거 아닌가?
         @Test func createObjectModel() async throws {
             // given
-            try await #require(systemModelRef.objectModels.isEmpty)
+            try await #require(systemModelRef.objects.isEmpty)
             
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
-            
-            let testName = "TEST_NAME"
-            let diff = await ObjectSourceDiff(.init(name: testName,
-                                                    parentRef: systemSourceRef))
+            let diff = ObjectSourceDiff(
+                id: ObjectSourceMock.ID(),
+                target: .init(),
+                name: "TEST_NAME",
+                role: .node)
             
             // when
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.objectAdded(diff))
             await updaterRef.update()
             
             // then
-            await #expect(systemModelRef.objectModels.count == 1)
+            await #expect(systemModelRef.objects.count == 1)
             
-            let objectModelRef = try #require(await systemModelRef.objectModels.first?.ref)
-            await #expect(objectModelRef.name == testName)
+            let objectModelRef = try #require(await systemModelRef.objects.values.first?.ref)
+            await #expect(objectModelRef.name == "TEST_NAME")
         }
         @Test func whenAlreadyAdded() async throws {
             // given
-            try await #require(systemModelRef.objectModels.isEmpty)
+            try await #require(systemModelRef.objects.isEmpty)
             
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
+            let diff = ObjectSourceDiff(
+                id: ObjectSourceMock.ID(),
+                target: .init(),
+                name: "TEST_NAME",
+                role: .node)
             
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
-            
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.objectAdded(diff))
             await updaterRef.update()
             
+            try await #require(systemModelRef.objects.count == 1)
+            
             // when
-            await MainActor.run {
-                updaterRef.appendEvent(.added(diff))
-            }
+            await updaterRef.appendEvent(.objectAdded(diff))
             await updaterRef.update()
             
             // then
@@ -74,13 +71,14 @@ struct SystemModelUpdaterTests {
             // given
             try await #require(updaterRef.queue.isEmpty == true)
             
-            let systemSource = try #require(systemModelRef.source as? SystemSourceMock.ID)
-            let systemSourceRef = try #require(await systemSource.ref)
+            let diff = ObjectSourceDiff(
+                id: ObjectSourceMock.ID(),
+                target: .init(),
+                name: "TEST_NAME",
+                role: .node)
             
-            let diff = await ObjectSourceDiff(.init(name: "TEST",
-                                                    parentRef: systemSourceRef))
+            await updaterRef.appendEvent(.objectAdded(diff))
             
-            await updaterRef.appendEvent(.added(diff))
             try await #require(updaterRef.queue.count == 1)
             
             // when
@@ -92,18 +90,21 @@ struct SystemModelUpdaterTests {
         
         @Test func deleteSystemModel() async throws {
             // given
-            let newSystemSourceMockRef = await SystemSourceMock(
-                name: "",
-                location: .origin,
-                parent: .init()
-            )
-            let diff = await SystemSourceDiff(newSystemSourceMockRef)
+            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
+            let projectModelUpdaterRef = projectModelRef.updaterRef
             
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
+            let diff = SystemSourceDiff(
+                id: SystemSourceMock.ID(),
+                target: .init(),
+                name: "TEST_SYSTEM_SOURCE",
+                location: .init(x: 99, y: 99))
             
-            try await #require(systemBoardRef.models.count == 1)
-            let systemModel = try #require(await systemBoardRef.models.values.first)
+            await projectModelUpdaterRef.appendEvent(.added(diff))
+            await projectModelUpdaterRef.update()
+            
+            try await #require(projectModelRef.systems.count == 1)
+            
+            let systemModel = try #require(await projectModelRef.systems.values.first)
             try await #require(systemModel.isExist == true)
             
             // when
@@ -114,15 +115,14 @@ struct SystemModelUpdaterTests {
             try await #require(updaterRef.queue.isEmpty)
             
             await #expect(systemModel.isExist == false)
-            await #expect(systemBoardRef.models.values.contains(systemModel) == false)
+            await #expect(projectModelRef.systems.values.contains(systemModel) == false)
         }
         @Test func whenAlreadyRemoved() async throws {
             // given
-            let newSystemSource = SystemSourceMock.ID()
-            let diff = SystemSourceDiff(id: newSystemSource,
+            let diff = SystemSourceDiff(id: SystemSourceMock.ID(),
                                         target: .init(),
-                                        name: "",
-                                        location: .init(x: 1, y: 1))
+                                        name: "TEST_NAME",
+                                        location: .init(x: 11, y: 11))
             
             await updaterRef.appendEvent(.removed(diff))
             
@@ -138,22 +138,25 @@ struct SystemModelUpdaterTests {
         
         @Test func modifySystemModel() async throws {
             // given
+            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
+            let projectModelUpdaterRef = projectModelRef.updaterRef
+            
             let newSystemSource = SystemSourceMock.ID()
             let newSystem = SystemID()
+            let testLocation = Location(x: 999, y: 999)
             
-            let diff = SystemSourceDiff(id: newSystemSource,
+            let oldDiff = SystemSourceDiff(id: newSystemSource,
                                         target: newSystem,
                                         name: "",
-                                        location: .init(x: 88, y: 88))
+                                        location: testLocation)
             
-            await updaterRef.appendEvent(.added(diff))
-            await updaterRef.update()
+            await projectModelUpdaterRef.appendEvent(.added(oldDiff))
+            await projectModelUpdaterRef.update()
             
-            let systemModelRef = try #require(await systemBoardRef.models.values.first?.ref)
+            let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
             
             // when
-            let testName = "TEST_Name"
-            let testLocation = Location(x: 999, y: 999)
+            let testName = "MODIFIED_NAME"
             
             let newDiff = SystemSourceDiff(id: newSystemSource,
                                            target: newSystem,

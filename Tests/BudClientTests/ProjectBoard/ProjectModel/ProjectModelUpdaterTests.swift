@@ -26,7 +26,58 @@ struct ProjectModelUpdaterTests {
         
         @Test func modifyProjectModel() async throws { }
         
-        @Test func removeProjectModel() async throws { }
+        @Test func whenProjectModelAlreadyRemoved() async throws {
+            // given
+            let unknownDiff = ProjectSourceDiff(id: ProjectSourceMock.ID(),
+                                                target: .init(),
+                                                name: "UNKNOWN_PROJECT")
+            
+            // when
+            await updaterRef.appendEvent(.removed(unknownDiff))
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyRemoved")
+        }
+        @Test func removeProjectModel() async throws {
+            // given
+            let projectBoardRef = try #require(await projectModelRef.config.parent.ref)
+            
+            try await #require(projectBoardRef.projects.isEmpty == true)
+            
+            await projectBoardRef.startUpdating()
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectBoardRef.setCallback {
+                        continuation.resume()
+                    }
+
+                    await projectBoardRef.createProject()
+                }
+            }
+            await projectBoardRef.setCallbackNil()
+            
+            try await #require(projectBoardRef.projects.count == 1)
+            
+            let projectModel = try #require(await projectBoardRef.projects.values.first)
+            let projectModelRef = try #require(await projectModel.ref)
+            
+            // given
+            let diff = ProjectSourceDiff(id: projectModelRef.source,
+                                         target: projectModelRef.target,
+                                         name: "")
+            
+            // when
+            await updaterRef.appendEvent(.removed(diff))
+            await updaterRef.update()
+            
+            // then
+            try await #require(projectBoardRef.issue == nil)
+            
+            await #expect(projectBoardRef.projects.isEmpty == true)
+            await #expect(projectModel.isExist == false)
+        }
         
         @Test func createSystemModel() async throws {
             // given

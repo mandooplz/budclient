@@ -14,7 +14,7 @@ import Values
 // MARK: Tests
 @Suite("SystemModel", .timeLimit(.minutes(1)))
 struct SystemModelTests {
-    struct Subscribe {
+    struct StartUpdating {
         let budClientRef: BudClient
         let systemModelRef: SystemModel
         init() async throws {
@@ -27,7 +27,7 @@ struct SystemModelTests {
             try await #require(systemModelRef.id.isExist == true)
             
             // when
-            await systemModelRef.subscribe {
+            await systemModelRef.startUpdating {
                 await systemModelRef.delete()
             }
             
@@ -37,53 +37,15 @@ struct SystemModelTests {
         }
         @Test func whenAlreadySubscribed() async throws {
             // given
-            await systemModelRef.subscribe()
+            await systemModelRef.startUpdating()
             try await #require(systemModelRef.issue == nil)
             
             // when
-            await systemModelRef.subscribe()
+            await systemModelRef.startUpdating()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadySubscribed")
-        }
-        
-        @Test func setHandlerInSystemSource() async throws {
-            // given
-            let systemSourceRef = try #require(await systemModelRef.source.ref)
-            let me = await ObjectID(systemModelRef.id.value)
-            
-            try await #require(systemSourceRef.hasHandler(requester: me) == false)
-            
-            // when
-            await systemModelRef.subscribe()
-            
-            // then
-            await #expect(systemSourceRef.hasHandler(requester: me) == true)
-        }
-    }
-    
-    struct Unsubscribe {
-        let budClientRef: BudClient
-        let systemModelRef: SystemModel
-        init() async throws {
-            self.budClientRef = await BudClient()
-            self.systemModelRef = try await getSystemModel(budClientRef)
-        }
-        
-        @Test func removeHandlerInSystemSource() async throws {
-            // given
-            await systemModelRef.subscribe()
-            
-            let systemSourceRef = try #require(await systemModelRef.source.ref)
-            let me = await ObjectID(systemModelRef.id.value)
-            try await #require(systemSourceRef.hasHandler(requester: me) == true)
-            
-            // when
-            await systemModelRef.unsubscribe()
-            
-            // then
-            await #expect(systemSourceRef.hasHandler(requester: me) == false)
         }
     }
     
@@ -127,7 +89,7 @@ struct SystemModelTests {
         @Test func modifySystemSourceName() async throws {
             
         }
-        @Test func notifyPushEvent() async throws {
+        @Test func updateNameByUpdater() async throws {
             // given
             let testName = "TEST_NAME"
             await MainActor.run {
@@ -138,20 +100,17 @@ struct SystemModelTests {
             try await #require(systemModelRef.id.isExist == true)
             
             // when
-            let projectSourceRef = try #require(await systemModelRef.config.parent.ref)
-            
             await withCheckedContinuation { continuation in
                 Task {
-                    await projectSourceRef.unsubscribe()
-
-                    await projectSourceRef.setCallback {
+                    await systemModelRef.setCallback {
                         continuation.resume()
                     }
-                    await projectSourceRef.subscribe()
                     
                     await systemModelRef.pushName()
                 }
             }
+            
+            await systemModelRef.setCallbackNil()
             
             // then
             await #expect(systemModelRef.name == testName)
@@ -180,34 +139,31 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
         
-        @Test func addRightSystemModelInSystemBoard() async throws {
+        @Test func addRightSystemModelInProjectModel() async throws {
             // given
-            let systemBoardRef = try #require(await systemModelRef.config.parent.ref)
+            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let rightLocation = await systemModelRef.location.getRight()
-            try await #require(systemBoardRef.models[rightLocation] == nil)
+            try await #require( projectModelRef.systemLocations.contains(rightLocation) == false)
             
             // when
             await withCheckedContinuation { continuation in
                 Task {
-                    await systemBoardRef.setCallback {
+                    await projectModelRef.setCallback {
                         continuation.resume()
                     }
-                    await systemBoardRef.subscribe()
                     
                     await systemModelRef.addSystemRight()
                 }
             }
             
             // then
-            let systemModel = try #require(await systemBoardRef.models[rightLocation])
-            await #expect(systemModel.ref?.location == rightLocation)
+            try await #require( projectModelRef.systemLocations.contains(rightLocation) == true)
         }
         @Test func whenRightSystemModelIsAlreadyExist() async throws {
             // given
             let rightLocation = await systemModelRef.location.getRight()
             let projectSourceRef = try #require(await systemModelRef
-                .config.parent.ref?
                 .config.parent.ref?
                 .source.ref as? ProjectSourceMock)
             
@@ -248,34 +204,33 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
     
-        @Test func addLeftSystemModelInSystemBoard() async throws {
+        @Test func addLeftSystemModelInProjectModel() async throws {
             // given
-            let systemBoardRef = try #require(await systemModelRef.config.parent.ref)
+            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let leftLocation = await systemModelRef.location.getLeft()
-            try await #require(systemBoardRef.models[leftLocation] == nil)
+            try await #require(projectModelRef.systemLocations.contains(leftLocation) ==  false)
             
             // when
+            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
-                    await systemBoardRef.setCallback {
+                    await projectModelRef.setCallback {
                         continuation.resume()
                     }
-                    await systemBoardRef.subscribe()
                     
                     await systemModelRef.addSystemLeft()
                 }
             }
+            await projectModelRef.setCallbackNil()
             
             // then
-            let systemModel = try #require(await systemBoardRef.models[leftLocation])
-            await #expect(systemModel.ref?.location == leftLocation)
+            try await #require(projectModelRef.systemLocations.contains(leftLocation))
         }
         @Test func whenLeftSystemModelIsAlreadyExist() async throws {
             // given
             let leftLocation = await systemModelRef.location.getLeft()
             let projectSourceRef = try #require(await systemModelRef
-                .config.parent.ref?
                 .config.parent.ref?
                 .source.ref as? ProjectSourceMock)
             
@@ -318,32 +273,31 @@ struct SystemModelTests {
         
         @Test func addTopSystemModelInSystemBoard() async throws {
             // given
-            let systemBoardRef = try #require(await systemModelRef.config.parent.ref)
+            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let topLocation = await systemModelRef.location.getTop()
-            try await #require(systemBoardRef.models[topLocation] == nil)
+            try await #require(projectModelRef.systemLocations.contains( topLocation) == false)
             
             // when
+            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
-                    await systemBoardRef.setCallback {
+                    await projectModelRef.setCallback {
                         continuation.resume()
                     }
-                    await systemBoardRef.subscribe()
                     
                     await systemModelRef.addSystemTop()
                 }
             }
+            await projectModelRef.setCallbackNil()
             
             // then
-            let systemModel = try #require(await systemBoardRef.models[topLocation])
-            await #expect(systemModel.ref?.location == topLocation)
+            try await #require( projectModelRef.systemLocations.contains(topLocation) == true)
         }
         @Test func whenTopSystemModelIsAlreadyExist() async throws {
             // given
             let topLocation = await systemModelRef.location.getTop()
             let projectSourceRef = try #require(await systemModelRef
-                .config.parent.ref?
                 .config.parent.ref?
                 .source.ref as? ProjectSourceMock)
             
@@ -384,34 +338,33 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
         
-        @Test func addBottomSystemModelInSystemBoard() async throws {
+        @Test func addBottomSystemModelInProjectModel() async throws {
             // given
-            let systemBoardRef = try #require(await systemModelRef.config.parent.ref)
+            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let bottomLocation = await systemModelRef.location.getBotttom()
-            try await #require(systemBoardRef.models[bottomLocation] == nil)
+            try await #require(projectModelRef.systemLocations.contains(bottomLocation) == false)
             
             // when
+            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
-                    await systemBoardRef.setCallback {
+                    await projectModelRef.setCallback {
                         continuation.resume()
                     }
-                    await systemBoardRef.subscribe()
                     
                     await systemModelRef.addSystemBottom()
                 }
             }
+            await projectModelRef.setCallbackNil()
             
             // then
-            let systemModel = try #require(await systemBoardRef.models[bottomLocation])
-            await #expect(systemModel.ref?.location == bottomLocation)
+            try #require(await projectModelRef.systemLocations.contains(bottomLocation) == true)
         }
         @Test func whenRightSystemModelIsAlreadyExist() async throws {
             // given
             let bottomLocation = await systemModelRef.location.getBotttom()
             let projectSourceRef = try #require(await systemModelRef
-                .config.parent.ref?
                 .config.parent.ref?
                 .source.ref as? ProjectSourceMock)
             
@@ -430,7 +383,7 @@ struct SystemModelTests {
         }
     }
     
-    struct Remove {
+    struct RemoveSystem {
         let budClientRef: BudClient
         let systemModelRef: SystemModel
         init() async throws {
@@ -443,7 +396,7 @@ struct SystemModelTests {
             try await #require(systemModelRef.id.isExist == true)
             
             // when
-            await systemModelRef.remove {
+            await systemModelRef.removeSystem {
                 await systemModelRef.delete()
             }
             
@@ -458,7 +411,7 @@ struct SystemModelTests {
             try await #require(systemSource.isExist == true)
             
             // when
-            await systemModelRef.remove()
+            await systemModelRef.removeSystem()
             
             // then
             await #expect(systemSource.isExist == false)
@@ -496,45 +449,39 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     await signUpFormRef.signUp()
     
 
-    // ProjectBoard.createNewProject
+    // ProjectBoard.createProject
     let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
     
+    await projectBoardRef.startUpdating()
     await withCheckedContinuation { continuation in
         Task {
             await projectBoardRef.setCallback {
                 continuation.resume()
             }
-            
-            await projectBoardRef.subscribe()
-            await projectBoardRef.createNewProject()
+            await projectBoardRef.createProject()
         }
     }
+    await projectBoardRef.setCallbackNil()
     
-    await projectBoardRef.unsubscribe()
+    await #expect(projectBoardRef.projects.count == 1)
+
+    // ProjectModel.createSystem
+    let projectModelRef = try #require(await projectBoardRef.projects.values.first?.ref)
     
-    // ProjectEditor.setUp
-    await #expect(projectBoardRef.editors.count == 1)
-    let projectEditorRef = try #require(await projectBoardRef.editors.first?.ref)
-    
-    await projectEditorRef.setUp()
-    
-    // SystemBoard.createFirstSystem
-    let systemBoardRef = try #require(await projectEditorRef.systemBoard?.ref)
-    
+    await projectModelRef.startUpdating()
     await withCheckedContinuation { continuation in
         Task {
-            await systemBoardRef.setCallback {
+            await projectModelRef.setCallback {
                 continuation.resume()
             }
             
-            await systemBoardRef.subscribe()
-            await systemBoardRef.createFirstSystem()
+            await projectModelRef.createSystem()
         }
     }
     
-    await systemBoardRef.unsubscribe()
+    await projectModelRef.setCallbackNil()
     
     // SystemModel
-    let systemModelRef = try #require(await systemBoardRef.models.values.first?.ref)
+    let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     return systemModelRef
 }

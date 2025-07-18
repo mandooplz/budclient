@@ -98,104 +98,69 @@ struct ProfileBoardTests {
             // then
             await #expect(projectBoard.isExist == false)
         }
-        @Test func deleteProjectEditors() async throws {
+        @Test func deleteProjectModels() async throws {
             // given
-            let projectBoard = try #require(await budClientRef.projectBoard)
-            let projectBoardRef = try #require(await projectBoard.ref)
+            let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
             
-            await withCheckedContinuation { con in
-                Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
+            await projectBoardRef.startUpdating()
+            
+            let runTime = Int.random(in: 1...10)
+            for _ in 1...runTime {
+                await withCheckedContinuation { continuation in
+                    Task {
+                        await projectBoardRef.setCallback {
+                            continuation.resume()
+                        }
+                        
+                        await projectBoardRef.createProject()
                     }
-                    await projectBoardRef.subscribe()
-                    
-                    await projectBoardRef.createNewProject()
                 }
+                
+                await projectBoardRef.setCallbackNil()
             }
             
-            await projectBoardRef.unsubscribe()
             
+            try await #require(projectBoardRef.projects.count == runTime)
+        
+            // when
+            await profileBoardRef.signOut()
             
-            await withCheckedContinuation { con in
-                Task {
-                    await projectBoardRef.setCallback {
-                        con.resume()
+            // then
+            for projectModel in await projectBoardRef.projects.values {
+                await #expect(projectModel.isExist == false)
+            }
+        }
+        
+        @Test func deleteSystemModels() async throws {
+            // given
+            let projectModelRef = try await createProjectModel(budClientRef)
+            
+            await projectModelRef.startUpdating()
+            
+            let runtime = Int.random(in: 1...10)
+            for _ in 1...runtime {
+                await withCheckedContinuation { continuation in
+                    Task {
+                        await projectModelRef.setCallback {
+                            continuation.resume()
+                        }
+                        
+                        await projectModelRef.createSystem()
                     }
-                    await projectBoardRef.subscribe()
-                    
-                    await projectBoardRef.createNewProject()
                 }
+                
+                await projectModelRef.setCallbackNil()
             }
             
+            try await #require(projectModelRef.systems.count == runtime)
             
-            try await #require(projectBoardRef.editors.count == 2)
-        
             // when
             await profileBoardRef.signOut()
             
             // then
-            for projectEditor in await projectBoardRef.editors {
-                await #expect(projectEditor.isExist == false)
+            for systemModel in await projectModelRef.systems.values {
+                await #expect(systemModel.isExist == false)
             }
-        }
-        
-        @Test func deleteSystemBoard() async throws {
-            // given
-            let projectEditorRef = try await createProjectEditor(budClientRef)
-            await projectEditorRef.setUp()
-            
-            let systemBoard = try #require(await projectEditorRef.systemBoard)
-            try await #require(systemBoard.isExist == true)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(systemBoard.isExist == false)
-        }
-        @Test func deleteSystemModel() async throws {
-            // given
-            let projectEditorRef = try await createProjectEditor(budClientRef)
-            let systemModelRef = try await createSystemModel(projectEditorRef)
-            
-            let profileBoardRef = try #require(await budClientRef.profileBoard?.ref)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(systemModelRef.id.isExist == false)
-        }
-        
-        @Test func deleteFlowBoard() async throws {
-            // given
-            let projectEditorRef = try await createProjectEditor(budClientRef)
-            await projectEditorRef.setUp()
-            
-            let flowBoard = try #require(await projectEditorRef.flowBoard)
-            try await #require(flowBoard.isExist == true)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(flowBoard.isExist == false)
-        }
-        
-        @Test func deleteComponentBoard() async throws {
-            // given
-            let projectEditorRef = try await createProjectEditor(budClientRef)
-            await projectEditorRef.setUp()
-            
-            let componentBoard = try #require(await projectEditorRef.componentBoard)
-            try await #require(componentBoard.isExist == true)
-            
-            // when
-            await profileBoardRef.signOut()
-            
-            // then
-            await #expect(componentBoard.isExist == false)
         }
         
         @Test func deleteProfileBoard() async throws {
@@ -268,51 +233,45 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileB
     return profileBoardRef
 }
 
-private func createProjectEditor(_ budClientRef: BudClient) async throws -> ProjectEditor{
+private func createProjectModel(_ budClientRef: BudClient) async throws -> ProjectModel {
     // check
     let projectBoardRef = try #require(await budClientRef.projectBoard?.ref)
     
     // ProjectBoard.createNewProject
+    await projectBoardRef.startUpdating()
     await withCheckedContinuation { continuation in
         Task {
             await projectBoardRef.setCallback {
                 continuation.resume()
             }
             
-            await projectBoardRef.subscribe()
-            await projectBoardRef.createNewProject()
+            await projectBoardRef.createProject()
         }
     }
-    
-    await projectBoardRef.unsubscribe()
+    await projectBoardRef.setCallbackNil()
     
     // ProjectEditor
-    await #expect(projectBoardRef.editors.count == 1)
-    return try #require(await projectBoardRef.editors.first?.ref)
+    await #expect(projectBoardRef.projects.count == 1)
+    return try #require(await projectBoardRef.projects.values.first?.ref)
 }
 
-private func createSystemModel(_ projectEditorRef: ProjectEditor) async throws -> SystemModel {
-    // ProjectEditor.setUp
-    await projectEditorRef.setUp()
-    
+private func createSystemModel(_ projectModelRef: ProjectModel) async throws -> SystemModel {
     // SystemBoard.createFirstSystem
-    let systemBoardRef = try #require(await projectEditorRef.systemBoard?.ref)
-    
+    await projectModelRef.startUpdating()
     await withCheckedContinuation { continuation in
         Task {
-            await systemBoardRef.setCallback {
+            await projectModelRef.setCallback {
                 continuation.resume()
             }
             
-            await systemBoardRef.subscribe()
-            await systemBoardRef.createFirstSystem()
+            await projectModelRef.createSystem()
         }
     }
     
-    await systemBoardRef.unsubscribe()
+    await projectModelRef.setCallbackNil()
     
     // SystemModel
-    let systemModelRef = try #require(await systemBoardRef.models.values.first?.ref)
+    let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     return systemModelRef
 }
 
