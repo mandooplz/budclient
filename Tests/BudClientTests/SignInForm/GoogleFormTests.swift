@@ -26,10 +26,12 @@ struct GoogleFormTests {
             // given
             try await #require(googleFormRef.id.isExist == true)
             
-            // when
-            await googleFormRef.fetchGoogleClientId {
+            await googleFormRef.setCaptureHook {
                 await googleFormRef.delete()
             }
+            
+            // when
+            await googleFormRef.fetchGoogleClientId()
             
             // then
             let issue = try #require(await googleFormRef.issue as? KnownIssue)
@@ -49,7 +51,7 @@ struct GoogleFormTests {
         }
     }
     
-    struct SignUpAndSignIn {
+    struct Submit {
         let budClientRef: BudClient
         let googleFormRef: GoogleForm
         init() async throws {
@@ -61,12 +63,12 @@ struct GoogleFormTests {
             // given
             try await #require(googleFormRef.id.isExist == true)
             
-            // when
-            await googleFormRef.signUpAndSignIn {
+            await googleFormRef.setCaptureHook {
                 await googleFormRef.delete()
-            } mutateHook: {
-                
             }
+            
+            // when
+            await googleFormRef.submit()
             
             // then
             let issue = try #require(await googleFormRef.issue as? KnownIssue)
@@ -83,12 +85,12 @@ struct GoogleFormTests {
                 googleFormRef.accessToken = Token.random().value
             }
             
-            // when
-            await googleFormRef.signUpAndSignIn {
-                
-            } mutateHook: {
+            await googleFormRef.setMutateHook {
                 await googleFormRef.delete()
             }
+            
+            // when
+            await googleFormRef.submit()
             
             // then
             let issue = try #require(await googleFormRef.issue as? KnownIssue)
@@ -104,7 +106,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             let issue = try #require(await googleFormRef.issue as? KnownIssue)
@@ -118,7 +120,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             let issue = try #require(await googleFormRef.issue as? KnownIssue)
@@ -136,7 +138,7 @@ struct GoogleFormTests {
             try await #require(signInForm.isExist == true)
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             await #expect(signInForm.isExist == false)
@@ -155,7 +157,7 @@ struct GoogleFormTests {
             try await #require(signUpForm.isExist == true)
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             await #expect(signUpForm.isExist == false)
@@ -168,7 +170,7 @@ struct GoogleFormTests {
             }
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             try await #require(googleFormRef.issue == nil)
@@ -185,13 +187,13 @@ struct GoogleFormTests {
             try await #require(budClientRef.projectBoard == nil)
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             let projectBoard = try #require(await budClientRef.projectBoard)
             await #expect(projectBoard.isExist == true)
         }
-        @Test func createProfileBoard() async throws {
+        @Test func createProfile() async throws {
             // given
             await MainActor.run {
                 googleFormRef.idToken = Token.random().value
@@ -201,7 +203,7 @@ struct GoogleFormTests {
             try await #require(budClientRef.profile == nil)
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             let profileBoard = try #require(await budClientRef.profile)
@@ -217,13 +219,48 @@ struct GoogleFormTests {
             try await #require(budClientRef.community == nil)
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             let community = try #require(await budClientRef.community)
             await #expect(community.isExist == true)
         }
-        @Test func setIsUserSignedIn() async throws {
+        
+        @Test func setSignInFormNil_BudClient() async throws {
+            // given
+            try await #require(budClientRef.signInForm != nil)
+            
+            await MainActor.run {
+                googleFormRef.idToken = Token.random().value
+                googleFormRef.accessToken = Token.random().value
+            }
+            
+            // when
+            await googleFormRef.submit()
+            
+            // then
+            try await #require(googleFormRef.issue == nil)
+            
+            await #expect(budClientRef.signInForm == nil)
+        }
+        @Test func setUser_BudClient() async throws {
+            // given
+            try await #require(budClientRef.user == nil)
+            
+            await MainActor.run {
+                googleFormRef.idToken = Token.random().value
+                googleFormRef.accessToken = Token.random().value
+            }
+            
+            // when
+            await googleFormRef.submit()
+            
+            // then
+            try await #require(googleFormRef.issue == nil)
+            
+            await #expect(budClientRef.user != nil)
+        }
+        @Test func setIsUserSignedIn_BudClient() async throws {
             // given
             await MainActor.run {
                 googleFormRef.idToken = Token.random().value
@@ -232,7 +269,7 @@ struct GoogleFormTests {
             try await #require(budClientRef.isUserSignedIn == false)
             
             // when
-            await googleFormRef.signUpAndSignIn()
+            await googleFormRef.submit()
             
             // then
             await #expect(budClientRef.user != nil)

@@ -223,7 +223,7 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> Profile 
     await signInFormRef.setUpSignUpForm()
     let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
     
-    // SignUpForm.signUp()
+    // SignUpForm.submit()
     let testEmail = Email.random().value
     let testPassword = Password.random().value
     await MainActor.run {
@@ -232,7 +232,7 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> Profile 
         signUpFormRef.passwordCheck = testPassword
     }
     
-    await signUpFormRef.signUp()
+    await signUpFormRef.submit()
     
     // Profile
     let profileBoardRef = try #require(await budClientRef.profile?.ref)

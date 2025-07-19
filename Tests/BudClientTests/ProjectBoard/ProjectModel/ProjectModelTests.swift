@@ -257,7 +257,7 @@ private func getProjectModel(_ budClientRef: BudClient) async throws -> ProjectM
     await signInFormRef.setUpSignUpForm()
     let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
     
-    // SignUpForm.signUp()
+    // SignUpForm.submit()
     let testEmail = Email.random().value
     let testPassword = Password.random().value
     await MainActor.run {
@@ -266,7 +266,7 @@ private func getProjectModel(_ budClientRef: BudClient) async throws -> ProjectM
         signUpFormRef.passwordCheck = testPassword
     }
     
-    await signUpFormRef.signUp()
+    await signUpFormRef.submit()
     
 
     // ProjectBoard.createProject

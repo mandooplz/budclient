@@ -116,7 +116,7 @@ package final class SystemSource: SystemSourceInterface {
                         // modify ObjectSource
                         objectSource.ref?.handler?.execute(.modified(diff))
                     case .removed:
-                        // remove ObjectSource
+                        // cancel ObjectSource
                         objectSource.ref?.delete()
                         objectSource.ref?.handler?.execute(.removed)
                         return
@@ -481,7 +481,7 @@ package final class SystemSource: SystemSourceInterface {
                     return
                 }
                 
-                // remove location in ProjectSource.systemLocations
+                // cancel location in ProjectSource.systemLocations
                 transaction.updateData([
                     ProjectSource.Data.systemLocations: FieldValue.arrayRemove([location.encode()])
                 ], forDocument: projectSourceDocRef)

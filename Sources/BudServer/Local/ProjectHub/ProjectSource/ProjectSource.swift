@@ -219,7 +219,7 @@ package final class ProjectSource: ProjectSourceInterface {
         projectHubRef.projectSources[target] = nil
         self.delete()
         
-        // remove ProjectSourceDocument in FireStore
+        // cancel ProjectSourceDocument in FireStore
         let db = Firestore.firestore()
         db.collection(DB.projectSources)
             .document(id.value)

@@ -13,7 +13,7 @@ private let logger = BudLogger("SignUpForm")
 
 // MARK: Object
 @MainActor @Observable
-public final class SignUpForm: Debuggable {
+public final class SignUpForm: Debuggable, Hookable {
     // MARK: core
     init(tempConfig: TempConfig<SignInForm.ID>) {
         self.tempConfig = tempConfig
@@ -35,47 +35,56 @@ public final class SignUpForm: Debuggable {
     
     public var issue: (any IssueRepresentable)?
     
+    package var captureHook: Hook? = nil
+    package var computeHook: Hook? = nil
+    package var mutateHook: Hook? = nil
+    
     
     // MARK: action
-    public func signUp() async {
+    public func submit() async {
         logger.start()
-        await signUp(captureHook: nil, mutateHook: nil)
-    }
-    func signUp(captureHook: Hook?, mutateHook: Hook?) async {
+        
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
+        guard id.isExist else {
+            setIssue(Error.signUpFormIsDeleted)
+            logger.failure("SignUpForm이 존재하지 않아 실행취소됩니다.")
+            return
+        }
         guard email.isEmpty == false else {
             setIssue(Error.emailIsEmpty)
-            logger.failure(Error.emailIsEmpty)
+            logger.failure("SignUpForm의 Email이 빈 문자열입니다.")
             return
         }
         guard password.isEmpty == false else {
             setIssue(Error.passwordIsEmpty)
-            logger.failure(Error.passwordIsEmpty)
+            logger.failure("SignUpForm의 Password가 빈 문자열입니다.")
             return
         }
         guard passwordCheck.isEmpty == false else {
             setIssue(Error.passsworCheckIsEmpty)
-            logger.failure(Error.passsworCheckIsEmpty)
+            logger.failure("SignUpForm의 passwordCheck가 빈 문자열입니다.")
             return
         }
         guard password == passwordCheck else {
             setIssue(Error.passwordsDoNotMatch)
-            logger.failure(Error.passwordsDoNotMatch)
+            logger.failure("SignUpForm의 Password와 PasswordCheck가 일치하지 않습니다.")
             return
         }
         
         let config = self.tempConfig
         let signInFormRef = config.parent.ref!
-        let budClientRef = signInFormRef.tempConfig.parent.ref!
+        let budClientRef = config.parent.ref!
+            .tempConfig.parent.ref!
 
         
         // compute - register
+        await computeHook?()
         async let budServerRef = await config.budServer.ref!
         let accountHubRef = await budServerRef.accountHub.ref!
         
-        let emailRegisterFormRef = await accountHubRef.emailRegisterFormType.init(email: email, password: password)
+        let emailRegisterFormRef = await accountHubRef.emailRegisterFormType
+            .init(email: email, password: password)
         
         await emailRegisterFormRef.submit()
         
@@ -90,13 +99,16 @@ public final class SignUpForm: Debuggable {
         
         
         // mutate
+        await mutateHook?()
         switch result {
         case .failure(let error):
             setUnknownIssue(error)
         case .success(let user):
             // mutate
-            await mutateHook?()
-            guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
+            guard id.isExist else { setIssue(Error.signUpFormIsDeleted)
+                logger.failure("SignUpForm이 존재하지 않아 실행 취소됩니다.")
+                return
+            }
             let newConfig = config.getConfig(budClientRef.id, user: user)
             
             let projectBoardRef = ProjectBoard(config: newConfig)
@@ -119,20 +131,18 @@ public final class SignUpForm: Debuggable {
         
         
     }
-    
-    public func remove() async {
+    public func cancel() async {
         logger.start()
         
-        await remove(mutateHook: nil)
-    }
-    internal func remove(mutateHook: Hook?) async {
-        // mutate
-        await mutateHook?()
+        // capture
+        await captureHook?()
         guard id.isExist else { setIssue(Error.signUpFormIsDeleted); return }
         
-        let signInForm = tempConfig.parent
-        signInForm.ref?.signUpForm = nil
+        let signInForm = self.tempConfig.parent
         
+        // mutate
+        await mutateHook?()
+        signInForm.ref?.signUpForm = nil
         self.delete()
     }
     

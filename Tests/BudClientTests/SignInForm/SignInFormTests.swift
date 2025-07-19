@@ -144,7 +144,7 @@ struct SignInFormTests {
             let projectBoard = try #require(await budClientRef.projectBoard)
             await #expect(projectBoard.isExist == true)
         }
-        @Test func createProfileBoard() async throws {
+        @Test func createProfile() async throws {
             // when
             await signInFormRef.signInByCache()
             

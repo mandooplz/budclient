@@ -165,7 +165,7 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
     await signInFormRef.setUpSignUpForm()
     let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
     
-    // SignUpForm.signUp()
+    // SignUpForm.submit()
     let testEmail = Email.random().value
     let testPassword = Password.random().value
     await MainActor.run {
@@ -174,7 +174,7 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
         signUpFormRef.passwordCheck = testPassword
     }
     
-    await signUpFormRef.signUp()
+    await signUpFormRef.submit()
     
 
     // ProjectBoard.createProject

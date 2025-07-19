@@ -60,7 +60,7 @@ extension ProjectModel {
                     
                     logger.finished("modified ProjectModel")
                     
-                // remove ProjectModel
+                // cancel ProjectModel
                 case .removed:
                     for systemModel in projectModelRef.systems.values {
                         systemModel.ref?.delete()

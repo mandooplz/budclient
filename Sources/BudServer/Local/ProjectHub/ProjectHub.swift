@@ -107,7 +107,7 @@ package final class ProjectHub: ProjectHubInterface {
                         
                         projectSourceRef.handler?.execute(.removed)
                         
-                        // remove ProjectSource
+                        // cancel ProjectSource
                         projectSourceRef.delete()
                         self.projectSources[data.target] = nil
                     }

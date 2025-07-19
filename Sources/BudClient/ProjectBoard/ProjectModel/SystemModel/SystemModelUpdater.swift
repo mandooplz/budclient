@@ -47,7 +47,7 @@ extension SystemModel {
                 
                 switch event {
                 case .removed:
-                    // remove SystemModel
+                    // cancel SystemModel
                     systemModelRef.delete()
                     projectModelRef.systems[systemModelRef.target] = nil
                     

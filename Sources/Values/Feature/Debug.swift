@@ -102,16 +102,26 @@ public struct BudLogger: Sendable {
     
     public func failure(_ description: String,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
-                        _ routine: String = #function) {
-        logger.error("[\(workflow)] \(objectName).\(routine) failure\n\(description)")
+                        _ file: String = #file,      // 추가: 파일 경로
+                        _ line: Int = #line,        // 추가: 줄 번호
+                        _ routine: String = #function) { // 기존 #function
+        
+        // #file은 전체 파일 경로를 반환하므로, 파일 이름만 추출하여 사용하면 더 깔끔합니다.
+        let fileName = URL(fileURLWithPath: file).lastPathComponent
+        
+        logger.error("[\(workflow)] \(fileName):\(line) - \(objectName).\(routine) failure\n\(description)")
     }
-    
-    
+
+
     public func failure(_ error: Error,
                         _ workflow: WorkFlow.ID = WorkFlow.id,
-                        _ routine: String = #function) {
-        self.failure("\(error)", workflow, routine)
+                        _ file: String = #file,      // 추가
+                        _ line: Int = #line,        // 추가
+                        _ routine: String = #function) { // 추가
+        // 다른 failure 함수를 호출할 때 file, line, routine 정보를 그대로 전달합니다.
+        self.failure("\(error)", workflow, file, line, routine)
     }
+
     
     
     // MARK: Message
