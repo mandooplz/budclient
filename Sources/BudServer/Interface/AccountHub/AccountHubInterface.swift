@@ -38,15 +38,3 @@ package protocol AccountHubIdentity: Sendable, Hashable {
 }
 
 
-// MARK: Value
-package struct UserID: IDRepresentable {
-    package let value: String
-    
-    package init(_ value: String) {
-        self.value = value
-    }
-    
-    package init() {
-        self.value = UUID().uuidString
-    }
-}

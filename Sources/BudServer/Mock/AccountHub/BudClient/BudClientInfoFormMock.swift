@@ -7,13 +7,13 @@
 import Foundation
 import Values
 
-private let logger = BudLogger("BudClientInfoForMock")
 
 
 // MARK: Object
 @MainActor
 package final class BudClientInfoFormMock: BudClientInfoFormInterface {
     // MARK: core
+    private let logger = BudLogger("BudClientInfoForMock")
     package init() { }
     
     

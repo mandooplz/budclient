@@ -8,6 +8,20 @@ import Foundation
 import CryptoKit
 
 
+// MARK: UserID
+public struct UserID: IDRepresentable {
+    public let value: String
+    
+    public init(_ value: String) {
+        self.value = value
+    }
+    
+    public init() {
+        self.value = UUID().uuidString
+    }
+}
+
+
 // MARK: Email
 public struct Email: Sendable, Hashable {
     public let value: String

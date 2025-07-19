@@ -71,7 +71,7 @@ public final class Profile: Debuggable {
         
         budClientRef.signInForm = newSignInFormRef.id
         budClientRef.projectBoard = nil
-        budClientRef.profileBoard = nil
+        budClientRef.profile = nil
         budClientRef.user = nil
         
         for projectModel in projectModels.values {

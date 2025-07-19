@@ -14,7 +14,7 @@ private let logger = BudLogger("GoogleForm")
 
 // MARK: Object
 @MainActor @Observable
-public final class GoogleForm: Debuggable {
+public final class GoogleForm: Debuggable, Hookable {
     // MARK: core
     init(tempConfig: TempConfig<SignInForm.ID>) {
         self.tempConfig = tempConfig
@@ -37,18 +37,26 @@ public final class GoogleForm: Debuggable {
     
     public var issue: (any IssueRepresentable)?
     
+    package var captureHook: Hook? = nil
+    package var computeHook: Hook? = nil
+    package var mutateHook: Hook? = nil
+    
     
     // MARK: action
     public func fetchGoogleClientId() async {
         logger.start()
         
-        await self.fetchGoogleClientId(mutateHook: nil)
-    }
-    func fetchGoogleClientId(mutateHook: Hook?) async {
         // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.googleFormIsDeleted)
+            logger.failure("GoogleForm이 존재하지 않아 실행취소 됩니다.")
+            return
+        }
         let tempConfig = self.tempConfig
         
         // compute
+        await computeHook?()
         async let googleClientId: String? = {
             guard let budServerRef = await tempConfig.budServer.ref,
                   let accountHubRef = await budServerRef.accountHub.ref else { return nil }
@@ -62,28 +70,37 @@ public final class GoogleForm: Debuggable {
         
         // mutate
         await mutateHook?()
-        guard id.isExist else { setIssue(Error.googleFormIsDeleted); return }
         self.googleClientId = await googleClientId
     }
-    
-    public func signUpAndSignIn() async {
+    public func submit() async {
         logger.start()
         
-        await signUpAndSignIn(captureHook: nil, mutateHook: nil)
-    }
-    func signUpAndSignIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard self.id.isExist else { setIssue(Error.googleFormIsDeleted); return }
-        guard let idToken else { issue = KnownIssue(Error.idTokenIsNil); return }
-        guard let accessToken else { issue = KnownIssue(Error.accessTokenIsNil); return }
+        guard self.id.isExist else {
+            setIssue(Error.googleFormIsDeleted)
+            logger.failure("GoogleForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard let idToken else {
+            issue = KnownIssue(Error.idTokenIsNil)
+            logger.failure("GoogleForm의 idToken이 존재하지 않습니다.")
+            return
+        }
+        guard let accessToken else {
+            issue = KnownIssue(Error.accessTokenIsNil)
+            logger.failure("GoogleForm accessToken이 존재하지 않습니다.")
+            return
+        }
         
         let config = tempConfig
         let signInForm = config.parent
         let budClientRef = config.parent.ref!.tempConfig.parent.ref!
-        let googleToken = GoogleToken(idToken: idToken, accessToken: accessToken)
+        let googleToken = GoogleToken(idToken: idToken,
+                                      accessToken: accessToken)
         
         // compute - register
+        await computeHook?()
         guard let budServerRef = await tempConfig.budServer.ref,
               let accountHubRef = await budServerRef.accountHub.ref else { return }
         
@@ -99,7 +116,8 @@ public final class GoogleForm: Debuggable {
         
         // compute - signIn
         async let signInResult = {
-            let googleAuthFormRef = await accountHubRef.googleAuthFormType.init(token: googleToken)
+            let googleAuthFormRef = await accountHubRef.googleAuthFormType
+                .init(token: googleToken)
             
             await googleAuthFormRef.submit()
             
@@ -114,10 +132,14 @@ public final class GoogleForm: Debuggable {
         }
         
         // mutate
+        await mutateHook?()
+        guard id.isExist else {
+            setIssue(Error.googleFormIsDeleted)
+            logger.failure("GoogleForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         switch result {
         case .success(let user):
-            await mutateHook?()
-            guard id.isExist else { setIssue(Error.googleFormIsDeleted); return }
             mutateForSignIn(budClientRef, signInForm, user, config)
         case .failure(let error):
             setUnknownIssue(error)
@@ -141,7 +163,7 @@ public final class GoogleForm: Debuggable {
         
         budClientRef.signInForm = nil
         budClientRef.projectBoard = projectBoardRef.id
-        budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.profile = profileBoardRef.id
         budClientRef.community = communityRef.id
         
         budClientRef.user = user

@@ -422,7 +422,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     await signInFormRef.setUpSignUpForm()
     let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
     
-    // SignUpForm.signUp()
+    // SignUpForm.submit()
     let testEmail = Email.random().value
     let testPassword = Password.random().value
     await MainActor.run {
@@ -431,7 +431,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
         signUpFormRef.passwordCheck = testPassword
     }
     
-    await signUpFormRef.signUp()
+    await signUpFormRef.submit()
     
 
     // ProjectBoard.createProject
@@ -450,7 +450,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     
     await #expect(projectBoardRef.projects.count == 1)
 
-    // ProjectModel.createSystem
+    // ProjectModel.createFirstSystem
     let projectModelRef = try #require(await projectBoardRef.projects.values.first?.ref)
     
     await projectModelRef.startUpdating()
@@ -460,7 +460,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
                 continuation.resume()
             }
             
-            await projectModelRef.createSystem()
+            await projectModelRef.createFirstSystem()
         }
     }
     

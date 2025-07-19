@@ -7,13 +7,13 @@
 import Foundation
 import Values
 
-private let logger = BudLogger("GoogleRegisterFormMock")
 
 
 // MARK: Object
 @Server
 package final class GoogleRegisterFormMock: GoogleRegisterFormInterface {
     // MARK: core
+    private let logger = BudLogger("GoogleRegisterFormMock")
     package init(token: GoogleToken) {
         self.token = token
     }

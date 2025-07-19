@@ -81,19 +81,17 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                 
                 await systemSourceRef.setHandler(
                     .init({ event in
-                        Task {
-                            await WorkFlow {
-                                guard let updaterRef = await systemModel.ref?.updater else {
-                                    logger.failure("SystemModel이 존재하지 않아 update가 취소됩니다.")
-                                    return
-                                }
-                                
-                                await updaterRef.appendEvent(event)
-                                await updaterRef.update()
-                                
-                                await systemModel.ref?.callback?()
-                                await systemModel.ref?.setCallbackNil()
+                        Task {    
+                            guard let updaterRef = await systemModel.ref?.updater else {
+                                logger.failure("SystemModel이 존재하지 않아 update가 취소됩니다.")
+                                return
                             }
+                            
+                            await updaterRef.appendEvent(event)
+                            await updaterRef.update()
+                            
+                            await systemModel.ref?.callback?()
+                            await systemModel.ref?.setCallbackNil()
                         }
                     }))
             }

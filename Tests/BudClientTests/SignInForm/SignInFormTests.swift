@@ -15,112 +15,6 @@ import Values
 // MARK: Tests
 @Suite("SignInForm")
 struct SignInFormTests {
-    struct SetUpSignUpForm {
-        let budClientRef: BudClient
-        let signInFormRef: SignInForm
-        init() async throws {
-            self.budClientRef = await BudClient()
-            self.signInFormRef = try await getSignInForm(budClientRef)
-        }
-        
-        @Test func whenSignInFormIsDeleted() async throws {
-            // given
-            try await #require(signInFormRef.id.isExist == true)
-            
-            // when
-            await signInFormRef.setUpSignUpForm {
-                await signInFormRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await signInFormRef.issue as? KnownIssue)
-            #expect(issue.reason == "signInFormIsDeleted")
-            
-            try await #require(signInFormRef.id.isExist == false)
-            await #expect(signInFormRef.signUpForm == nil)
-        }
-        
-        @Test func setSignUpForm() async throws {
-            // given
-            try await #require(signInFormRef.signUpForm == nil)
-            
-            // when
-            await signInFormRef.setUpSignUpForm()
-            
-            // then
-            await #expect(signInFormRef.signUpForm != nil)
-        }
-        @Test func createSignUpForm() async throws {
-            // given
-            try await #require(signInFormRef.signUpForm == nil)
-            
-            // when
-            await signInFormRef.setUpSignUpForm()
-            
-            // then
-            let signUpForm = try #require(await signInFormRef.signUpForm)
-            await #expect(signUpForm.isExist == true)
-        }
-        @Test func whenRegisterFormAlreadyExists() async throws {
-            // given
-            try await #require(signInFormRef.signUpForm == nil)
-            
-            await signInFormRef.setUpSignUpForm()
-            let signUpForm = try #require(await signInFormRef.signUpForm)
-            
-            // when
-            await signInFormRef.setUpSignUpForm()
-            
-            // then
-            await #expect(signInFormRef.signUpForm == signUpForm)
-        }
-    }
-    
-    struct SetUpGoogleForm {
-        let budClientRef: BudClient
-        let signInFormRef: SignInForm
-        init() async throws {
-            self.budClientRef = await BudClient()
-            self.signInFormRef = try await getSignInForm(budClientRef)
-        }
-        
-        @Test func whenSignInFormIsDeleted() async throws {
-            // given
-            try await #require(signInFormRef.id.isExist == true)
-            
-            // when
-            await signInFormRef.setUpGoogleForm {
-                await signInFormRef.delete()
-            }
-            
-            // then
-            let issue = try #require(await signInFormRef.issue as? KnownIssue)
-            #expect(issue.reason == "signInFormIsDeleted")
-        }
-        
-        @Test func setGoogleForm() async throws {
-            // given
-            try await #require(signInFormRef.googleForm == nil)
-            
-            // when
-            await signInFormRef.setUpGoogleForm()
-            
-            // then
-            await #expect(signInFormRef.googleForm != nil)
-        }
-        @Test func createGoogleForm() async throws {
-            // given
-            try await #require(signInFormRef.googleForm == nil)
-            
-            // when
-            await signInFormRef.setUpGoogleForm()
-            
-            // then
-            let googleForm = try #require(await signInFormRef.googleForm)
-            await #expect(googleForm.isExist == true)
-        }
-    }
-    
     struct SignInByCache {
         let budClientRef: BudClient
         let signInFormRef: SignInForm
@@ -135,12 +29,12 @@ struct SignInFormTests {
             // given
             try await #require(signInFormRef.id.isExist == true)
             
-            // when
-            await signInFormRef.signInByCache {
+            await signInFormRef.setCaptureHook {
                 await signInFormRef.delete()
-            } mutateHook: {
-                
             }
+            
+            // when
+            await signInFormRef.signInByCache()
 
             // then
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
@@ -152,12 +46,12 @@ struct SignInFormTests {
             // given
             try await #require(signInFormRef.id.isExist == true)
             
-            // when
-            await signInFormRef.signInByCache {
-                
-            } mutateHook: {
+            await signInFormRef.setMutateHook {
                 await signInFormRef.delete()
             }
+            
+            // when
+            await signInFormRef.signInByCache()
             
             // then
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
@@ -166,7 +60,7 @@ struct SignInFormTests {
             await #expect(budClientRef.isUserSignedIn == false)
         }
         
-        @Test func signInWithOutEmailAndPassword() async throws {
+        @Test func signInWithoutEmailAndPassword() async throws {
             // given
             await MainActor.run {
                 signInFormRef.email = ""
@@ -180,26 +74,40 @@ struct SignInFormTests {
             
             // then
             await #expect(signInFormRef.issue == nil)
+            
+            await #expect(budClientRef.user != nil)
         }
-        
-        @Test func setNilSignInFormInBudCliet() async throws {
+        @Test func signInWithEmailAndPassword() async throws {
+            // given
+            await MainActor.run {
+                signInFormRef.email = "UNKNOWN_ID"
+                signInFormRef.password = "UNKNOWN_PASSWORD"
+            }
+            
+            try await #require(signInFormRef.isIssueOccurred == false)
+            
             // when
             await signInFormRef.signInByCache()
             
             // then
             await #expect(signInFormRef.issue == nil)
-            try await #require(signInFormRef.isIssueOccurred == false)
             
-            await #expect(budClientRef.signInForm == nil)
+            await #expect(budClientRef.user != nil)
         }
-        @Test func deleteEmailForm() async throws {
+        
+        @Test func deleteSignInForm() async throws {
+            // given
+            let signInForm = signInFormRef.id
+            
+            try await #require(signInForm.isExist == true)
+            
             // when
             await signInFormRef.signInByCache()
             
             // then
             try await #require(signInFormRef.isIssueOccurred == false)
             
-            await #expect(signInFormRef.id.isExist == false)
+            await #expect(signInForm.isExist == false)
         }
         @Test func deleteSignUpForm() async throws {
             // given
@@ -213,50 +121,6 @@ struct SignInFormTests {
             // then
             await #expect(signUpForm.isExist == false)
         }
-        @Test func deleteSifnInForm() async throws {
-            // given
-            let signInForm = try #require(await budClientRef.signInForm)
-            
-            // when
-            await signInFormRef.signInByCache()
-            
-            // then
-            await #expect(signInForm.isExist == false)
-        }
-        @Test func createProjectBoard() async throws {
-            // when
-            await signInFormRef.signInByCache()
-            
-            // then
-            let projectBoard = try #require(await budClientRef.projectBoard)
-            await #expect(projectBoard.isExist == true)
-        }
-        @Test func createProfileBoard() async throws {
-            // when
-            await signInFormRef.signInByCache()
-            
-            // then
-            let profileBoard = try #require(await budClientRef.profileBoard)
-            await #expect(profileBoard.isExist == true)
-        }
-        @Test func createCommunity() async throws {
-            // when
-            await signInFormRef.signInByCache()
-            
-            // then
-            let community = try #require(await budClientRef.community)
-            await #expect(community.isExist == true)
-        }
-        @Test func setIsUserSignedIn() async throws {
-            // when
-            await signInFormRef.signInByCache()
-            
-            // then
-            try await #require(signInFormRef.isIssueOccurred == false)
-            
-            await #expect(budClientRef.isUserSignedIn == true)
-        }
-        
         @Test func deleteGoogleForm() async throws {
             // given
             await signInFormRef.setUpGoogleForm()
@@ -270,6 +134,66 @@ struct SignInFormTests {
             // then
             try await #require(signInFormRef.isIssueOccurred == false)
             await #expect(googleForm.isExist == false)
+        }
+        
+        @Test func createProjectBoard() async throws {
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            let projectBoard = try #require(await budClientRef.projectBoard)
+            await #expect(projectBoard.isExist == true)
+        }
+        @Test func createProfile() async throws {
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            let profileBoard = try #require(await budClientRef.profile)
+            await #expect(profileBoard.isExist == true)
+        }
+        @Test func createCommunity() async throws {
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            let community = try #require(await budClientRef.community)
+            await #expect(community.isExist == true)
+        }
+        
+        @Test func setSignInFormNil_BudClient() async throws {
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            await #expect(signInFormRef.issue == nil)
+            try await #require(signInFormRef.isIssueOccurred == false)
+            
+            await #expect(budClientRef.signInForm == nil)
+        }
+        @Test func setUser_BudClient() async throws {
+            // given
+            try await #require(budClientRef.user == nil)
+            
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            try await #require(signInFormRef.isIssueOccurred == false)
+            
+            await #expect(budClientRef.user != nil)
+        }
+        @Test func setIsUserSignedIn_BudClient() async throws {
+            // given
+            try await #require(budClientRef.isUserSignedIn == false)
+            
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            try await #require(signInFormRef.isIssueOccurred == false)
+            
+            await #expect(budClientRef.isUserSignedIn == true)
         }
         
         @Test func whenAlreadySignedIn() async throws {
@@ -287,8 +211,7 @@ struct SignInFormTests {
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadySignedIn")
         }
-        
-        @Test func whenEmailCredentialIsMissingAtBudCache() async throws {
+        @Test func whenUserIsNilInBudCache() async throws {
             // given
             let newBudClientRef = await BudClient()
             let signInFormRef = try await getSignInForm(newBudClientRef)
@@ -323,12 +246,12 @@ struct SignInFormTests {
             // given
             try await #require(signInFormRef.id.isExist == true)
             
-            // when
-            await signInFormRef.signIn {
+            await signInFormRef.setCaptureHook {
                 await signInFormRef.delete()
-            } mutateHook: {
-                
             }
+            
+            // when
+            await signInFormRef.signIn()
 
             // then
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
@@ -345,12 +268,12 @@ struct SignInFormTests {
                 signInFormRef.password = validPassword
             }
             
-            // when
-            await signInFormRef.signIn {
-                
-            } mutateHook: {
+            await signInFormRef.setMutateHook {
                 await signInFormRef.delete()
             }
+            
+            // when
+            await signInFormRef.signIn()
             
             // then
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
@@ -412,23 +335,6 @@ struct SignInFormTests {
             // then
             let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "wrongPassword")
-        }
-        
-        @Test func setNilSignInFormInBudClient() async throws {
-            // given
-            try await #require(budClientRef.signInForm != nil)
-            
-            await MainActor.run {
-                signInFormRef.email = validEmail
-                signInFormRef.password = validPassword
-            }
-            
-            // when
-            await signInFormRef.signIn()
-            
-            // then
-            try await #require(signInFormRef.isIssueOccurred == false)
-            await #expect(budClientRef.signInForm == nil)
         }
         
         @Test func deleteEmailForm() async throws {
@@ -499,6 +405,7 @@ struct SignInFormTests {
             // then
             await #expect(signInForm.isExist == false)
         }
+        
         @Test func createProjectBoard() async throws {
             // given
             await MainActor.run {
@@ -524,7 +431,7 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            let profileBoard = try #require(await budClientRef.profileBoard)
+            let profileBoard = try #require(await budClientRef.profile)
             await #expect(profileBoard.isExist == true)
         }
         @Test func createCommunity() async throws {
@@ -541,8 +448,27 @@ struct SignInFormTests {
             let community = try #require(await budClientRef.community)
             await #expect(community.isExist == true)
         }
-        @Test func setIsUserSignedIn() async throws {
+        
+        @Test func setSignInFormNil_BudClient() async throws {
             // given
+            try await #require(budClientRef.signInForm != nil)
+            
+            await MainActor.run {
+                signInFormRef.email = validEmail
+                signInFormRef.password = validPassword
+            }
+            
+            // when
+            await signInFormRef.signIn()
+            
+            // then
+            try await #require(signInFormRef.isIssueOccurred == false)
+            await #expect(budClientRef.signInForm == nil)
+        }
+        @Test func setIsUserSignedIn_BudClient() async throws {
+            // given
+            try await #require(budClientRef.isUserSignedIn == false)
+            
             await MainActor.run {
                 signInFormRef.email = validEmail
                 signInFormRef.password = validPassword
@@ -555,6 +481,23 @@ struct SignInFormTests {
             try await #require(signInFormRef.isIssueOccurred == false)
             
             await #expect(budClientRef.isUserSignedIn == true)
+        }
+        @Test func setUser_BudClient() async throws {
+            // given
+            try await #require(budClientRef.user == nil)
+            
+            await MainActor.run {
+                signInFormRef.email = validEmail
+                signInFormRef.password = validPassword
+            }
+            
+            // when
+            await signInFormRef.signIn()
+            
+            // then
+            try await #require(signInFormRef.isIssueOccurred == false)
+            
+            await #expect(budClientRef.user != nil)
         }
         
         @Test func whenAlreadySignedIn() async throws {
@@ -573,11 +516,142 @@ struct SignInFormTests {
             #expect(issue.reason == "alreadySignedIn")
         }
     }
+    
+    struct SetUpSignUpForm {
+        let budClientRef: BudClient
+        let signInFormRef: SignInForm
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.signInFormRef = try await getSignInForm(budClientRef)
+        }
+        
+        @Test func whenSignInFormIsDeleted() async throws {
+            // given
+            try await #require(signInFormRef.id.isExist == true)
+            
+            await signInFormRef.setCaptureHook {
+                await signInFormRef.delete()
+            }
+            
+            // when
+            await signInFormRef.setUpSignUpForm()
+            
+            // then
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
+            
+            try await #require(signInFormRef.id.isExist == false)
+            await #expect(signInFormRef.signUpForm == nil)
+        }
+        @Test func whenAlreadySetUp() async throws {
+            // given
+            try await #require(signInFormRef.signUpForm == nil)
+            
+            await signInFormRef.setUpSignUpForm()
+            let signUpForm = try #require(await signInFormRef.signUpForm)
+            
+            // when
+            await signInFormRef.setUpSignUpForm()
+            
+            // then
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signUpFormAlreadySetUp")
+            
+            await #expect(signInFormRef.signUpForm == signUpForm)
+        }
+        
+        @Test func setSignUpForm() async throws {
+            // given
+            try await #require(signInFormRef.signUpForm == nil)
+            
+            // when
+            await signInFormRef.setUpSignUpForm()
+            
+            // then
+            await #expect(signInFormRef.signUpForm != nil)
+        }
+        @Test func createSignUpForm() async throws {
+            // given
+            try await #require(signInFormRef.signUpForm == nil)
+            
+            // when
+            await signInFormRef.setUpSignUpForm()
+            
+            // then
+            let signUpForm = try #require(await signInFormRef.signUpForm)
+            await #expect(signUpForm.isExist == true)
+        }
+    }
+    
+    struct SetUpGoogleForm {
+        let budClientRef: BudClient
+        let signInFormRef: SignInForm
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.signInFormRef = try await getSignInForm(budClientRef)
+        }
+        
+        @Test func whenSignInFormIsDeleted() async throws {
+            // given
+            try await #require(signInFormRef.id.isExist == true)
+            
+            await signInFormRef.setCaptureHook {
+                await signInFormRef.delete()
+            }
+            
+            // when
+            await signInFormRef.setUpGoogleForm()
+            
+            // then
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "signInFormIsDeleted")
+        }
+        @Test func whenAlreadySetUp() async throws {
+            // given
+            try await #require(signInFormRef.googleForm == nil)
+            
+            await signInFormRef.setUpGoogleForm()
+            
+            let googleForm = try #require(await signInFormRef.googleForm)
+            
+            // when
+            await signInFormRef.setUpGoogleForm()
+            
+            // then
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
+            #expect(issue.reason == "googleFormAlreadySetUp")
+            
+            await #expect(signInFormRef.googleForm == googleForm)
+        }
+        
+        @Test func setGoogleForm() async throws {
+            // given
+            try await #require(signInFormRef.googleForm == nil)
+            
+            // when
+            await signInFormRef.setUpGoogleForm()
+            
+            // then
+            await #expect(signInFormRef.googleForm != nil)
+        }
+        @Test func createGoogleForm() async throws {
+            // given
+            try await #require(signInFormRef.googleForm == nil)
+            
+            // when
+            await signInFormRef.setUpGoogleForm()
+            
+            // then
+            let googleForm = try #require(await signInFormRef.googleForm)
+            await #expect(googleForm.isExist == true)
+        }
+    }
+    
 }
 
 
 // MARK: Helphers
-internal func getSignInForm(_ budClientRef: BudClient) async throws -> SignInForm {
+private func getSignInForm(_ budClientRef: BudClient) async throws -> SignInForm {
     await budClientRef.setUp()
     
     let signInFormRef = try #require(await budClientRef.signInForm?.ref)

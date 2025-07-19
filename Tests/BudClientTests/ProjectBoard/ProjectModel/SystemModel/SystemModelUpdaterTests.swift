@@ -198,7 +198,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     await signInFormRef.setUpSignUpForm()
     let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
     
-    // SignUpForm.signUp()
+    // SignUpForm.submit()
     let testEmail = Email.random().value
     let testPassword = Password.random().value
     await MainActor.run {
@@ -207,7 +207,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
         signUpFormRef.passwordCheck = testPassword
     }
     
-    await signUpFormRef.signUp()
+    await signUpFormRef.submit()
     
 
     // ProjectBoard.createNewProject
@@ -227,7 +227,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     
     await projectBoardRef.setCallbackNil()
     
-    // ProjectModel.createSystem
+    // ProjectModel.createFirstSystem
     await #expect(projectBoardRef.projects.count == 1)
     let projectModelRef = try #require(await projectBoardRef.projects.values.first?.ref)
     
@@ -239,7 +239,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
                 continuation.resume()
             }
             
-            await projectModelRef.createSystem()
+            await projectModelRef.createFirstSystem()
         }
     }
     
@@ -248,6 +248,6 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     // SystemModel and Updater
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     
-    logger.finished("테스트 준비 끝")
+    logger.end("테스트 준비 끝")
     return systemModelRef
 }

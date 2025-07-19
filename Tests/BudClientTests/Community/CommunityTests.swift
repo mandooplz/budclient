@@ -29,7 +29,7 @@ private func getCommunity(_ budClientRef: BudClient) async throws -> Community {
     let signUpFormRef = try #require(await signInFormRef.signUpForm?.ref)
     
     
-    // SignUpForm.signUp()
+    // SignUpForm.submit()
     let testEmail = Email.random().value
     let testPassword = Password.random().value
     await MainActor.run {
@@ -38,7 +38,7 @@ private func getCommunity(_ budClientRef: BudClient) async throws -> Community {
         signUpFormRef.passwordCheck = testPassword
     }
     
-    await signUpFormRef.signUp()
+    await signUpFormRef.submit()
     
     // Community
     let communityRef = try #require(await budClientRef.community?.ref)

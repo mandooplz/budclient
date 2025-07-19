@@ -33,14 +33,14 @@ public final class BudClient: Debuggable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let mode: SystemMode
-    
     private nonisolated let plistPath: String
     var tempConfig: TempConfig<BudClient.ID>?
     
     public internal(set) var signInForm: SignInForm.ID?
     public internal(set) var projectBoard: ProjectBoard.ID?
-    public internal(set) var profileBoard: Profile.ID?
+    public internal(set) var profile: Profile.ID?
     public internal(set) var community: Community.ID?
+    
     var user: UserID? = nil
     public var isUserSignedIn: Bool { user != nil }
     
@@ -52,7 +52,7 @@ public final class BudClient: Debuggable {
         logger.start()
         
         // capture
-        guard signInForm == nil && projectBoard == nil && profileBoard == nil
+        guard signInForm == nil && projectBoard == nil && profile == nil
         else {
             setIssue(Error.alreadySetUp)
             logger.failure(Error.alreadySetUp)

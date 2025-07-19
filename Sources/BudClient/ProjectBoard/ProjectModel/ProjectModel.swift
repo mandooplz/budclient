@@ -14,7 +14,9 @@ private let logger = BudLogger("ProjectModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectModel: Debuggable, EventDebuggable {
+public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
+    
+    
     // MARK: core
     init(config: Config<ProjectBoard.ID>,
          target: ProjectID,
@@ -57,13 +59,14 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
     
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
+    
     // MARK: action
     public func startUpdating() async {
         logger.start()
         
-        await self.startUpdating(captureHook: nil)
-    }
-    func startUpdating(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard self.id.isExist else {
@@ -79,27 +82,24 @@ public final class ProjectModel: Debuggable, EventDebuggable {
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let projectSourceRef = await projectSource.ref else {
-                    let log = logger.getLog("ProjectSource가 존재하지 않습니다. -> ProjectSource 삭제 로직 구현 필요")
-                    logger.raw.fault("\(log)")
+                    logger.failure("ProjectSource가 존재하지 않습니다. -> ProjectSource 삭제 로직 구현 필요")
                     return
                 }
                 
                 await projectSourceRef.setHandler(
                     .init({ event in
                         Task {
-                            await WorkFlow {
-                                guard let projectModelRef = await projectModel.ref else {
-                                    return
-                                }
-                                
-                                let updaterRef = projectModelRef.updaterRef
-                                
-                                await updaterRef.appendEvent(event)
-                                await updaterRef.update()
-                                
-                                await projectModelRef.callback?()
-                                await projectModelRef.setCallbackNil()
+                            guard let projectModelRef = await projectModel.ref else {
+                                return
                             }
+                            
+                            let updaterRef = projectModelRef.updaterRef
+                            
+                            await updaterRef.appendEvent(event)
+                            await updaterRef.update()
+                            
+                            await projectModelRef.callback?()
+                            await projectModelRef.setCallbackNil()
                         }
                     }))
             }
@@ -110,9 +110,6 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     public func pushName() async {
         logger.start()
         
-        await self.pushName(captureHook: nil)
-    }
-    func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -149,41 +146,12 @@ public final class ProjectModel: Debuggable, EventDebuggable {
             }
         }
         
-        logger.finished()
+        logger.end()
     }
     
-    public func removeProject() async {
+    public func createFirstSystem() async {
         logger.start()
         
-        await self.removeProject(captureHook: nil)
-    }
-    func removeProject(captureHook: Hook?) async {
-        // capture
-        await captureHook?()
-        guard id.isExist else {
-            setIssue(Error.projectModelIsDeleted)
-            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        let projectSource = self.source
-        
-        // compute
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                guard let projectSourceRef = await projectSource.ref else { return }
-                
-                await projectSourceRef.removeProject()
-            }
-        }
-    }
-    
-    // TODO: 마지막 SystemModel의 Location에서 랜덤한 방향으로 시스템을 무작위로 생성
-    public func createSystem() async {
-        logger.start()
-        
-        await self.createSystem(captureHook: nil)
-    }
-    func createSystem(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -209,6 +177,29 @@ public final class ProjectModel: Debuggable, EventDebuggable {
             }
         }
     }
+    
+    public func removeProject() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.projectModelIsDeleted)
+            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let projectSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let projectSourceRef = await projectSource.ref else { return }
+                
+                await projectSourceRef.removeProject()
+            }
+        }
+    }
+
     
     
     // MARK: value

@@ -48,8 +48,7 @@ package final class ProjectHub: ProjectHubInterface {
         self.listener = projectSourcesCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    let log = logger.getLog("\(error!)")
-                    logger.raw.fault("\(log)")
+                    logger.failure(error!)
                     return
                 }
                 
@@ -61,8 +60,7 @@ package final class ProjectHub: ProjectHubInterface {
                     do {
                         data = try diff.document.data(as: ProjectSource.Data.self)
                     } catch {
-                        let log = logger.getLog("ProjetSource 디코딩 실패\n\(error)")
-                        logger.raw.fault("\(log)")
+                        logger.failure("ProjetSource 디코딩 실패\n\(error)")
                         return
                     }
                     
@@ -107,7 +105,7 @@ package final class ProjectHub: ProjectHubInterface {
                         
                         projectSourceRef.handler?.execute(.removed)
                         
-                        // remove ProjectSource
+                        // cancel ProjectSource
                         projectSourceRef.delete()
                         self.projectSources[data.target] = nil
                     }
@@ -135,8 +133,7 @@ package final class ProjectHub: ProjectHubInterface {
             try db.collection(DB.projectSources)
                 .addDocument(from: data)
         } catch {
-            let log = logger.getLog(error)
-            logger.raw.error("\(log)")
+            logger.failure(error)
             return
         }
     }

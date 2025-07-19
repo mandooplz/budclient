@@ -9,13 +9,13 @@ import Values
 import FirebaseAuth
 import FirebaseCore
 
-private let logger = BudLogger("BudClientInfoForm")
 
 
 // MARK: Object
 @MainActor
 package final class BudClienInfoForm: BudClientInfoFormInterface {
     // MARK: core
+    private let logger = BudLogger("BudClientInfoForm")
     package init() { }
     
     
@@ -26,8 +26,7 @@ package final class BudClienInfoForm: BudClientInfoFormInterface {
     // MARK: action
     package func fetchGoogleClientId() async {
         guard let googleClient = FirebaseApp.app()?.options.clientID else {
-            let log = logger.getLog("FirebaseApp이 초기화되지 않아 실행 취소됩니다.")
-            logger.raw.error("\(log)")
+            logger.failure("FirebaseApp이 초기화되지 않아 실행 취소됩니다.")
             return
         }
         

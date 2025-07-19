@@ -47,11 +47,11 @@ extension SystemModel {
                 
                 switch event {
                 case .removed:
-                    // remove SystemModel
+                    // cancel SystemModel
                     systemModelRef.delete()
                     projectModelRef.systems[systemModelRef.target] = nil
                     
-                    logger.finished("removed SystemModel")
+                    logger.end("removed SystemModel")
                 case .modified(let diff):
                     // modified SystemModel -> SystemModel.updater
                     guard let modifiedModel = projectModelRef.systems[diff.target] else {
@@ -63,7 +63,7 @@ extension SystemModel {
                     modifiedModel.ref?.name = diff.name
                     modifiedModel.ref?.location = diff.location
                     
-                    logger.finished("modified SystemModel")
+                    logger.end("modified SystemModel")
                 case .objectAdded(let diff):
                     // create ObjectModel
                     guard systemModelRef.objects[diff.target] == nil else {

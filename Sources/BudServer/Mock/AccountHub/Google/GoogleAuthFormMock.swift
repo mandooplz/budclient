@@ -7,19 +7,20 @@
 import Foundation
 import Values
 
-private let logger = BudLogger("GoogleAuthFormMock")
 
 
 // MARK: Object
 @Server
 package final class GoogleAuthFormMock: GoogleAuthFormInterface {
     // MARK: core
+    private let logger = BudLogger("GoogleAuthFormMock")
     package init(token: GoogleToken) async {
         self.token = token
     }
     
     
     // MARK: state
+    
     nonisolated let token: GoogleToken
 
     package var result: Result<UserID, GoogleAuthFormError>?

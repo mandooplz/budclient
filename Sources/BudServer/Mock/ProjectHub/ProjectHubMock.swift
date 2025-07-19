@@ -26,7 +26,7 @@ package final class ProjectHubMock: ProjectHubInterface {
     
     package var projectSources: Set<ProjectSourceMock.ID> = []
     
-    private var handler: EventHandler?
+    var handler: EventHandler?
     package func setHandler(_ handler: EventHandler) {
         self.handler = handler
     }

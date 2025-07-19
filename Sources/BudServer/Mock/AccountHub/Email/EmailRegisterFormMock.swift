@@ -7,13 +7,12 @@
 import Foundation
 import Values
 
-private let logger = BudLogger("EmailRegisterFormMock")
-
 
 // MARK: Object
 @Server
 package final class EmailRegisterFormMock: EmailRegisterFormInterface {
     // MARK: core
+    private let logger = BudLogger("EmailRegisterFormMock")
     package init(email: String, password: String) {
         self.email = email
         self.password = password
@@ -21,6 +20,7 @@ package final class EmailRegisterFormMock: EmailRegisterFormInterface {
     
 
     // MARK: state
+    
     nonisolated let email: String
     nonisolated let password: String
     
