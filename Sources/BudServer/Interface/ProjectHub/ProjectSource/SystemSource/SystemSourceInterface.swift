@@ -1,14 +1,42 @@
 //
-//  SystemSourceEvent.swift
+//  SystemSourceInterface.swift
 //  BudClient
 //
-//  Created by 김민우 on 7/15/25.
+//  Created by 김민우 on 7/11/25.
 //
 import Foundation
 import Values
 
 
-// MARK: SystemSourceEvent
+// MARK: Interface
+package protocol SystemSourceInterface: Sendable {
+    associatedtype ID: SystemSourceIdentity where ID.Object == Self
+    
+    // MARK: state
+    func setName(_ value: String) async
+    func setHandler(_ handler: Handler<SystemSourceEvent>) async
+    
+    func notifyNameChanged() async
+    
+    // MARK: action
+    func addSystemRight() async
+    func addSystemLeft() async
+    func addSystemTop() async
+    func addSystemBottom() async
+    
+    func removeSystem() async
+}
+
+
+package protocol SystemSourceIdentity: Sendable, Hashable {
+    associatedtype Object: SystemSourceInterface where Object.ID == Self
+    
+    var isExist: Bool { get async }
+    var ref: Object? { get async }
+}
+
+
+// MARK: Values
 public enum SystemSourceEvent: Sendable {
     case modified(SystemSourceDiff)
     case removed(SystemSourceDiff)
@@ -18,7 +46,6 @@ public enum SystemSourceEvent: Sendable {
 }
 
 
-// MARK: SystemSourceDiff
 public struct SystemSourceDiff: Sendable {
     package let id: any SystemSourceIdentity
     package let target: SystemID
@@ -59,6 +86,4 @@ extension SystemSourceDiff {
         self.location = data.location
     }
 }
-
-
 

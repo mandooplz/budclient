@@ -10,29 +10,14 @@ import Values
 
 // MARK: Interface
 package protocol GoogleAuthFormInterface: Sendable {
-    associatedtype ID: GoogleAuthFormIdentity where ID.Object == Self
-    
     // MARK: core
     init(token: GoogleToken) async
-    func delete() async
-    
     
     // MARK: state
-    nonisolated var id: ID { get async }
-    
     var result: Result<UserID, GoogleAuthFormError>? { get async }
-    
     
     // MARK: action
     func submit() async
-}
-
-
-package protocol GoogleAuthFormIdentity: Sendable, Hashable {
-    associatedtype Object: GoogleAuthFormInterface where Object.ID == Self
-    
-    var isExist: Bool { get async }
-    var ref: Object? { get async }
 }
 
 

@@ -108,8 +108,6 @@ public final class SignInForm: Debuggable {
             return
         }
         
-        await emailAuthFormRef.delete()
-        
         
         // mutate
         await mutateHook?()

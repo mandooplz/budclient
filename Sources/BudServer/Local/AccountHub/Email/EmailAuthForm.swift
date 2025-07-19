@@ -19,17 +19,10 @@ package final class EmailAuthForm: EmailAuthFormInterface {
     package init(email: String, password: String) async {
         self.email = email
         self.password = password
-        
-        EmailAuthFormManager.register(self)
-    }
-    package func delete() async {
-        EmailAuthFormManager.unregister(self.id)
     }
     
     
     // MARK: state
-    package nonisolated let id = ID()
-    
     nonisolated let email: String
     nonisolated let password: String
     
@@ -39,10 +32,6 @@ package final class EmailAuthForm: EmailAuthFormInterface {
     // MARK: action
     package func submit() async {
         logger.start()
-        guard id.isExist else {
-            logger.failure("EmailAuthForm이 존재하지 않아 실행취소됩니다.")
-            return
-        }
         
         // 현재 Firebase에서 이메일, 비밀번호로 로그인되어있는지 확인
         if let firebaseUser = Auth.auth().currentUser {
@@ -82,34 +71,5 @@ package final class EmailAuthForm: EmailAuthFormInterface {
                 self.result = .failure(.unknown(error))
             }
         }
-    }
-    
-    
-    // MARK: value
-    @MainActor
-    package struct ID: EmailAuthFormIdentity {
-        let value = UUID()
-        nonisolated init() { }
-        
-        package var isExist: Bool {
-            EmailAuthFormManager.container[self] != nil
-        }
-        package var ref: EmailAuthForm? {
-            EmailAuthFormManager.container[self]
-        }
-    }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class EmailAuthFormManager: Sendable {
-    // MARK: state
-    fileprivate static var container: [EmailAuthForm.ID: EmailAuthForm] = [:]
-    fileprivate static func register(_ object: EmailAuthForm) {
-        container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: EmailAuthForm.ID) {
-        container[id] = nil
     }
 }

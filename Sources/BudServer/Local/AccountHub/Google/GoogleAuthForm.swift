@@ -18,17 +18,10 @@ package final class GoogleAuthForm: GoogleAuthFormInterface {
     // MARK: core
     package init(token: GoogleToken) async {
         self.token = token
-        
-        GoogleAuthFormManager.register(self)
-    }
-    package func delete() async {
-        GoogleAuthFormManager.unregister(self.id)
     }
     
     
     // MARK: state
-    package nonisolated let id = ID()
-    
     nonisolated let token: GoogleToken
     
     package var result: Result<UserID, GoogleAuthFormError>?
@@ -77,35 +70,6 @@ package final class GoogleAuthForm: GoogleAuthFormInterface {
             result = .failure(.unknown(error))
             return
         }
-    }
-    
-    
-    // MARK: value
-    @MainActor
-    package struct ID: GoogleAuthFormIdentity {
-        let value = UUID()
-        nonisolated init() { }
-        
-        package var isExist: Bool {
-            GoogleAuthFormManager.container[self] != nil
-        }
-        package var ref: GoogleAuthForm? {
-            GoogleAuthFormManager.container[self]
-        }
-    }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class GoogleAuthFormManager: Sendable {
-    // MARK: state
-    fileprivate static var container: [GoogleAuthForm.ID: GoogleAuthForm] = [:]
-    fileprivate static func register(_ object: GoogleAuthForm) {
-        container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: GoogleAuthForm.ID) {
-        container[id] = nil
     }
 }
 

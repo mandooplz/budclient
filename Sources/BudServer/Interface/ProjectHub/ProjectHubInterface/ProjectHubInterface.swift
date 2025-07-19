@@ -30,3 +30,9 @@ package protocol ProjectHubIdentity: Sendable, Hashable {
 }
 
 
+// MARK: Values
+public enum ProjectHubEvent: Sendable {
+    case added(ProjectSourceDiff)
+}
+
+

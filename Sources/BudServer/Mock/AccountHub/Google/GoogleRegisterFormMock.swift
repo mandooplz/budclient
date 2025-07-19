@@ -44,12 +44,5 @@ package final class GoogleRegisterFormMock: GoogleRegisterFormInterface {
         let accountRef = AccountMock(token: token)
         accountHubRef.accounts.insert(accountRef.id)
     }
-    
-    
-    // MARK: value
-    package enum Error: String, Swift.Error {
-        case tokenIsNil
-        case googleUserIdIsNil
-    }
 }
 

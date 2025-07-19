@@ -17,17 +17,10 @@ package final class EmailAuthFormMock: EmailAuthFormInterface {
     package init(email: String, password: String) async {
         self.email = email
         self.password = password
-        
-        EmailAuthFormMockManager.register(self)
-    }
-    package func delete() async {
-        EmailAuthFormMockManager.unregister(self.id)
     }
     
     
     // MARK: state
-    package nonisolated let id = ID()
-    
     nonisolated let email: String
     nonisolated let password: String
     
@@ -59,34 +52,5 @@ package final class EmailAuthFormMock: EmailAuthFormInterface {
         }
         
         self.result = .success(account.user)
-    }
-    
-    
-    // MARK: value
-    @Server
-    package struct ID: EmailAuthFormIdentity {
-        let value = UUID()
-        nonisolated init() { }
-        
-        package var isExist: Bool {
-            EmailAuthFormMockManager.container[self] != nil
-        }
-        package var ref: EmailAuthFormMock? {
-            EmailAuthFormMockManager.container[self]
-        }
-    }
-}
-
-
-// MARK: ObjectManager
-@Server
-fileprivate final class EmailAuthFormMockManager: Sendable {
-    // MARK: state
-    fileprivate static var container: [EmailAuthFormMock.ID: EmailAuthFormMock] = [:]
-    fileprivate static func register(_ object: EmailAuthFormMock) {
-        container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: EmailAuthFormMock.ID) {
-        container[id] = nil
     }
 }

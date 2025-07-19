@@ -33,3 +33,29 @@ package protocol ProjectSourceIdentity: Sendable, Hashable {
     var ref: Object? { get async }
 }
 
+
+// MARK: Values
+public enum ProjectSourceEvent: Sendable {
+    case modified(ProjectSourceDiff)
+    case removed(ProjectSourceDiff)
+    
+    case added(SystemSourceDiff)
+}
+
+
+public struct ProjectSourceDiff: Sendable {
+    package let id: any ProjectSourceIdentity
+    package let target: ProjectID
+    package let name: String
+    
+    package init(id: any ProjectSourceIdentity, target: ProjectID, name: String) {
+        self.id = id
+        self.target = target
+        self.name = name
+    }
+    
+    package func changeName(_ value: String) -> Self {
+        .init(id: self.id, target: self.target, name: value)
+    }
+}
+

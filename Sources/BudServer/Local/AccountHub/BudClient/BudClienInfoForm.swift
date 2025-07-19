@@ -16,17 +16,10 @@ private let logger = BudLogger("BudClientInfoForm")
 @MainActor
 package final class BudClienInfoForm: BudClientInfoFormInterface {
     // MARK: core
-    package init() {
-        BudClientInfoFormManager.register(self)
-    }
-    package func delete() {
-        BudClientInfoFormManager.unregister(self.id)
-    }
+    package init() { }
     
     
     // MARK: state
-    package nonisolated let id = ID()
-    
     package var googleClientId: String?
     
     
@@ -39,34 +32,5 @@ package final class BudClienInfoForm: BudClientInfoFormInterface {
         }
         
         self.googleClientId = googleClient
-    }
-    
-    
-    // MARK: value
-    @MainActor
-    package struct ID: BudClientInfoFormIdentity {
-        let value = UUID()
-        nonisolated init() { }
-        
-        package var isExist: Bool {
-            BudClientInfoFormManager.container[self] != nil
-        }
-        package var ref: BudClienInfoForm? {
-            BudClientInfoFormManager.container[self]
-        }
-    }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class BudClientInfoFormManager: Sendable {
-    // MARK: state
-    fileprivate static var container: [BudClienInfoForm.ID: BudClienInfoForm] = [:]
-    fileprivate static func register(_ object: BudClienInfoForm) {
-        container[object.id] = object
-    }
-    fileprivate static func unregister(_ id: BudClienInfoForm.ID) {
-        container[id] = nil
     }
 }

@@ -57,8 +57,6 @@ public final class GoogleForm: Debuggable {
             await budClientInfoFormRef.fetchGoogleClientId()
             let result = await budClientInfoFormRef.googleClientId
             
-            await budClientInfoFormRef.delete()
-            
             return result
         }()
         

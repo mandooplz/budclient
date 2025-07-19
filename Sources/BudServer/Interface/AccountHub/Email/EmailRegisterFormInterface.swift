@@ -13,10 +13,8 @@ package protocol EmailRegisterFormInterface: Sendable {
     // MARK: core
     init(email: String, password: String) async
     
-    
     // MARK: state
     var error: EmailRegisterFormError? { get async }
-    
     
     // MARK: action
     func submit() async

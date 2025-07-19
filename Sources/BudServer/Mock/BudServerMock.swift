@@ -19,7 +19,6 @@ import Values
 }
 
 
-
 // MARK: Object
 @Server
 package final class BudServerMock: BudServerInterface {

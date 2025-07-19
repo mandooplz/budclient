@@ -20,3 +20,10 @@ package protocol ValueSourceIdentity: Sendable, Hashable {
     var ref: Object? { get async }
 }
 
+
+// MARK: Values
+package struct ValueSourceDiff: Sendable {
+    
+}
+
+
