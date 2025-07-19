@@ -9,7 +9,7 @@ import Values
 import BudServer
 import Collections
 
-private let logger = WorkFlow.getLogger(for: "SystemModel")
+private let logger = BudLogger("SystemModel")
 
 
 // MARK: Object
@@ -51,7 +51,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public var root: ObjectModel.ID?
     public var objects = OrderedDictionary<ObjectID, ObjectModel.ID>()
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     public var callback: Callback?
     
     

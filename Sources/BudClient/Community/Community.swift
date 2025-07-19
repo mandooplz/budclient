@@ -26,7 +26,7 @@ public final class Community: Debuggable {
     public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     
     
     

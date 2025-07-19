@@ -9,7 +9,7 @@ import Values
 import BudServer
 import BudCache
 
-private let logger = WorkFlow.getLogger(for: "BudClient")
+private let logger = BudLogger("BudClient")
 
 
 // MARK: System
@@ -40,12 +40,12 @@ public final class BudClient: Debuggable {
     
     public internal(set) var signInForm: SignInForm.ID?
     public internal(set) var projectBoard: ProjectBoard.ID?
-    public internal(set) var profileBoard: ProfileBoard.ID?
+    public internal(set) var profileBoard: Profile.ID?
     public internal(set) var community: Community.ID?
     var user: UserID? = nil
     public var isUserSignedIn: Bool { user != nil }
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     
     
     // MARK: action

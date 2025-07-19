@@ -1,11 +1,52 @@
 //
-//  BudLogger.swift
+//  Debug.swift
 //  BudClient
 //
-//  Created by 김민우 on 7/11/25.
+//  Created by 김민우 on 7/3/25.
 //
 import Foundation
 import os
+
+
+// MARK: Hook
+package typealias Hook = (@Sendable () async -> Void)
+
+
+// MARK: Callback
+public typealias Callback = @Sendable () async -> Void
+
+
+// MARK: KnownIssue
+public struct KnownIssue: IssueRepresentable {
+    public let id = UUID()
+    public let isKnown: Bool = true
+    public let reason: String
+    
+    public init(reason: String) {
+        self.reason = reason
+    }
+    
+    public init<ObjectError: RawRepresentable<String>>(_ reason: ObjectError) {
+        self.reason = reason.rawValue
+    }
+}
+
+
+// MARK: UnknownIssue
+public struct UnknownIssue: IssueRepresentable {
+    public let id = UUID()
+    public let isKnown: Bool = false
+    public let reason: String
+    
+    public init(reason: String) {
+        self.reason = reason
+    }
+    
+    public init<ObjectError: Error>(_ reason: ObjectError) {
+        self.reason = reason.localizedDescription
+    }
+}
+
 
 
 // MARK: BudLogger
@@ -13,7 +54,7 @@ public struct BudLogger: Sendable {
     // MARK: rawValue
     private let objectName: String
     private let logger: Logger
-    init(objectName: String) {
+    public init(_ objectName: String) {
         self.objectName = objectName
         self.logger = Logger(subsystem: "Bud", category: objectName)
     }
@@ -90,3 +131,4 @@ public struct BudLogger: Sendable {
         return self.getLog("\(error)", workflow, routine)
     }
 }
+

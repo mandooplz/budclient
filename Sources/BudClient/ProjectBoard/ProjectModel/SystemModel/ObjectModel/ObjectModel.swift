@@ -8,7 +8,7 @@ import Foundation
 import Values
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "ObjectModel")
+private let logger = BudLogger("ObjectModel")
 
 
 // MARK: Object
@@ -47,7 +47,7 @@ public final class ObjectModel: Sendable, Debuggable {
     public internal(set) var states: [StateModel.ID] = []
     public internal(set) var actions: [ActionModel.ID] = []
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     
     
     // MARK: action

@@ -7,7 +7,7 @@
 import Foundation
 import Values
 
-private let logger = WorkFlow.getLogger(for: "ActionModel")
+private let logger = BudLogger("ActionModel")
 
 
 // MARK: Object

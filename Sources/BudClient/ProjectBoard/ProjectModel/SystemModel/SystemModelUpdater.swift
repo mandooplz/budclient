@@ -9,7 +9,7 @@ import Values
 import Collections
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "SystemModelUpdater")
+private let logger = BudLogger("SystemModelUpdater")
 
 
 // MARK: Object
@@ -26,7 +26,7 @@ extension SystemModel {
         nonisolated let owner: SystemModel.ID
         
         var queue: Deque<SystemSourceEvent> = []
-        var issue: (any Issuable)?
+        var issue: (any IssueRepresentable)?
         
         
         // MARK: action

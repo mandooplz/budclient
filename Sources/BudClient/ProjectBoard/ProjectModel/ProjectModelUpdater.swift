@@ -9,7 +9,7 @@ import Values
 import BudServer
 import Collections
 
-private let logger = WorkFlow.getLogger(for: "ProjectModelUpdater")
+private let logger = BudLogger("ProjectModelUpdater")
 
 
 // MARK: Object
@@ -27,7 +27,7 @@ extension ProjectModel {
         nonisolated let owner: ProjectModel.ID
         
         var queue: Deque<ProjectSourceEvent> = []
-        var issue: (any Issuable)?
+        var issue: (any IssueRepresentable)?
         
         
         // MARK: action

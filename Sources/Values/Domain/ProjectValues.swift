@@ -11,6 +11,7 @@ public struct Location: Sendable, Hashable, Codable {
     public let x: Int
     public let y: Int
     
+    
     // MARK: core
     public init(x: Int, y: Int) {
         self.x = x
@@ -20,27 +21,26 @@ public struct Location: Sendable, Hashable, Codable {
     public static var origin: Self {
         .init(x: 0, y: 0)
     }
-}
-
-// MARK: Operators
-public extension Location {
-    func getRight() -> Self {
+    
+    
+    // MARK: operator
+    public func getRight() -> Self {
         return .init(x: self.x + 1, y: self.y)
     }
     
-    func getLeft() -> Self {
+    public func getLeft() -> Self {
         return .init(x: self.x - 1, y: self.y)
     }
     
-    func getTop() -> Self {
+    public func getTop() -> Self {
         return .init(x: self.x, y: self.y + 1)
     }
     
-    func getBotttom() -> Self {
+    public func getBotttom() -> Self {
         return .init(x: self.x, y: self.y - 1)
     }
     
-    func encode() -> [String: Int] {
+    public func encode() -> [String: Int] {
         return ["x": self.x, "y": self.y]
     }
 }

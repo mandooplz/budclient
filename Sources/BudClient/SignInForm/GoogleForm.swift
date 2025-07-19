@@ -9,7 +9,7 @@ import Values
 import BudCache
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "GoogleForm")
+private let logger = BudLogger("GoogleForm")
 
 
 // MARK: Object
@@ -35,7 +35,7 @@ public final class GoogleForm: Debuggable {
     public var idToken: String?
     public var accessToken: String?
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     
     
     // MARK: action
@@ -138,7 +138,7 @@ public final class GoogleForm: Debuggable {
         signInForm.ref?.delete()
          
         let projectBoardRef = ProjectBoard(config: newConfig)
-        let profileBoardRef = ProfileBoard(config: newConfig)
+        let profileBoardRef = Profile(config: newConfig)
         let communityRef = Community(config: newConfig)
         
         budClientRef.signInForm = nil

@@ -9,7 +9,7 @@ import Values
 import FirebaseAuth
 import FirebaseCore
 
-private let logger = WorkFlow.getLogger(for: "EmailAuthForm")
+private let logger = BudLogger("EmailAuthForm")
 
 
 // MARK: Object

@@ -7,7 +7,7 @@
 import Foundation
 import Values
 
-private let logger = WorkFlow.getLogger(for: "GoogleRegisterFormMock")
+private let logger = BudLogger("GoogleRegisterFormMock")
 
 
 // MARK: Object

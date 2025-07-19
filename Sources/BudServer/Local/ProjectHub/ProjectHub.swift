@@ -9,7 +9,7 @@ import Values
 import Collections
 import FirebaseFirestore
 
-private let logger = WorkFlow.getLogger(for: "ProjectHub")
+private let logger = BudLogger("ProjectHub")
 
 
 // MARK: Object

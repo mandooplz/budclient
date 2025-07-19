@@ -1,5 +1,5 @@
 //
-//  ProfileBoard.swift
+//  Profile.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/26/25.
@@ -8,20 +8,20 @@ import Foundation
 import Values
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "ProfileBoard")
+private let logger = BudLogger("Profile")
 
 
 // MARK: Object
 @MainActor @Observable
-public final class ProfileBoard: Debuggable {
+public final class Profile: Debuggable {
     // MARK: core
     init(config: Config<BudClient.ID>) {
         self.config = config
 
-        ProfileBoardManager.register(self)
+        ProfileManager.register(self)
     }
     func delete() {
-        ProfileBoardManager.unregister(self.id)
+        ProfileManager.unregister(self.id)
     }
 
     
@@ -29,7 +29,7 @@ public final class ProfileBoard: Debuggable {
     public nonisolated let id = ID()
     public nonisolated let config: Config<BudClient.ID>
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     
     
     // MARK: action
@@ -105,10 +105,10 @@ public final class ProfileBoard: Debuggable {
         }
         
         var isExist: Bool {
-            ProfileBoardManager.container[self] != nil
+            ProfileManager.container[self] != nil
         }
-        public var ref: ProfileBoard? {
-            ProfileBoardManager.container[self]
+        public var ref: Profile? {
+            ProfileManager.container[self]
         }
     }
     public enum Error: String, Swift.Error {
@@ -119,13 +119,13 @@ public final class ProfileBoard: Debuggable {
 
 // MARK: Object Manager
 @MainActor @Observable
-fileprivate final class ProfileBoardManager: Sendable {
+fileprivate final class ProfileManager: Sendable {
     // MARK: state
-    fileprivate static var container: [ProfileBoard.ID: ProfileBoard] = [:]
-    fileprivate static func register(_ object: ProfileBoard) {
+    fileprivate static var container: [Profile.ID: Profile] = [:]
+    fileprivate static func register(_ object: Profile) {
         container[object.id] = object
     }
-    fileprivate static func unregister(_ id: ProfileBoard.ID) {
+    fileprivate static func unregister(_ id: Profile.ID) {
         container[id] = nil
     }
 }

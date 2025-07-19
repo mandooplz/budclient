@@ -8,7 +8,7 @@ import Foundation
 import Values
 import FirebaseAuth
 
-private let logger = WorkFlow.getLogger(for: "GoogleRegisterForm")
+private let logger = BudLogger("GoogleRegisterForm")
 
 
 // MARK: Object

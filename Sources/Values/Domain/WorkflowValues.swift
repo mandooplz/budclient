@@ -1,10 +1,14 @@
 //
-//  WorkFlow.swift
+//  WorkflowID.swift
 //  BudClient
 //
-//  Created by 김민우 on 7/11/25.
+//  Created by 김민우 on 7/17/25.
 //
 import Foundation
+
+public struct WorkflowID: IDRepresentable {
+    public let value: UUID
+}
 
 
 // MARK: WorkFlow
@@ -29,14 +33,6 @@ public struct WorkFlow: Sendable {
                 }
             }
         }
-
-    public static func getLogger(for objectName: String) -> BudLogger {
-        .init(objectName: objectName)
-    }
-    
-    
-    
-    
     
     // MARK: value
     public struct ID: Sendable, Hashable, CustomStringConvertible, Codable {
@@ -53,6 +49,12 @@ public struct WorkFlow: Sendable {
             }
         }
     }
+}
+
+
+// MARK: FlowID
+public struct FlowID: IDRepresentable {
+    public let value: UUID
 }
 
 

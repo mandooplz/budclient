@@ -7,6 +7,18 @@
 import Foundation
 import Values
 
+@globalActor package final actor Server {
+    package static let shared = Server()
+    
+    @discardableResult @Server
+    package static func run<T>(resultType: T.Type = T.self,
+                                                  body: @Server () async throws -> T)
+    async rethrows -> T where T:Sendable {
+        try await body()
+    }
+}
+
+
 
 // MARK: Object
 @Server

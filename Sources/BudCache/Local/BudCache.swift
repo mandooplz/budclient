@@ -9,7 +9,7 @@ import Values
 import BudServer
 import FirebaseAuth
 
-private let logger = WorkFlow.getLogger(for: "BudCache")
+private let logger = BudLogger("BudCache")
 
 
 // MARK: Object

@@ -9,7 +9,7 @@ import Values
 import Collections
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "GetterModel")
+private let logger = BudLogger("GetterModel")
 
 
 // MARK: Object

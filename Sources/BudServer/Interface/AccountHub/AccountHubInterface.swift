@@ -39,7 +39,7 @@ package protocol AccountHubIdentity: Sendable, Hashable {
 
 
 // MARK: Value
-package struct UserID: Identity {
+package struct UserID: IDRepresentable {
     package let value: String
     
     package init(_ value: String) {

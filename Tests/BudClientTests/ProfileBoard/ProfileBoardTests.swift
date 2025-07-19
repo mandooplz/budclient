@@ -15,7 +15,7 @@ import Values
 struct ProfileBoardTests {
     struct SignOut {
         let budClientRef: BudClient
-        let profileBoardRef: ProfileBoard
+        let profileBoardRef: Profile
         init() async throws {
             self.budClientRef = await BudClient()
             self.profileBoardRef = try await getProfileBoard(budClientRef)
@@ -213,7 +213,7 @@ struct ProfileBoardTests {
 
 
 // MARK: Helphers
-private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileBoard {
+private func getProfileBoard(_ budClientRef: BudClient) async throws -> Profile {
     // BudClient.setUp()
     await budClientRef.setUp()
     let signInForm = try #require(await budClientRef.signInForm)
@@ -234,7 +234,7 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> ProfileB
     
     await signUpFormRef.signUp()
     
-    // ProfileBoard
+    // Profile
     let profileBoardRef = try #require(await budClientRef.profileBoard?.ref)
     return profileBoardRef
 }

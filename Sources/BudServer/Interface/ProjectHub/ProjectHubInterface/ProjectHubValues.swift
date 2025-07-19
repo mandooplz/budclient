@@ -9,7 +9,7 @@ import Values
 
 
 // MARK: ProjectID
-public struct ProjectID: Identity {
+public struct ProjectID: IDRepresentable {
     public let value: UUID
     
     public init(value: UUID = UUID()) {

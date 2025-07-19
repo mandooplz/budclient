@@ -9,7 +9,7 @@ import Values
 import FirebaseFirestore
 import BudMacro
 
-private let logger = WorkFlow.getLogger(for: "SystemSource")
+private let logger = BudLogger("SystemSource")
 
 
 // MARK: Object

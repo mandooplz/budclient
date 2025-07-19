@@ -9,8 +9,7 @@ import Values
 import BudServer
 import BudCache
 
-private let logger = WorkFlow.getLogger(for: "SignUpForm")
-
+private let logger = BudLogger("SignUpForm")
 
 // MARK: Object
 @MainActor @Observable
@@ -34,7 +33,7 @@ public final class SignUpForm: Debuggable {
     public var password: String = ""
     public var passwordCheck: String = ""
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     
     
     // MARK: action
@@ -101,7 +100,7 @@ public final class SignUpForm: Debuggable {
             let newConfig = config.getConfig(budClientRef.id, user: user)
             
             let projectBoardRef = ProjectBoard(config: newConfig)
-            let profileBoardRef = ProfileBoard(config: newConfig)
+            let profileBoardRef = Profile(config: newConfig)
             let communityRef = Community(config: newConfig)
             
             budClientRef.signInForm = nil

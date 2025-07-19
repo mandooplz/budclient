@@ -1,14 +1,10 @@
 //
-//  EventHandler.swift
+//  EventDebuggable.swift
 //  BudClient
 //
-//  Created by 김민우 on 7/3/25.
+//  Created by 김민우 on 7/19/25.
 //
-
-
-// MARK: EventHandler
-public typealias Callback = @Sendable () async -> Void
-
+import Foundation
 
 
 // MARK: EventDebuggable

@@ -8,7 +8,7 @@ import Foundation
 import Values
 import FirebaseFirestore
 
-private let logger = WorkFlow.getLogger(for: "ObjectSource")
+private let logger = BudLogger("ObjectSource")
 
 
 // MARK: Object

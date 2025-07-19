@@ -9,7 +9,7 @@ import Values
 import Collections
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "ProjectModel")
+private let logger = BudLogger("ProjectModel")
 
 
 // MARK: Object
@@ -54,7 +54,7 @@ public final class ProjectModel: Debuggable, EventDebuggable {
             .map { $0.location }
     }
         
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     public var callback: Callback?
     
     // MARK: action

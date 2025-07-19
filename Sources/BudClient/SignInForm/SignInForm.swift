@@ -9,7 +9,7 @@ import Values
 import BudServer
 import BudCache
 
-private let logger = WorkFlow.getLogger(for: "SignInForm")
+private let logger = BudLogger("SignInForm")
 
 
 // MARK: Object
@@ -36,7 +36,7 @@ public final class SignInForm: Debuggable {
     public internal(set) var signUpForm: SignUpForm.ID?
     public internal(set) var googleForm: GoogleForm.ID?
     
-    public var issue: (any Issuable)?
+    public var issue: (any IssueRepresentable)?
     
     
     // MARK: action
@@ -132,7 +132,7 @@ public final class SignInForm: Debuggable {
         
         let config = tempConfig.getConfig(budClientRef.id, user: user)
         let projectBoardRef = ProjectBoard(config: config)
-        let profileBoardRef = ProfileBoard(config: config)
+        let profileBoardRef = Profile(config: config)
         let communityRef = Community(config: config)
         
         budClientRef.signInForm = nil

@@ -8,7 +8,7 @@ import Foundation
 import Values
 import BudServer
 
-private let logger = WorkFlow.getLogger(for: "SetterModel")
+private let logger = BudLogger("SetterModel")
 
 
 // MARK: Object
