@@ -8,10 +8,6 @@ import Foundation
 import os
 
 
-// MARK: Hook
-package typealias Hook = (@Sendable () async -> Void)
-
-
 // MARK: Callback
 public typealias Callback = @Sendable () async -> Void
 

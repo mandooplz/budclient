@@ -105,7 +105,7 @@ public final class SignUpForm: Debuggable {
             
             budClientRef.signInForm = nil
             budClientRef.projectBoard = projectBoardRef.id
-            budClientRef.profileBoard = profileBoardRef.id
+            budClientRef.profile = profileBoardRef.id
             budClientRef.community = communityRef.id
             
             budClientRef.user = user

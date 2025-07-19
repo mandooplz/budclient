@@ -14,7 +14,7 @@ private let logger = BudLogger("SignInForm")
 
 // MARK: Object
 @MainActor @Observable
-public final class SignInForm: Debuggable {
+public final class SignInForm: Debuggable, Hookable {
     // MARK: core
     init(tempConfig: TempConfig<BudClient.ID>) {
         self.tempConfig = tempConfig
@@ -38,14 +38,15 @@ public final class SignInForm: Debuggable {
     
     public var issue: (any IssueRepresentable)?
     
+    package var captureHook: Hook? = nil
+    package var computeHook: Hook? = nil
+    package var mutateHook: Hook? = nil
+    
     
     // MARK: action
     public func signInByCache() async {
         logger.start()
         
-        await signInByCache(captureHook: nil, mutateHook: nil)
-    }
-    func signInByCache(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -61,6 +62,7 @@ public final class SignInForm: Debuggable {
         }
         
         // compute
+        await computeHook?()
         async let result: UserID? = {
             let budCacheRef = await tempConfig.budCache.ref!
             
@@ -81,16 +83,16 @@ public final class SignInForm: Debuggable {
         }
         mutateForSignIn(budClientRef: budClientRef, user: user)
     }
-    
     public func signIn() async {
         logger.start()
         
-        await self.signIn(captureHook: nil, mutateHook: nil)
-    }
-    func signIn(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
+        guard id.isExist else {
+            setIssue(Error.signInFormIsDeleted)
+            logger.failure("SignInForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         let budClientRef = self.tempConfig.parent.ref!
         guard budClientRef.isUserSignedIn == false else {
             setIssue(Error.alreadySignedIn)
@@ -113,6 +115,7 @@ public final class SignInForm: Debuggable {
         let (email, password) = (self.email, self.password)
         
         // compute
+        await computeHook?()
         let budServerRef = await tempConfig.budServer.ref!
         let accountHubRef = await budServerRef.accountHub.ref!
         
@@ -156,7 +159,7 @@ public final class SignInForm: Debuggable {
         
         budClientRef.signInForm = nil
         budClientRef.projectBoard = projectBoardRef.id
-        budClientRef.profileBoard = profileBoardRef.id
+        budClientRef.profile = profileBoardRef.id
         budClientRef.community = communityRef.id
         
         budClientRef.user = user
@@ -169,36 +172,46 @@ public final class SignInForm: Debuggable {
     public func setUpSignUpForm() async {
         logger.start()
         
-        await setUpSignUpForm(mutateHook: nil)
-    }
-    func setUpSignUpForm(mutateHook: Hook?) async {
-        // mutate
-        await mutateHook?()
-        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.signInFormIsDeleted)
+            logger.failure("SignInForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         guard signUpForm == nil else {
-            logger.failure(Error.signUpFormAlreadyExist)
+            setIssue(Error.signUpFormAlreadySetUp)
+            logger.failure("SignUpForm이 이미 존재합니다.")
             return
         }
         
         let myConfig = tempConfig.setParent(self.id)
         
+        // mutate
+        await mutateHook?()
         let signUpFormRef = SignUpForm(tempConfig: myConfig)
         self.signUpForm = signUpFormRef.id
     }
-    
     public func setUpGoogleForm() async {
         logger.start()
         
-        await setUpGoogleForm(mutateHook: nil)
-    }
-    func setUpGoogleForm(mutateHook: Hook?) async {
         // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.signInFormIsDeleted)
+            logger.failure("SignInForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard googleForm == nil else {
+            setIssue(Error.googleFormAlreadySetUp)
+            logger.failure("GoogleForm이 이미 존재합니다.")
+            return
+        }
         let signInForm = self.id
         let config = self.tempConfig
         
         // mutate
         await mutateHook?()
-        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
         let googleFormRef = GoogleForm(tempConfig: config.setParent(signInForm))
         
         self.googleForm = googleFormRef.id
@@ -223,7 +236,7 @@ public final class SignInForm: Debuggable {
     }
     public enum Error: String, Swift.Error {
         case signInFormIsDeleted
-        case signUpFormAlreadyExist
+        case signUpFormAlreadySetUp, googleFormAlreadySetUp
         case emailIsEmpty, passwordIsEmpty
         case userNotFound, wrongPassword
         case alreadySignedIn

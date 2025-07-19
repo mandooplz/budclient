@@ -24,7 +24,7 @@ struct ProfileBoardTests {
         @Test func whenProfileBoardIsDeletedBeforeCapture() async throws {
             // given
             
-            try await #require(budClientRef.profileBoard?.isExist == true)
+            try await #require(budClientRef.profile?.isExist == true)
             
             await budClientRef.saveUserInCache()
             let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
@@ -41,12 +41,12 @@ struct ProfileBoardTests {
             let issue = try #require(await profileBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "profileBoardIsDeleted")
             
-            try await #require(budClientRef.profileBoard?.isExist == false)
+            try await #require(budClientRef.profile?.isExist == false)
             await #expect(budCacheRef.getUser() != nil)
         }
         @Test func whenProfileBoardIsDeletedBeforeMutate() async throws {
             // given
-            try await #require(budClientRef.profileBoard?.isExist == true)
+            try await #require(budClientRef.profile?.isExist == true)
             
             await budClientRef.saveUserInCache()
             let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
@@ -63,7 +63,7 @@ struct ProfileBoardTests {
             let issue = try #require(await profileBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "profileBoardIsDeleted")
             
-            try await #require(budClientRef.profileBoard?.isExist == false)
+            try await #require(budClientRef.profile?.isExist == false)
             await #expect(budClientRef.isUserSignedIn == true)
         }
         
@@ -174,13 +174,13 @@ struct ProfileBoardTests {
         
         @Test func deleteProfileBoard() async throws {
             // given
-            let profileBoard = try #require(await budClientRef.profileBoard)
+            let profileBoard = try #require(await budClientRef.profile)
             
             // when
             await profileBoardRef.signOut()
             
             // then
-            await #expect(budClientRef.profileBoard == nil)
+            await #expect(budClientRef.profile == nil)
             await #expect(profileBoard.isExist == false)
         }
         @Test func deleteCommunity() async throws {
@@ -235,7 +235,7 @@ private func getProfileBoard(_ budClientRef: BudClient) async throws -> Profile 
     await signUpFormRef.signUp()
     
     // Profile
-    let profileBoardRef = try #require(await budClientRef.profileBoard?.ref)
+    let profileBoardRef = try #require(await budClientRef.profile?.ref)
     return profileBoardRef
 }
 

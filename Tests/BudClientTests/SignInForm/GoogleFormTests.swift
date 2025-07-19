@@ -198,13 +198,13 @@ struct GoogleFormTests {
                 googleFormRef.accessToken = Token.random().value
             }
             
-            try await #require(budClientRef.profileBoard == nil)
+            try await #require(budClientRef.profile == nil)
             
             // when
             await googleFormRef.signUpAndSignIn()
             
             // then
-            let profileBoard = try #require(await budClientRef.profileBoard)
+            let profileBoard = try #require(await budClientRef.profile)
             await #expect(profileBoard.isExist == true)
         }
         @Test func createCommunity() async throws {
