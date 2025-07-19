@@ -27,7 +27,7 @@ struct ObjectModelUpdaterTests {
         
         @Test func deleteObjectModel() async throws {
             // given
-            let diff = ObjectSourceDiff(
+            _ = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
                 target: objectModelRef.target,
                 name: "TEST_OBJECT",
@@ -45,7 +45,7 @@ struct ObjectModelUpdaterTests {
             let systemModelRef = await objectModelRef.config.parent.ref!
             let target = objectModelRef.target
             
-            let diff = ObjectSourceDiff(
+            _ = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
                 target: target,
                 name: "TEST_OBJECT",
@@ -63,12 +63,8 @@ struct ObjectModelUpdaterTests {
         }
         @Test func whenAlreadyRemoved() async throws {
             // given
-            let target = objectModelRef.target
-            let diff = ObjectSourceDiff(
-                id: ObjectSourceMock.ID(),
-                target: target,
-                name: "TEST_OBJECT",
-                role: .node)
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
             
             // when
             await updaterRef.appendEvent(.removed)
@@ -101,63 +97,50 @@ struct ObjectModelUpdaterTests {
         
         @Test func modifyObjectModelName() async throws {
             // given
-            let projectModelRef = await objectModelRef.config.parent.ref!
-            let projectModelUpdaterRef = projectModelRef.updater
+            let objectSourceRef = try #require(await objectModelRef.source.ref as? ObjectSourceMock)
             
-            let diff = ObjectSourceDiff(
-                id: ObjectSourceMock.ID(),
-                target: .init(),
-                name: "TEST_OBJECT",
-                role: .node)
+            let diff = await ObjectSourceDiff(objectSourceRef)
             
-            await projectModelUpdaterRef.appendEvent(.objectAdded(diff))
-            await projectModelUpdaterRef.update()
-            
-            let objectModelRef = try #require(await projectModelRef.objects.values.first?.ref)
-            await #expect(objectModelRef.name == "TEST_OBJECT")
+            let newName = "NEW_NAME"
+            let newDiff = diff.newName(newName)
             
             // when
-            let newName = "NEW_NAME"
-            let newDiff = ObjectSourceDiff(id: diff.id,
-                                           target: diff.target,
-                                           name: newName,
-                                           role: .node)
-            
             await updaterRef.appendEvent(.modified(newDiff))
             await updaterRef.update()
             
             // then
             try await #require(updaterRef.issue == nil)
             await #expect(objectModelRef.name == newName)
-            
         }
         @Test func modifyRemovedObjectModel() async throws {
             // given
-            let unknownDiff = ObjectSourceDiff(
-                id: ObjectSourceMock.ID(),
-                target: .init(),
-                name: "UNKNOWN_OBJECT",
+            await objectModelRef.delete()
+            
+            let diff = ObjectSourceDiff(
+                id: objectModelRef.source,
+                target: objectModelRef.target,
+                name: "",
                 role: .node)
             
             // when
-            await updaterRef.appendEvent(.modified(unknownDiff))
+            await updaterRef.appendEvent(.modified(diff))
             await updaterRef.update()
             
             // then
             let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyRemoved")
+            #expect(issue.reason == "objectModelIsDeleted")
         }
         @Test func removeRemovedEventInQueue() async throws {
             // given
             try await #require(updaterRef.queue.isEmpty)
             
-            let diff = ObjectSourceDiff(
+            _ = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
                 target: .init(),
                 name: "TEST_OBJECT",
                 role: .node)
             
-            await updaterRef.appendEvent(.removed(diff))
+            await updaterRef.appendEvent(.removed)
             
             try await #require(updaterRef.queue.count == 1)
             

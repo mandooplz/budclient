@@ -48,7 +48,11 @@ public final class SignInForm: Debuggable {
     func signInByCache(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
+        guard id.isExist else {
+            setIssue(Error.signInFormIsDeleted)
+            logger.failure("SignInForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         let budClientRef = self.tempConfig.parent.ref!
         guard budClientRef.isUserSignedIn == false else {
             setIssue(Error.alreadySignedIn)

@@ -18,8 +18,10 @@ public final class ObjectModel: Sendable, Debuggable {
     init(name: String,
          role: ObjectRole,
          target: ObjectID,
-         config: Config<SystemModel.ID>) {
+         config: Config<SystemModel.ID>,
+         source: any ObjectSourceIdentity) {
         self.target = target
+        self.source = source
         self.config = config
         self.updaterRef = Updater(owner: self.id)
         
@@ -39,8 +41,9 @@ public final class ObjectModel: Sendable, Debuggable {
     nonisolated let config: Config<SystemModel.ID>
     nonisolated let target: ObjectID
     nonisolated let updaterRef: Updater
+    nonisolated let source: any ObjectSourceIdentity
     
-    public internal(set) var role: ObjectRole
+    public nonisolated let role: ObjectRole
     public internal(set) var name: String
     public var nameInput: String
     

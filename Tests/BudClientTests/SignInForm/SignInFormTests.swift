@@ -284,7 +284,7 @@ struct SignInFormTests {
             await signInFormRef.signInByCache()
             
             // then
-            let issue = try #require(await budClientRef.issue as? KnownIssue)
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadySignedIn")
         }
         
@@ -569,7 +569,7 @@ struct SignInFormTests {
             await signInFormRef.signIn()
             
             // then
-            let issue = try #require(await budClientRef.issue as? KnownIssue)
+            let issue = try #require(await signInFormRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadySignedIn")
         }
     }

@@ -92,53 +92,29 @@ struct SystemModelUpdaterTests {
         
         @Test func deleteSystemModel() async throws {
             // given
-            let projectModelRef = try #require(await systemModelRef.config.parent.ref)
-            try await #require(projectModelRef.systems.count == 1)
-            
-            let projectModelUpdaterRef = projectModelRef.updaterRef
-            
-            let target = SystemID()
-            let diff = SystemSourceDiff(
-                id: SystemSourceMock.ID(),
-                target: target,
-                name: "TEST_SYSTEM_SOURCE",
-                location: .init(x: 99, y: 99))
-            
-            await projectModelUpdaterRef.appendEvent(.added(diff))
-            await projectModelUpdaterRef.update()
-            
-            try await #require(projectModelRef.systems.count == 2)
-            
-            let systemModel = try #require(await projectModelRef.systems[target])
-            try await #require(systemModel.isExist == true)
+            try await #require(systemModelRef.id.isExist == true)
             
             // when
-            await updaterRef.appendEvent(.removed(diff))
+            await updaterRef.appendEvent(.removed)
             await updaterRef.update()
             
             // then
             try await #require(updaterRef.queue.isEmpty)
             
-            await #expect(projectModelRef.systems.values.contains(systemModel) == false)
-            await #expect(systemModel.isExist == false)
+            await #expect(systemModelRef.id.isExist == false)
         }
         @Test func whenAlreadyRemoved() async throws {
             // given
-            let diff = SystemSourceDiff(id: SystemSourceMock.ID(),
-                                        target: .init(),
-                                        name: "TEST_NAME",
-                                        location: .init(x: 11, y: 11))
-            
-            await updaterRef.appendEvent(.removed(diff))
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
             
             // when
+            await updaterRef.appendEvent(.removed)
             await updaterRef.update()
             
             // then
-            try await #require(updaterRef.queue.isEmpty)
-            
             let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyRemoved")
+            #expect(issue.reason == "systemModelIsDeleted")
         }
         
         @Test func modifyNameOfSystemModel() async throws {

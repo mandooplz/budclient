@@ -201,7 +201,8 @@ package final class SystemSourceMock: SystemSourceInterface {
         
         // capture
         guard id.isExist else {
-            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            let log = logger.getLog("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            logger.raw.error("\(log)")
             return
         }
         let projectSourceRef = self.parent.ref!

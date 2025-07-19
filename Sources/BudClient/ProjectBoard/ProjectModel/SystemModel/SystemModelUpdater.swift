@@ -75,7 +75,8 @@ extension SystemModel {
                     let objectModelRef = ObjectModel(name: diff.name,
                                                      role: diff.role,
                                                      target: diff.target,
-                                                     config: config)
+                                                     config: config,
+                                                     source: diff.id)
                     
                     if diff.role == .root {
                         systemModelRef.root = objectModelRef.id
