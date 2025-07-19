@@ -78,7 +78,7 @@ public struct BudLogger: Sendable {
         // #file은 전체 파일 경로를 반환하므로, 파일 이름만 추출하여 사용하면 더 깔끔합니다.
         let fileName = URL(fileURLWithPath: file).lastPathComponent
         
-        logger.error("[\(fileName):\(line) - \(routine) failure\n\(description)")
+        logger.error("\(fileName):\(line) - \(routine) failure\n\(description)")
     }
     
     public func failure(_ error: Error,

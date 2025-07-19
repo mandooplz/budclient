@@ -35,10 +35,12 @@ struct ProjectModelTests {
             // given
             try await #require(projectModelRef.id.isExist == true)
             
-            // when
-            await projectModelRef.pushName {
+            await projectModelRef.setCaptureHook {
                 await projectModelRef.delete()
             }
+            
+            // when
+            await projectModelRef.pushName()
             
             // then
             let issue = try #require(await projectModelRef.issue)
@@ -113,10 +115,12 @@ struct ProjectModelTests {
             // given
             try await #require(projectModelRef.id.isExist == true)
             
-            // when
-            await projectModelRef.removeProject {
+            await projectModelRef.setCaptureHook {
                 await projectModelRef.delete()
             }
+            
+            // when
+            await projectModelRef.removeProject()
             
             // then
             let issue = try #require(await projectModelRef.issue)
@@ -194,10 +198,11 @@ struct ProjectModelTests {
             // given
             try await #require(projectModelRef.id.isExist == true)
             
-            // when
-            await projectModelRef.createSystem {
+            await projectModelRef.setCaptureHook {
                 await projectModelRef.delete()
             }
+            // when
+            await projectModelRef.createSystem()
             
             // then
             let issue = try #require(await projectModelRef.issue as? KnownIssue)

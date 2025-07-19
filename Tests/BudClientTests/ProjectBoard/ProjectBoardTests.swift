@@ -36,6 +36,20 @@ struct ProjectBoardTests {
             let issue = try #require(await projectBoardRef.issue as? KnownIssue)
             #expect(issue.reason == "projectBoardIsDeleted")
         }
+        
+        @Test func setHandler_ProjectHub() async throws {
+            // given
+            let budServerRef = try #require(await budClientRef.tempConfig?.budServer.ref)
+            let projectHubRef = try #require(await budServerRef.getProjectHub(projectBoardRef.config.user).ref as? ProjectHubMock)
+            
+            try await #require(projectHubRef.handler == nil)
+            
+            // when
+            await projectBoardRef.startUpdating()
+            
+            // then
+            await #expect(projectHubRef.handler != nil)
+        }
     }
     
     struct CreateProject {
@@ -50,10 +64,12 @@ struct ProjectBoardTests {
             // given
             try await #require(projectBoardRef.id.isExist == true)
             
-            // when
-            await projectBoardRef.createProject {
+            await projectBoardRef.setCaptureHook {
                 await projectBoardRef.delete()
             }
+            
+            // when
+            await projectBoardRef.createProject()
             
             // then
             try await #require(projectBoardRef.id.isExist == false)

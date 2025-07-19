@@ -90,12 +90,13 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     public func createProject() async {
         logger.start()
         
-        await self.createProject(captureHook: nil)
-    }
-    func createProject(captureHook: Hook?) async {
         // capture
         await captureHook?()
-        guard id.isExist else { setIssue(Error.projectBoardIsDeleted); return }
+        guard id.isExist else {
+            setIssue(Error.projectBoardIsDeleted)
+            logger.failure("ProjectBoard가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         let config = self.config
         
         
@@ -103,7 +104,10 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.getProjectHub(config.user).ref else { return }
+                      let projectHubRef = await budServerRef.getProjectHub(config.user).ref else {
+                    logger.failure("ProjectHub가 존재하지 않습니다.")
+                    return
+                }
                 
                 await projectHubRef.createProject()
             }
@@ -128,8 +132,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     }
     public enum Error: String, Swift.Error {
         case projectBoardIsDeleted
-        case alreadySubscribed
-        case alreadySetUp
     }
 }
 

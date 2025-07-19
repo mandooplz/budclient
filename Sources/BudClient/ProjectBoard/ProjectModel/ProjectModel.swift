@@ -14,7 +14,9 @@ private let logger = BudLogger("ProjectModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectModel: Debuggable, EventDebuggable {
+public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
+    
+    
     // MARK: core
     init(config: Config<ProjectBoard.ID>,
          target: ProjectID,
@@ -57,13 +59,14 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
     
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
+    
     // MARK: action
     public func startUpdating() async {
         logger.start()
         
-        await self.startUpdating(captureHook: nil)
-    }
-    func startUpdating(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard self.id.isExist else {
@@ -107,9 +110,6 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     public func pushName() async {
         logger.start()
         
-        await self.pushName(captureHook: nil)
-    }
-    func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -152,9 +152,6 @@ public final class ProjectModel: Debuggable, EventDebuggable {
     public func removeProject() async {
         logger.start()
         
-        await self.removeProject(captureHook: nil)
-    }
-    func removeProject(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -174,13 +171,9 @@ public final class ProjectModel: Debuggable, EventDebuggable {
         }
     }
     
-    // TODO: 마지막 SystemModel의 Location에서 랜덤한 방향으로 시스템을 무작위로 생성
     public func createSystem() async {
         logger.start()
         
-        await self.createSystem(captureHook: nil)
-    }
-    func createSystem(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
