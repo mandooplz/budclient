@@ -91,7 +91,7 @@ struct ProjectModelUpdaterTests {
                         continuation.resume()
                     }
                     
-                    await projectModelRef.createSystem()
+                    await projectModelRef.createFirstSystem()
                 }
             }
             

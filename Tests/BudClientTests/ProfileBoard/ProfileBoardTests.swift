@@ -155,7 +155,7 @@ struct ProfileBoardTests {
                         continuation.resume()
                     }
                     
-                    await projectModelRef.createSystem()
+                    await projectModelRef.createFirstSystem()
                 }
             }
             
@@ -270,7 +270,7 @@ private func createSystemModel(_ projectModelRef: ProjectModel) async throws -> 
                 continuation.resume()
             }
             
-            await projectModelRef.createSystem()
+            await projectModelRef.createFirstSystem()
         }
     }
     

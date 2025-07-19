@@ -149,29 +149,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         logger.end()
     }
     
-    public func removeProject() async {
-        logger.start()
-        
-        // capture
-        await captureHook?()
-        guard id.isExist else {
-            setIssue(Error.projectModelIsDeleted)
-            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        let projectSource = self.source
-        
-        // compute
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                guard let projectSourceRef = await projectSource.ref else { return }
-                
-                await projectSourceRef.removeProject()
-            }
-        }
-    }
-    
-    public func createSystem() async {
+    public func createFirstSystem() async {
         logger.start()
         
         // capture
@@ -199,6 +177,29 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
             }
         }
     }
+    
+    public func removeProject() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.projectModelIsDeleted)
+            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let projectSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let projectSourceRef = await projectSource.ref else { return }
+                
+                await projectSourceRef.removeProject()
+            }
+        }
+    }
+
     
     
     // MARK: value

@@ -227,7 +227,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     
     await projectBoardRef.setCallbackNil()
     
-    // ProjectModel.createSystem
+    // ProjectModel.createFirstSystem
     await #expect(projectBoardRef.projects.count == 1)
     let projectModelRef = try #require(await projectBoardRef.projects.values.first?.ref)
     
@@ -239,7 +239,7 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
                 continuation.resume()
             }
             
-            await projectModelRef.createSystem()
+            await projectModelRef.createFirstSystem()
         }
     }
     

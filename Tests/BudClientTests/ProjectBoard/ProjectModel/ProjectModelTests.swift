@@ -21,6 +21,23 @@ struct ProjectModelTests {
             self.budClientRef = await BudClient()
             self.projectModelRef = try await getProjectModel(budClientRef)
         }
+        
+        @Test func whenProjectModelIsDeleted() async throws {
+            // given
+            try await #require(projectModelRef.id.isExist == true)
+            
+            await projectModelRef.setCaptureHook {
+                await projectModelRef.delete()
+            }
+            
+            // when
+            await projectModelRef.startUpdating()
+            
+            // then
+            let issue = try #require(await projectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectModelIsDeleted")
+            
+        }
     }
     
     struct PushName {
@@ -46,6 +63,7 @@ struct ProjectModelTests {
             let issue = try #require(await projectModelRef.issue)
             #expect(issue.reason == "projectModelIsDeleted")
         }
+        
         @Test func whenNameInputIsEmpty() async throws {
             // given
             await MainActor.run {
@@ -74,7 +92,7 @@ struct ProjectModelTests {
             #expect(issue.reason == "pushWithSameValue")
         }
         
-        @Test func updateNameViaUpdater() async throws {
+        @Test func updateNameByHandler() async throws {
             // given
             let testName = "TEST_PROJECT_NAME"
             
@@ -83,19 +101,16 @@ struct ProjectModelTests {
             }
             
             // then
-            await withCheckedContinuation { con in
+            await projectModelRef.startUpdating()
+            await withCheckedContinuation { continuation in
                 Task {
-                    await projectModelRef.startUpdating()
-                    
                     await projectModelRef.setCallback {
-                        con.resume()
+                        continuation.resume()
                     }
                     
-                    // when
                     await projectModelRef.pushName()
                 }
             }
-            await projectModelRef.setCallbackNil()
             
             
             // then
@@ -186,7 +201,7 @@ struct ProjectModelTests {
         }
     }
     
-    struct CreateSystem {
+    struct CreateFirstSystem {
         let budClientRef: BudClient
         let projectModelRef: ProjectModel
         init() async throws {
@@ -202,7 +217,7 @@ struct ProjectModelTests {
                 await projectModelRef.delete()
             }
             // when
-            await projectModelRef.createSystem()
+            await projectModelRef.createFirstSystem()
             
             // then
             let issue = try #require(await projectModelRef.issue as? KnownIssue)
@@ -223,7 +238,7 @@ struct ProjectModelTests {
                         continuation.resume()
                     }
                     
-                    await projectModelRef.createSystem()
+                    await projectModelRef.createFirstSystem()
                 }
             }
             await projectModelRef.setCallbackNil()
@@ -242,7 +257,7 @@ struct ProjectModelTests {
             try await #require(projectSourceRef.systems.isEmpty == true)
             
             // when
-            await projectModelRef.createSystem()
+            await projectModelRef.createFirstSystem()
             
             // then
             await #expect(projectSourceRef.systems.count == 1)
