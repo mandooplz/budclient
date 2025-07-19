@@ -212,7 +212,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         self.delete()
         
         // notify
-        self.handler?.execute(.removed(diff))
+        self.handler?.execute(.removed)
     }
     
     

@@ -61,19 +61,13 @@ extension ProjectModel {
                     logger.finished("modified ProjectModel")
                     
                 // remove ProjectModel
-                case .removed(let diff):
-                    guard let removedModelRef = projectBoardRef.projects[diff.target]?.ref else {
-                        setIssue(Error.alreadyRemoved)
-                        logger.failure(Error.alreadyRemoved)
-                        return
-                    }
-                    
-                    for systemModel in removedModelRef.systems.values {
+                case .removed:
+                    for systemModel in projectModelRef.systems.values {
                         systemModel.ref?.delete()
                     }
                     
-                    removedModelRef.delete()
-                    projectBoardRef.projects[diff.target] = nil
+                    projectModelRef.delete()
+                    projectBoardRef.projects[projectModelRef.target] = nil
                     
                     logger.finished("removed ProjectModel")
                     

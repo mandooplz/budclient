@@ -46,16 +46,10 @@ extension SystemModel {
                 let event = queue.removeFirst()
                 
                 switch event {
-                case .removed(let diff):
+                case .removed:
                     // remove SystemModel
-                    guard let removedModel = projectModelRef.systems[diff.target] else {
-                        setIssue(Error.alreadyRemoved)
-                        logger.failure(Error.alreadyRemoved)
-                        return
-                    }
-                    
-                    removedModel.ref?.delete()
-                    projectModelRef.systems[diff.target] = nil
+                    systemModelRef.delete()
+                    projectModelRef.systems[systemModelRef.target] = nil
                     
                     logger.finished("removed SystemModel")
                 case .modified(let diff):

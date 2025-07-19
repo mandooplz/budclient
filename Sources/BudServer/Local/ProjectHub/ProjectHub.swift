@@ -105,7 +105,7 @@ package final class ProjectHub: ProjectHubInterface {
                                                                   target: data.target,
                                                                   name: data.name)
                         
-                        projectSourceRef.handler?.execute(.removed(projectSourceDiff))
+                        projectSourceRef.handler?.execute(.removed)
                         
                         // remove ProjectSource
                         projectSourceRef.delete()

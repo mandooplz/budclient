@@ -88,7 +88,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
                                      target: self.target,
                                      name: self.name)
 
-        handler?.execute(.removed(diff))
+        handler?.execute(.removed)
         
         projectHubRef.projectSources.remove(self.id)
         self.delete()

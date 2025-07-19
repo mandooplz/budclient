@@ -124,7 +124,7 @@ package final class ProjectSource: ProjectSourceInterface {
                             return
                         }
                         
-                        systemSourceRef.handler?.execute(.removed(diff))
+                        systemSourceRef.handler?.execute(.removed)
                         
                         // delete SystemSource
                         self.systemSources[data.target] = nil

@@ -118,7 +118,7 @@ package final class SystemSource: SystemSourceInterface {
                     case .removed:
                         // remove ObjectSource
                         objectSource.ref?.delete()
-                        objectSource.ref?.handler?.execute(.removed(diff))
+                        objectSource.ref?.handler?.execute(.removed)
                         return
                     }
                 }
