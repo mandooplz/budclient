@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 
 private let logger = BudLogger("SystemSourceMock")
 
@@ -37,11 +38,13 @@ package final class SystemSourceMock: SystemSourceInterface {
     let parent: ProjectSourceMock.ID
     
     private(set) var name: String
+    package var location: Location
     package func setName(_ value: String) async {
         self.name = value
     }
     
-    package var location: Location
+    package var objects = OrderedDictionary<ObjectID, ObjectSourceMock.ID>()
+
     
     
     var handler: EventHandler?
@@ -164,6 +167,33 @@ package final class SystemSourceMock: SystemSourceInterface {
         // notify
         let diff = SystemSourceDiff(systemSourceRef)
         projectSourceHandler?.execute(.added(diff))
+    }
+    
+    package func createRoot() async {
+        logger.start()
+        
+        // caputure
+        guard id.isExist else {
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard objects.isEmpty else {
+            logger.failure("Root에 해당하는 ObjectSourceMock이 이미 존재합니다.")
+            return
+        }
+        let handler = self.handler
+        
+        
+        // mutate
+        let rootObjectSourceRef = ObjectSourceMock(
+            name: "New RootObject",
+            role: .root,
+            parentRef: self)
+        
+        self.objects[rootObjectSourceRef.target] = rootObjectSourceRef.id
+        
+        // notify
+        handler?.execute(.objectAdded(.init(rootObjectSourceRef)))
     }
     
     package func removeSystem() async {

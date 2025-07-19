@@ -33,7 +33,6 @@ public final class BudClient: Debuggable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let mode: SystemMode
-    nonisolated let system = SystemID()
     
     private nonisolated let plistPath: String
     var tempConfig: TempConfig<BudClient.ID>?
@@ -79,7 +78,7 @@ public final class BudClient: Debuggable {
         }
         
         // mutate
-        let tempConfig = TempConfig(id, mode, system, budServer, budCache)
+        let tempConfig = TempConfig(id, mode, budServer, budCache)
         self.tempConfig = tempConfig
         
         let signInFormRef = SignInForm(tempConfig: tempConfig)
@@ -111,7 +110,8 @@ public final class BudClient: Debuggable {
     
     
     // MARK: value
-    @MainActor public struct ID: Sendable, Hashable {
+    @MainActor
+    public struct ID: Sendable, Hashable {
         public let value: UUID
         nonisolated init(_ value: UUID = UUID()) {
             self.value = value
@@ -135,28 +135,25 @@ public final class BudClient: Debuggable {
 public struct TempConfig<Parent: Sendable>: Sendable {
     public let parent: Parent
     let mode: SystemMode
-    let system: SystemID
     let budServer: any BudServerIdentity
     let budCache: any BudCacheIdentity
     
     init(_ parent: Parent,
          _ mode: SystemMode,
-         _ system: SystemID,
          _ budServer: any BudServerIdentity,
          _ budCache: any BudCacheIdentity) {
         self.parent = parent
         self.mode = mode
-        self.system = system
         self.budServer = budServer
         self.budCache = budCache
     }
     
     
     func getConfig<P:Sendable>(_ parent: P, user: UserID) -> Config<P> {
-        .init(parent, mode, system, user, budServer, budCache)
+        .init(parent, mode, user, budServer, budCache)
     }
     func setParent<P:Sendable>(_ parent: P) -> TempConfig<P> {
-        .init(parent, mode, system, budServer, budCache)
+        .init(parent, mode, budServer, budCache)
     }
 }
 
@@ -166,7 +163,6 @@ public struct Config<Parent: Sendable> : Sendable{
     public let parent: Parent
     
     let mode: SystemMode
-    let system: SystemID
     let user: UserID
     
     let budServer: any BudServerIdentity
@@ -174,23 +170,21 @@ public struct Config<Parent: Sendable> : Sendable{
     
     init(_ parent: Parent,
          _ mode: SystemMode,
-         _ system: SystemID,
          _ user: UserID,
          _ budServer: any BudServerIdentity,
          _ budCache: any BudCacheIdentity) {
         self.parent = parent
         self.mode = mode
-        self.system = system
         self.user = user
         self.budServer = budServer
         self.budCache = budCache
     }
     
     func getTempConfig<P:Sendable>(_ parent: P) -> TempConfig<P> {
-        .init(parent, mode, system, budServer, budCache)
+        .init(parent, mode, budServer, budCache)
     }
     func setParent<P: Sendable>(_ parent: P) -> Config<P> {
-        .init(parent, mode, system, user, budServer, budCache)
+        .init(parent, mode, user, budServer, budCache)
     }
 }
 

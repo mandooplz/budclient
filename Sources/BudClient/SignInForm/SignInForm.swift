@@ -43,33 +43,39 @@ public final class SignInForm: Debuggable {
     public func signInByCache() async {
         logger.start()
         
-        await signInByCache(captureHook: nil,
-                            mutateHook: nil)
+        await signInByCache(captureHook: nil, mutateHook: nil)
     }
     func signInByCache(captureHook: Hook?, mutateHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
         let budClientRef = self.tempConfig.parent.ref!
+        guard budClientRef.isUserSignedIn == false else {
+            setIssue(Error.alreadySignedIn)
+            logger.failure("이미 로그인된 상태입니다.")
+            return
+        }
         
         // compute
         async let result: UserID? = {
-            guard let budCacheRef = await tempConfig.budCache.ref else {
-                return nil
-            }
+            let budCacheRef = await tempConfig.budCache.ref!
+            
             return await budCacheRef.getUser()
         }()
         guard let user = await result else {
             setIssue(Error.userIsNilInCache)
-            logger.failure(Error.userIsNilInCache)
+            logger.failure("BudCache에 User 정보가 존재하지 않습니다.")
             return
         }
         
         // mutate
         await mutateHook?()
-        mutateForSignIn(budClientRef: budClientRef,
-                        user: user)
-        
+        guard id.isExist else {
+            setIssue(Error.signInFormIsDeleted)
+            logger.failure("SignInForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        mutateForSignIn(budClientRef: budClientRef, user: user)
     }
     
     public func signIn() async {
@@ -81,25 +87,33 @@ public final class SignInForm: Debuggable {
         // capture
         await captureHook?()
         guard id.isExist else { setIssue(Error.signInFormIsDeleted); return }
+        let budClientRef = self.tempConfig.parent.ref!
+        guard budClientRef.isUserSignedIn == false else {
+            setIssue(Error.alreadySignedIn)
+            logger.failure("이미 로그인된 상태입니다.")
+            return
+        }
+        
         guard email.isEmpty == false else {
             setIssue(Error.emailIsEmpty)
-            logger.failure(Error.emailIsEmpty)
+            logger.failure("SignInForm의 email이 빈 문자열입니다.")
             return
         }
         guard password.isEmpty == false else {
             setIssue(Error.passwordIsEmpty)
-            logger.failure(Error.passwordIsEmpty)
+            logger.failure("SignInForm의 password가 빈 문자열입니다.")
             return
         }
         
-        let budClientRef = self.tempConfig.parent.ref!
         let tempConfig = self.tempConfig
+        let (email, password) = (self.email, self.password)
         
         // compute
-        guard let budServerRef = await tempConfig.budServer.ref,
-                let accountHubRef = await budServerRef.accountHub.ref else  { return }
+        let budServerRef = await tempConfig.budServer.ref!
+        let accountHubRef = await budServerRef.accountHub.ref!
         
-        let emailAuthFormRef = await accountHubRef.emailAuthFormType.init(email: email, password: password)
+        let emailAuthFormRef = await accountHubRef.emailAuthFormType
+            .init(email: email, password: password)
         
         await emailAuthFormRef.submit()
         
@@ -111,6 +125,11 @@ public final class SignInForm: Debuggable {
         
         // mutate
         await mutateHook?()
+        guard id.isExist else {
+            setIssue(Error.signInFormIsDeleted)
+            logger.failure("SignInForm이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
         switch result {
         case .success(let user):
             mutateForSignIn(budClientRef: budClientRef, user: user)
@@ -123,10 +142,8 @@ public final class SignInForm: Debuggable {
         }
         
     }
-    private func mutateForSignIn(budClientRef: BudClient,
-                                 user: UserID) {
-        guard id.isExist else { setIssue(Error.signInFormIsDeleted); return  }
-        guard budClientRef.isUserSignedIn == false else { return }
+    private func mutateForSignIn(budClientRef: BudClient, user: UserID) {
+        
         
         let config = tempConfig.getConfig(budClientRef.id, user: user)
         let projectBoardRef = ProjectBoard(config: config)
@@ -205,6 +222,7 @@ public final class SignInForm: Debuggable {
         case signUpFormAlreadyExist
         case emailIsEmpty, passwordIsEmpty
         case userNotFound, wrongPassword
+        case alreadySignedIn
         case userIsNilInCache
     }
 }

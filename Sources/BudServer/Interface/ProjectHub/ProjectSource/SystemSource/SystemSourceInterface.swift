@@ -14,15 +14,17 @@ package protocol SystemSourceInterface: Sendable {
     
     // MARK: state
     func setName(_ value: String) async
-    func setHandler(_ handler: Handler<SystemSourceEvent>) async
+    func setHandler(_ handler: Handler<SystemSourceEvent>) async;
     
-    func notifyNameChanged() async
+    func notifyNameChanged() async;
     
     // MARK: action
     func addSystemRight() async
     func addSystemLeft() async
     func addSystemTop() async
-    func addSystemBottom() async
+    func addSystemBottom() async;
+    
+    func createRoot() async
     
     func removeSystem() async
 }
@@ -39,7 +41,7 @@ package protocol SystemSourceIdentity: Sendable, Hashable {
 // MARK: Values
 public enum SystemSourceEvent: Sendable {
     case modified(SystemSourceDiff)
-    case removed(SystemSourceDiff)
+    case removed
     
     case objectAdded(ObjectSourceDiff)
     case flowAdded(FlowSourceDiff)

@@ -272,6 +272,22 @@ struct SignInFormTests {
             await #expect(googleForm.isExist == false)
         }
         
+        @Test func whenAlreadySignedIn() async throws {
+            // given
+            await MainActor.run {
+                budClientRef.user = UserID()
+            }
+            
+            try await #require(budClientRef.isUserSignedIn == true)
+            
+            // when
+            await signInFormRef.signInByCache()
+            
+            // then
+            let issue = try #require(await budClientRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadySignedIn")
+        }
+        
         @Test func whenEmailCredentialIsMissingAtBudCache() async throws {
             // given
             let newBudClientRef = await BudClient()
@@ -539,6 +555,22 @@ struct SignInFormTests {
             try await #require(signInFormRef.isIssueOccurred == false)
             
             await #expect(budClientRef.isUserSignedIn == true)
+        }
+        
+        @Test func whenAlreadySignedIn() async throws {
+            // given
+            await MainActor.run {
+                budClientRef.user = UserID()
+            }
+            
+            try await #require(budClientRef.isUserSignedIn == true)
+            
+            // when
+            await signInFormRef.signIn()
+            
+            // then
+            let issue = try #require(await budClientRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadySignedIn")
         }
     }
 }

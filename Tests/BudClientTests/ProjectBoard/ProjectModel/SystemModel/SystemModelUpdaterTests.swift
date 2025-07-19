@@ -10,7 +10,7 @@ import Values
 @testable import BudClient
 @testable import BudServer
 
-private let logger = WorkFlow.getLogger(for: "SystemModelUpdaterTest")
+private let logger = BudLogger("SystemModelUpdaterTest")
 
 
 // MARK: Tests

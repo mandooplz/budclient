@@ -282,6 +282,19 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let source = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                if let systemSourceRef = await source.ref {
+                    await systemSourceRef.createRoot()
+                } else {
+                    logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다. -> 추후 정리 로직 구현 예정")
+                    return
+                }
+            }
+        }
     }
     
     public func removeSystem() async {

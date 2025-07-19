@@ -27,7 +27,7 @@ package protocol ObjectSourceIdentity: Sendable, Hashable {
 // MARK: Values
 public enum ObjectSourceEvent: Sendable {
     case modified(ObjectSourceDiff)
-    case removed(ObjectSourceDiff)
+    case removed
     
     case addedState(StateSourceDiff)
 }

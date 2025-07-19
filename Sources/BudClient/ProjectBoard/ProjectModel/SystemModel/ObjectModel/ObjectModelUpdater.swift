@@ -32,11 +32,35 @@ extension ObjectModel {
         
         // MARK: action
         func update(mutateHook: Hook? = nil) async {
+            guard let objectModelRef = owner.ref else {
+                setIssue(Error.objectModelIsDeleted)
+                logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+                return
+            }
+            let systemModelRef = objectModelRef.config.parent.ref!
             
+            while queue.isEmpty == false {
+                let event = queue.removeFirst()
+                
+                switch event {
+                case .modified(let _):
+                    return
+                case .removed:
+                    systemModelRef.objects[objectModelRef.target] = nil
+                    objectModelRef.delete()
+                    
+                    logger.finished("removed \(objectModelRef.id)")
+                case .addedState(let _):
+                    return
+                }
+            }
         }
         
         
         // MARK: value
+        enum Error: String, Swift.Error {
+            case objectModelIsDeleted
+        }
         typealias Event = ObjectSourceEvent
     }
 }

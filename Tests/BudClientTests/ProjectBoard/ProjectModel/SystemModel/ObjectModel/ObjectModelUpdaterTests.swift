@@ -10,9 +10,10 @@ import Values
 @testable import BudClient
 @testable import BudServer
 
+private let logger = BudLogger("ObjectModelUpdaterTest")
 
 // MARK: Tests
-@Suite("ObjectModel.Updater", .disabled())
+@Suite("ObjectModelUpdater", .timeLimit(.minutes(1)))
 struct ObjectModelUpdaterTests {
     struct Update {
         let budClientRef: BudClient
@@ -26,65 +27,56 @@ struct ObjectModelUpdaterTests {
         
         @Test func deleteObjectModel() async throws {
             // given
-            let addedDiff = ObjectSourceDiff(
+            let diff = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
-                target: .init(),
+                target: objectModelRef.target,
                 name: "TEST_OBJECT",
                 role: .node)
             
-            let systemModelRef = await objectModelRef.config.parent.ref!
-            let systemModelUpdaterRef = systemModelRef.updater
-            
-            await systemModelUpdaterRef.appendEvent(.objectAdded(addedDiff))
-            
-            try await #require(systemModelRef.objects.count == 1)
-            let objectModel = try #require(await systemModelRef.objects.values.first)
-            
             // when
-            await updaterRef.appendEvent(.removed(addedDiff))
+            await updaterRef.appendEvent(.removed)
             await updaterRef.update()
             
             // then
-            await #expect(objectModel.isExist == false)
+            await #expect(objectModelRef.id.isExist == false)
         }
         @Test func removeObjectModelInSystemModel() async throws {
             // given
-            let addedDiff = ObjectSourceDiff(
+            let systemModelRef = await objectModelRef.config.parent.ref!
+            let target = objectModelRef.target
+            
+            let diff = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
-                target: .init(),
+                target: target,
                 name: "TEST_OBJECT",
                 role: .node)
-            
-            let systemModelRef = await objectModelRef.config.parent.ref!
-            let systemModelUpdaterRef = systemModelRef.updater
-            
-            await systemModelUpdaterRef.appendEvent(.objectAdded(addedDiff))
+
             
             try await #require(systemModelRef.objects.count == 1)
-            let objectModel = try #require(await systemModelRef.objects.values.first)
             
             // when
-            await updaterRef.appendEvent(.removed(addedDiff))
+            await updaterRef.appendEvent(.removed)
             await updaterRef.update()
             
             // then
-            await #expect(systemModelRef.objects.values.contains(objectModel) == false)
+            await #expect(systemModelRef.objects[target] == nil)
         }
         @Test func whenAlreadyRemoved() async throws {
             // given
+            let target = objectModelRef.target
             let diff = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
-                target: .init(),
+                target: target,
                 name: "TEST_OBJECT",
                 role: .node)
             
             // when
-            await updaterRef.appendEvent(.removed(diff))
+            await updaterRef.appendEvent(.removed)
             await updaterRef.update()
             
             // then
             let issue = try #require(await updaterRef.issue as? KnownIssue)
-            #expect(issue.reason == "alreadyRemoved")
+            #expect(issue.reason == "objectModelIsDeleted")
         }
         @Test func removeModifiedEventInQueue() async throws {
             // given
@@ -211,10 +203,10 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
             await projectBoardRef.setCallback {
                 continuation.resume()
             }
+            
             await projectBoardRef.createProject()
         }
     }
-    await projectBoardRef.setCallbackNil()
     
     await #expect(projectBoardRef.projects.count == 1)
 
@@ -232,8 +224,6 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
         }
     }
     
-    await projectModelRef.setCallbackNil()
-    
     // SystemModel
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     await systemModelRef.startUpdating()
@@ -249,5 +239,8 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
     await systemModelRef.setCallbackNil()
     
     let rootObjectModelRef = try #require(await systemModelRef.root?.ref)
+    
+    logger.finished("테스트 준비 끝")
+    
     return rootObjectModelRef
 }

@@ -37,7 +37,7 @@ package protocol ProjectSourceIdentity: Sendable, Hashable {
 // MARK: Values
 public enum ProjectSourceEvent: Sendable {
     case modified(ProjectSourceDiff)
-    case removed(ProjectSourceDiff)
+    case removed
     
     case added(SystemSourceDiff)
 }
