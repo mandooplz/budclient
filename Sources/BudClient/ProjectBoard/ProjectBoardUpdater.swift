@@ -60,7 +60,7 @@ extension ProjectBoard {
                     
                     projectBoardRef.projects[diff.target] = projectModelRef.id
 
-                    logger.finished("added \(diff.id)")
+                    logger.end("added \(diff.id)")
                 }
             }
         }

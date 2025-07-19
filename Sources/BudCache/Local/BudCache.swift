@@ -39,8 +39,7 @@ package final class BudCache: BudCacheInterface {
         do {
             try Auth.auth().signOut()
         } catch {
-            let log = logger.getLog("\(error)")
-            logger.raw.fault("\(log)")
+            logger.failure(error)
         }
     }
     

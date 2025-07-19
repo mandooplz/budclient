@@ -9,13 +9,13 @@ import Values
 import FirebaseAuth
 import FirebaseCore
 
-private let logger = BudLogger("GoogleAuthForm")
 
 
 // MARK: Object
 @MainActor
 package final class GoogleAuthForm: GoogleAuthFormInterface {
     // MARK: core
+    private let logger = BudLogger("GoogleAuthForm")
     package init(token: GoogleToken) async {
         self.token = token
     }
@@ -40,7 +40,7 @@ package final class GoogleAuthForm: GoogleAuthFormInterface {
             guard isEmailPasswordUser == false else {
                 let user = UserID(firebaseUser.uid)
                 self.result = .success(user)
-                logger.info("Google 로그인이 되어 있어 조기종료합니다.")
+                logger.end("Google 로그인이 되어 있어 조기종료합니다.")
                 return
             }
         }

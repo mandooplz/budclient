@@ -7,13 +7,13 @@
 import Foundation
 import Values
 
-private let logger = BudLogger("ProjectSourceMock")
 
 
 // MARK: Object
 @Server
 package final class ProjectSourceMock: ProjectSourceInterface {
     // MARK: core
+    private let logger = BudLogger("ProjectSourceMock")
     package init(name: String,
                  creator: UserID,
                  projectHubMockRef: ProjectHubMock.ID) {

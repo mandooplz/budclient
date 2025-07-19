@@ -79,27 +79,24 @@ public final class ProjectModel: Debuggable, EventDebuggable {
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let projectSourceRef = await projectSource.ref else {
-                    let log = logger.getLog("ProjectSource가 존재하지 않습니다. -> ProjectSource 삭제 로직 구현 필요")
-                    logger.raw.fault("\(log)")
+                    logger.failure("ProjectSource가 존재하지 않습니다. -> ProjectSource 삭제 로직 구현 필요")
                     return
                 }
                 
                 await projectSourceRef.setHandler(
                     .init({ event in
                         Task {
-                            await WorkFlow {
-                                guard let projectModelRef = await projectModel.ref else {
-                                    return
-                                }
-                                
-                                let updaterRef = projectModelRef.updaterRef
-                                
-                                await updaterRef.appendEvent(event)
-                                await updaterRef.update()
-                                
-                                await projectModelRef.callback?()
-                                await projectModelRef.setCallbackNil()
+                            guard let projectModelRef = await projectModel.ref else {
+                                return
                             }
+                            
+                            let updaterRef = projectModelRef.updaterRef
+                            
+                            await updaterRef.appendEvent(event)
+                            await updaterRef.update()
+                            
+                            await projectModelRef.callback?()
+                            await projectModelRef.setCallbackNil()
                         }
                     }))
             }
@@ -149,7 +146,7 @@ public final class ProjectModel: Debuggable, EventDebuggable {
             }
         }
         
-        logger.finished()
+        logger.end()
     }
     
     public func removeProject() async {

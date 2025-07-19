@@ -8,13 +8,13 @@ import Foundation
 import Values
 import FirebaseAuth
 
-private let logger = BudLogger("GoogleRegisterForm")
 
 
 // MARK: Object
 @Server
 package final class GoogleRegisterForm: GoogleRegisterFormInterface {
     // MARK: core
+    private let logger = BudLogger("GoogleRegisterForm")
     package init(token: GoogleToken) {
         self.token = token
     }

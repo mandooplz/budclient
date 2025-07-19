@@ -58,7 +58,7 @@ extension ProjectModel {
                     
                     modifiedModel.ref?.name = diff.name
                     
-                    logger.finished("modified ProjectModel")
+                    logger.end("modified ProjectModel")
                     
                 // cancel ProjectModel
                 case .removed:
@@ -69,7 +69,7 @@ extension ProjectModel {
                     projectModelRef.delete()
                     projectBoardRef.projects[projectModelRef.target] = nil
                     
-                    logger.finished("removed ProjectModel")
+                    logger.end("removed ProjectModel")
                     
                 // create SystemModel
                 case .added(let sysDiff):
@@ -90,7 +90,7 @@ extension ProjectModel {
                     
                     projectModelRef.systems[sysDiff.target] = systemModelRef.id
                     
-                    logger.finished("added SystemModel")
+                    logger.end("added SystemModel")
                 }
                 
             }

@@ -51,13 +51,13 @@ extension ObjectModel {
                 case .modified(let diff):
                     objectModelRef.name = diff.name
                     
-                    logger.finished("modified ObjectModel")
+                    logger.end("modified ObjectModel")
                     return
                 case .removed:
                     systemModelRef.objects[objectModelRef.target] = nil
                     objectModelRef.delete()
                     
-                    logger.finished("removed \(objectModelRef.id)")
+                    logger.end("removed \(objectModelRef.id)")
                 case .addedState:
                     
                     logger.failure("아직 미구현")

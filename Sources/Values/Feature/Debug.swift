@@ -45,63 +45,32 @@ public struct UnknownIssue: IssueRepresentable {
 
 
 
-// MARK: BudLogger
+// MARK: Logger
 public struct BudLogger: Sendable {
-    // MARK: rawValue
-    private let objectName: String
     private let logger: Logger
     public init(_ objectName: String) {
-        self.objectName = objectName
         self.logger = Logger(subsystem: "Bud", category: objectName)
     }
     
-    public var raw: Logger {
-        return self.logger
-    }
-    
-    
-    // MARK: log
-    static func start(_ workflow: WorkFlow.ID = WorkFlow.id) {
-        Logger(subsystem: "Bud", category: "").debug("[\(workflow)] start")
-    }
-    
-    static func end(_ workflow: WorkFlow.ID = WorkFlow.id) {
-        Logger(subsystem: "Bud", category: "").debug("[\(workflow)] end")
-    }
-    
-    public func start(_ description: String? = nil,
-                      _ workflow: WorkFlow.ID = WorkFlow.id,
+    public func start(_ file: String = #file,
+                      _ line: Int = #line,
                       _ routine: String = #function) {
+        let fileName = URL(fileURLWithPath: file).lastPathComponent
         
-        if let description {
-            logger.debug("[\(workflow)] \(objectName).\(routine) start\n\(description)")
-        } else {
-            logger.debug("[\(workflow)] \(objectName).\(routine) start")
-        }
+        logger.debug("\(fileName):\(line) - \(routine) start")
     }
     
-    public func info(_ description: String? = nil,
-                     _ workflow: WorkFlow.ID = WorkFlow.id,
-                     _ routine: String = #function) {
-        if let description {
-            logger.debug("[\(workflow)] \(objectName).\(routine) INFO\n\(description)")
-        } else {
-            logger.debug("[\(workflow)] \(objectName).\(routine) INFO")
-        }
-    }
-    
-    public func finished(_ description: String? = nil,
-                        _ workflow: WorkFlow.ID = WorkFlow.id,
-                        _ routine: String = #function) {
-        if let description {
-            logger.debug("[\(workflow)] \(objectName).\(routine) finished\n\(description)")
-        } else {
-            logger.debug("[\(workflow)] \(objectName).\(routine) finished")
-        }
+    public func end(_ description: String? = nil,
+                    _ file: String = #file,
+                    _ line: Int = #line,
+                    _ routine: String = #function) {
+        
+        let fileName = URL(fileURLWithPath: file).lastPathComponent
+        
+        logger.debug("\(fileName):\(line) - \(routine) \(description ?? "ended")")
     }
     
     public func failure(_ description: String,
-                        _ workflow: WorkFlow.ID = WorkFlow.id,
                         _ file: String = #file,      // 추가: 파일 경로
                         _ line: Int = #line,        // 추가: 줄 번호
                         _ routine: String = #function) { // 기존 #function
@@ -109,32 +78,15 @@ public struct BudLogger: Sendable {
         // #file은 전체 파일 경로를 반환하므로, 파일 이름만 추출하여 사용하면 더 깔끔합니다.
         let fileName = URL(fileURLWithPath: file).lastPathComponent
         
-        logger.error("[\(workflow)] \(fileName):\(line) - \(objectName).\(routine) failure\n\(description)")
+        logger.error("[\(fileName):\(line) - \(routine) failure\n\(description)")
     }
-
-
+    
     public func failure(_ error: Error,
-                        _ workflow: WorkFlow.ID = WorkFlow.id,
-                        _ file: String = #file,      // 추가
-                        _ line: Int = #line,        // 추가
-                        _ routine: String = #function) { // 추가
+                 _ file: String = #file,      // 추가
+                 _ line: Int = #line,        // 추가
+                 _ routine: String = #function) { // 추가
         // 다른 failure 함수를 호출할 때 file, line, routine 정보를 그대로 전달합니다.
-        self.failure("\(error)", workflow, file, line, routine)
-    }
-
-    
-    
-    // MARK: Message
-    public func getLog(_ description: String,
-                          _ workflow: WorkFlow.ID = WorkFlow.id,
-                          _ routine: String = #function) -> String {
-        return "[\(workflow)] \(objectName).\(routine) critical\n\(description)"
+        self.failure("\(error)", file, line, routine)
     }
     
-    public func getLog(_ error: Error,
-                       _ workflow: WorkFlow.ID = WorkFlow.id,
-                       _ routine: String = #function) -> String {
-        return self.getLog("\(error)", workflow, routine)
-    }
 }
-

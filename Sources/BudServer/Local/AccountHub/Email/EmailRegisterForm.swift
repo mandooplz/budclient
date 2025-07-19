@@ -8,13 +8,13 @@ import Foundation
 import Values
 import FirebaseAuth
 
-private let logger = BudLogger("EmailRegisterForm")
 
 
 // MARK: Object
 @MainActor
 package final class EmailRegisterForm: EmailRegisterFormInterface {
     // MARK: core
+    private let logger = BudLogger("EmailRegisterForm")
     package init(email: String, password: String) {
         self.email = email
         self.password = password

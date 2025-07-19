@@ -14,7 +14,7 @@ private let logger = BudLogger("ProjectBoard")
 
 // MARK: Object
 @MainActor @Observable
-public final class ProjectBoard: Debuggable, EventDebuggable {
+public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     // MARK: core
     init(config: Config<BudClient.ID>) {
         self.config = config
@@ -37,14 +37,15 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
     
+    package var captureHook: Hook? = nil
+    package var computeHook: Hook? = nil
+    package var mutateHook: Hook? = nil
+    
     
     // MARK: action
     public func startUpdating() async {
         logger.start()
         
-        await self.startUpdating(captureHook: nil)
-    }
-    func startUpdating(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard self.id.isExist else {
@@ -60,27 +61,25 @@ public final class ProjectBoard: Debuggable, EventDebuggable {
             group.addTask {
                 guard let budServerRef = await config.budServer.ref,
                       let projectHubRef = await budServerRef.getProjectHub(config.user).ref else {
-                    let log = logger.getLog("ProjectHub가 존재하지 않습니다.")
-                    logger.raw.fault("\(log)")
+                    logger.failure("User의 ProjectHub가 존재하지 않습니다.")
                     return
                 }
                 
                 await projectHubRef.setHandler(
                     .init({ event in
                         Task {
-                            await WorkFlow {
-                                guard let projectBoardRef = await projectBoard.ref else {
-                                    return
-                                }
-                                
-                                let updaterRef = projectBoardRef.updater
-                                
-                                await updaterRef.appendEvent(event)
-                                await updaterRef.update()
-                                
-                                await projectBoardRef.callback?()
-                                await projectBoardRef.setCallbackNil()
+                            guard let projectBoardRef = await projectBoard.ref else {
+                                // ProjectBoard가 삭제된 상태라면? 어떻게 처리해야 하는가??
+                                return
                             }
+                            
+                            let updaterRef = projectBoardRef.updater
+                            
+                            await updaterRef.appendEvent(event)
+                            await updaterRef.update()
+                            
+                            await projectBoardRef.callback?()
+                            await projectBoardRef.setCallbackNil()
                         }
                     })
                 )

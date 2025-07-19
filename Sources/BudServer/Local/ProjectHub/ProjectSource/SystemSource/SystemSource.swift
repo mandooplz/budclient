@@ -70,8 +70,7 @@ package final class SystemSource: SystemSourceInterface {
         
         // set listener
         guard self.listener == nil else {
-            let log = logger.getLog("Firebase 리스너가 이미 등록되어 있습니다.")
-            logger.raw.error("\(log)")
+            logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
             return
         }
         
@@ -79,8 +78,7 @@ package final class SystemSource: SystemSourceInterface {
         self.listener = objectSourceCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    let report = logger.getLog("\(error!)")
-                    logger.raw.fault("\(report)")
+                    logger.failure(error!)
                     return
                 }
                 
@@ -92,8 +90,7 @@ package final class SystemSource: SystemSourceInterface {
                     do {
                         data = try changed.document.data(as: ObjectSource.Data.self)
                     } catch {
-                        let log = logger.getLog("ObjectSource.Data 디코딩 실패 \(documentId)\n\(error)")
-                        logger.raw.fault("\(log)")
+                        logger.failure("ObjectSource.Data 디코딩 실패 \(documentId)\n\(error)")
                         return
                     }
                     
@@ -174,8 +171,7 @@ package final class SystemSource: SystemSourceInterface {
                     let systemLocations = projectSourceData.systemLocations
                     
                     guard systemLocations.contains(topLocation) == false else {
-                        let log = logger.getLog("위쪽에 이미 SystemSource가 존재합니다")
-                        logger.raw.error("\(log)")
+                        logger.failure("위쪽에 이미 SystemSource가 존재합니다")
                         return
                     }
                     
@@ -197,16 +193,14 @@ package final class SystemSource: SystemSourceInterface {
                     )
                     
                 } catch {
-                    let log = logger.getLog("\(error)")
-                    logger.raw.fault("\(log)")
+                    logger.failure(error)
                     return
                 }
                 
                 return
             }
         } catch {
-            let log = logger.getLog("\(error)")
-            logger.raw.fault("\(log)")
+            logger.failure(error)
             return
         }
     }
@@ -252,8 +246,7 @@ package final class SystemSource: SystemSourceInterface {
                     let systemLocations = projectSourceData.systemLocations
                     
                     guard systemLocations.contains(leftLocation) == false else {
-                        let log = logger.getLog("Left 방향에 이미 SystemSource가 존재합니다")
-                        logger.raw.error("\(log)")
+                        logger.failure("Left 방향에 이미 SystemSource가 존재합니다")
                         return
                     }
                     
@@ -275,16 +268,14 @@ package final class SystemSource: SystemSourceInterface {
                     )
                     
                 } catch {
-                    let log = logger.getLog("\(error)")
-                    logger.raw.fault("\(log)")
+                    logger.failure(error)
                     return
                 }
                 
                 return
             }
         } catch {
-            let log = logger.getLog("\(error)")
-            logger.raw.fault("\(log)")
+            logger.failure(error)
             return
         }
     }
@@ -330,8 +321,7 @@ package final class SystemSource: SystemSourceInterface {
                     let systemLocations = projectSourceData.systemLocations
                     
                     guard systemLocations.contains(rightLocation) == false else {
-                        let log = logger.getLog("Right 방향에 이미 SystemSource가 존재합니다")
-                        logger.raw.error("\(log)")
+                        logger.failure("Right 방향에 이미 SystemSource가 존재합니다")
                         return
                     }
                     
@@ -353,16 +343,14 @@ package final class SystemSource: SystemSourceInterface {
                     )
                     
                 } catch {
-                    let log = logger.getLog("\(error)")
-                    logger.raw.fault("\(log)")
+                    logger.failure(error)
                     return
                 }
                 
                 return
             }
         } catch {
-            let log = logger.getLog("\(error)")
-            logger.raw.fault("\(log)")
+            logger.failure(error)
             return
         }
     }
@@ -408,8 +396,7 @@ package final class SystemSource: SystemSourceInterface {
                     let systemLocations = projectSourceData.systemLocations
                     
                     guard systemLocations.contains(bottomLocation) == false else {
-                        let log = logger.getLog("Bottom 방향에 이미 SystemSource가 존재합니다")
-                        logger.raw.error("\(log)")
+                        logger.failure("Bottom 방향에 이미 SystemSource가 존재합니다")
                         return
                     }
                     
@@ -431,16 +418,14 @@ package final class SystemSource: SystemSourceInterface {
                     )
                     
                 } catch {
-                    let log = logger.getLog("\(error)")
-                    logger.raw.fault("\(log)")
+                    logger.failure(error)
                     return
                 }
                 
                 return
             }
         } catch {
-            let log = logger.getLog("\(error)")
-            logger.raw.fault("\(log)")
+            logger.failure(error)
             return
         }
     }
@@ -476,8 +461,7 @@ package final class SystemSource: SystemSourceInterface {
                         .data(as: SystemSource.Data.self)
                         .location
                 } catch {
-                    let log = logger.getLog("SystemSource 디코딩 실패\n\(error)")
-                    logger.raw.fault("\(log)")
+                    logger.failure("SystemSource 디코딩 실패\n\(error)")
                     return
                 }
                 
@@ -493,8 +477,8 @@ package final class SystemSource: SystemSourceInterface {
                 return
             }
         } catch {
-            let log = logger.getLog("SystemSource Document 삭제 실패\n\(error)")
-            logger.raw.error("\(log)")
+            logger.failure("SystemSource Document 삭제 실패\n\(error)")
+            return
         }
     }
     

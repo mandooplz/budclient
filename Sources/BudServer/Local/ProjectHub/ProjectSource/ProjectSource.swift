@@ -75,8 +75,7 @@ package final class ProjectSource: ProjectSourceInterface {
         self.listener = systemSourceCollectionRef
             .addSnapshotListener({ snapshot, error in
                 guard let snapshot else {
-                    let log = logger.getLog("\(error!)")
-                    logger.raw.fault("\(log)")
+                    logger.failure(error!)
                     return
                 }
                 
@@ -88,14 +87,12 @@ package final class ProjectSource: ProjectSourceInterface {
                     do {
                         data = try changed.document.data(as: SystemSource.Data.self)
                     } catch {
-                        let log = logger.getLog("SystemSource 디코딩 실패 \(documentId)\n\(error)")
-                        logger.raw.fault("\(log)")
+                        logger.failure("SystemSource 디코딩 실패 \(documentId)\n\(error)")
                         return
                     }
                     
                     guard let diff = SystemSourceDiff(from: data) else {
-                        let log = logger.getLog("SystemSourceDiff 변환 실패")
-                        logger.raw.fault("\(log)")
+                        logger.failure("SystemSourceDiff 변환 실패")
                         return
                     }
                     
@@ -170,8 +167,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     
                     // check System alreadyExist
                     guard projectSourceData.systemLocations.isEmpty else {
-                        let log = logger.getLog("(0,0) 위치에 첫 번째 System이 이미 존재합니다.")
-                        logger.raw.error("\(log)")
+                        logger.failure("(0,0) 위치에 첫 번째 System이 이미 존재합니다.")
                         return
                     }
                     
@@ -195,14 +191,12 @@ package final class ProjectSource: ProjectSourceInterface {
                     
                     return
                 } catch(let error as NSError) {
-                    let log = logger.getLog("\(error)")
-                    logger.raw.fault("\(log)")
+                    logger.failure(error)
                     return nil
                 }
             }
         } catch {
-            let log = logger.getLog("트랜잭션 실패\n\(error)")
-            logger.raw.fault("\(log)")
+            logger.failure("트랜잭션 실패\n\(error)")
             return
         }
     }

@@ -223,7 +223,7 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
     
     let rootObjectModelRef = try #require(await systemModelRef.root?.ref)
     
-    logger.finished("테스트 준비 끝")
+    logger.end("테스트 준비 끝")
     
     return rootObjectModelRef
 }

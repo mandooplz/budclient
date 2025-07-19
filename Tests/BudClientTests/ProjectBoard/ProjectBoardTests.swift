@@ -25,10 +25,12 @@ struct ProjectBoardTests {
             // given
             try await #require(projectBoardRef.id.isExist == true)
             
-            // when
-            await projectBoardRef.startUpdating {
+            await projectBoardRef.setCaptureHook {
                 await projectBoardRef.delete()
             }
+            
+            // when
+            await projectBoardRef.startUpdating()
 
             // then
             let issue = try #require(await projectBoardRef.issue as? KnownIssue)

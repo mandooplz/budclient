@@ -9,13 +9,13 @@ import Values
 import FirebaseAuth
 import FirebaseCore
 
-private let logger = BudLogger("EmailAuthForm")
 
 
 // MARK: Object
 @MainActor
 package final class EmailAuthForm: EmailAuthFormInterface {
     // MARK: core
+    private let logger = BudLogger("EmailAuthForm")
     package init(email: String, password: String) async {
         self.email = email
         self.password = password
@@ -42,7 +42,7 @@ package final class EmailAuthForm: EmailAuthFormInterface {
             guard isEmailPasswordUser == false else {
                 let user = UserID(firebaseUser.uid)
                 self.result = .success(user)
-                logger.info("Email 로그인이 되어 있어 조기종료합니다.")
+                logger.end("Email 로그인이 되어 있어 조기종료합니다.")
                 return
             }
         }

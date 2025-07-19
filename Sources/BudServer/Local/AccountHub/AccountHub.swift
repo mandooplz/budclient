@@ -7,14 +7,13 @@
 import Foundation
 import Values
 
-private let logger = BudLogger("AccountHub")
 
 
 // MARK: Object
 @MainActor
-package final class AccountHub: AccountHubInterface {
-    
+package final class AccountHub: AccountHubInterface {    
     // MARK: core
+    private let logger = BudLogger("AccountHub")
     static let shared = AccountHub()
     private init() { }
     

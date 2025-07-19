@@ -248,6 +248,6 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     // SystemModel and Updater
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     
-    logger.finished("테스트 준비 끝")
+    logger.end("테스트 준비 끝")
     return systemModelRef
 }

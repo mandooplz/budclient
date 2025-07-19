@@ -8,13 +8,13 @@ import Foundation
 import Values
 import Collections
 
-private let logger = BudLogger("SystemSourceMock")
 
 
 // MARK: Object
 @Server
 package final class SystemSourceMock: SystemSourceInterface {
     // MARK: core
+    private let logger = BudLogger("SystemSourceMock")
     init(name: String,
          location: Location,
          parent: ProjectSourceMock.ID,
@@ -201,8 +201,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         
         // capture
         guard id.isExist else {
-            let log = logger.getLog("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
-            logger.raw.error("\(log)")
+            logger.failure("SystemSourceMock이 존재하지 않아 실행 취소됩니다.")
             return
         }
         let projectSourceRef = self.parent.ref!
