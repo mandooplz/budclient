@@ -49,49 +49,76 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     
     package var creator: UserID
     
-    var handler: EventHandler?
-    package func setHandler(_ handler: EventHandler) {
-        self.handler = handler
+    var handlers = [ObjectID: EventHandler]()
+    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
+        logger.start()
+        
+        handlers[requester] = handler
+    }
+    package func removeHandler(of requester: ObjectID) async {
+        logger.start()
+        
+        handlers[requester] = nil
+    }
+    package func sendInitialEvents(to requester: ObjectID) async {
+        logger.start()
+        
+        let initialDiffs = self.systems
+            .compactMap { $0.ref }
+            .map { SystemSourceDiff($0) }
+        
+        for initialDiff in initialDiffs {
+            handlers[requester]?.execute(.added(initialDiff))
+        }
     }
     
     package func notifyNameChanged() {
+        logger.start()
+        
         let diff = ProjectSourceDiff(id: self.id,
                                      target: self.target,
                                      name: self.name)
         
-        handler?.execute(.modified(diff))
+        handlers.values.forEach { eventHandler in
+            eventHandler.execute(.modified(diff))
+        }
     }
     
     
     // MARK: action
     package func createSystem() {
-        // mutate
+        // capture
         guard systems.isEmpty else { return }
         
-        
+        // mutate
         let systemSourceRef = SystemSourceMock(name: "First System",
                                                location: .origin,
                                                parent: self.id)
         
         self.systems.insert(systemSourceRef.id)
         
-        // notify
+        
         let diff = SystemSourceDiff(systemSourceRef)
-        self.handler?.execute(.added(diff))
+        
+        handlers.values.forEach { handler in
+            handler.execute(.added(diff))
+        }
+        
+        
     }
     package func removeProject() {
-        // mutate
+        // capture
         guard id.isExist else { return }
         guard let projectHubRef = projectHub.ref else { return }
         
-        let diff = ProjectSourceDiff(id: self.id,
-                                     target: self.target,
-                                     name: self.name)
-
-        handler?.execute(.removed)
-        
+        // mutate
         projectHubRef.projectSources.remove(self.id)
         self.delete()
+        
+        // notify
+        handlers.values.forEach { handler in
+            handler.execute(.removed)
+        }
     }
     
     

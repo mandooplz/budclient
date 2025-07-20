@@ -16,7 +16,10 @@ package protocol ProjectSourceInterface: Sendable {
     nonisolated var id: ID { get }
     
     func setName(_ value: String) async;
-    func setHandler(_ handler: Handler<ProjectSourceEvent>) async
+    
+    func setHandler(for requester: ObjectID, _ handler: Handler<ProjectSourceEvent>) async
+    func removeHandler(of requester: ObjectID) async
+    func sendInitialEvents(to requester: ObjectID) async
     
     func notifyNameChanged() async;
     

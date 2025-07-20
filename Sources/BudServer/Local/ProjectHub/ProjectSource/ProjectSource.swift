@@ -69,24 +69,25 @@ package final class ProjectSource: ProjectSourceInterface {
         }
     }
     
-    // objectID마다 있어야 하는가?
     package var listener: ListenerRegistration?
-    package var handler: EventHandler?
-    package func setHandler(_ handler: EventHandler) {
+    package var handlers: [ObjectID:EventHandler] = [:]
+    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
+        
+        
+        // mutate
+        self.handlers[requester] = handler
+        
+        // mutate - firebase
         let db = Firestore.firestore()
         let systemSourceCollectionRef = db.collection(DB.projectSources)
             .document(id.value)
             .collection(DB.systemSources)
-        
-        self.handler = handler
-        
         guard self.listener == nil else {
             logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
             return
         }
-        
         self.listener = systemSourceCollectionRef
             .addSnapshotListener({ snapshot, error in
                 guard let snapshot else {
@@ -145,8 +146,30 @@ package final class ProjectSource: ProjectSourceInterface {
                 }
             })
     }
+    package func removeHandler(of requester: ObjectID) async {
+        logger.start()
+        
+        guard id.isExist else {
+            logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        // mutate
+        self.handlers[requester] = nil
+        
+        self.listener?.remove()
+        self.listener = nil
+    }
+    package func sendInitialEvents(to requester: ObjectID) async {
+        logger.start()
+        
+        // Firebase.listerner를 등록하는 과정에서 자체적으로 이벤트를 전달한다.
+    }
     
     package func notifyNameChanged() async {
+        logger.start()
+        
+        // Firebase에서 내부적으로 이벤트를 전달한다.
         return
     }
     

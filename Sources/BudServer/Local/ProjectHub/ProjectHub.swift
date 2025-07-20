@@ -81,17 +81,21 @@ package final class ProjectHub: ProjectHubInterface {
                         projectHub.ref?.handler?.execute(.added(diff))
                     case .modified:
                         // serve event
-                        let projectSourceDiff = ProjectSourceDiff(id: projectSource,
-                                                     target: data.target,
-                                                     name: data.name)
                         guard let projectSourceRef = projectSource.ref else {
                             logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
                             return
                         }
                         
+                        let projectSourceHandlers = projectSourceRef.handlers.values
+                        let projectSourceDiff = ProjectSourceDiff(id: projectSource,
+                                                     target: data.target,
+                                                     name: data.name)
+                        
                         // modify ProjectSource
                         projectSourceRef.name = data.name
-                        projectSourceRef.handler?.execute(.modified(projectSourceDiff))
+                        projectSourceHandlers.forEach { eventHandler in
+                            eventHandler.execute(.modified(projectSourceDiff))
+                        }
                     case .removed:
                         guard let projectSourceRef = projectSource.ref else {
                             logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
@@ -99,11 +103,12 @@ package final class ProjectHub: ProjectHubInterface {
                         }
                         
                         // serve event
-                        let projectSourceDiff = ProjectSourceDiff(id: projectSource,
-                                                                  target: data.target,
-                                                                  name: data.name)
+                        let projectSourceHandlers = projectSourceRef.handlers.values
                         
-                        projectSourceRef.handler?.execute(.removed)
+                        projectSourceHandlers.forEach { eventHandler in
+                            eventHandler.execute(.removed)
+                        }
+
                         
                         // cancel ProjectSource
                         projectSourceRef.delete()

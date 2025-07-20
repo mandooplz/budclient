@@ -77,6 +77,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         
         let projectSource = self.source
         let projectModel = self.id
+        let me = ObjectID(self.id.value)
         
         // compute
         await withDiscardingTaskGroup { group in
@@ -87,6 +88,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await projectSourceRef.setHandler(
+                    for: me,
                     .init({ event in
                         Task {
                             guard let projectModelRef = await projectModel.ref else {
@@ -108,7 +110,15 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         // mutate
         
     }
+    public func pauseUpdating() async {
+        logger.failure("미구현")
+    }
+    public func resumeUpdating() async {
+        // 새롭게 추가된 혹은 삭제된 기존 문서를 파악하고 이들의 새로운 연결을 구성
+        logger.failure("미구현")
+    }
     
+    // pushName과 createFirstSystem에서 ProjectSource가 존재하지 않을 때
     public func pushName() async {
         logger.start()
         
@@ -136,6 +146,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         
         
         // compute
+        await computeHook?()
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let projectSourceRef = await projectSource.ref else {
@@ -150,7 +161,6 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         
         logger.end()
     }
-    
     public func createFirstSystem() async {
         logger.start()
         

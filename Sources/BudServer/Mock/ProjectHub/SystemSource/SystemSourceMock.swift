@@ -72,7 +72,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         }
         let rightLocation = self.location.getRight()
         let projectSourceRef = self.parent.ref!
-        let projectSourceHandler = projectSourceRef.handler
+        let projectSourceHandlers = projectSourceRef.handlers.values
         
         // mutate
         guard projectSourceRef.isLocationExist(rightLocation) == false else {
@@ -88,7 +88,10 @@ package final class SystemSourceMock: SystemSourceInterface {
         
         // notify
         let diff = SystemSourceDiff(systemSourceRef)
-        projectSourceHandler?.execute(.added(diff))
+        
+        projectSourceHandlers.forEach { eventHandler in
+            eventHandler.execute(.added(diff))
+        }
     }
     package func addSystemLeft() async {
         logger.start()
@@ -100,7 +103,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         }
         let leftLocation = self.location.getLeft()
         let projectSourceRef = self.parent.ref!
-        let projectSourceHandler = projectSourceRef.handler
+        let projectSourceHandlers = projectSourceRef.handlers.values
         
         // mutate
         guard projectSourceRef.isLocationExist(leftLocation) == false else {
@@ -114,7 +117,10 @@ package final class SystemSourceMock: SystemSourceInterface {
         
         // notify
         let diff = SystemSourceDiff(systemSourceRef)
-        projectSourceHandler?.execute(.added(diff))
+        
+        projectSourceHandlers.forEach { eventHandler in
+            eventHandler.execute(.added(diff))
+        }
     }
     package func addSystemTop() async {
         logger.start()
@@ -126,7 +132,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         }
         let topLocation = self.location.getTop()
         let projectSourceRef = self.parent.ref!
-        let projectSourceHandler = projectSourceRef.handler
+        let projectSourceHandlers = projectSourceRef.handlers.values
         
         // mutate
         guard projectSourceRef.isLocationExist(topLocation) == false else {
@@ -140,7 +146,9 @@ package final class SystemSourceMock: SystemSourceInterface {
         
         // notify
         let diff = SystemSourceDiff(systemSourceRef)
-        projectSourceHandler?.execute(.added(diff))
+        projectSourceHandlers.forEach { eventHandler in
+            eventHandler.execute(.added(diff))
+        }
     }
     package func addSystemBottom() async {
         logger.start()
@@ -152,7 +160,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         }
         let bottomLocation = self.location.getBotttom()
         let projectSourceRef = self.parent.ref!
-        let projectSourceHandler = projectSourceRef.handler
+        let projectSourceHandlers = projectSourceRef.handlers.values
         
         // mutate
         guard projectSourceRef.isLocationExist(bottomLocation) == false else {
@@ -166,7 +174,10 @@ package final class SystemSourceMock: SystemSourceInterface {
         
         // notify
         let diff = SystemSourceDiff(systemSourceRef)
-        projectSourceHandler?.execute(.added(diff))
+        
+        projectSourceHandlers.forEach { eventHandler in
+            eventHandler.execute(.added(diff))
+        }
     }
     
     package func createRoot() async {
@@ -205,7 +216,6 @@ package final class SystemSourceMock: SystemSourceInterface {
             return
         }
         let projectSourceRef = self.parent.ref!
-        let diff = SystemSourceDiff(self)
         
         // mutate
         projectSourceRef.systems.remove(self.id)
