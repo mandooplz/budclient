@@ -35,7 +35,7 @@ package final class ProjectHubMock: ProjectHubInterface {
     package func removeHandler(of requester: ObjectID) async {
         self.handlers[requester] = nil
     }
-    package func sendInitialEvents(to requester: ObjectID) async {
+    package func synchronize(requester: ObjectID) async {
         let diffs = self.projectSources
             .compactMap { $0.ref }
             .map { ProjectSourceDiff($0) }

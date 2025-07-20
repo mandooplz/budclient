@@ -17,7 +17,7 @@ package protocol ProjectHubInterface: Sendable {
     
     func appendHandler(for requester: ObjectID, _ handler: Handler<ProjectHubEvent>) async
     func removeHandler(of requester: ObjectID) async
-    func sendInitialEvents(to requester: ObjectID) async
+    func synchronize(requester: ObjectID) async
     
     // MARK: action
     func createProject() async

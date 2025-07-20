@@ -33,7 +33,7 @@ struct ProjectModelUpdaterTests {
                 name: "OLD_NAME")
             
             let projectBoardRef = try #require(await projectModelRef.config.parent.ref)
-            let projectBoardUpdaterRef = projectBoardRef.updater
+            let projectBoardUpdaterRef = projectBoardRef.updaterRef
             
             await projectBoardUpdaterRef.appendEvent(.added(diff))
             await projectBoardUpdaterRef.update()

@@ -134,10 +134,10 @@ package final class ProjectHub: ProjectHubInterface {
         self.listener?.remove()
         self.listener = nil
     }
-    package func sendInitialEvents(to requester: ObjectID) async {
+    package func synchronize(requester: ObjectID) async {
         logger.start()
         
-        // Firebase에서 자체적으로 이벤트를 전달하기 때문에 명시적으로 호출할 필요는 없다.
+        // Firebase에서 알아서 호출해준다.
     }
     
     package func notifyNameChanged(_ project: ProjectID) async {

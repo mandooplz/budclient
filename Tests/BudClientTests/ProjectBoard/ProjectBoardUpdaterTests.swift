@@ -21,7 +21,7 @@ struct ProjectBoardUpdaterTests {
         init() async throws {
             self.budClientRef = await BudClient()
             self.projectBoardRef = try await getProjectBoard(budClientRef)
-            self.updaterRef = projectBoardRef.updater
+            self.updaterRef = projectBoardRef.updaterRef
         }
         
         @Test func whenProjectModelAlreadyAdded() async throws {
@@ -58,7 +58,8 @@ struct ProjectBoardUpdaterTests {
             let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadyAdded")
         }
-        @Test func createProject() async throws {
+        
+        @Test func createProjectModel() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty == true)
             

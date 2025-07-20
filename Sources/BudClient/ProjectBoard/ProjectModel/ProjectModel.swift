@@ -15,20 +15,15 @@ private let logger = BudLogger("ProjectModel")
 // MARK: Object
 @MainActor @Observable
 public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
-    
-    
     // MARK: core
-    init(config: Config<ProjectBoard.ID>,
-         target: ProjectID,
-         name: String,
-         source: any ProjectSourceIdentity) {
+    init(config: Config<ProjectBoard.ID>, diff: ProjectSourceDiff) {
         self.config = config
-        self.target = target
-        self.source = source
+        self.target = diff.target
+        self.source = diff.id
         self.updaterRef = Updater(owner: self.id)
         
-        self.name = name
-        self.nameInput = name
+        self.name = diff.name
+        self.nameInput = diff.name
         
         ProjectModelManager.register(self)
     }
@@ -62,6 +57,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     package var captureHook: Hook?
     package var computeHook: Hook?
     package var mutateHook: Hook?
+    
     
     // MARK: action
     public func startUpdating() async {
@@ -112,21 +108,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         // mutate
         
     }
-    public func stopUpdating() async {
-        logger.start()
-        
-        // capture
-        await captureHook?()
-        guard id.isExist else {
-            setIssue(Error.projectModelIsDeleted)
-            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        
-        logger.failure("미구현")
-    }
     
-    // pushName과 createFirstSystem에서 ProjectSource가 존재하지 않을 때
     public func pushName() async {
         logger.start()
         

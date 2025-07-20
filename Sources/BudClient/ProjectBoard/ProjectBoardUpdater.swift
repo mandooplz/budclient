@@ -45,20 +45,18 @@ extension ProjectBoard {
                 let event = queue.removeFirst()
                 switch event {
                 case .added(let diff):
-                    guard projectBoardRef.projects[diff.target] == nil else {
+                    let newProject = diff.target
+                    
+                    guard projectBoardRef.projects[newProject] == nil else {
                         setIssue(Error.alreadyAdded)
-                        logger.failure(Error.alreadyAdded)
+                        logger.failure("Project에 연결된 ProjectModel이 이미 존재합니다.")
                         return
                     }
 
                     // create ProjectModel
-                    let projectModelRef = ProjectModel(
-                        config: config,
-                        target: diff.target,
-                        name: diff.name,
-                        source: diff.id)
+                    let projectModelRef = ProjectModel(config: config, diff: diff)
                     
-                    projectBoardRef.projects[diff.target] = projectModelRef.id
+                    projectBoardRef.projects[newProject] = projectModelRef.id
 
                     logger.end("added \(diff.id)")
                 }

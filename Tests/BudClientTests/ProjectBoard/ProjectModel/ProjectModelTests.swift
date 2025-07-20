@@ -67,65 +67,6 @@ struct ProjectModelTests {
         }
     }
     
-    struct StopUpdating {
-        let budClientRef: BudClient
-        let projectModelRef: ProjectModel
-        let projectSourceRef: ProjectSourceMock
-        init() async throws {
-            self.budClientRef = await BudClient()
-            self.projectModelRef = try await getProjectModel(budClientRef)
-            self.projectSourceRef = await projectModelRef.source.ref as! ProjectSourceMock
-        }
-        
-        @Test func whenProjectModelIsDeleted() async throws {
-            // given
-            try await #require(projectModelRef.id.isExist == true)
-            
-            await projectModelRef.setCaptureHook {
-                await projectModelRef.delete()
-            }
-            
-            // when
-            await projectModelRef.stopUpdating()
-            
-            // then
-            let issue = try #require(await projectModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "projectModelIsDeleted")
-        }
-        
-        @Test func cantReceiveAddedSystemSourceEvent() async throws {
-            // given
-            try await #require(projectModelRef.systems.isEmpty)
-            try await #require(projectSourceRef.systems.isEmpty)
-            
-            await projectModelRef.startUpdating()
-            
-            // when
-            await projectModelRef.stopUpdating()
-            
-            // then
-            await confirmation(expectedCount: 0) { confirm in
-                await withCheckedContinuation { continuation in
-                    Task {
-                        await projectModelRef.setCallback {
-                            confirm()
-                        }
-                        
-                        // 비동기 테스트
-                        let someObject = ObjectID()
-                        await projectSourceRef.appendHandler(
-                            for: someObject,
-                            .init({ event in
-                                continuation.resume()
-                            }))
-                        
-                        await projectModelRef.createFirstSystem()
-                    }
-                }
-            }
-        }
-    }
-    
     struct PushName {
         let budClientRef: BudClient
         let projectModelRef: ProjectModel

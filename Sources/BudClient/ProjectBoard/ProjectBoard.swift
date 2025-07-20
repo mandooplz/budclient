@@ -18,7 +18,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     // MARK: core
     init(config: Config<BudClient.ID>) {
         self.config = config
-        self.updater = Updater(owner: self.id)
+        self.updaterRef = Updater(owner: self.id)
         
         ProjectBoardManager.register(self)
     }
@@ -30,7 +30,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let config: Config<BudClient.ID>
-    nonisolated let updater: Updater
+    nonisolated let updaterRef: Updater
     
     public internal(set) var projects = OrderedDictionary<ProjectID, ProjectModel.ID>()
     
@@ -71,11 +71,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                     .init({ event in
                         Task {
                             guard let projectBoardRef = await projectBoard.ref else {
-                                // ProjectBoard가 삭제된 상태라면? 어떻게 처리해야 하는가??
+                                logger.failure("ProjectBoard가 존재하지 않습니다.")
                                 return
                             }
                             
-                            let updaterRef = projectBoardRef.updater
+                            let updaterRef = projectBoardRef.updaterRef
                             
                             await updaterRef.appendEvent(event)
                             await updaterRef.update()
@@ -86,34 +86,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                     })
                 )
                 
-                await projectHubRef.sendInitialEvents(to: me)
-            }
-        }
-    }
-    public func stopUpdating() async {
-        logger.start()
-        
-        // capture
-        await captureHook?()
-        guard id.isExist else {
-            setIssue(Error.projectBoardIsDeleted)
-            logger.failure("ProjectBoard가 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        let config = self.config
-        let me = ObjectID(self.id.value)
-        
-        
-        // compute
-        await withDiscardingTaskGroup { group in
-            group.addTask {
-                guard let budServerRef = await config.budServer.ref,
-                      let projectHubRef = await budServerRef.getProjectHub(config.user).ref else {
-                    logger.failure("User의 ProjectHub가 존재하지 않습니다.")
-                    return
-                }
-                
-                await projectHubRef.removeHandler(of: me)
+                await projectHubRef.synchronize(requester: me)
             }
         }
     }
