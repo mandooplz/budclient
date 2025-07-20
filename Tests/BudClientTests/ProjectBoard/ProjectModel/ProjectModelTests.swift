@@ -249,7 +249,6 @@ struct ProjectModelTests {
             let systemModel = try #require(await projectModelRef.systems.values.first)
             await #expect(systemModel.isExist == true)
         }
-        
         @Test func createSystemSource() async throws {
             // given
             let projectSourceRef = try #require(await projectModelRef.source.ref as? ProjectSourceMock)
@@ -261,6 +260,34 @@ struct ProjectModelTests {
             
             // then
             await #expect(projectSourceRef.systems.count == 1)
+        }
+        
+        @Test func whenFirstSystemAlreadyExist() async throws {
+            // given
+            try await #require(projectModelRef.systems.isEmpty)
+            
+            await projectModelRef.startUpdating()
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.createFirstSystem()
+                }
+            }
+            
+            try await #require(projectModelRef.systems.count == 1)
+            try await #require(projectModelRef.issue == nil)
+            
+            // when
+            await projectModelRef.createFirstSystem()
+            
+            // then
+            try await #require(projectModelRef.systems.count == 1)
+            
+            let issue = try #require(await projectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "firstSystemAlreadyExist")
         }
     }
 }

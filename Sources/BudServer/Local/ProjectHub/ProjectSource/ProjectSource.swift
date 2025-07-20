@@ -51,7 +51,22 @@ package final class ProjectSource: ProjectSourceInterface {
             ProjectSource.Data.name: value
         ]
         
-        docRef.updateData(updateData)
+        docRef.updateData(updateData) { error in
+            if let error {
+                // Firestore 에러인지 확인하고 에러 코드를 가져옵니다.
+                let fireStoreError = error as NSError
+                let errorCode = FirestoreErrorCode.Code(rawValue: fireStoreError.code)
+                
+                // 에러 코드가 notFound인지 확인합니다.
+                if errorCode == .notFound {
+                    logger.failure("문서가 존재하지 않아 업데이트에 실패했습니다. (삭제되었을 수 있습니다)")
+                } else {
+                    logger.failure("Firestore 업데이트 중 에러 발생 \n\(error)")
+                }
+            } else {
+                print("문서가 성공적으로 업데이트되었습니다.")
+            }
+        }
     }
     
     // objectID마다 있어야 하는가?

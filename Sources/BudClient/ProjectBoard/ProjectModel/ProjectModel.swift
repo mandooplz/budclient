@@ -105,6 +105,8 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
             }
         }
         
+        // mutate
+        
     }
     
     public func pushName() async {
@@ -200,7 +202,6 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         }
     }
 
-    
     
     // MARK: value
     @MainActor
