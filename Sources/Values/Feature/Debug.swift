@@ -8,9 +8,6 @@ import Foundation
 import os
 
 
-// MARK: Callback
-public typealias Callback = @Sendable () async -> Void
-
 
 // MARK: KnownIssue
 public struct KnownIssue: IssueRepresentable {

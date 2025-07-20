@@ -57,7 +57,7 @@ package final class SystemSource: SystemSourceInterface {
     var listener: ListenerRegistration?
     var handler: EventHandler?
     
-    package func setHandler(_ handler: EventHandler) {
+    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
         // capture
@@ -430,7 +430,7 @@ package final class SystemSource: SystemSourceInterface {
         }
     }
     
-    package func createRoot() async {
+    package func createRootObject() async {
         
     }
     

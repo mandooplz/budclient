@@ -41,7 +41,7 @@ struct ProjectModelTests {
             
         }
         
-        @Test func reveiveInitialEvents() async throws {
+        @Test func receiveInitialEvents() async throws {
             // given
             try await #require(projectModelRef.systems.isEmpty)
             try await #require(projectSourceRef.systems.isEmpty)
@@ -102,7 +102,7 @@ struct ProjectModelTests {
             
             // then
             let issue = try #require(await projectModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "nameInputIsEmpty")
+            #expect(issue.reason == "nameCannotBeEmpty")
         }
         @Test func whenNameInputIsSameWithName() async throws {
             // given
@@ -116,7 +116,7 @@ struct ProjectModelTests {
             
             // then
             let issue = try #require(await projectModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "pushWithSameValue")
+            #expect(issue.reason == "newNameIsSameAsCurrent")
         }
         
         @Test func updateNameByHandler() async throws {
@@ -176,7 +176,6 @@ struct ProjectModelTests {
             try await #require(projectSourceRef.systems.isEmpty)
             
             await projectModelRef.startUpdating()
-            await projectModelRef.setCallbackNil()
             
             // when
             await withCheckedContinuation { continuation in
@@ -188,7 +187,6 @@ struct ProjectModelTests {
                     await projectModelRef.createFirstSystem()
                 }
             }
-            await projectModelRef.setCallbackNil()
             
             // then
             try await #require(projectModelRef.systems.count == 1)
@@ -280,7 +278,6 @@ struct ProjectModelTests {
             try await #require(projectBoardRef.projects.values.contains(projectModelRef.id))
             
             // when
-            await projectModelRef.setCallbackNil()
             await withCheckedContinuation { continuation in
                 Task {
                     await projectModelRef.startUpdating()
@@ -290,21 +287,19 @@ struct ProjectModelTests {
                     await projectModelRef.removeProject()
                 }
             }
-            await projectModelRef.setCallbackNil()
             
             // then
             await #expect(projectBoardRef.projects.values.contains(projectModelRef.id) == false)
             
         }
+        
         @Test func deleteProjectModel() async throws {
             // given
+            await projectModelRef.startUpdating()
             
             // when
-            await projectModelRef.setCallbackNil()
             await withCheckedContinuation { continuation in
                 Task {
-                    
-                    await projectModelRef.startUpdating()
                     await projectModelRef.setCallback {
                         continuation.resume()
                     }
@@ -314,11 +309,66 @@ struct ProjectModelTests {
                     await projectModelRef.removeProject()
                 }
             }
-            await projectModelRef.setCallbackNil()
             
             // then
             await #expect(projectModelRef.id.isExist == false)
         }
+        
+        @Test func deleteSystemModels() async throws {
+            // given
+            await projectModelRef.startUpdating()
+            try await #require(projectModelRef.systems.isEmpty)
+            
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.createFirstSystem()
+                }
+            }
+            
+            try await #require(projectModelRef.systems.count == 1)
+            
+            let systemModel = try #require(await projectModelRef.systems.values.first)
+            
+            // when
+            try await removeProjectWithContinuation(projectModelRef)
+            
+            // then
+            await #expect(systemModel.isExist == false)
+        }
+        @Test func deleteRootObjectModel() async throws {
+            // give
+            let systemModelRef = try await createSystemModel(projectModelRef)
+            let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
+            
+            try await #require(rootObjectModelRef.id.isExist == true)
+            
+            // when
+            try await removeProjectWithContinuation(projectModelRef)
+            
+            // then
+            await #expect(rootObjectModelRef.id.isExist == false)
+        }
+        @Test(.disabled("구현 예정")) func deleteStateModels() async throws {
+            Issue.record("미구현")
+        }
+        @Test(.disabled("구현 예정")) func deleteGetterModels() async throws {
+            Issue.record("미구현")
+        }
+        @Test(.disabled("구현 예정")) func deleteSetterModels() async throws {
+            Issue.record("미구현")
+        }
+        @Test(.disabled("구현 예정")) func deleteActionModels() async throws {
+            Issue.record("미구현")
+        }
+        @Test(.disabled("구현 예정")) func deleteFlowModels() async throws {}
+        
+        @Test(.disabled("구현 예정")) func deleteWorkflowModels() async throws {}
+        
+        @Test(.disabled("구현 예정")) func deleteValueModels() async throws {}
     }
 }
 
@@ -359,9 +409,60 @@ private func getProjectModel(_ budClientRef: BudClient) async throws -> ProjectM
             await projectBoardRef.createProject()
         }
     }
-    await projectBoardRef.setCallbackNil()
     
     // ProjectEditor
     await #expect(projectBoardRef.projects.count == 1)
     return try #require(await projectBoardRef.projects.values.first?.ref)
+}
+
+private func removeProjectWithContinuation(_ projectModelRef: ProjectModel) async throws {
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await #expect(projectModelRef.issue == nil)
+            
+            await projectModelRef.removeProject()
+        }
+    }
+}
+
+private func createSystemModel(_ projectModelRef: ProjectModel) async throws -> SystemModel {
+    try await #require(projectModelRef.systems.isEmpty)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await projectModelRef.startUpdating()
+            
+            await projectModelRef.createFirstSystem()
+        }
+    }
+    
+    try await #require(projectModelRef.systems.count == 1)
+    return try #require(await projectModelRef.systems.values.first?.ref)
+}
+
+private func createRootObjectModel(_ systemModelRef: SystemModel) async throws -> ObjectModel {
+    try await #require(systemModelRef.root == nil)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await systemModelRef.startUpdating()
+            
+            await systemModelRef.createRootObject()
+        }
+    }
+    
+    try await #require(systemModelRef.objects.count == 1)
+    return try #require(await systemModelRef.root?.ref)
 }

@@ -12,7 +12,15 @@ import Values
 package protocol ObjectSourceInterface: Sendable {
     associatedtype ID: ObjectSourceIdentity where ID.Object == Self
     
-    func setHandler(_ handler: Handler<ObjectSourceEvent>) async
+    // MARK: state
+    func setName(_ value: String) async
+    func setHandler(for requester: ObjectID,
+                    _ handler: Handler<ObjectSourceEvent>) async
+    
+    func notifyNameChanged() async
+    
+    
+    // MARK: action
 }
 
 

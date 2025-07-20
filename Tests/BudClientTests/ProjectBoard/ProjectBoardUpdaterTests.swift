@@ -27,7 +27,6 @@ struct ProjectBoardUpdaterTests {
         @Test func whenProjectModelAlreadyAdded() async throws {
             // given
             await projectBoardRef.startUpdating()
-            await projectBoardRef.setCallbackNil()
             await withCheckedContinuation { continuation in
                 Task {
                     await projectBoardRef.setCallback {

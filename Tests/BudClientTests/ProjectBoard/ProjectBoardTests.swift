@@ -112,8 +112,6 @@ struct ProjectBoardTests {
                         await projectBoardRef.createProject()
                     }
                 }
-                
-                await projectBoardRef.setCallbackNil()
             }
 
             // then

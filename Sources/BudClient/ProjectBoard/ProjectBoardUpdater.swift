@@ -15,7 +15,7 @@ private let logger = BudLogger("ProjectBoard.Updater")
 // MARK: Object
 extension ProjectBoard {
     @MainActor @Observable
-    final class Updater: Debuggable, UpdaterInterface {
+    final class Updater: Debuggable, UpdaterInterface, Hookable {
         // MARK: core
         init(owner: ProjectBoard.ID) {
             self.owner = owner
@@ -29,13 +29,20 @@ extension ProjectBoard {
         var queue: Deque<ProjectHubEvent> = []
         var issue: (any IssueRepresentable)?
         
+        package var captureHook: Hook?
+        package var computeHook: Hook?
+        package var mutateHook: Hook?
+        
         
         // MARK: action
         func update() async {
             logger.start()
             
             // capture
+            await captureHook?()
             guard let projectBoardRef = owner.ref else {
+                setIssue(Error.projectBoardIsDeleted)
+                logger.failure("ProjectBoard가 존재하지 않아 update가 취소됩니다.")
                 return
             }
             let config = projectBoardRef.config.setParent(owner)
@@ -66,9 +73,8 @@ extension ProjectBoard {
         
         // MARK: value
         enum Error: String, Swift.Error {
-            case updaterIsDeleted
-            case alreadyAdded, alreadyRemoved
-            case projectSourceDoesNotExist
+            case projectBoardIsDeleted
+            case alreadyAdded
         }
     }
 }

@@ -15,7 +15,7 @@ private let logger = BudLogger("ProjectModelUpdater")
 // MARK: Object
 extension ProjectModel {
     @MainActor @Observable
-    final class Updater: Sendable, UpdaterInterface, Debuggable {
+    final class Updater: UpdaterInterface, Hookable {
         // MARK: core
         init(owner: ProjectModel.ID) {
             self.owner = owner
@@ -29,9 +29,13 @@ extension ProjectModel {
         var queue: Deque<ProjectSourceEvent> = []
         var issue: (any IssueRepresentable)?
         
+        package var captureHook: Hook?
+        package var computeHook: Hook?
+        package var mutateHook: Hook?
+        
         
         // MARK: action
-        func update(captureHook: Hook? = nil) async {
+        func update() async {
             logger.start()
             
             // capture
@@ -60,10 +64,17 @@ extension ProjectModel {
                     
                     logger.end("modified ProjectModel")
                     
-                // cancel ProjectModel
+                // remove ProjectModel
                 case .removed:
                     for systemModel in projectModelRef.systems.values {
-                        systemModel.ref?.delete()
+                        guard let systemModelRef = systemModel.ref else { continue
+                        }
+                        
+                        for objectModel in systemModelRef.objects.values {
+                            objectModel.ref?.delete()
+                        }
+                        
+                        systemModelRef.delete()
                     }
                     
                     projectModelRef.delete()
@@ -83,10 +94,7 @@ extension ProjectModel {
                     
                     let systemModelRef = SystemModel(
                         config: newConfig,
-                        target: sysDiff.target,
-                        name: sysDiff.name,
-                        location: sysDiff.location,
-                        source: sysDiff.id)
+                        diff: sysDiff)
                     
                     projectModelRef.systems[sysDiff.target] = systemModelRef.id
                     
@@ -94,8 +102,6 @@ extension ProjectModel {
                 }
                 
             }
-            
-            
         }
         
         

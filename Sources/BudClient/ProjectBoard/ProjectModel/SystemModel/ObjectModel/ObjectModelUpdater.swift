@@ -45,8 +45,6 @@ extension ObjectModel {
             while queue.isEmpty == false {
                 let event = queue.removeFirst()
                 
-                
-                
                 switch event {
                 case .modified(let diff):
                     objectModelRef.name = diff.name

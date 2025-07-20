@@ -48,7 +48,7 @@ package final class SystemSourceMock: SystemSourceInterface {
     
     
     var handler: EventHandler?
-    package func setHandler(_ handler: Handler<SystemSourceEvent>) {
+    package func setHandler(for requester: ObjectID, _ handler: Handler<SystemSourceEvent>) {
         self.handler = handler
     }
     
@@ -180,7 +180,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         }
     }
     
-    package func createRoot() async {
+    package func createRootObject() async {
         logger.start()
         
         // caputure

@@ -8,8 +8,7 @@ import Foundation
 import Values
 
 
-// Flow는 소프트웨어가 제공하는 하나의 기능을 의미할 수 있다. 
-
+// Flow는 소프트웨어가 제공하는 하나의 기능을 의미할 수 있다.
 // MARK: Object
 @MainActor @Observable
 public final class FlowModel: Sendable {

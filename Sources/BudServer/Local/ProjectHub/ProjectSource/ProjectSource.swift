@@ -37,7 +37,7 @@ package final class ProjectSource: ProjectSourceInterface {
     nonisolated let target: ProjectID
     nonisolated let parent: ProjectHub.ID
     
-    var systemSources: [SystemID: SystemSource.ID] = [:]
+    var systems: [SystemID: SystemSource.ID] = [:]
     
     var name: String
     package func setName(_ value: String) {
@@ -120,7 +120,7 @@ package final class ProjectSource: ProjectSourceInterface {
                                                            target: data.target,
                                                            parent: self.id)
                         
-                        self.systemSources[data.target] = systemSourceRef.id
+                        self.systems[data.target] = systemSourceRef.id
 
                         // serve event
                         handler.execute(.added(diff))
@@ -140,7 +140,7 @@ package final class ProjectSource: ProjectSourceInterface {
                         systemSourceRef.handler?.execute(.removed)
                         
                         // delete SystemSource
-                        self.systemSources[data.target] = nil
+                        self.systems[data.target] = nil
                         systemSource.ref?.delete()
                     }
                 }

@@ -14,21 +14,18 @@ private let logger = BudLogger("SystemModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class SystemModel: Sendable, Debuggable, EventDebuggable {
+public final class SystemModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
     init(config: Config<ProjectModel.ID>,
-         target: SystemID,
-         name: String,
-         location: Location,
-         source: any SystemSourceIdentity) {
+         diff: SystemSourceDiff) {
         self.config = config
-        self.target = target
-        self.source = source
-        self.updater = Updater(owner: self.id)
+        self.target = diff.target
+        self.source = diff.id
+        self.updaterRef = Updater(owner: self.id)
         
-        self.name = name
-        self.nameInput = name
-        self.location = location
+        self.name = diff.name
+        self.nameInput = diff.name
+        self.location = diff.location
         
         SystemModelManager.register(self)
     }
@@ -41,7 +38,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     nonisolated let config: Config<ProjectModel.ID>
     nonisolated let target: SystemID
     nonisolated let source: any SystemSourceIdentity
-    nonisolated let updater: Updater
+    nonisolated let updaterRef: Updater
     
     public internal(set) var name: String
     public var nameInput: String
@@ -54,14 +51,15 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
     
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
+    
     
     // MARK: action
     public func startUpdating() async {
         logger.start()
         
-        await startUpdating(captureHook: nil)
-    }
-    func startUpdating(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -70,7 +68,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             return
         }
         let systemSource = self.source
-        let systemModel = self.id
+        let me = ObjectID(self.id.value)
         
         await withDiscardingTaskGroup { group in
             group.addTask {
@@ -80,18 +78,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
                 }
                 
                 await systemSourceRef.setHandler(
+                    for: me,
                     .init({ event in
-                        Task {    
-                            guard let updaterRef = await systemModel.ref?.updater else {
-                                logger.failure("SystemModel이 존재하지 않아 update가 취소됩니다.")
-                                return
-                            }
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
                             
-                            await updaterRef.appendEvent(event)
-                            await updaterRef.update()
-                            
-                            await systemModel.ref?.callback?()
-                            await systemModel.ref?.setCallbackNil()
+                            await self?.callback?()
                         }
                     }))
             }
@@ -101,9 +94,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public func pushName() async {
         logger.start()
         
-        await self.pushName(captureHook: nil)
-    }
-    func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -111,8 +101,13 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard nameInput.isEmpty == false else {
+            setIssue(Error.nameCannotBeEmpty)
+            logger.failure("SystemModel의 name이 빈 문자열일 수 없습니다.")
+            return
+        }
         guard name != nameInput else {
-            setIssue(Error.noChangesToPush)
+            setIssue(Error.newNameIsSameAsCurrent)
             logger.failure("nameInput과 name이 동일합니다.")
             return
         }
@@ -135,11 +130,6 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     public func addSystemRight() async {
         logger.start()
         
-        await addSystemRight(captureHook: nil)
-    }
-    func addSystemRight(captureHook: Hook?) async {
-        logger.start()
-        
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -156,6 +146,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         
         let systemSource = self.source
         
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let systemSourceRef = await systemSource.ref else {
@@ -167,13 +158,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             }
         }
     }
-    
     public func addSystemLeft() async {
-        logger.start()
-        
-        await addSystemLeft(captureHook: nil)
-    }
-    func addSystemLeft(captureHook: Hook?) async {
         logger.start()
         
         // capture
@@ -192,6 +177,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         
         let systemSource = self.source
         
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let systemSourceRef = await systemSource.ref else { return }
@@ -200,11 +186,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             }
         }
     }
-    
     public func addSystemTop() async {
-        await addSystemTop(captureHook: nil)
-    }
-    func addSystemTop(captureHook: Hook?) async {
         logger.start()
         
         // capture
@@ -222,6 +204,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         }
         let systemSource = self.source
         
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let systemSourceRef = await systemSource.ref else {
@@ -233,11 +216,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
             }
         }
     }
-    
     public func addSystemBottom() async {
-        await addSystemBottom(captureHook: nil)
-    }
-    func addSystemBottom(captureHook: Hook?) async {
         logger.start()
         
         // capture
@@ -255,6 +234,7 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         }
         let systemSource = self.source
         
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let systemSourceRef = await systemSource.ref else {
@@ -267,17 +247,19 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         }
     }
     
-    // TODO: Root에 해당하는 Object를 생성
-    public func createRoot() async {
+    public func createRootObject() async {
         logger.start()
         
-        await self.createRoot(captureHook: nil)
-    }
-    func createRoot(captureHook: Hook?) async {
+        // capture
         await captureHook?()
         guard id.isExist else {
             setIssue(Error.systemModelIsDeleted)
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard root == nil else {
+            setIssue(Error.rootObjectModelAlreadyExist)
+            logger.failure("RootObjectModel이 이미 존재합니다.")
             return
         }
         let source = self.source
@@ -285,22 +267,17 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                if let systemSourceRef = await source.ref {
-                    await systemSourceRef.createRoot()
-                } else {
-                    logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다. -> 추후 정리 로직 구현 예정")
+                guard let systemSourceRef = await source.ref else {
+                    logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
                     return
                 }
+                
+                await systemSourceRef.createRootObject()
             }
         }
     }
     
     public func removeSystem() async {
-        logger.start()
-        
-        await self.removeSystem(captureHook: nil)
-    }
-    func removeSystem(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
@@ -340,9 +317,9 @@ public final class SystemModel: Sendable, Debuggable, EventDebuggable {
     }
     public enum Error: String, Swift.Error {
         case systemModelIsDeleted
+        case nameCannotBeEmpty, newNameIsSameAsCurrent
         case systemAlreadyExist // addSystem의 capture에서 검증
-        case alreadySubscribed
-        case noChangesToPush
+        case rootObjectModelAlreadyExist
     }
 }
 

@@ -190,7 +190,6 @@ private func getProjectModel(_ budClientRef: BudClient) async throws -> ProjectM
         }
     }
     
-    await projectBoardRef.setCallbackNil()
     
     // ProjectEditor
     await #expect(projectBoardRef.projects.count == 1)

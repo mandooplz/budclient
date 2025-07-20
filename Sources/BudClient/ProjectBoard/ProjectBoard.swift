@@ -53,7 +53,6 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
             logger.failure("ProjectBoard가 존재하지 않아 실행 취소됩니다.")
             return
         }
-        let projectBoard = self.id
         let config = self.config
         let me = ObjectID(self.id.value)
         
@@ -69,19 +68,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                 await projectHubRef.appendHandler(
                     for: me,
                     .init({ event in
-                        Task {
-                            guard let projectBoardRef = await projectBoard.ref else {
-                                logger.failure("ProjectBoard가 존재하지 않습니다.")
-                                return
-                            }
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
                             
-                            let updaterRef = projectBoardRef.updaterRef
-                            
-                            await updaterRef.appendEvent(event)
-                            await updaterRef.update()
-                            
-                            await projectBoardRef.callback?()
-                            await projectBoardRef.setCallbackNil()
+                            await self?.callback?()
                         }
                     })
                 )

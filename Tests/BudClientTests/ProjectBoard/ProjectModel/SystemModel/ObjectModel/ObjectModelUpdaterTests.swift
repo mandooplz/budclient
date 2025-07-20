@@ -134,12 +134,6 @@ struct ObjectModelUpdaterTests {
             // given
             try await #require(updaterRef.queue.isEmpty)
             
-            _ = ObjectSourceDiff(
-                id: ObjectSourceMock.ID(),
-                target: .init(),
-                name: "TEST_OBJECT",
-                role: .node)
-            
             await updaterRef.appendEvent(.removed)
             
             try await #require(updaterRef.queue.count == 1)
@@ -216,10 +210,9 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
                 continuation.resume()
             }
             
-            await systemModelRef.createRoot()
+            await systemModelRef.createRootObject()
         }
     }
-    await systemModelRef.setCallbackNil()
     
     let rootObjectModelRef = try #require(await systemModelRef.root?.ref)
     

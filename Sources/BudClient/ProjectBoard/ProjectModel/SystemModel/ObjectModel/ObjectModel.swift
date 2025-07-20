@@ -13,21 +13,18 @@ private let logger = BudLogger("ObjectModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class ObjectModel: Sendable, Debuggable {
+public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
-    init(name: String,
-         role: ObjectRole,
-         target: ObjectID,
-         config: Config<SystemModel.ID>,
-         source: any ObjectSourceIdentity) {
-        self.target = target
-        self.source = source
+    init(config: Config<SystemModel.ID>,
+         diff: ObjectSourceDiff) {
+        self.target = diff.target
+        self.source = diff.id
         self.config = config
         self.updaterRef = Updater(owner: self.id)
         
-        self.role = role
-        self.name = name
-        self.nameInput = name
+        self.role = diff.role
+        self.name = diff.name
+        self.nameInput = diff.name
         
         ObjectModelManager.register(self)
     }
@@ -44,6 +41,7 @@ public final class ObjectModel: Sendable, Debuggable {
     nonisolated let source: any ObjectSourceIdentity
     
     public nonisolated let role: ObjectRole
+    
     public internal(set) var name: String
     public var nameInput: String
     
@@ -51,22 +49,146 @@ public final class ObjectModel: Sendable, Debuggable {
     public internal(set) var actions: [ActionModel.ID] = []
     
     public var issue: (any IssueRepresentable)?
+    public var callback: Callback?
+    
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
     
     
     // MARK: action
-    public func subscribeSource() { }
-    public func unsubscribeSource() { }
+    public func startUpdating() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.objectModelIsDeleted)
+            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let objectSource = self.source
+        let me = ObjectID(self.id.value)
+        
+        // compute
+        await computeHook?()
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let objectSourceRef = await objectSource.ref else {
+                    logger.failure("ObjectSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await objectSourceRef.setHandler(
+                    for: me,
+                    .init { event in
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
+                            
+                            await self?.callback?()
+                        }
+                    })
+            }
+        }
+    }
     
-    public func pushName() async { }
-    func pushName(captureHook: Hook?) async { }
+    public func pushName() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.objectModelIsDeleted)
+            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard nameInput.isEmpty == false else {
+            setIssue(Error.nameCannotBeEmpty)
+            logger.failure("name이 빈 문자열일 수는 없습니다.")
+            return
+        }
+        guard nameInput != name else {
+            setIssue(Error.newNameIsSameAsCurrent)
+            logger.failure("nameInput이 name과 동일합니다.")
+            return
+        }
+        
+        let objectSource = self.source
+        let nameInput = self.nameInput
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let objectSourceRef = await objectSource.ref else {
+                    logger.failure("ObjectSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await objectSourceRef.setName(nameInput)
+                await objectSourceRef.notifyNameChanged()
+            }
+        }
+        
+    }
     
-    public func addChildObject() { }
-    public func addParentObject() { }
+    public func addChildObject() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.objectModelIsDeleted)
+            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    public func addParentObject() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.objectModelIsDeleted)
+            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
     
-    public func createState() { }
-    public func createAction() { }
+    public func appendState() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.objectModelIsDeleted)
+            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    public func appendAction() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.objectModelIsDeleted)
+            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
     
-    public func removeObject() { }
+    public func removeObject() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.objectModelIsDeleted)
+            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
     
     
     // MARK: value
@@ -83,6 +205,10 @@ public final class ObjectModel: Sendable, Debuggable {
         var ref: ObjectModel? {
             ObjectModelManager.container[self]
         }
+    }
+    public enum Error: String, Swift.Error {
+        case objectModelIsDeleted
+        case nameCannotBeEmpty, newNameIsSameAsCurrent
     }
 }
 

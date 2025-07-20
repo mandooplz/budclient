@@ -7,6 +7,8 @@
 import Foundation
 import Values
 
+private let logger = BudLogger("ObjectSourceMock")
+
 
 // MARK: Object
 @Server
@@ -31,12 +33,27 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     package nonisolated let parentRef: SystemSourceMock
     package nonisolated let target = ObjectID()
     
-    package var name: String
     package nonisolated let role: ObjectRole
     
+    package var name: String
+    package func setName(_ value: String) async {
+        logger.start()
+        
+        self.name = value
+    }
+    
+    
     package var handler: EventHandler?
-    package func setHandler(_ handler: EventHandler) {
+    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
         self.handler = handler
+    }
+    
+    package func notifyNameChanged() async {
+        logger.start()
+        
+        let diff = ObjectSourceDiff(self)
+        
+        self.handler?.execute(.modified(diff))
     }
     
     

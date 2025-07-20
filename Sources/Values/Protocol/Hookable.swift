@@ -36,23 +36,23 @@ internal extension Hookable {
 
 package extension Hookable {
     func setCaptureHook(_ hook: @escaping Hook) {
-        self.captureHook = {
+        self.captureHook = { [weak self] in
             await hook()
-            await self.setCaptureHookNil()
+            await self?.setCaptureHookNil()
         }
     }
     
     func setMutateHook(_ hook: @escaping Hook) {
-        self.mutateHook = {
+        self.mutateHook = { [weak self] in
             await hook()
-            await self.setMutateHookNil()
+            await self?.setMutateHookNil()
         }
     }
     
     func setComputeHook(_ hook: @escaping Hook) {
-        self.computeHook = {
+        self.computeHook = { [weak self] in
             await hook()
-            await self.setComputeHookNil()
+            await self?.setComputeHookNil()
         }
     }
 }

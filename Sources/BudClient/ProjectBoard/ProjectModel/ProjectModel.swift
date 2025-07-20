@@ -72,41 +72,31 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         }
         
         let projectSource = self.source
-        let projectModel = self.id
         let me = ObjectID(self.id.value)
         
         // compute
+        await computeHook?()
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let projectSourceRef = await projectSource.ref else {
-                    logger.failure("ProjectSource가 존재하지 않습니다. -> ProjectSource 삭제 로직 구현 필요")
+                    logger.failure("ProjectSource가 존재하지 않습니다.")
                     return
                 }
                 
                 await projectSourceRef.appendHandler(
                     for: me,
                     .init({ event in
-                        Task {
-                            guard let projectModelRef = await projectModel.ref else {
-                                return
-                            }
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
                             
-                            let updaterRef = projectModelRef.updaterRef
-                            
-                            await updaterRef.appendEvent(event)
-                            await updaterRef.update()
-                            
-                            await projectModelRef.callback?()
-                            await projectModelRef.setCallbackNil()
+                            await self?.callback?()
                         }
                     }))
                 
                 await projectSourceRef.sendInitialEvents(to: me)
             }
         }
-        
-        // mutate
-        
     }
     
     public func pushName() async {
@@ -120,13 +110,13 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
             return
         }
         guard self.nameInput.isEmpty == false else {
-            setIssue(Error.nameInputIsEmpty)
+            setIssue(Error.nameCannotBeEmpty)
             logger.failure("nameInput이 nil으로 비어있습니다.")
             return
         }
         
         guard self.nameInput != self.name else {
-            setIssue(Error.pushWithSameValue)
+            setIssue(Error.newNameIsSameAsCurrent)
             logger.failure("nameInput과 name이 동일합니다.")
             return
         }
@@ -195,7 +185,10 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let projectSourceRef = await projectSource.ref else { return }
+                guard let projectSourceRef = await projectSource.ref else {
+                    logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
                 
                 await projectSourceRef.removeProject()
             }
@@ -219,8 +212,8 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         }
     }
     public enum Error: String, Swift.Error {
-        case projectModelIsDeleted, projectSourceIsDeleted
-        case nameInputIsEmpty, pushWithSameValue
+        case projectModelIsDeleted
+        case nameCannotBeEmpty, newNameIsSameAsCurrent
         case firstSystemAlreadyExist
     }
 }

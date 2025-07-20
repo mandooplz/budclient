@@ -7,19 +7,27 @@
 import Foundation
 
 
+// MARK: Callback
+public typealias Callback = @Sendable @MainActor () -> Void
+
+
 // MARK: EventDebuggable
 @MainActor
 public protocol EventDebuggable: AnyObject {
     var callback: Callback? { get set }
 }
 
-public extension EventDebuggable {
-    func setCallback(_ handler: @escaping Callback) {
-        self.callback = nil
-        self.callback = handler
-    }
-    
+internal extension EventDebuggable {
     func setCallbackNil() {
         self.callback = nil
+    }
+}
+
+public extension EventDebuggable {
+    func setCallback(_ handler: @escaping Callback) {
+        self.callback = { [weak self] in
+            handler()
+            self?.setCallbackNil()
+        }
     }
 }

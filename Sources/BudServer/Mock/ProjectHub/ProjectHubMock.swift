@@ -36,6 +36,8 @@ package final class ProjectHubMock: ProjectHubInterface {
         self.handlers[requester] = nil
     }
     package func synchronize(requester: ObjectID) async {
+        logger.start()
+        
         let diffs = self.projectSources
             .compactMap { $0.ref }
             .map { ProjectSourceDiff($0) }

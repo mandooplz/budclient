@@ -10,6 +10,8 @@ import Values
 @testable import BudClient
 @testable import BudServer
 
+private let logger = BudLogger("SystemModelTests")
+
 
 // MARK: Tests
 @Suite("SystemModel", .timeLimit(.minutes(1)))
@@ -26,14 +28,24 @@ struct SystemModelTests {
             // given
             try await #require(systemModelRef.id.isExist == true)
             
-            // when
-            await systemModelRef.startUpdating {
+            await systemModelRef.setCaptureHook {
                 await systemModelRef.delete()
             }
+            
+            // when
+            await systemModelRef.startUpdating()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "systemModelIsDeleted")
+        }
+        
+        @Test func receiveInitialStates() async throws {
+            // given
+            
+            // when
+            
+            // then
         }
     }
     
@@ -49,16 +61,31 @@ struct SystemModelTests {
             // given
             try await #require(systemModelRef.id.isExist == true)
             
-            // when
-            await systemModelRef.pushName {
+            await systemModelRef.setCaptureHook {
                 await systemModelRef.delete()
             }
+            
+            // when
+            await systemModelRef.pushName()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "systemModelIsDeleted")
         }
-        @Test func whenAlreadyUpdated() async throws {
+        @Test func whenNameInputIsEmpty() async throws {
+            // given
+            await MainActor.run {
+                systemModelRef.nameInput = ""
+            }
+            
+            // when
+            await systemModelRef.pushName()
+            
+            // then
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "nameCannotBeEmpty")
+        }
+        @Test func whenNameInputIsSameWithName() async throws {
             // given
             let testName = "TEST_NAME_22"
             await MainActor.run {
@@ -71,12 +98,9 @@ struct SystemModelTests {
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "noChangesToPush")
+            #expect(issue.reason == "newNameIsSameAsCurrent")
         }
         
-        @Test func modifySystemSourceName() async throws {
-            
-        }
         @Test func updateNameByUpdater() async throws {
             // given
             let testName = "TEST_NAME"
@@ -99,7 +123,6 @@ struct SystemModelTests {
                 }
             }
             
-            await systemModelRef.setCallbackNil()
             
             // then
             await #expect(systemModelRef.name == testName)
@@ -118,10 +141,12 @@ struct SystemModelTests {
             // given
             try await #require(systemModelRef.id.isExist == true)
             
-            // when
-            await systemModelRef.addSystemRight {
+            await systemModelRef.setCaptureHook {
                 await systemModelRef.delete()
             }
+            
+            // when
+            await systemModelRef.addSystemRight()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
@@ -194,10 +219,12 @@ struct SystemModelTests {
             // given
             try await #require(systemModelRef.id.isExist == true)
             
-            // when
-            await systemModelRef.addSystemLeft {
+            await systemModelRef.setCaptureHook {
                 await systemModelRef.delete()
             }
+            
+            // when
+            await systemModelRef.addSystemLeft()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
@@ -231,7 +258,6 @@ struct SystemModelTests {
                     await systemModelRef.addSystemLeft()
                 }
             }
-            await projectModelRef.setCallbackNil()
             
             // then
             try await #require(projectModelRef.systemLocations.contains(leftLocation))
@@ -270,10 +296,12 @@ struct SystemModelTests {
             // given
             try await #require(systemModelRef.id.isExist == true)
             
-            // when
-            await systemModelRef.addSystemTop {
+            await systemModelRef.setCaptureHook {
                 await systemModelRef.delete()
             }
+            
+            // when
+            await systemModelRef.addSystemTop()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
@@ -307,7 +335,6 @@ struct SystemModelTests {
                     await systemModelRef.addSystemTop()
                 }
             }
-            await projectModelRef.setCallbackNil()
             
             // then
             try await #require( projectModelRef.systemLocations.contains(topLocation) == true)
@@ -346,10 +373,12 @@ struct SystemModelTests {
             // given
             try await #require(systemModelRef.id.isExist == true)
             
-            // when
-            await systemModelRef.addSystemBottom {
+            await systemModelRef.setCaptureHook {
                 await systemModelRef.delete()
             }
+            
+            // when
+            await systemModelRef.addSystemBottom()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
@@ -383,7 +412,6 @@ struct SystemModelTests {
                     await systemModelRef.addSystemBottom()
                 }
             }
-            await projectModelRef.setCallbackNil()
             
             // then
             try #require(await projectModelRef.systemLocations.contains(bottomLocation) == true)
@@ -410,7 +438,7 @@ struct SystemModelTests {
         }
     }
     
-    struct RemoveSystem {
+    struct CreateRootObject {
         let budClientRef: BudClient
         let systemModelRef: SystemModel
         init() async throws {
@@ -422,27 +450,187 @@ struct SystemModelTests {
             // given
             try await #require(systemModelRef.id.isExist == true)
             
-            // when
-            await systemModelRef.removeSystem {
+            await systemModelRef.setCaptureHook {
                 await systemModelRef.delete()
             }
+            
+            // when
+            await systemModelRef.createRootObject()
             
             // then
             let issue = try #require(await systemModelRef.issue as? KnownIssue)
             #expect(issue.reason == "systemModelIsDeleted")
         }
         
-        @Test func removeSystemSource() async throws {
+        @Test func setRoot() async throws {
             // given
-            let systemSource = systemModelRef.source
-            try await #require(systemSource.isExist == true)
+            try await #require(systemModelRef.root == nil)
+            
+            await systemModelRef.startUpdating()
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await systemModelRef.createRootObject()
+                }
+            }
+            
+            // then
+            try await #require(systemModelRef.issue == nil)
+            
+            await #expect(systemModelRef.root != nil)
+        }
+        @Test func createObjectModel() async throws {
+            // given
+            try await #require(systemModelRef.root == nil)
+            
+            await systemModelRef.startUpdating()
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await systemModelRef.createRootObject()
+                }
+            }
+            
+            // then
+            try await #require(systemModelRef.issue == nil)
+            
+            let rootObjectModel = try #require(await systemModelRef.root)
+            await #expect(rootObjectModel.isExist == true)
+        }
+        @Test func appendObjectModelInObjects() async throws {
+            // given
+            try await #require(systemModelRef.objects.isEmpty)
+            
+            await systemModelRef.startUpdating()
+            
+            // when
+        }
+        
+        @Test func whenRootObjectModelAlreadyExist() async throws {
+            // given
+            try await #require(systemModelRef.root == nil)
+            
+            await systemModelRef.startUpdating()
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await systemModelRef.createRootObject()
+                }
+            }
+            
+            try await #require(systemModelRef.root != nil)
+            
+            // when
+            await systemModelRef.createRootObject()
+            
+            // then
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "rootObjectModelAlreadyExist")
+        }
+    }
+    
+    struct RemoveSystem {
+        let budClientRef: BudClient
+        let systemModelRef: SystemModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.systemModelRef = try await getSystemModel(budClientRef)
+            
+            logger.end("테스트 준비 끝")
+        }
+        
+        @Test func whenSystemModelIsDeleted() async throws {
+            // given
+            try await #require(systemModelRef.id.isExist == true)
+            
+            await systemModelRef.setCaptureHook {
+                await systemModelRef.delete()
+            }
             
             // when
             await systemModelRef.removeSystem()
             
             // then
-            await #expect(systemSource.isExist == false)
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "systemModelIsDeleted")
         }
+        
+        @Test func deleteSystemModel() async throws {
+             // given
+            try await #require(systemModelRef.id.isExist == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await systemModelRef.startUpdating()
+                    
+                    await systemModelRef.removeSystem()
+                }
+            }
+            
+            // then
+            await #expect(systemModelRef.id.isExist == false)
+        }
+        
+        @Test func deleteObjectModels() async throws {
+            // given
+            try await #require(systemModelRef.objects.isEmpty)
+            try await #require(systemModelRef.root == nil)
+            
+            await systemModelRef.startUpdating()
+            
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await systemModelRef.createRootObject()
+                }
+            }
+            
+            let objectModels = await systemModelRef.objects.values
+            try #require(objectModels.count == 1)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await systemModelRef.removeSystem()
+                }
+            }
+            
+            // then
+            for objectModel in objectModels {
+                await #expect(objectModel.isExist == false)
+            }
+        }
+        @Test(.disabled("구현 예정")) func deleteStateModels() async throws { }
+        @Test(.disabled("구현 예정")) func deleteGetterModels() async throws { }
+        @Test(.disabled("구현 예정")) func deleteSetterModels() async throws { }
+        @Test(.disabled("구현 예정")) func deleteActionModels() async throws { }
+        
+        @Test(.disabled("구현 예정")) func deleteFlowModels() async throws { }
     }
 }
 
@@ -483,7 +671,6 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
             await projectBoardRef.createProject()
         }
     }
-    await projectBoardRef.setCallbackNil()
     
     await #expect(projectBoardRef.projects.count == 1)
 
@@ -501,9 +688,9 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
         }
     }
     
-    await projectModelRef.setCallbackNil()
-    
     // SystemModel
+    try await #require(projectModelRef.systems.count == 1)
+    
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     return systemModelRef
 }

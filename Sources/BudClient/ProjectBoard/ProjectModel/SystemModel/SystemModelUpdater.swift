@@ -15,7 +15,7 @@ private let logger = BudLogger("SystemModelUpdater")
 // MARK: Object
 extension SystemModel {
     @MainActor @Observable
-    final class Updater: Sendable, Debuggable, UpdaterInterface {
+    final class Updater: Sendable, Debuggable, UpdaterInterface, Hookable {
         // MARK: core
         init(owner: SystemModel.ID) {
             self.owner = owner
@@ -28,17 +28,24 @@ extension SystemModel {
         var queue: Deque<SystemSourceEvent> = []
         var issue: (any IssueRepresentable)?
         
+        package var captureHook: Hook?
+        package var computeHook: Hook?
+        package var mutateHook: Hook?
         
         // MARK: action
-        func update(mutateHook: Hook? = nil) async {
+        func update() async {
+            logger.start()
+
             // capture
             await mutateHook?()
-            guard let systemModelRef = owner.ref,
-                let projectModelRef = systemModelRef.config.parent.ref else {
+            guard let systemModelRef = owner.ref else {
                 setIssue(Error.systemModelIsDeleted)
                 logger.failure("SystemModel이 존재하지 않아 update 취소됩니다.")
                 return
             }
+            let projectModelRef = systemModelRef.config.parent.ref!
+            let callback = systemModelRef.callback
+            
             let config = systemModelRef.config.setParent(owner)
             
             // mutate
@@ -47,13 +54,17 @@ extension SystemModel {
                 
                 switch event {
                 case .removed:
-                    // cancel SystemModel
+                    // remove SystemModel
+                    for objectModel in systemModelRef.objects.values {
+                        objectModel.ref?.delete()
+                    }
+                    
                     systemModelRef.delete()
                     projectModelRef.systems[systemModelRef.target] = nil
                     
                     logger.end("removed SystemModel")
                 case .modified(let diff):
-                    // modified SystemModel -> SystemModel.updater
+                    // modified SystemModel
                     guard let modifiedModel = projectModelRef.systems[diff.target] else {
                         setIssue(Error.alreadyRemoved)
                         logger.failure(Error.alreadyRemoved)
@@ -72,11 +83,8 @@ extension SystemModel {
                         return
                     }
                     
-                    let objectModelRef = ObjectModel(name: diff.name,
-                                                     role: diff.role,
-                                                     target: diff.target,
-                                                     config: config,
-                                                     source: diff.id)
+                    let objectModelRef = ObjectModel(config: config,
+                                                     diff: diff)
                     
                     if diff.role == .root {
                         systemModelRef.root = objectModelRef.id
@@ -84,11 +92,15 @@ extension SystemModel {
                     
                     systemModelRef.objects[diff.target] = objectModelRef.id
                     
+                    logger.end("created ObjectModel")
                 case .flowAdded:
+                    // create FlowModel
                     logger.failure("미구현")
                     return
                 }
             }
+            
+            callback?()
         }
         
         

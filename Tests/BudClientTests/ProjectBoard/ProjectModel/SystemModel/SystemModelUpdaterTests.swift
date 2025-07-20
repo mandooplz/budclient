@@ -23,7 +23,7 @@ struct SystemModelUpdaterTests {
         init() async throws {
             self.budClientRef = await BudClient()
             self.systemModelRef = try await getSystemModel(budClientRef)
-            self.updaterRef = systemModelRef.updater
+            self.updaterRef = systemModelRef.updaterRef
         }
 
         @Test func createObjectModel() async throws {
@@ -225,7 +225,6 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
         }
     }
     
-    await projectBoardRef.setCallbackNil()
     
     // ProjectModel.createFirstSystem
     await #expect(projectBoardRef.projects.count == 1)
@@ -243,7 +242,6 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
         }
     }
     
-    await projectModelRef.setCallbackNil()
     
     // SystemModel and Updater
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)

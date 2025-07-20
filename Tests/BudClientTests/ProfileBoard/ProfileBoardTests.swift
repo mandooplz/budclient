@@ -128,8 +128,6 @@ struct ProfileBoardTests {
                         await projectBoardRef.createProject()
                     }
                 }
-                
-                await projectBoardRef.setCallbackNil()
             }
             
             
@@ -159,7 +157,6 @@ struct ProfileBoardTests {
                 }
             }
             
-            await projectModelRef.setCallbackNil()
             
             try await #require(projectModelRef.systems.count == 1)
             
@@ -254,7 +251,6 @@ private func createProjectModel(_ budClientRef: BudClient) async throws -> Proje
             await projectBoardRef.createProject()
         }
     }
-    await projectBoardRef.setCallbackNil()
     
     // ProjectEditor
     await #expect(projectBoardRef.projects.count == 1)
@@ -273,8 +269,6 @@ private func createSystemModel(_ projectModelRef: ProjectModel) async throws -> 
             await projectModelRef.createFirstSystem()
         }
     }
-    
-    await projectModelRef.setCallbackNil()
     
     // SystemModel
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)

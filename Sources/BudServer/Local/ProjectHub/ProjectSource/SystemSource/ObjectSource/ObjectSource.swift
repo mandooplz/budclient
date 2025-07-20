@@ -28,10 +28,20 @@ package final class ObjectSource: ObjectSourceInterface {
     // MARK: state
     package nonisolated let id: ID
     
+    package func setName(_ value: String) async {
+        logger.failure("미구현")
+    }
+    
     var listener: ListenerRegistration?
     var handler: EventHandler?
-    package func setHandler(_ handler: EventHandler) {
+    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
         // Firebase를 통해 구독 구현
+    }
+    
+    package func notifyNameChanged() async {
+        logger.start()
+        
+        // Firebase에 의해 알아서 처리된다. 
     }
     
     

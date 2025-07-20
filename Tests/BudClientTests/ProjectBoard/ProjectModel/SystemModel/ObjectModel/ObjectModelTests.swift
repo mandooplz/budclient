@@ -13,16 +13,68 @@ import Values
 
 // MARK: Tests
 @Suite("ObjectModel")
-struct ObjectModelTests {
-    struct CreateState {
+struct RootObjectModelTests {
+    struct StartUpdating {
+        let budClientRef: BudClient
+        let objectModelRef: ObjectModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
         
+        @Test func whenObjectModelIsDeleted() async throws {
+            // given
+            try await #require(objectModelRef.id.isExist == true)
+            
+            await objectModelRef.setCaptureHook {
+                await objectModelRef.delete()
+            }
+            
+            // when
+            await objectModelRef.startUpdating()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
+        }
     }
-    struct CreateAction {
+    
+    struct PushName {
         
     }
     
-    struct RemoveObject {
+    struct addChildObject {
         
+    }
+    
+    struct addParentObject {
+        
+    }
+    
+    struct AppendState {
+        let budClientRef: BudClient
+        let objectModelRef: ObjectModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
+    }
+    struct AppendAction {
+        let budClientRef: BudClient
+        let objectModelRef: ObjectModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
+    }
+    
+    struct RemoveObject {
+        let budClientRef: BudClient
+        let objectModelRef: ObjectModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
     }
 }
 
@@ -62,7 +114,6 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
             await projectBoardRef.createProject()
         }
     }
-    await projectBoardRef.setCallbackNil()
     
     await #expect(projectBoardRef.projects.count == 1)
 
@@ -80,7 +131,6 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
         }
     }
     
-    await projectModelRef.setCallbackNil()
     
     // SystemModel
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
@@ -92,10 +142,9 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
                 continuation.resume()
             }
             
-            await systemModelRef.createRoot()
+            await systemModelRef.createRootObject()
         }
     }
-    await systemModelRef.setCallbackNil()
     
     let rootObjectModelRef = try #require(await systemModelRef.root?.ref)
     return rootObjectModelRef
