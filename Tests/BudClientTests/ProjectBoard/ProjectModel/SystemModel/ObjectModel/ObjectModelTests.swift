@@ -66,7 +66,7 @@ struct ObjectModelTests {
             #expect(issue.reason == "alreadyUpdating")
         }
         
-        @Test func receiveInitialAddedStateEvents() async throws {
+        @Test func receiveInitialAdded_StateAdded() async throws {
             // given
             try await #require(objectSourceRef.states.isEmpty)
             await objectSourceRef.appendNewState()
@@ -87,6 +87,9 @@ struct ObjectModelTests {
             
             // then
             await #expect(objectModelRef.states.count == 1)
+        }
+        @Test func receiveInitialEvent_ActionAdded() async throws {
+            Issue.record("구현 필요")
         }
     }
     
