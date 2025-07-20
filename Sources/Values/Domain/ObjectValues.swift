@@ -37,6 +37,10 @@ public enum ObjectRole: String, Sendable, Codable {
 // MARK: StateID
 public struct StateID: IDRepresentable {
     public let value: UUID
+    
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
 
 
@@ -53,11 +57,19 @@ public enum AccessLevel: String, Sendable, Hashable, CaseIterable, Identifiable 
 // MARK: SetterID
 public struct SetterID: IDRepresentable {
     public let value: UUID
+    
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
 
 
 public struct GetterID: IDRepresentable {
     public let value: UUID
+    
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
 
 
@@ -65,6 +77,7 @@ public struct GetterID: IDRepresentable {
 // MARK: GetterID
 public struct ActionID: IDRepresentable {
     public let value: UUID
+    
     public init(_ value: UUID = UUID()) {
         self.value = value
     }

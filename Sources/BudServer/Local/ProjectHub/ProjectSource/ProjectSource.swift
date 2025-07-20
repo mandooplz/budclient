@@ -160,7 +160,7 @@ package final class ProjectSource: ProjectSourceInterface {
         self.listener?.remove()
         self.listener = nil
     }
-    package func sendInitialEvents(to requester: ObjectID) async {
+    package func synchronize(requester: ObjectID) async {
         logger.start()
         
         // Firebase.listerner를 등록하는 과정에서 자체적으로 이벤트를 전달한다.

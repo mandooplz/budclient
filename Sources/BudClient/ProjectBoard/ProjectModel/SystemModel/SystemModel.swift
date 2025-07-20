@@ -40,6 +40,8 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let source: any SystemSourceIdentity
     nonisolated let updaterRef: Updater
     
+    var isUpdating: Bool = false
+    
     public internal(set) var name: String
     public var nameInput: String
     
@@ -67,6 +69,11 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("SystemModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 updating 중입니다.")
+            return
+        }
         let systemSource = self.source
         let me = ObjectID(self.id.value)
         
@@ -87,8 +94,13 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
                             await self?.callback?()
                         }
                     }))
+                
+                await systemSourceRef.synchronize(requester: me)
             }
         }
+        
+        // mutate
+        self.isUpdating = true
     }
     
     public func pushName() async {
@@ -317,6 +329,7 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
     }
     public enum Error: String, Swift.Error {
         case systemModelIsDeleted
+        case alreadyUpdating
         case nameCannotBeEmpty, newNameIsSameAsCurrent
         case systemAlreadyExist // addSystem의 capture에서 검증
         case rootObjectModelAlreadyExist

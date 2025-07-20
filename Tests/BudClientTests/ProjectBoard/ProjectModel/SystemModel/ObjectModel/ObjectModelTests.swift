@@ -12,14 +12,16 @@ import Values
 
 
 // MARK: Tests
-@Suite("ObjectModel")
-struct RootObjectModelTests {
+@Suite("ObjectModel", .timeLimit(.minutes(1)))
+struct ObjectModelTests {
     struct StartUpdating {
         let budClientRef: BudClient
         let objectModelRef: ObjectModel
+        let objectSourceRef: ObjectSourceMock
         init() async throws {
             self.budClientRef = await BudClient()
             self.objectModelRef = try await getRootObjectModel(budClientRef)
+            self.objectSourceRef = await objectModelRef.source.ref as! ObjectSourceMock
         }
         
         @Test func whenObjectModelIsDeleted() async throws {
@@ -36,6 +38,55 @@ struct RootObjectModelTests {
             // then
             let issue = try #require(await objectModelRef.issue as? KnownIssue)
             #expect(issue.reason == "objectModelIsDeleted")
+        }
+        
+        @Test func setIsUpdatingTrue() async throws {
+            // given
+            try await #require(objectModelRef.isUpdating == false)
+            
+            // when
+            await objectModelRef.startUpdating()
+            
+            // then
+            try await #require(objectModelRef.issue == nil)
+            
+            await #expect(objectModelRef.isUpdating == true)
+        }
+        @Test func whenAlreadyUpdating() async throws {
+            // given
+            await objectModelRef.startUpdating()
+            
+            try await #require(objectModelRef.issue == nil)
+            
+            // when
+            await objectModelRef.startUpdating()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyUpdating")
+        }
+        
+        @Test func receiveInitialAddedStateEvents() async throws {
+            // given
+            try await #require(objectSourceRef.states.isEmpty)
+            await objectSourceRef.appendNewState()
+            try await #require(objectSourceRef.states.count == 1)
+            
+            try await #require(objectModelRef.states.isEmpty)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.startUpdating()
+                }
+            }
+            
+            // then
+            await #expect(objectModelRef.states.count == 1)
         }
     }
     

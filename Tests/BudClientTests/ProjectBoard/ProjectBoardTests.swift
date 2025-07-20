@@ -44,6 +44,30 @@ struct ProjectBoardTests {
             #expect(issue.reason == "projectBoardIsDeleted")
         }
         
+        @Test func setIsUpdatingTrue() async throws {
+            // given
+            try await #require(projectBoardRef.isUpdating == false)
+            
+            // when
+            await projectBoardRef.startUpdating()
+            
+            // then
+            await #expect(projectBoardRef.isUpdating == true)
+        }
+        @Test func whenAlreadyUpdating() async throws {
+            // given
+            await projectBoardRef.startUpdating()
+            
+            try await #require(projectBoardRef.issue == nil)
+            
+            // when
+            await projectBoardRef.startUpdating()
+            
+            // then
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyUpdating")
+        }
+        
         @Test func receiveInitialEvents() async throws {
             // given
             try await #require(projectBoardRef.projects.isEmpty)

@@ -52,6 +52,16 @@ package final class SystemSourceMock: SystemSourceInterface {
         self.handler = handler
     }
     
+    package func synchronize(requester: ObjectID) async {
+        let diffs = objects.values
+            .compactMap { $0.ref }
+            .map { ObjectSourceDiff($0) }
+        
+        for diff in diffs {
+            self.handler?.execute(.objectAdded(diff))
+        }
+    }
+    
     package func notifyNameChanged() {
         // capture
         guard id.isExist else { return }

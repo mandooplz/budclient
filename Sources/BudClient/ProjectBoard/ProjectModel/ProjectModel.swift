@@ -39,6 +39,8 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let source: any ProjectSourceIdentity
     nonisolated let updaterRef: Updater
     
+    var isUpdating: Bool = false
+    
     public internal(set) var name: String
     public var nameInput: String
     
@@ -70,6 +72,11 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 updating 중입니다.")
+            return
+        }
         
         let projectSource = self.source
         let me = ObjectID(self.id.value)
@@ -94,9 +101,12 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                         }
                     }))
                 
-                await projectSourceRef.sendInitialEvents(to: me)
+                await projectSourceRef.synchronize(requester: me)
             }
         }
+        
+        // mutate
+        self.isUpdating = true
     }
     
     public func pushName() async {
@@ -213,6 +223,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     }
     public enum Error: String, Swift.Error {
         case projectModelIsDeleted
+        case alreadyUpdating
         case nameCannotBeEmpty, newNameIsSameAsCurrent
         case firstSystemAlreadyExist
     }

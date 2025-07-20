@@ -41,6 +41,30 @@ struct ProjectModelTests {
             
         }
         
+        @Test func setIsUpdatingTrue() async throws {
+            // given
+            try await #require(projectModelRef.isUpdating == false)
+            
+            // when
+            await projectModelRef.startUpdating()
+            
+            // then
+            await #expect(projectModelRef.isUpdating == true)
+        }
+        @Test func whenAlreadyUpdating() async throws {
+            // given
+            await projectModelRef.startUpdating()
+            
+            try await #require(projectModelRef.issue == nil)
+            
+            // when
+            await projectModelRef.startUpdating()
+            
+            // then
+            let issue = try #require(await projectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyUpdating")
+        }
+        
         @Test func receiveInitialEvents() async throws {
             // given
             try await #require(projectModelRef.systems.isEmpty)

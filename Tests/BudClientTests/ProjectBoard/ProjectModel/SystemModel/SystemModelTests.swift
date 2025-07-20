@@ -40,12 +40,28 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
         
-        @Test func receiveInitialStates() async throws {
+        @Test func setIsUpdatingTrue() async throws {
             // given
+            try await #require(systemModelRef.isUpdating == false)
             
             // when
+            await systemModelRef.startUpdating()
             
             // then
+            await #expect(systemModelRef.isUpdating == true)
+        }
+        @Test func whenAlreadyUpdating() async throws {
+            // given
+            await systemModelRef.startUpdating()
+            
+            try await #require(systemModelRef.issue == nil)
+            
+            // when
+            await systemModelRef.startUpdating()
+            
+            // then
+            let issue = try #require(await systemModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyUpdating")
         }
     }
     
@@ -160,16 +176,6 @@ struct SystemModelTests {
             let rightLocation = await systemModelRef.location.getRight()
             try await #require( projectModelRef.systemLocations.contains(rightLocation) == false)
             
-            // given
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await projectModelRef.startUpdating()
-                }
-            }
             
             // when
             await withCheckedContinuation { continuation in
@@ -238,15 +244,6 @@ struct SystemModelTests {
             let leftLocation = await systemModelRef.location.getLeft()
             try await #require(projectModelRef.systemLocations.contains(leftLocation) ==  false)
             
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await projectModelRef.startUpdating()
-                }
-            }
             
             // when
             await withCheckedContinuation { continuation in
@@ -314,16 +311,7 @@ struct SystemModelTests {
             
             let topLocation = await systemModelRef.location.getTop()
             try await #require(projectModelRef.systemLocations.contains( topLocation) == false)
-            
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await projectModelRef.startUpdating()
-                }
-            }
+
             
             // when
             await withCheckedContinuation { continuation in
@@ -391,16 +379,6 @@ struct SystemModelTests {
             
             let bottomLocation = await systemModelRef.location.getBotttom()
             try await #require(projectModelRef.systemLocations.contains(bottomLocation) == false)
-            
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await projectModelRef.startUpdating()
-                }
-            }
             
             // when
             await withCheckedContinuation { continuation in

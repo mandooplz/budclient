@@ -60,7 +60,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         
         handlers[requester] = nil
     }
-    package func sendInitialEvents(to requester: ObjectID) async {
+    package func synchronize(requester: ObjectID) async {
         logger.start()
         
         let initialDiffs = self.systems

@@ -47,7 +47,6 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
         self.handler = handler
     }
-    
     package func notifyNameChanged() async {
         logger.start()
         
@@ -57,7 +56,37 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     }
     
     
+    var states: [StateID: StateSourceMock.ID] = [:]
+    var actions: [ActionID: ActionSourceMock.ID] = [:]
+    
+    package func synchronize(requester: ObjectID) async {
+        self.states.values
+            .compactMap { $0.ref }
+            .map { StateSourceDiff($0) }
+            .forEach {
+                self.handler?.execute(.addedState($0))
+            }
+        
+        logger.failure("actionDiffs 구현 필요")
+    }
+    
     // MARK: action
+    package func appendNewState() async {
+        logger.start()
+        
+        guard id.isExist else {
+            logger.failure("ObjectSourceMock이 존재하지 않아 실행취소됩니다.")
+            return
+        }
+        
+        let stateSourceRef = StateSourceMock(name: "New State")
+        self.states[stateSourceRef.target] = stateSourceRef.id
+        
+        // notify
+    }
+    package func appendNewAction() async {
+        fatalError()
+    }
 
     
     

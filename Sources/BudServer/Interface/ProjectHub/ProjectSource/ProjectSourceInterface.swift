@@ -19,7 +19,7 @@ package protocol ProjectSourceInterface: Sendable {
     
     func appendHandler(for requester: ObjectID, _ handler: Handler<ProjectSourceEvent>) async
     func removeHandler(of requester: ObjectID) async
-    func sendInitialEvents(to requester: ObjectID) async
+    func synchronize(requester: ObjectID) async
     
     func notifyNameChanged() async;
     

@@ -7,6 +7,7 @@
 import Foundation
 import Values
 import BudServer
+import Collections
 
 private let logger = BudLogger("ObjectModel")
 
@@ -40,13 +41,15 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let updaterRef: Updater
     nonisolated let source: any ObjectSourceIdentity
     
+    var isUpdating: Bool = false
+    
     public nonisolated let role: ObjectRole
     
     public internal(set) var name: String
     public var nameInput: String
     
-    public internal(set) var states: [StateModel.ID] = []
-    public internal(set) var actions: [ActionModel.ID] = []
+    public internal(set) var states = OrderedDictionary<StateID, StateModel.ID>()
+    public internal(set) var actions = OrderedDictionary<ActionID, ActionModel.ID>()
     
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
@@ -65,6 +68,11 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
         guard id.isExist else {
             setIssue(Error.objectModelIsDeleted)
             logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 updating 중입니다.")
             return
         }
         let objectSource = self.source
@@ -89,8 +97,13 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
                             await self?.callback?()
                         }
                     })
+                
+                await objectSourceRef.synchronize(requester: me)
             }
         }
+        
+        // mutate
+        self.isUpdating = true
     }
     
     public func pushName() async {
@@ -208,6 +221,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
     }
     public enum Error: String, Swift.Error {
         case objectModelIsDeleted
+        case alreadyUpdating
         case nameCannotBeEmpty, newNameIsSameAsCurrent
     }
 }

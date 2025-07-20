@@ -43,9 +43,21 @@ package final class ObjectSource: ObjectSourceInterface {
         
         // Firebase에 의해 알아서 처리된다. 
     }
+    package func synchronize(requester: ObjectID) async {
+        logger.start()
+        
+        // Firebase에서 자체적으로 첫 이벤트들을 전송
+        return
+    }
     
     
     // MARK: action
+    package func appendNewState() async {
+        fatalError()
+    }
+    package func appendNewAction() async {
+        fatalError()
+    }
 
     
     

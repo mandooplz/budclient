@@ -41,6 +41,7 @@ extension ObjectModel {
             }
             
             let systemModelRef = objectModelRef.config.parent.ref!
+            let newConfig = objectModelRef.config.setParent(objectModelRef.id)
             
             while queue.isEmpty == false {
                 let event = queue.removeFirst()
@@ -56,9 +57,19 @@ extension ObjectModel {
                     objectModelRef.delete()
                     
                     logger.end("removed \(objectModelRef.id)")
-                case .addedState:
+                case .addedState(let diff):
+                    // create StateModel
+                    guard objectModelRef.states[diff.target] == nil else {
+                        logger.failure("System에 대응되는 SystemModel이 이미 존재합니다.")
+                        return
+                    }
                     
-                    logger.failure("아직 미구현")
+                    let stateModelRef = StateModel(
+                        config: newConfig,
+                        diff: diff)
+                    objectModelRef.states[diff.target] = stateModelRef.id
+                    
+                    logger.failure("ActionSource 관련 기능 미구현")
                     return
                 }
             }

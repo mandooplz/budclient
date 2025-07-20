@@ -15,12 +15,14 @@ private let logger = BudLogger("StateModel")
 @MainActor @Observable
 public final class StateModel: Sendable {
     // MARK: core
-    init(name: String, target: StateID) {
-        self.target = target
+    init(config: Config<ObjectModel.ID>,
+         diff: StateSourceDiff) {
+        self.target = diff.target
         self.updater = Updater(owner: self.id)
+        self.source = diff.id
         
-        self.name = name
-        self.nameInput = name
+        self.name = diff.name
+        self.nameInput = diff.name
         
         StateModelManager.register(self)
     }
@@ -33,6 +35,7 @@ public final class StateModel: Sendable {
     nonisolated let id = ID()
     nonisolated let target: StateID
     nonisolated let updater: Updater
+    nonisolated let source: any StateSourceIdentity
     
     public internal(set) var name: String
     public var nameInput: String

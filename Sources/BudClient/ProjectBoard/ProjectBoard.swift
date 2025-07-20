@@ -32,6 +32,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     nonisolated let config: Config<BudClient.ID>
     nonisolated let updaterRef: Updater
     
+    var isUpdating: Bool = false
+    
     public internal(set) var projects = OrderedDictionary<ProjectID, ProjectModel.ID>()
     
     public var issue: (any IssueRepresentable)?
@@ -51,6 +53,11 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
         guard self.id.isExist else {
             setIssue(Error.projectBoardIsDeleted)
             logger.failure("ProjectBoard가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 updating 중입니다.")
             return
         }
         let config = self.config
@@ -80,6 +87,9 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                 await projectHubRef.synchronize(requester: me)
             }
         }
+        
+        // mutate
+        self.isUpdating = true
     }
     
     public func createProject() async {
@@ -127,6 +137,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     }
     public enum Error: String, Swift.Error {
         case projectBoardIsDeleted
+        case alreadyUpdating
     }
 }
 

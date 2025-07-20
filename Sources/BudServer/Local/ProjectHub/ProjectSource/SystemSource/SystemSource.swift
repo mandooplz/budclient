@@ -122,6 +122,14 @@ package final class SystemSource: SystemSourceInterface {
             }
     }
     
+    package func synchronize(requester: ObjectID) async {
+        logger.start()
+        
+        // Firebase에서 listener를 등록할 때 내부적으로 호출
+        
+        return
+    }
+    
     package func notifyNameChanged() async {
         return
     }

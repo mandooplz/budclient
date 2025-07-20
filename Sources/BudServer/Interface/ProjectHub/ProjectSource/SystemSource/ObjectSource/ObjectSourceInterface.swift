@@ -19,8 +19,12 @@ package protocol ObjectSourceInterface: Sendable {
     
     func notifyNameChanged() async
     
+    func synchronize(requester: ObjectID) async
+    
     
     // MARK: action
+    func appendNewState() async
+    func appendNewAction() async
 }
 
 
@@ -33,7 +37,7 @@ package protocol ObjectSourceIdentity: Sendable, Hashable {
 
 
 // MARK: Values
-public enum ObjectSourceEvent: Sendable {
+package enum ObjectSourceEvent: Sendable {
     case modified(ObjectSourceDiff)
     case removed
     
