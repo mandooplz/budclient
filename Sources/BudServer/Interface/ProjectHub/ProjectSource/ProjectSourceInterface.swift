@@ -17,7 +17,7 @@ package protocol ProjectSourceInterface: Sendable {
     
     func setName(_ value: String) async;
     
-    func setHandler(for requester: ObjectID, _ handler: Handler<ProjectSourceEvent>) async
+    func appendHandler(for requester: ObjectID, _ handler: Handler<ProjectSourceEvent>) async
     func removeHandler(of requester: ObjectID) async
     func sendInitialEvents(to requester: ObjectID) async
     
@@ -51,12 +51,21 @@ public struct ProjectSourceDiff: Sendable {
     package let target: ProjectID
     package let name: String
     
+    // MARK: core
     package init(id: any ProjectSourceIdentity, target: ProjectID, name: String) {
         self.id = id
         self.target = target
         self.name = name
     }
     
+    @Server
+    init(_ projectSourceMockRef: ProjectSourceMock) {
+        self.id = projectSourceMockRef.id
+        self.target = projectSourceMockRef.target
+        self.name = projectSourceMockRef.name
+    }
+    
+    // MARK: operator
     package func changeName(_ value: String) -> Self {
         .init(id: self.id, target: self.target, name: value)
     }

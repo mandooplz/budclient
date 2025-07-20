@@ -17,9 +17,11 @@ struct ProjectModelTests {
     struct StartUpdating {
         let budClientRef: BudClient
         let projectModelRef: ProjectModel
+        let projectSourceRef: ProjectSourceMock
         init() async throws {
             self.budClientRef = await BudClient()
             self.projectModelRef = try await getProjectModel(budClientRef)
+            self.projectSourceRef = await projectModelRef.source.ref as! ProjectSourceMock
         }
         
         @Test func whenProjectModelIsDeleted() async throws {
@@ -37,6 +39,90 @@ struct ProjectModelTests {
             let issue = try #require(await projectModelRef.issue as? KnownIssue)
             #expect(issue.reason == "projectModelIsDeleted")
             
+        }
+        
+        @Test func reveiveInitialEvents() async throws {
+            // given
+            try await #require(projectModelRef.systems.isEmpty)
+            try await #require(projectSourceRef.systems.isEmpty)
+            
+            await projectModelRef.createFirstSystem()
+            
+            try await #require(projectModelRef.systems.isEmpty)
+            try await #require(projectSourceRef.systems.count == 1)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.startUpdating()
+                }
+            }
+            
+            // then
+            await #expect(projectModelRef.systems.count == 1)
+        }
+    }
+    
+    struct StopUpdating {
+        let budClientRef: BudClient
+        let projectModelRef: ProjectModel
+        let projectSourceRef: ProjectSourceMock
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.projectModelRef = try await getProjectModel(budClientRef)
+            self.projectSourceRef = await projectModelRef.source.ref as! ProjectSourceMock
+        }
+        
+        @Test func whenProjectModelIsDeleted() async throws {
+            // given
+            try await #require(projectModelRef.id.isExist == true)
+            
+            await projectModelRef.setCaptureHook {
+                await projectModelRef.delete()
+            }
+            
+            // when
+            await projectModelRef.stopUpdating()
+            
+            // then
+            let issue = try #require(await projectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectModelIsDeleted")
+        }
+        
+        @Test func cantReceiveAddedSystemSourceEvent() async throws {
+            // given
+            try await #require(projectModelRef.systems.isEmpty)
+            try await #require(projectSourceRef.systems.isEmpty)
+            
+            await projectModelRef.startUpdating()
+            
+            // when
+            await projectModelRef.stopUpdating()
+            
+            // then
+            await confirmation(expectedCount: 0) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task {
+                        await projectModelRef.setCallback {
+                            confirm()
+                        }
+                        
+                        // 비동기 테스트
+                        let someObject = ObjectID()
+                        await projectSourceRef.appendHandler(
+                            for: someObject,
+                            .init({ event in
+                                continuation.resume()
+                            }))
+                        
+                        await projectModelRef.createFirstSystem()
+                    }
+                }
+            }
         }
     }
     
@@ -115,6 +201,99 @@ struct ProjectModelTests {
             
             // then
             await #expect(projectModelRef.name == testName)
+        }
+    }
+    
+    struct CreateFirstSystem {
+        let budClientRef: BudClient
+        let projectModelRef: ProjectModel
+        let projectSourceRef: ProjectSourceMock
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.projectModelRef = try await getProjectModel(budClientRef)
+            self.projectSourceRef = await projectModelRef.source.ref as! ProjectSourceMock
+        }
+        
+        @Test func whenProjectModelIsDeleted() async throws {
+            // given
+            try await #require(projectModelRef.id.isExist == true)
+            
+            await projectModelRef.setCaptureHook {
+                await projectModelRef.delete()
+            }
+            // when
+            await projectModelRef.createFirstSystem()
+            
+            // then
+            let issue = try #require(await projectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectModelIsDeleted")
+        }
+        
+        @Test func createSystemModel() async throws {
+            // given
+            try await #require(projectModelRef.systems.isEmpty == true)
+            try await #require(projectSourceRef.systems.isEmpty)
+            
+            await projectModelRef.startUpdating()
+            await projectModelRef.setCallbackNil()
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.createFirstSystem()
+                }
+            }
+            await projectModelRef.setCallbackNil()
+            
+            // then
+            try await #require(projectModelRef.systems.count == 1)
+            
+            let systemModel = try #require(await projectModelRef.systems.values.first)
+            await #expect(systemModel.isExist == true)
+        }
+        @Test func createSystemSource() async throws {
+            // given
+            let projectSourceRef = try #require(await projectModelRef.source.ref as? ProjectSourceMock)
+            
+            try await #require(projectSourceRef.systems.isEmpty == true)
+            
+            // when
+            await projectModelRef.createFirstSystem()
+            
+            // then
+            await #expect(projectSourceRef.systems.count == 1)
+        }
+        
+        @Test func whenFirstSystemAlreadyExist() async throws {
+            // given
+            try await #require(projectModelRef.systems.isEmpty)
+            
+            await projectModelRef.startUpdating()
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.createFirstSystem()
+                }
+            }
+            
+            try await #require(projectModelRef.systems.count == 1)
+            try await #require(projectModelRef.issue == nil)
+            
+            // when
+            await projectModelRef.createFirstSystem()
+            
+            // then
+            try await #require(projectModelRef.systems.count == 1)
+            
+            let issue = try #require(await projectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "firstSystemAlreadyExist")
         }
     }
 
@@ -198,96 +377,6 @@ struct ProjectModelTests {
             
             // then
             await #expect(projectModelRef.id.isExist == false)
-        }
-    }
-    
-    struct CreateFirstSystem {
-        let budClientRef: BudClient
-        let projectModelRef: ProjectModel
-        init() async throws {
-            self.budClientRef = await BudClient()
-            self.projectModelRef = try await getProjectModel(budClientRef)
-        }
-        
-        @Test func whenProjectModelIsDeleted() async throws {
-            // given
-            try await #require(projectModelRef.id.isExist == true)
-            
-            await projectModelRef.setCaptureHook {
-                await projectModelRef.delete()
-            }
-            // when
-            await projectModelRef.createFirstSystem()
-            
-            // then
-            let issue = try #require(await projectModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "projectModelIsDeleted")
-        }
-        
-        @Test func createSystemModel() async throws {
-            // given
-            try await #require(projectModelRef.systems.isEmpty == true)
-            
-            await projectModelRef.startUpdating()
-            await projectModelRef.setCallbackNil()
-            
-            // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await projectModelRef.createFirstSystem()
-                }
-            }
-            await projectModelRef.setCallbackNil()
-            
-            // then
-            try await #require(projectModelRef.systems.count == 1)
-            
-            let systemModel = try #require(await projectModelRef.systems.values.first)
-            await #expect(systemModel.isExist == true)
-        }
-        @Test func createSystemSource() async throws {
-            // given
-            let projectSourceRef = try #require(await projectModelRef.source.ref as? ProjectSourceMock)
-            
-            try await #require(projectSourceRef.systems.isEmpty == true)
-            
-            // when
-            await projectModelRef.createFirstSystem()
-            
-            // then
-            await #expect(projectSourceRef.systems.count == 1)
-        }
-        
-        @Test func whenFirstSystemAlreadyExist() async throws {
-            // given
-            try await #require(projectModelRef.systems.isEmpty)
-            
-            await projectModelRef.startUpdating()
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await projectModelRef.createFirstSystem()
-                }
-            }
-            
-            try await #require(projectModelRef.systems.count == 1)
-            try await #require(projectModelRef.issue == nil)
-            
-            // when
-            await projectModelRef.createFirstSystem()
-            
-            // then
-            try await #require(projectModelRef.systems.count == 1)
-            
-            let issue = try #require(await projectModelRef.issue as? KnownIssue)
-            #expect(issue.reason == "firstSystemAlreadyExist")
         }
     }
 }

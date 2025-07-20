@@ -50,7 +50,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     package var creator: UserID
     
     var handlers = [ObjectID: EventHandler]()
-    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
+    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
         handlers[requester] = handler

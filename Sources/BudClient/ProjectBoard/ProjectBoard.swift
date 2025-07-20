@@ -55,6 +55,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
         }
         let projectBoard = self.id
         let config = self.config
+        let me = ObjectID(self.id.value)
         
         // compute
         await withDiscardingTaskGroup { group in
@@ -65,7 +66,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                     return
                 }
                 
-                await projectHubRef.setHandler(
+                await projectHubRef.appendHandler(
+                    for: me,
                     .init({ event in
                         Task {
                             guard let projectBoardRef = await projectBoard.ref else {
@@ -83,6 +85,35 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                         }
                     })
                 )
+                
+                await projectHubRef.sendInitialEvents(to: me)
+            }
+        }
+    }
+    public func stopUpdating() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.projectBoardIsDeleted)
+            logger.failure("ProjectBoard가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let config = self.config
+        let me = ObjectID(self.id.value)
+        
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let budServerRef = await config.budServer.ref,
+                      let projectHubRef = await budServerRef.getProjectHub(config.user).ref else {
+                    logger.failure("User의 ProjectHub가 존재하지 않습니다.")
+                    return
+                }
+                
+                await projectHubRef.removeHandler(of: me)
             }
         }
     }

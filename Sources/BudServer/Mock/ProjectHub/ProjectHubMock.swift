@@ -8,6 +8,8 @@ import Foundation
 import Values
 import Collections
 
+private let logger = BudLogger("ProjectHubMock")
+
 
 // MARK: Object
 @Server
@@ -26,14 +28,33 @@ package final class ProjectHubMock: ProjectHubInterface {
     
     package var projectSources: Set<ProjectSourceMock.ID> = []
     
-    var handler: EventHandler?
-    package func setHandler(_ handler: EventHandler) {
-        self.handler = handler
+    var handlers: [ObjectID:EventHandler] = [:]
+    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
+        self.handlers[requester] = handler
+    }
+    package func removeHandler(of requester: ObjectID) async {
+        self.handlers[requester] = nil
+    }
+    package func sendInitialEvents(to requester: ObjectID) async {
+        let diffs = self.projectSources
+            .compactMap { $0.ref }
+            .map { ProjectSourceDiff($0) }
+        
+        for initialDiff in diffs {
+            self.handlers[requester]?.execute(.added(initialDiff))
+        }
     }
     
     
     // MARK: action
     package func createProject() async {
+        logger.start()
+        // capture
+        guard id.isExist else {
+            logger.failure("ProjectHubMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
         // mutate
         let newProjectName = "Project \(Int.random(in: 1..<1000))"
         let projectSourceRef = ProjectSourceMock(
@@ -49,7 +70,9 @@ package final class ProjectHubMock: ProjectHubInterface {
                                      target: projectSourceRef.target,
                                      name: projectSourceRef.name)
         
-        handler?.execute(.added(diff))
+        handlers.values.forEach { eventHandler in
+            eventHandler.execute(.added(diff))
+        }
     }
     
     

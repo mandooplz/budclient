@@ -87,7 +87,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                     return
                 }
                 
-                await projectSourceRef.setHandler(
+                await projectSourceRef.appendHandler(
                     for: me,
                     .init({ event in
                         Task {
@@ -104,17 +104,25 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                             await projectModelRef.setCallbackNil()
                         }
                     }))
+                
+                await projectSourceRef.sendInitialEvents(to: me)
             }
         }
         
         // mutate
         
     }
-    public func pauseUpdating() async {
-        logger.failure("미구현")
-    }
-    public func resumeUpdating() async {
-        // 새롭게 추가된 혹은 삭제된 기존 문서를 파악하고 이들의 새로운 연결을 구성
+    public func stopUpdating() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.projectModelIsDeleted)
+            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
         logger.failure("미구현")
     }
     

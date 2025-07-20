@@ -128,15 +128,25 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
         
-        @Test func addRightSystemModelInProjectModel() async throws {
+        @Test func addRightSystemModel_ProjectModel() async throws {
             // given
             let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let rightLocation = await systemModelRef.location.getRight()
             try await #require( projectModelRef.systemLocations.contains(rightLocation) == false)
             
+            // given
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.startUpdating()
+                }
+            }
+            
             // when
-            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
                     await projectModelRef.setCallback {
@@ -194,15 +204,24 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
     
-        @Test func addLeftSystemModelInProjectModel() async throws {
+        @Test func addLeftSystemModel_ProjectModel() async throws {
             // given
             let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let leftLocation = await systemModelRef.location.getLeft()
             try await #require(projectModelRef.systemLocations.contains(leftLocation) ==  false)
             
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.startUpdating()
+                }
+            }
+            
             // when
-            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
                     await projectModelRef.setCallback {
@@ -261,15 +280,24 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
         
-        @Test func addTopSystemModelInSystemBoard() async throws {
+        @Test func addTopSystemModel_ProjectModel() async throws {
             // given
             let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let topLocation = await systemModelRef.location.getTop()
             try await #require(projectModelRef.systemLocations.contains( topLocation) == false)
             
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.startUpdating()
+                }
+            }
+            
             // when
-            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
                     await projectModelRef.setCallback {
@@ -328,15 +356,24 @@ struct SystemModelTests {
             #expect(issue.reason == "systemModelIsDeleted")
         }
         
-        @Test func addBottomSystemModelInProjectModel() async throws {
+        @Test func addBottomSystemModel_ProjectModel() async throws {
             // given
             let projectModelRef = try #require(await systemModelRef.config.parent.ref)
             
             let bottomLocation = await systemModelRef.location.getBotttom()
             try await #require(projectModelRef.systemLocations.contains(bottomLocation) == false)
             
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.startUpdating()
+                }
+            }
+            
             // when
-            await projectModelRef.startUpdating()
             await withCheckedContinuation { continuation in
                 Task {
                     await projectModelRef.setCallback {

@@ -30,21 +30,23 @@ package final class ProjectHub: ProjectHubInterface {
     var projectSources: [ProjectID: ProjectSource.ID] = [:]
     
     var listener: ListenerRegistration?
-    var handler: EventHandler?
-    package func setHandler(_ handler: EventHandler) {
+    var handlers: [ObjectID:EventHandler] = [:]
+    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
         // capture
         let projectHub = self.id
+        
+        self.handlers[requester] = handler
+        
+        // mutate - firebase
+        guard self.listener == nil else {
+            logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
+            return
+        }
         
         let db = Firestore.firestore()
         let projectSourcesCollectionRef = db.collection(DB.projectSources)
             .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
         
-        self.handler = handler
-        
-        guard self.listener == nil else {
-            logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
-            return
-        }
         self.listener = projectSourcesCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
@@ -78,7 +80,9 @@ package final class ProjectHub: ProjectHubInterface {
                                                      target: projectSourceRef.target,
                                                      name: data.name)
                         
-                        projectHub.ref?.handler?.execute(.added(diff))
+                        projectHub.ref?.handlers.values.forEach { eventHandler in
+                            eventHandler.execute(.added(diff))
+                        }
                     case .modified:
                         // serve event
                         guard let projectSourceRef = projectSource.ref else {
@@ -116,6 +120,24 @@ package final class ProjectHub: ProjectHubInterface {
                     }
                 }
             }
+    }
+    package func removeHandler(of requester: ObjectID) async {
+        logger.start()
+        
+        guard id.isExist else {
+            logger.failure("ProjectHub가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        self.handlers[requester] = nil
+        
+        self.listener?.remove()
+        self.listener = nil
+    }
+    package func sendInitialEvents(to requester: ObjectID) async {
+        logger.start()
+        
+        // Firebase에서 자체적으로 이벤트를 전달하기 때문에 명시적으로 호출할 필요는 없다.
     }
     
     package func notifyNameChanged(_ project: ProjectID) async {

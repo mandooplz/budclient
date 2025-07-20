@@ -71,7 +71,7 @@ package final class ProjectSource: ProjectSourceInterface {
     
     package var listener: ListenerRegistration?
     package var handlers: [ObjectID:EventHandler] = [:]
-    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
+    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
         

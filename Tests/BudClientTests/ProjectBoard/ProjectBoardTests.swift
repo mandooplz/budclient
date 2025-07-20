@@ -16,9 +16,16 @@ struct ProjectBoardTests {
     struct StartUpdating {
         let budClientRef: BudClient
         let projectBoardRef: ProjectBoard
+        let projectHubRef: ProjectHubMock
         init() async throws {
             self.budClientRef = await BudClient()
             self.projectBoardRef = try await getProjectBoard(budClientRef)
+            
+            let user = projectBoardRef.config.user
+            
+            self.projectHubRef = await budClientRef
+                .tempConfig!.budServer.ref!
+                .getProjectHub(user).ref! as! ProjectHubMock
         }
         
         @Test func whenProjectBoardIsDeletedBeforeCapture() async throws {
@@ -37,18 +44,104 @@ struct ProjectBoardTests {
             #expect(issue.reason == "projectBoardIsDeleted")
         }
         
-        @Test func setHandler_ProjectHub() async throws {
+        @Test func receiveInitialEvents() async throws {
             // given
-            let budServerRef = try #require(await budClientRef.tempConfig?.budServer.ref)
-            let projectHubRef = try #require(await budServerRef.getProjectHub(projectBoardRef.config.user).ref as? ProjectHubMock)
+            try await #require(projectBoardRef.projects.isEmpty)
             
-            try await #require(projectHubRef.handler == nil)
+            await projectBoardRef.createProject()
+            
+            try await #require(projectBoardRef.projects.isEmpty)
             
             // when
-            await projectBoardRef.startUpdating()
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectBoardRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectBoardRef.startUpdating()
+                }
+            }
             
             // then
-            await #expect(projectHubRef.handler != nil)
+            await #expect(projectBoardRef.projects.count == 1)
+        }
+    }
+    
+    struct StopUpdating {
+        let budClientRef: BudClient
+        let projectBoardRef: ProjectBoard
+        let projectHubRef: ProjectHubMock
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.projectBoardRef = try await getProjectBoard(budClientRef)
+            
+            let user = projectBoardRef.config.user
+            
+            self.projectHubRef = await budClientRef
+                .tempConfig!.budServer.ref!
+                .getProjectHub(user).ref! as! ProjectHubMock
+        }
+        
+        @Test func whenProjectBoardIsDeleted() async throws {
+            // given
+            try await #require(projectBoardRef.id.isExist == true)
+            
+            await projectBoardRef.setCaptureHook {
+                await projectBoardRef.delete()
+            }
+            
+            // when
+            await projectBoardRef.stopUpdating()
+
+            // then
+            let issue = try #require(await projectBoardRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectBoardIsDeleted")
+        }
+        
+        @Test func cantReceiveProjectAddedEvent() async throws {
+            // given
+            try await #require(projectBoardRef.projects.isEmpty)
+            
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectBoardRef.startUpdating()
+                    
+                    await projectBoardRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectBoardRef.createProject()
+                }
+            }
+            
+            try await #require(projectBoardRef.projects.count == 1)
+            
+            // when
+            await projectBoardRef.stopUpdating()
+            
+            // then
+            await confirmation(expectedCount: 0) { confirm in
+                await withCheckedContinuation { continuation in
+                    Task {
+                        // callback이 호출되어서는 안됨
+                        await projectBoardRef.setCallback {
+                            confirm()
+                        }
+                        
+                        // handler를 통해 비동기 테스트
+                        let someObject = ObjectID()
+                        await projectHubRef.appendHandler(
+                            for: someObject,
+                            .init({ event in
+                                continuation.resume()
+                            }))
+                        
+                        await projectBoardRef.createProject()
+                    }
+                }
+            }
+            
         }
     }
     
