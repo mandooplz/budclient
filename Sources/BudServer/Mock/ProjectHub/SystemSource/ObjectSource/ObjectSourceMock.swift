@@ -60,6 +60,8 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     var actions: [ActionID: ActionSourceMock.ID] = [:]
     
     package func synchronize(requester: ObjectID) async {
+        logger.start()
+        
         self.states.values
             .compactMap { $0.ref }
             .map { StateSourceDiff($0) }
@@ -67,7 +69,12 @@ package final class ObjectSourceMock: ObjectSourceInterface {
                 self.handler?.execute(.addedState($0))
             }
         
-        logger.failure("actionDiffs 구현 필요")
+        self.actions.values
+            .compactMap { $0.ref }
+            .map { ActionSourceDiff($0) }
+            .forEach {
+                self.handler?.execute(.actionAdded($0))
+            }
     }
     
     // MARK: action
@@ -83,9 +90,21 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         self.states[stateSourceRef.target] = stateSourceRef.id
         
         // notify
+        logger.failure("새로운 StateSource 생성 notify 로직 구현 필요")
     }
     package func appendNewAction() async {
-        fatalError()
+        logger.start()
+        
+        guard id.isExist else {
+            logger.failure("ObjectSourceMock이 존재하지 않아 실행취소됩니다.")
+            return
+        }
+        
+        let actionSourceRef = ActionSourceMock(name: "New Action")
+        self.actions[actionSourceRef.target] = actionSourceRef.id
+        
+        // notify
+        logger.failure("새로운 ActionSource 생성 notify 로직 구현 필요")
     }
 
     

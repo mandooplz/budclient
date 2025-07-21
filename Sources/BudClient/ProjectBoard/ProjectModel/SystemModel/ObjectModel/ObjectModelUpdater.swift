@@ -69,8 +69,18 @@ extension ObjectModel {
                         diff: diff)
                     objectModelRef.states[diff.target] = stateModelRef.id
                     
-                    logger.failure("ActionSource 관련 기능 미구현")
-                    return
+                    logger.end("added StateModel")
+                    
+                case .actionAdded(let diff):
+                    guard objectModelRef.actions[diff.target] == nil else {
+                        logger.failure("Action에 대응되는 ActionModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    let actionModelRef = ActionModel(config: newConfig, diff: diff)
+                    objectModelRef.actions[diff.target] = actionModelRef.id
+                    
+                    logger.end("added ActionModel")
                 }
             }
         }

@@ -25,3 +25,19 @@ package protocol ActionSourceIdentity: Sendable, Hashable {
     var isExist: Bool { get async }
     var ref: Object? { get async }
 }
+
+
+
+// MARK: Value
+package struct ActionSourceDiff: Sendable {
+    package let id: any ActionSourceIdentity
+    package let target: ActionID
+    package let name: String
+    
+    @Server
+    internal init(_ objectRef: ActionSourceMock) {
+        self.id = objectRef.id
+        self.target = objectRef.target
+        self.name = objectRef.name
+    }
+}

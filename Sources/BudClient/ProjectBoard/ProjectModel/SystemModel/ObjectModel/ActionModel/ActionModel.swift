@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import BudServer
 
 private let logger = BudLogger("ActionModel")
 
@@ -14,8 +15,13 @@ private let logger = BudLogger("ActionModel")
 @MainActor @Observable
 public final class ActionModel: Sendable {
     // MARK: core
-    init(target: ActionID) {
-        self.target = target
+    init(config: Config<ObjectModel.ID>,
+         diff: ActionSourceDiff) {
+        self.config = config
+        self.target = diff.target
+        
+        self.name = diff.name
+        self.nameInput = diff.name
         
         ActionModelManager.register(self)
     }
@@ -26,13 +32,17 @@ public final class ActionModel: Sendable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<ObjectModel.ID>
     nonisolated let target: ActionID
     
-    public var name: String?
+    public internal(set) var name: String
+    public var nameInput: String
     
     
     // MARK: action
-    public func remove() { }
+    public func removeAction() {
+        fatalError()
+    }
     
     
     // MARK: value

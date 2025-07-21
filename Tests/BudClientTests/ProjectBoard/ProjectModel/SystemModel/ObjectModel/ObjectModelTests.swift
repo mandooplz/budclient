@@ -89,36 +89,125 @@ struct ObjectModelTests {
             await #expect(objectModelRef.states.count == 1)
         }
         @Test func receiveInitialEvent_ActionAdded() async throws {
-            Issue.record("구현 필요")
+            // given
+            try await #require(objectSourceRef.actions.isEmpty)
+            await objectSourceRef.appendNewAction()
+            try await #require(objectSourceRef.actions.count == 1)
+            
+            try await #require(objectModelRef.actions.isEmpty)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.startUpdating()
+                }
+            }
+            
+            // then
+            await #expect(objectModelRef.actions.count == 1)
         }
     }
     
     struct PushName {
-        
-    }
-    
-    struct addChildObject {
-        
-    }
-    
-    struct addParentObject {
-        
-    }
-    
-    struct AppendState {
         let budClientRef: BudClient
         let objectModelRef: ObjectModel
         init() async throws {
             self.budClientRef = await BudClient()
             self.objectModelRef = try await getRootObjectModel(budClientRef)
         }
+        
+        @Test func whenObjectModelIsDeleted() async throws {
+            // given
+            try await #require(objectModelRef.id.isExist == true)
+            
+            await objectModelRef.setCaptureHook {
+                await objectModelRef.delete()
+            }
+            
+            // when
+            await objectModelRef.pushName()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
+        }
     }
-    struct AppendAction {
+    
+    struct createChildObject {
         let budClientRef: BudClient
         let objectModelRef: ObjectModel
         init() async throws {
             self.budClientRef = await BudClient()
             self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
+        
+        @Test func whenObjectModelIsDeleted() async throws {
+            // given
+            try await #require(objectModelRef.id.isExist == true)
+            
+            await objectModelRef.setCaptureHook {
+                await objectModelRef.delete()
+            }
+            
+            // when
+            await objectModelRef.createChildObject()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
+        }
+    }
+    
+    struct AppendNewState {
+        let budClientRef: BudClient
+        let objectModelRef: ObjectModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
+        
+        @Test func whenObjectModelIsDeleted() async throws {
+            // given
+            try await #require(objectModelRef.id.isExist == true)
+            
+            await objectModelRef.setCaptureHook {
+                await objectModelRef.delete()
+            }
+            
+            // when
+            await objectModelRef.appendNewState()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
+        }
+    }
+    struct AppendNewAction {
+        let budClientRef: BudClient
+        let objectModelRef: ObjectModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
+        
+        @Test func whenObjectModelIsDeleted() async throws {
+            // given
+            try await #require(objectModelRef.id.isExist == true)
+            
+            await objectModelRef.setCaptureHook {
+                await objectModelRef.delete()
+            }
+            
+            // when
+            await objectModelRef.appendNewAction()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
         }
     }
     
@@ -128,6 +217,22 @@ struct ObjectModelTests {
         init() async throws {
             self.budClientRef = await BudClient()
             self.objectModelRef = try await getRootObjectModel(budClientRef)
+        }
+        
+        @Test func whenObjectModelIsDeleted() async throws {
+            // given
+            try await #require(objectModelRef.id.isExist == true)
+            
+            await objectModelRef.setCaptureHook {
+                await objectModelRef.delete()
+            }
+            
+            // when
+            await objectModelRef.removeObject()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
         }
     }
 }

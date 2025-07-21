@@ -14,7 +14,9 @@ private let logger = BudLogger("ActionSourceMock")
 @Server
 package final class ActionSourceMock: ActionSourceInterface {
     // MARK: core
-    init() {
+    init(name: String) {
+        self.name = name
+        
         ActionSourceMockManager.register(self)
     }
     func delete() {
@@ -24,6 +26,9 @@ package final class ActionSourceMock: ActionSourceInterface {
     
     // MARK: state
     package nonisolated let id = ID()
+    nonisolated let target = ActionID()
+    
+    var name: String
 
     
     // MARK: action

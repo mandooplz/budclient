@@ -145,7 +145,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
         
     }
     
-    public func addChildObject() async {
+    public func createChildObject() async {
         logger.start()
         
         // capture
@@ -157,6 +157,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
         }
     }
     public func addParentObject() async {
+        // 부모 객체를 만드는 것이 필요한가
         logger.start()
         
         // capture
@@ -168,7 +169,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
         }
     }
     
-    public func appendState() async {
+    public func appendNewState() async {
         logger.start()
         
         // capture
@@ -179,7 +180,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             return
         }
     }
-    public func appendAction() async {
+    public func appendNewAction() async {
         logger.start()
         
         // capture
