@@ -57,7 +57,7 @@ extension ObjectModel {
                     objectModelRef.delete()
                     
                     logger.end("removed \(objectModelRef.id)")
-                case .addedState(let diff):
+                case .stateAdded(let diff):
                     // create StateModel
                     guard objectModelRef.states[diff.target] == nil else {
                         logger.failure("System에 대응되는 SystemModel이 이미 존재합니다.")

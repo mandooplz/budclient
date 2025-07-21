@@ -64,6 +64,10 @@ package final class ObjectSource: ObjectSourceInterface {
     package func createChildObject() async {
         fatalError()
     }
+    
+    package func removeObject() async {
+        fatalError("구현 예정")
+    }
 
     
     

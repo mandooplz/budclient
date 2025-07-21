@@ -32,6 +32,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
         GetterModelManager.unregister(self.id)
     }
     
+    
     // MARK: state
     nonisolated let id = ID()
     nonisolated let target: GetterID

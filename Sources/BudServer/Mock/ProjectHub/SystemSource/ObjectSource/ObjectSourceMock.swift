@@ -77,7 +77,7 @@ package final class ObjectSourceMock: ObjectSourceInterface {
             .compactMap { $0.ref }
             .map { StateSourceDiff($0) }
             .forEach {
-                self.handler?.execute(.addedState($0))
+                self.handler?.execute(.stateAdded($0))
             }
         
         self.actions.values
@@ -142,6 +142,10 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         let diff = ObjectSourceDiff(childObjectSourceRef)
         
         systemSourceRef.handler?.execute(.objectAdded(diff))
+    }
+    
+    package func removeObject() async {
+        fatalError()
     }
 
     

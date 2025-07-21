@@ -24,9 +24,12 @@ package protocol ObjectSourceInterface: Sendable {
     
     
     // MARK: action
+    func createChildObject() async
+    
     func appendNewState() async
     func appendNewAction() async
-    func createChildObject() async
+    
+    func removeObject() async
 }
 
 
@@ -43,7 +46,7 @@ package enum ObjectSourceEvent: Sendable {
     case modified(ObjectSourceDiff)
     case removed
     
-    case addedState(StateSourceDiff)
+    case stateAdded(StateSourceDiff)
     case actionAdded(ActionSourceDiff)
 }
 

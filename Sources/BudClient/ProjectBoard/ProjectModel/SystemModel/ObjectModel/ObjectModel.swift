@@ -184,6 +184,19 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let objectSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let objectSourceRef = await objectSource.ref else {
+                    logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                await objectSourceRef.appendNewState()
+            }
+        }
     }
     public func appendNewAction() async {
         logger.start()
@@ -194,6 +207,20 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             setIssue(Error.objectModelIsDeleted)
             logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
             return
+        }
+        
+        let objectSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let objectSourceRef = await objectSource.ref else {
+                    logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                await objectSourceRef.appendNewAction()
+            }
         }
     }
     
@@ -206,6 +233,19 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             setIssue(Error.objectModelIsDeleted)
             logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
             return
+        }
+        let objectSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let objectSourceRef = await objectSource.ref else {
+                    logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                await objectSourceRef.removeObject()
+            }
         }
     }
     
