@@ -40,9 +40,9 @@ package final class SystemSource: SystemSourceInterface {
         
         // compute
         let db = Firestore.firestore()
-        let docRef = db.collection(DB.projectSources)
+        let docRef = db.collection(DB.ProjectSources)
             .document(parent.value)
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
             .document(id.value)
         
         let updateData: [String: Any] = [
@@ -62,11 +62,11 @@ package final class SystemSource: SystemSourceInterface {
         
         // capture
         let db = Firestore.firestore()
-        let objectSourceCollectionRef = db.collection(DB.projectSources)
+        let objectSourceCollectionRef = db.collection(DB.ProjectSources)
             .document(parent.value)
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
             .document(id.value)
-            .collection(DB.objectSources)
+            .collection(DB.ObjectSources)
         
         // set listener
         guard self.listener == nil else {
@@ -151,13 +151,13 @@ package final class SystemSource: SystemSourceInterface {
         let firebaseDB = Firestore.firestore()
         
         let projectSourceDocRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
         
         let systemSourceCollectionRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
             .document(id.value)
@@ -226,13 +226,13 @@ package final class SystemSource: SystemSourceInterface {
         let firebaseDB = Firestore.firestore()
         
         let projectSourceDocRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
         
         let systemSourceCollectionRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
             .document(id.value)
@@ -301,13 +301,13 @@ package final class SystemSource: SystemSourceInterface {
         let firebaseDB = Firestore.firestore()
         
         let projectSourceDocRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
         
         let systemSourceCollectionRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
             .document(id.value)
@@ -376,13 +376,13 @@ package final class SystemSource: SystemSourceInterface {
         let firebaseDB = Firestore.firestore()
         
         let projectSourceDocRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
         
         let systemSourceCollectionRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
             .document(id.value)
@@ -455,10 +455,10 @@ package final class SystemSource: SystemSourceInterface {
         // db & docRef
         let firebaseDB = Firestore.firestore()
         let projectSourceDocRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(parent.value)
         let systemSourceDocRef = projectSourceDocRef
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
             .document(id.value)
         
         do {

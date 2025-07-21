@@ -44,7 +44,7 @@ package final class ProjectHub: ProjectHubInterface {
         }
         
         let db = Firestore.firestore()
-        let projectSourcesCollectionRef = db.collection(DB.projectSources)
+        let projectSourcesCollectionRef = db.collection(DB.ProjectSources)
             .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
         
         self.listener = projectSourcesCollectionRef
@@ -157,7 +157,7 @@ package final class ProjectHub: ProjectHubInterface {
             let data = ProjectSource.Data(name: newProjectName,
                                           creator: self.user)
             
-            try db.collection(DB.projectSources)
+            try db.collection(DB.ProjectSources)
                 .addDocument(from: data)
         } catch {
             logger.failure(error)

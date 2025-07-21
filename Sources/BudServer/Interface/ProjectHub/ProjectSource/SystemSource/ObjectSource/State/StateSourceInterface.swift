@@ -41,3 +41,11 @@ package struct StateSourceDiff: Sendable {
         self.name = objectRef.name
     }
 }
+
+package enum StateSourceEvent: Sendable {
+    case modified(StateSourceDiff)
+    case removed
+    
+    case getterAdded(GetterSourceDiff)
+    case setterAdded(SetterSourceDiff)
+}

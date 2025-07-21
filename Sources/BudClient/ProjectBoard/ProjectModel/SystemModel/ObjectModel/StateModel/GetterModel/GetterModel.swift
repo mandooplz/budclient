@@ -14,13 +14,17 @@ private let logger = BudLogger("GetterModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class GetterModel: Sendable {
+public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
-    init(name: String, target: GetterID) {
-        self.target = target
+    init(config: Config<StateModel.ID>,
+         diff: GetterSourceDiff) {
+        self.target = diff.target
+        self.config = config
         
-        self.name = name
-        self.nameInput = name
+        self.name = diff.name
+        self.nameInput = diff.name
+        
+        self.updaterRef = Updater(owner: self.id)
         
         GetterModelManager.register(self)
     }
@@ -31,12 +35,22 @@ public final class GetterModel: Sendable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let target: GetterID
+    nonisolated let config: Config<StateModel.ID>
+    nonisolated let updaterRef: Updater
+    var isUpdating: Bool = false
     
-    public var name: String
+    public internal(set) var name: String
     public var nameInput: String
     
     public var paremeters = OrderedDictionary<ValueTypeID, ParameterValue>()
     public var result: ResultValue = .AnyValue
+    
+    public var issue: (any IssueRepresentable)?
+    public var callback: Callback?
+    
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
     
     
     // MARK: action

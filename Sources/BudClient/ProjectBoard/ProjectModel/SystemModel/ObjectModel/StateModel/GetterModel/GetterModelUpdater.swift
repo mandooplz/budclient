@@ -1,31 +1,31 @@
 //
-//  StateModelUpdater.swift
+//  GetterModelUpdater.swift
 //  BudClient
 //
-//  Created by 김민우 on 7/17/25.
+//  Created by 김민우 on 7/22/25.
 //
 import Foundation
 import Values
 import Collections
 import BudServer
 
-private let logger = BudLogger("StateModelUpdater")
+private let logger = BudLogger("GetterModelUpdater")
 
 
 // MARK: Object
-extension StateModel {
+extension GetterModel {
     @MainActor @Observable
     final class Updater: Debuggable, Hookable, UpdaterInterface {
         // MARK: core
-        init(owner: StateModel.ID) {
+        init(owner: GetterModel.ID) {
             self.owner = owner
         }
         
         
         // MARK: state
-        nonisolated let owner: StateModel.ID
+        nonisolated let owner: GetterModel.ID
         
-        var queue: Deque<StateSourceEvent> = []
+        var queue: Deque<GetterSourceEvent> = []
         
         var issue: (any IssueRepresentable)?
         var captureHook: Hook?
@@ -40,8 +40,8 @@ extension StateModel {
             // capture
             await captureHook?()
             guard let getterModelRef = owner.ref else {
-                setIssue(Error.stateModelIsDeleted)
-                logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+                setIssue(Error.getterModelIsDeleted)
+                logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
                 return
             }
             
@@ -51,7 +51,7 @@ extension StateModel {
         
         // MARK: value
         public enum Error: String, Swift.Error {
-            case stateModelIsDeleted
+            case getterModelIsDeleted
         }
     }
 }

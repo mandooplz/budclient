@@ -38,7 +38,6 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let target: ProjectID
     nonisolated let source: any ProjectSourceIdentity
     nonisolated let updaterRef: Updater
-    
     var isUpdating: Bool = false
     
     public internal(set) var name: String

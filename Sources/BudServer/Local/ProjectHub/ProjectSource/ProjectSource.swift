@@ -45,7 +45,7 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // set ProjectSource.name
         let db = Firestore.firestore()
-        let docRef = db.collection(DB.projectSources).document(id.value)
+        let docRef = db.collection(DB.ProjectSources).document(id.value)
         
         let updateData: [String: Any] = [
             ProjectSource.Data.name: value
@@ -81,9 +81,9 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // mutate - firebase
         let db = Firestore.firestore()
-        let systemSourceCollectionRef = db.collection(DB.projectSources)
+        let systemSourceCollectionRef = db.collection(DB.ProjectSources)
             .document(id.value)
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
         guard self.listener == nil else {
             logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
             return
@@ -188,11 +188,11 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // get ref
         let projectSourceDocRef = firebaseDB
-            .collection(DB.projectSources)
+            .collection(DB.ProjectSources)
             .document(id.value)
         
         let systemSourceCollectionRef = projectSourceDocRef
-            .collection(DB.systemSources)
+            .collection(DB.SystemSources)
         
         // transaction
         do {
@@ -253,7 +253,7 @@ package final class ProjectSource: ProjectSourceInterface {
         
         // cancel ProjectSourceDocument in FireStore
         let db = Firestore.firestore()
-        db.collection(DB.projectSources)
+        db.collection(DB.ProjectSources)
             .document(id.value)
             .delete()
     }

@@ -8,15 +8,14 @@
 
 // MARK: DB
 enum DB: Sendable {
-    static let projectSources = "ProjectSources"
-    static let systemSources = "SystemSources"
+    static let ProjectSources = "ProjectSources"
+    static let SystemSources = "SystemSources"
     
-    static let rootStateSources = "RootStateSources"
-    static let rootActionSources = "RootActionSources"
-    
-    static let objectSources = "ObjectSources"
-    static let objectStateSources = "ObjectStateSources"
-    static let objectActionSources = "ObjectActionSources"
+    static let ObjectSources = "ObjectSources"
+    static let StateSources = "StateSources"
+    static let GetterSources = "GetterSources"
+    static let SetterSources = "SetterSources"
+    static let ActionSources = "ActionSources"
     
     static let valueCardSources = "ValueCardSources"
     static let objectCardSources = "ObjectCardSources"

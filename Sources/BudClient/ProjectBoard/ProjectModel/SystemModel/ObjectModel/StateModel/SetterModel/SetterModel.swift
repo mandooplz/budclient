@@ -15,8 +15,15 @@ private let logger = BudLogger("SetterModel")
 @MainActor @Observable
 public final class SetterModel: Sendable {
     // MARK: core
-    init(target: SetterID) {
-        self.target = target
+    init(config: Config<StateModel.ID>,
+         diff: SetterSourceDiff) {
+        self.target = diff.target
+        self.config = config
+        
+        self.name = diff.name
+        self.nameInput = diff.name
+        
+        self.updaterRef = Updater(owner: self.id)
         
         SetterModelManager.register(self)
     }
@@ -28,12 +35,19 @@ public final class SetterModel: Sendable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let target: SetterID
+    nonisolated let config: Config<StateModel.ID>
+    nonisolated let updaterRef: Updater
+    var isUpdating: Bool = false
+    
+    public internal(set) var name: String
+    public var nameInput: String
     
     public var parameters: [ParameterValue] = [.AnyValue]
     
     
     // MARK: action
     public func duplicate() async { }
+    
     public func removeSetter() async { }
     
     

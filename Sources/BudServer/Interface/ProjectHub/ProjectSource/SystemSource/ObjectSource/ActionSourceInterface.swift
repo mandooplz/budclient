@@ -41,3 +41,9 @@ package struct ActionSourceDiff: Sendable {
         self.name = objectRef.name
     }
 }
+
+
+package enum ActionSourceEvent: Sendable {
+    case modified(ActionSourceDiff)
+    case removed
+}

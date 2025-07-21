@@ -39,7 +39,6 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let target: SystemID
     nonisolated let source: any SystemSourceIdentity
     nonisolated let updaterRef: Updater
-    
     var isUpdating: Bool = false
     
     public internal(set) var name: String

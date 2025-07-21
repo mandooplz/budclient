@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 import BudServer
 
 private let logger = BudLogger("StateModel")
@@ -13,12 +14,12 @@ private let logger = BudLogger("StateModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class StateModel: Sendable {
+public final class StateModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
     init(config: Config<ObjectModel.ID>,
          diff: StateSourceDiff) {
         self.target = diff.target
-        self.updater = Updater(owner: self.id)
+        self.updaterRef = Updater(owner: self.id)
         self.source = diff.id
         
         self.name = diff.name
@@ -34,49 +35,73 @@ public final class StateModel: Sendable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let target: StateID
-    nonisolated let updater: Updater
     nonisolated let source: any StateSourceIdentity
+    nonisolated let updaterRef: Updater
+    var isUpdating: Bool = false
     
     public internal(set) var name: String
     public var nameInput: String
     
     public var accessLevel : AccessLevel = .readAndWrite
-    public var stateValue: StateValue = .AnyValue
+    public var stateValue: StateValue = .AnyValue 
     
-    public internal(set) var getters: [GetterModel.ID] = []
-    public internal(set) var setters: [SetterModel.ID] = []
+    public internal(set) var getters = OrderedDictionary<GetterID,GetterModel.ID>()
+    public internal(set) var setters = OrderedDictionary<SetterID, SetterModel.ID>()
+    
+    public var issue: (any IssueRepresentable)?
+    public var callback: Callback?
+    
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
     
     
     // MARK: action
-    public func pushName() async {
+    public func startUpdating() async {
         logger.start()
         
-        await self.pushName(captureHook: nil)
-    }
-    func pushName(captureHook: Hook?) async {
         // capture
         await captureHook?()
         guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
     }
     
-    public func createGetter() async {
+    public func pushName() async {
         logger.start()
         
-        await self.createGetter(captureHook: nil)
-    }
-    func createGetter(captureHook: Hook?) async {
-        
-    }
-    
-    public func createSetter() async {
-        logger.start()
-        
-        await self.createSetter(captureHook: nil)
-    }
-    func createSetter(captureHook: Hook?) async {
         // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+
+    public func appendNewGetter() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    public func appendNewSetter() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
     }
     
     public func duplicate() async { }
@@ -100,6 +125,9 @@ public final class StateModel: Sendable {
         public var ref: StateModel? {
             StateModelManager.container[self]
         }
+    }
+    public enum Error: String, Swift.Error {
+        case stateModelIsDeleted
     }
 }
 

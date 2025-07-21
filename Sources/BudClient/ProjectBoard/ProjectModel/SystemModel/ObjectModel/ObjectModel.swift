@@ -173,18 +173,6 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             }
         }
     }
-    public func addParentObject() async {
-        // 부모 객체를 만드는 것이 필요한가
-        logger.start()
-        
-        // capture
-        await captureHook?()
-        guard id.isExist else {
-            setIssue(Error.objectModelIsDeleted)
-            logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-    }
     
     public func appendNewState() async {
         logger.start()
