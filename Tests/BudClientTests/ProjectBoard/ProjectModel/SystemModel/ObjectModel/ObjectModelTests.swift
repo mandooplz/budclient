@@ -135,6 +135,64 @@ struct ObjectModelTests {
             let issue = try #require(await objectModelRef.issue as? KnownIssue)
             #expect(issue.reason == "objectModelIsDeleted")
         }
+        
+        @Test func whenNameInputIsEmpty() async throws {
+            // given
+            await MainActor.run {
+                objectModelRef.nameInput = ""
+            }
+            
+            // when
+            await objectModelRef.pushName()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "nameCannotBeEmpty")
+        }
+        @Test func whenNameInputIsSameWithName() async throws {
+            // given
+            await MainActor.run {
+                let testName = "TEST_NAME"
+                objectModelRef.nameInput = testName
+                objectModelRef.name = testName
+            }
+            
+            // when
+            await objectModelRef.pushName()
+            
+            // then
+            let issue = try #require(await objectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "newNameIsSameAsCurrent")
+        }
+        
+        @Test func updateNameByUpdater() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                objectModelRef.name = oldName
+                objectModelRef.nameInput = newName
+            }
+            
+            try await #require(objectModelRef.isUpdating == false)
+            await objectModelRef.startUpdating()
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.pushName()
+                }
+            }
+            
+            // then
+            await #expect(objectModelRef.name != oldName)
+            await #expect(objectModelRef.name == newName)
+        }
     }
     
     struct createChildObject {
@@ -159,6 +217,31 @@ struct ObjectModelTests {
             // then
             let issue = try #require(await objectModelRef.issue as? KnownIssue)
             #expect(issue.reason == "objectModelIsDeleted")
+        }
+        
+        @Test func appendObjectModel_SystemModel() async throws {
+            Issue.record("구현 필요")
+            // given
+            let systemModelRef = try #require(await objectModelRef.config.parent.ref)
+            
+            let count = await systemModelRef.objects.count
+            
+            try await #require(systemModelRef.isUpdating == true)
+            try #require(objectModelRef.role == .root)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.createChildObject()
+                }
+            }
+            
+            // then
+            await #expect(systemModelRef.objects.count == count+1)
         }
     }
     

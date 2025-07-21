@@ -155,6 +155,9 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        // ObjectModel 간의 부모 자식 관계를 어떻게 표현해야 하는가.
+        fatalError()
     }
     public func addParentObject() async {
         // 부모 객체를 만드는 것이 필요한가
