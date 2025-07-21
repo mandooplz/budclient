@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 
 private let logger = BudLogger("ObjectSourceMock")
 
@@ -16,10 +17,18 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     // MARK: core
     init(name: String,
          role: ObjectRole,
-         parentRef: SystemSourceMock) {
+         parent: ObjectID? = nil,
+         systemSource: SystemSourceMock.ID) {
         self.name = name
         self.role = role
-        self.parentRef = parentRef
+        self.parent = parent
+        self.systemSource = systemSource
+        
+        if role == .node && parent == nil {
+            logger.failure("node에 해당하는 Object의 parent가 nil일 수 없습니다.")
+        } else if role == .root && parent != nil {
+            logger.failure("root에 해당하는 Object의 parent가 존재해서는 안됩니다.")
+        }
         
         ObjectSourceMockManager.register(self)
     }
@@ -30,10 +39,12 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     
     // MARK: state
     package nonisolated let id = ID()
-    package nonisolated let parentRef: SystemSourceMock
+    package nonisolated let systemSource: SystemSourceMock.ID
     package nonisolated let target = ObjectID()
     
     package nonisolated let role: ObjectRole
+    package var parent: ObjectID!
+    package var childs: OrderedSet<ObjectID> = []
     
     package var name: String
     package func setName(_ value: String) async {
@@ -105,6 +116,32 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         
         // notify
         logger.failure("새로운 ActionSource 생성 notify 로직 구현 필요")
+    }
+    
+    package func createChildObject() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ObjectSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let systemSourceRef = self.systemSource.ref!
+        
+        // mutate
+        let childObjectSourceRef = ObjectSourceMock(
+            name: "New Object",
+            role: .node,
+            parent: self.target,
+            systemSource: self.systemSource)
+        
+        systemSourceRef.objects[childObjectSourceRef.target] = childObjectSourceRef.id
+        self.childs.append(childObjectSourceRef.target)
+        
+        // notify
+        let diff = ObjectSourceDiff(childObjectSourceRef)
+        
+        systemSourceRef.handler?.execute(.objectAdded(diff))
     }
 
     

@@ -220,7 +220,6 @@ struct ObjectModelTests {
         }
         
         @Test func appendObjectModel_SystemModel() async throws {
-            Issue.record("구현 필요")
             // given
             let systemModelRef = try #require(await objectModelRef.config.parent.ref)
             
@@ -241,7 +240,89 @@ struct ObjectModelTests {
             }
             
             // then
-            await #expect(systemModelRef.objects.count == count+1)
+            await #expect(systemModelRef.objects.count == count + 1)
+        }
+        @Test func createObjectModel_SystemModel() async throws {
+            // given
+            let systemModelRef = try #require(await objectModelRef.config.parent.ref)
+            
+            try await #require(systemModelRef.isUpdating == true)
+            try await #require(systemModelRef.objects.count == 1)
+            
+            try #require(objectModelRef.role == .root)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.createChildObject()
+                }
+            }
+            
+            // then
+            try await #require(systemModelRef.objects.count == 2)
+            
+            let newObjectModel = try #require(await systemModelRef.objects.values.last)
+            await #expect(newObjectModel.isExist == true)
+        }
+        @Test func setNewObjectModelParentToSelfTarget() async throws {
+            // given
+            let systemModelRef = try #require(await objectModelRef.config.parent.ref)
+            
+            try await #require(systemModelRef.isUpdating == true)
+            try await #require(systemModelRef.objects.count == 1)
+            
+            try #require(objectModelRef.role == .root)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.createChildObject()
+                }
+            }
+            
+            // then
+            try await #require(systemModelRef.objects.count == 2)
+            
+            let newObjectModelRef = try #require(await systemModelRef.objects.values.last?.ref)
+            
+            await #expect(newObjectModelRef.parent == objectModelRef.target)
+        }
+        @Test func appendNewObjectModelTargetinChilds() async throws {
+            // given
+            let systemModelRef = try #require(await objectModelRef.config.parent.ref)
+            
+            try await #require(systemModelRef.isUpdating == true)
+            try await #require(systemModelRef.objects.count == 1)
+            
+            try #require(objectModelRef.role == .root)
+            try await #require(objectModelRef.childs.count == 0)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await systemModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.createChildObject()
+                }
+            }
+            
+            // then
+            try await #require(systemModelRef.objects.count == 2)
+            
+            let newObject = try #require(await systemModelRef.objects.values.last?.ref?.target)
+            
+            try await #require(objectModelRef.childs.count == 1)
+            await #expect(objectModelRef.childs.first == newObject)
         }
     }
     

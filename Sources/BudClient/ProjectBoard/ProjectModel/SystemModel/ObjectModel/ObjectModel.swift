@@ -24,6 +24,8 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
         self.updaterRef = Updater(owner: self.id)
         
         self.role = diff.role
+        self.parent = diff.parent
+        self.childs = diff.childs
         self.name = diff.name
         self.nameInput = diff.name
         
@@ -43,10 +45,12 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
     
     var isUpdating: Bool = false
     
-    public nonisolated let role: ObjectRole
-    
     public internal(set) var name: String
     public var nameInput: String
+    
+    public nonisolated let role: ObjectRole
+    public internal(set) var parent: ObjectID!
+    public internal(set) var childs: OrderedSet<ObjectID> = []
     
     public internal(set) var states = OrderedDictionary<StateID, StateModel.ID>()
     public internal(set) var actions = OrderedDictionary<ActionID, ActionModel.ID>()
@@ -156,8 +160,18 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             return
         }
         
-        // ObjectModel 간의 부모 자식 관계를 어떻게 표현해야 하는가.
-        fatalError()
+        let objectSource = self.source
+        
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let objectSourceRef = await objectSource.ref else {
+                    logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                await objectSourceRef.createChildObject()
+            }
+        }
     }
     public func addParentObject() async {
         // 부모 객체를 만드는 것이 필요한가

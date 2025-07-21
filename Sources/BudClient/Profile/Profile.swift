@@ -74,25 +74,42 @@ public final class Profile: Debuggable {
         budClientRef.profile = nil
         budClientRef.user = nil
         
-        for projectModel in projectModels.values {
-            projectModel.ref?.systems.values.forEach { systemModel in
-                systemModel.ref?.delete()
-            }
-            
-            projectModel.ref?.workflows.values.forEach { workflowModel in
-                workflowModel.ref?.delete()
-            }
-            
-            projectModel.ref?.valueTypes.values.forEach { valueTypeModel in
-                valueTypeModel.ref?.delete()
-            }
-            
-            projectModel.ref?.delete()
-        }
+        projectModels.values
+            .compactMap { $0.ref }
+            .forEach { cleanUpProjectModel($0) }
         
         projectBoardRef.delete()
         communityRef.delete()
         self.delete()
+    }
+    
+    
+    // MARK: Helphers
+    private func cleanUpProjectModel(_ projectModelRef: ProjectModel) {
+        // delete ObjectModels
+        projectModelRef.systems.values
+            .compactMap { $0.ref }
+            .map { $0.objects.values.compactMap { $0.ref } }
+            .flatMap { $0 }
+            .forEach { $0.delete() }
+
+        // delete SystemModels
+        projectModelRef.systems.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // deleted WorkflowModels
+        projectModelRef.workflows.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete ValueModels
+        projectModelRef.valueTypes.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete ProjectModel
+        projectModelRef.delete()
     }
 
 

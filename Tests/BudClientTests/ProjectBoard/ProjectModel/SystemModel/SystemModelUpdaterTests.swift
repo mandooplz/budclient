@@ -34,7 +34,9 @@ struct SystemModelUpdaterTests {
                 id: ObjectSourceMock.ID(),
                 target: .init(),
                 name: "TEST_NAME",
-                role: .node)
+                role: .root,
+                parent: nil,
+                childs: [])
             
             // when
             await updaterRef.appendEvent(.objectAdded(diff))
@@ -54,7 +56,9 @@ struct SystemModelUpdaterTests {
                 id: ObjectSourceMock.ID(),
                 target: .init(),
                 name: "TEST_NAME",
-                role: .node)
+                role: .root,
+                parent: nil,
+                childs: [])
             
             await updaterRef.appendEvent(.objectAdded(diff))
             await updaterRef.update()
@@ -77,7 +81,9 @@ struct SystemModelUpdaterTests {
                 id: ObjectSourceMock.ID(),
                 target: .init(),
                 name: "TEST_NAME",
-                role: .node)
+                role: .root,
+                parent: nil,
+                childs: [])
             
             await updaterRef.appendEvent(.objectAdded(diff))
             

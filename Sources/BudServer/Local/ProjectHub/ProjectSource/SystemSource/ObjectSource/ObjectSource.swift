@@ -7,6 +7,7 @@
 import Foundation
 import Values
 import FirebaseFirestore
+import Collections
 
 private let logger = BudLogger("ObjectSource")
 
@@ -36,12 +37,13 @@ package final class ObjectSource: ObjectSourceInterface {
     var handler: EventHandler?
     package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
         // Firebase를 통해 구독 구현
+        fatalError()
     }
     
     package func notifyNameChanged() async {
         logger.start()
         
-        // Firebase에 의해 알아서 처리된다. 
+        // Firebase에 의해 알아서 처리된다.
     }
     package func synchronize(requester: ObjectID) async {
         logger.start()
@@ -56,6 +58,10 @@ package final class ObjectSource: ObjectSourceInterface {
         fatalError()
     }
     package func appendNewAction() async {
+        fatalError()
+    }
+    
+    package func createChildObject() async {
         fatalError()
     }
 
@@ -85,12 +91,22 @@ package final class ObjectSource: ObjectSourceInterface {
         
         package var name: String
         package var role: ObjectRole
+        package var parent: ObjectID?
+        package var childs: OrderedSet<ObjectID>
         
         
-        init(name: String, role: ObjectRole) {
+        init(name: String, role: ObjectRole, parent: ObjectID? = nil) {
             self.name = name
             self.target = ObjectID()
             self.role = role
+            self.parent = parent
+            self.childs = []
+            
+            if role == .node && parent == nil {
+                logger.failure("node에 해당하는 Object의 parent가 nil일 수 없습니다.")
+            } else if role == .root && parent != nil {
+                logger.failure("root에 해당하는 Object의 parent가 존재해서는 안됩니다.")
+            }
         }
     }
 }

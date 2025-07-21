@@ -209,7 +209,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         let rootObjectSourceRef = ObjectSourceMock(
             name: "New RootObject",
             role: .root,
-            parentRef: self)
+            systemSource: self.id)
         
         self.objects[rootObjectSourceRef.target] = rootObjectSourceRef.id
         

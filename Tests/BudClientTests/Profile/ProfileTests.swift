@@ -1,5 +1,5 @@
 //
-//  ProfileBoardTests.swift
+//  ProfileTests.swift
 //  BudClient
 //
 //  Created by 김민우 on 6/26/25.
@@ -11,8 +11,8 @@ import Values
 
 
 // MARK: Tests
-@Suite("ProfileBoard", .timeLimit(.minutes(1)))
-struct ProfileBoardTests {
+@Suite("Profile", .timeLimit(.minutes(1)))
+struct ProfileTests {
     struct SignOut {
         let budClientRef: BudClient
         let profileBoardRef: Profile
@@ -168,8 +168,39 @@ struct ProfileBoardTests {
                 await #expect(systemModel.isExist == false)
             }
         }
+        @Test func deleteRootObjectModel() async throws {
+            // given
+            let projectModelRef = try await createProjectModel(budClientRef)
+            let systemModelRef = try await createSystemModel(projectModelRef)
+            let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
+            
+            try await #require(rootObjectModelRef.id.isExist == true)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            await #expect(rootObjectModelRef.id.isExist == false)
+        }
+        @Test func deleteObjectModels() async throws {
+            // given
+            let projectModelRef = try await createProjectModel(budClientRef)
+            let systemModelRef = try await createSystemModel(projectModelRef)
+            let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
+            
+            try await createChildObject(rootObjectModelRef)
+            try await createChildObject(rootObjectModelRef)
+            
+            // when
+            await profileBoardRef.signOut()
+            
+            // then
+            for objectModel in await systemModelRef.objects.values {
+                await #expect(objectModel.isExist == false)
+            }
+        }
         
-        @Test func deleteProfileBoard() async throws {
+        @Test func deleteProfile() async throws {
             // given
             let profileBoard = try #require(await budClientRef.profile)
             
@@ -275,3 +306,42 @@ private func createSystemModel(_ projectModelRef: ProjectModel) async throws -> 
     return systemModelRef
 }
 
+private func createRootObjectModel(_ systemModelRef: SystemModel) async throws -> ObjectModel {
+    await systemModelRef.startUpdating()
+    try await #require(systemModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await systemModelRef.createRootObject()
+        }
+    }
+    
+    let rootObjectModel = try #require(await systemModelRef.root)
+    return try #require(await rootObjectModel.ref)
+}
+
+private func createChildObject(_ rootObjectModelRef: ObjectModel) async throws {
+    let systemModelRef = try #require(await rootObjectModelRef.config.parent.ref)
+    try await #require(systemModelRef.isUpdating == true)
+    
+    let oldCount = await systemModelRef.objects.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await rootObjectModelRef.createChildObject()
+        }
+    }
+    
+    let newCount = await systemModelRef.objects.count
+    
+    try #require(newCount == oldCount + 1)
+    return
+}

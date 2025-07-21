@@ -27,14 +27,9 @@ struct ObjectModelUpdaterTests {
         
         @Test func deleteObjectModel() async throws {
             // given
-            _ = ObjectSourceDiff(
-                id: ObjectSourceMock.ID(),
-                target: objectModelRef.target,
-                name: "TEST_OBJECT",
-                role: .node)
+            await updaterRef.appendEvent(.removed)
             
             // when
-            await updaterRef.appendEvent(.removed)
             await updaterRef.update()
             
             // then
@@ -43,22 +38,15 @@ struct ObjectModelUpdaterTests {
         @Test func removeObjectModelInSystemModel() async throws {
             // given
             let systemModelRef = await objectModelRef.config.parent.ref!
-            let target = objectModelRef.target
-            
-            _ = ObjectSourceDiff(
-                id: ObjectSourceMock.ID(),
-                target: target,
-                name: "TEST_OBJECT",
-                role: .node)
-
-            
             try await #require(systemModelRef.objects.count == 1)
             
-            // when
             await updaterRef.appendEvent(.removed)
+            
+            // when
             await updaterRef.update()
             
             // then
+            let target = objectModelRef.target
             await #expect(systemModelRef.objects[target] == nil)
         }
         @Test func whenAlreadyRemoved() async throws {
@@ -82,7 +70,9 @@ struct ObjectModelUpdaterTests {
                 id: ObjectSourceMock.ID(),
                 target: .init(),
                 name: "TEST_OBJECT",
-                role: .node)
+                role: .root,
+                parent: nil,
+                childs: [])
             
             await updaterRef.appendEvent(.modified(diff))
             
@@ -120,7 +110,9 @@ struct ObjectModelUpdaterTests {
                 id: objectModelRef.source,
                 target: objectModelRef.target,
                 name: "",
-                role: .node)
+                role: .root,
+                parent: nil,
+                childs: [])
             
             // when
             await updaterRef.appendEvent(.modified(diff))

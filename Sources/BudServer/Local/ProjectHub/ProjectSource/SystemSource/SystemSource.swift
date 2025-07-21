@@ -98,7 +98,9 @@ package final class SystemSource: SystemSourceInterface {
                         id: objectSource,
                         target: data.target,
                         name: data.name,
-                        role: data.role)
+                        role: data.role,
+                        parent: data.parent,
+                        childs: data.childs)
                     
                     // ObjectSources 컬렉션 이벤트 처리
                     switch changed.type {

@@ -63,6 +63,7 @@ extension SystemModel {
                     projectModelRef.systems[systemModelRef.target] = nil
                     
                     logger.end("removed SystemModel")
+                    
                 case .modified(let diff):
                     // modified SystemModel
                     guard let modifiedModel = projectModelRef.systems[diff.target] else {
@@ -75,6 +76,7 @@ extension SystemModel {
                     modifiedModel.ref?.location = diff.location
                     
                     logger.end("modified SystemModel")
+                    
                 case .objectAdded(let diff):
                     // create ObjectModel
                     guard systemModelRef.objects[diff.target] == nil else {
@@ -85,14 +87,24 @@ extension SystemModel {
                     
                     let objectModelRef = ObjectModel(config: config,
                                                      diff: diff)
-                    
-                    if diff.role == .root {
-                        systemModelRef.root = objectModelRef.id
-                    }
-                    
                     systemModelRef.objects[diff.target] = objectModelRef.id
                     
-                    logger.end("created ObjectModel")
+                    
+                    switch diff.role {
+                    case .root:
+                        systemModelRef.root = objectModelRef.id
+                        
+                        logger.end("created RootObjectModel")
+                    case .node:
+                        let parent = diff.parent!
+                        
+                        let parentObjectModel = systemModelRef.objects[parent]
+                        
+                        parentObjectModel?.ref?.childs.append(diff.target)
+                        
+                        logger.end("created NodeObjectModel")
+                    }
+                    
                 case .flowAdded:
                     // create FlowModel
                     logger.failure("미구현")

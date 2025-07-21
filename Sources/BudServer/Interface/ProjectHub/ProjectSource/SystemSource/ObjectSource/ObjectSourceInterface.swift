@@ -5,6 +5,7 @@
 //  Created by 김민우 on 7/11/25.
 //
 import Foundation
+import Collections
 import Values
 
 
@@ -19,12 +20,13 @@ package protocol ObjectSourceInterface: Sendable {
     
     func notifyNameChanged() async
     
-    func synchronize(requester: ObjectID) async
+    func synchronize(requester: ObjectID) async;
     
     
     // MARK: action
     func appendNewState() async
     func appendNewAction() async
+    func createChildObject() async
 }
 
 
@@ -53,29 +55,45 @@ public struct ObjectSourceDiff: Sendable {
     package let name: String
     package let role: ObjectRole
     
+    package let parent: ObjectID?
+    package let childs: OrderedSet<ObjectID>
+    
     // MARK: core
     @Server
     init(_ object: ObjectSourceMock) {
         self.id = object.id
         self.target = object.target
         self.name = object.name
+        
         self.role = object.role
+        self.parent = object.parent
+        self.childs = object.childs
     }
     
     init(id: any ObjectSourceIdentity,
          target: ObjectID,
          name: String,
-         role: ObjectRole) {
+         role: ObjectRole,
+         parent: ObjectID? = nil,
+         childs: OrderedSet<ObjectID>) {
         self.id = id
         self.target = target
         self.name = name
+        
         self.role = role
+        self.parent = parent
+        self.childs = childs
     }
     
     
     // MARK: operator
     func newName(_ value: String) -> Self {
-        .init(id: self.id, target: self.target, name: value, role: self.role)
+        .init(id: self.id,
+              target: self.target,
+              name: value,
+              role: self.role,
+              parent: self.parent,
+              childs: self.childs)
     }
 }
 
