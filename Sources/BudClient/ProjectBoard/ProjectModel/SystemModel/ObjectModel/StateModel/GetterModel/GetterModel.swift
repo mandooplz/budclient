@@ -47,7 +47,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public var result: ResultValue = .AnyValue
     
     public var issue: (any IssueRepresentable)?
-    public var callback: Callback?
+    package var callback: Callback?
     
     package var captureHook: Hook?
     package var computeHook: Hook?

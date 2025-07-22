@@ -55,7 +55,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var actions = OrderedDictionary<ActionID, ActionModel.ID>()
     
     public var issue: (any IssueRepresentable)?
-    public var callback: Callback?
+    package var callback: Callback?
     
     package var captureHook: Hook?
     package var computeHook: Hook?

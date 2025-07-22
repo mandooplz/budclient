@@ -618,8 +618,7 @@ struct ObjectModelTests {
             for setterModel in await stateModelRef.setters.values {
                 await #expect(setterModel.isExist == false)
             }
-        }
-        
+        }   
     }
 }
 
