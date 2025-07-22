@@ -6,10 +6,11 @@
 //
 import Foundation
 import Values
+import Collections
 
 
 // MARK: Interface
-package protocol StateSourceInterface: Sendable {
+package protocol StateSourceInterface: Sendable, SyncInterface {
     associatedtype ID: StateSourceIdentity where ID.Object == Self
     
     
@@ -22,6 +23,9 @@ package protocol StateSourceInterface: Sendable {
     
     // MARK: action
     func notifyStateChanged() async
+    
+    func appendNewGetter() async
+    func appendNewSetter() async
 }
 
 

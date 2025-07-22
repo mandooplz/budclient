@@ -39,13 +39,46 @@ extension StateModel {
             
             // capture
             await captureHook?()
-            guard let getterModelRef = owner.ref else {
+            guard let stateModelRef = owner.ref else {
                 setIssue(Error.stateModelIsDeleted)
                 logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
                 return
             }
+            let newConfig = stateModelRef.config.setParent(stateModelRef.id)
             
-            fatalError()
+            // mutate
+            while queue.isEmpty == false {
+                let event = queue.removeFirst()
+                
+                switch event {
+                case .modified(let stateSourceDiff):
+                    fatalError()
+                case .removed:
+                    fatalError()
+                case .getterAdded(let diff):
+                    guard stateModelRef.getters[diff.target] == nil else {
+                        logger.failure("GetterID를 target으로 갖는 GetterModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    let getterModelRef = GetterModel(
+                        config: newConfig,
+                        diff: diff)
+                    stateModelRef.getters[diff.target] = getterModelRef.id
+                    
+                    logger.end("added GetterModel")
+                case .setterAdded(let diff):
+                    guard stateModelRef.setters[diff.target] == nil else {
+                        logger.failure("SetterID를 target으로 갖는 SetterModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    let setterModelRef = SetterModel(config: newConfig, diff: diff)
+                    stateModelRef.setters[diff.target] = setterModelRef.id
+                    
+                    logger.end("added SetterModel")
+                }
+            }
         }
         
         

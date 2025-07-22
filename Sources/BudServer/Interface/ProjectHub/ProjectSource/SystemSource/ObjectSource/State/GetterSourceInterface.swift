@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 
 
 // MARK: Interface
@@ -33,6 +34,20 @@ package struct GetterSourceDiff: Sendable {
     package let id: any GetterSourceIdentity
     package let target: GetterID
     package let name: String
+    
+    package let parameters: [ParameterValue]
+    package let result: ResultValue
+    
+    @Server
+    init(_ objectRef: GetterSourceMock) {
+        self.id = objectRef.id
+        self.target = objectRef.target
+        self.name = objectRef.name
+        
+        self.parameters = objectRef.parameters.values
+            .map { $0 }
+        self.result = objectRef.result
+    }
 }
 
 

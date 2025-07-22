@@ -18,6 +18,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
     init(config: Config<ObjectModel.ID>,
          diff: StateSourceDiff) {
+        self.config = config
         self.target = diff.target
         self.updaterRef = Updater(owner: self.id)
         self.source = diff.id
@@ -37,6 +38,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     
     // MARK: state
     nonisolated let id = ID()
+    nonisolated let config: Config<ObjectModel.ID>
     nonisolated let target: StateID
     nonisolated let source: any StateSourceIdentity
     nonisolated let updaterRef: Updater
@@ -76,6 +78,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
             return
         }
         let stateSource = self.source
+        let me = ObjectID(self.id.value)
         
         // compute
         await withDiscardingTaskGroup { group in
@@ -86,6 +89,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await stateSourceRef.setHandler(
+                    requester: me,
                     .init({ event in
                         Task { [weak self] in
                             await self?.updaterRef.appendEvent(event)
@@ -95,7 +99,8 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
                         }
                     }))
                 
-                await stateSource.synchronize(requester: me)
+                await stateSourceRef.registerSync(me)
+                await stateSourceRef.synchronize()
             }
         }
         

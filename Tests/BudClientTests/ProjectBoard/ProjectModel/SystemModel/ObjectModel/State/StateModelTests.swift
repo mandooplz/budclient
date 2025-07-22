@@ -17,9 +17,11 @@ struct StateModelTests {
     struct StartUpdating {
         let budClientRef: BudClient
         let stateModelRef: StateModel
+        let stateSourceRef: StateSourceMock
         init() async throws {
             self.budClientRef = await BudClient()
             self.stateModelRef = try await getStateModel(budClientRef)
+            self.stateSourceRef = try #require(await stateModelRef.source.ref as? StateSourceMock)
         }
         
         @Test func whenStateModelIsDeleted() async throws {
@@ -62,10 +64,52 @@ struct StateModelTests {
         }
         
         @Test func recevieInitialEvents_GetterAdded() async throws {
-            Issue.record("미구현")
+            // given
+            try await #require(stateSourceRef.getters.count == 0)
+            try await #require(stateModelRef.getters.isEmpty)
+            
+            await stateSourceRef.appendNewGetter()
+            
+            try await #require(stateSourceRef.getters.count == 1)
+            try await #require(stateModelRef.getters.isEmpty)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await stateModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await stateModelRef.startUpdating()
+                }
+            }
+            
+            // then
+            await #expect(stateModelRef.getters.count == 1)
         }
         @Test func receiveInitialEvents_SetterAdded() async throws {
-            Issue.record("미구현")
+            // given
+            try await #require(stateSourceRef.setters.count == 0)
+            try await #require(stateModelRef.setters.isEmpty)
+            
+            await stateSourceRef.appendNewSetter()
+            
+            try await #require(stateSourceRef.setters.count == 1)
+            try await #require(stateModelRef.setters.isEmpty)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await stateModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await stateModelRef.startUpdating()
+                }
+            }
+            
+            // then
+            await #expect(stateModelRef.setters.count == 1)
         }
     }
 }
@@ -180,4 +224,27 @@ private func getStateModel(_ budClientRef: BudClient) async throws-> StateModel 
     try await #require(rootObjectModelRef.states.count == 1)
     
     return try #require(await rootObjectModelRef.states.values.first?.ref)
+}
+
+@discardableResult
+private func createGetterModel(_ stateModelRef: StateModel) async throws -> GetterModel {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    let oldCount = await stateModelRef.getters.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewGetter()
+        }
+    }
+    
+    try await #require(stateModelRef.getters.count == oldCount + 1)
+    
+    let getterModel = try #require(await stateModelRef.getters.values.last)
+    return try #require(await getterModel.ref)
 }

@@ -33,6 +33,19 @@ package struct SetterSourceDiff: Sendable {
     package let id: any SetterSourceIdentity
     package let target: SetterID
     package let name: String
+    
+    package let parameters: [ParameterValue]
+    
+    @Server
+    init(_ objectRef: SetterSourceMock) {
+        self.id = objectRef.id
+        self.target = objectRef.target
+        self.name = objectRef.name
+        
+        self.parameters = objectRef.parameters
+            .values
+            .map { $0 }
+    }
 }
 
 

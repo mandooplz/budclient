@@ -27,10 +27,12 @@ package final class SetterSourceMock: SetterSourceInterface {
     
     // MARK: state
     package nonisolated let id = ID()
-    nonisolated let target = GetterID()
+    nonisolated let target = SetterID()
     
     var handlers: [ObjectID:EventHandler?] = [:]
     var name: String
+    
+    var parameters: OrderedDictionary<ValueTypeID, ParameterValue> = [:]
     
     package func setHandler(requester: ObjectID, _ handler: EventHandler) async {
         

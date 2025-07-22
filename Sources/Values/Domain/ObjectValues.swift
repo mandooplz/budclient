@@ -124,7 +124,7 @@ public struct StateValue: Sendable {
 
 
 // MARK: ParameterValue
-public struct ParameterValue: Sendable, Hashable {
+public struct ParameterValue: Sendable, Hashable, Codable {
     public let name: String
     public let isOptional: Bool
     public let type: ValueTypeID
@@ -140,7 +140,7 @@ public struct ParameterValue: Sendable, Hashable {
 
 
 // MARK: ResultValue
-public struct ResultValue: Sendable, Hashable {
+public struct ResultValue: Sendable, Hashable, Codable {
     public let name: String
     public let isOptional: Bool
     public let type: ValueTypeID

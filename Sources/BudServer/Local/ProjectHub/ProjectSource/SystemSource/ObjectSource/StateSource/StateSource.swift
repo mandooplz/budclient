@@ -28,12 +28,28 @@ package final class StateSource: StateSourceInterface {
         fatalError()
     }
     
-    package func notifyStateChanged() async {
+    package func registerSync(_ object: ObjectID) async {
         fatalError()
     }
     
     
     // MARK: action
+    package func synchronize() async {
+        fatalError()
+    }
+    package func notifyStateChanged() async {
+        fatalError()
+    }
+    
+    package func appendNewGetter() async {
+        fatalError()
+    }
+    package func appendNewSetter() async {
+        fatalError()
+    }
+    
+    
+    
     
     // MARK: value
     @MainActor
