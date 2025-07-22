@@ -352,10 +352,48 @@ struct ObjectModelTests {
         
         @Test func appendStateModel() async throws {
             // given
-            try await #require(objectModelRef)
+            try await #require(objectModelRef.states.isEmpty)
+            
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.appendNewState()
+                }
+            }
+            
+            // then
+            await #expect(objectModelRef.states.count == 1)
         }
         @Test func createStateModel() async throws {
+            // given
+            try await #require(objectModelRef.states.isEmpty)
             
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.appendNewState()
+                }
+            }
+            
+            // then
+            try await #require(objectModelRef.states.count == 1)
+            
+            let stateModel = try #require(await objectModelRef.states.values.first)
+            await #expect(stateModel.isExist == true)
         }
     }
     struct AppendNewAction {
@@ -380,6 +418,52 @@ struct ObjectModelTests {
             // then
             let issue = try #require(await objectModelRef.issue as? KnownIssue)
             #expect(issue.reason == "objectModelIsDeleted")
+        }
+        
+        @Test func appendActionModel() async throws {
+            // given
+            try await #require(objectModelRef.actions.isEmpty)
+            
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.appendNewAction()
+                }
+            }
+            
+            // then
+            try await #require(objectModelRef.actions.count == 1)
+        }
+        @Test func createActionModel() async throws {
+            // given
+            try await #require(objectModelRef.actions.isEmpty)
+            
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.appendNewAction()
+                }
+            }
+            
+            // then
+            try await #require(objectModelRef.actions.count == 1)
+            
+            let actionModel = try #require(await objectModelRef.actions.values.first)
+            await #expect(actionModel.isExist == true)
         }
     }
     
@@ -406,6 +490,84 @@ struct ObjectModelTests {
             let issue = try #require(await objectModelRef.issue as? KnownIssue)
             #expect(issue.reason == "objectModelIsDeleted")
         }
+        
+        @Test func deleteObjectModel() async throws {
+            // given
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            try await #require(objectModelRef.id.isExist == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.removeObject()
+                }
+            }
+            
+            // then
+            await #expect(objectModelRef.id.isExist == false)
+        }
+        @Test func deleteActionModels() async throws {
+            // given
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            try await createActionModel(objectModelRef)
+            try await createActionModel(objectModelRef)
+            
+            try await #require(objectModelRef.actions.count == 2)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.removeObject()
+                }
+            }
+            
+            // then
+            for actionModel in await objectModelRef.actions.values {
+                await #expect(actionModel.isExist == false)
+            }
+        }
+        @Test(.disabled("구현 예정")) func deleteStateModels() async throws {
+            // given
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            try await createStateModel(objectModelRef)
+            try await createStateModel(objectModelRef)
+            
+            try await #require(objectModelRef.states.count == 2)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await objectModelRef.removeObject()
+                }
+            }
+            
+            // then
+            for stateModel in await objectModelRef.states.values {
+                await #expect(stateModel.isExist == false)
+            }
+        }
+        @Test(.disabled("구현 예정")) func deleteGetterModels() async throws {
+            
+        }
+        
     }
 }
 
@@ -479,4 +641,44 @@ private func getRootObjectModel(_ budClientRef: BudClient) async throws-> Object
     
     let rootObjectModelRef = try #require(await systemModelRef.root?.ref)
     return rootObjectModelRef
+}
+
+@discardableResult
+private func createStateModel(_ objectModelRef: ObjectModel) async throws -> StateModel {
+    try await #require(objectModelRef.isUpdating == true)
+    
+    let oldCount = await objectModelRef.states.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.appendNewState()
+        }
+    }
+    
+    try await #require(objectModelRef.states.count == oldCount + 1)
+    
+    let stateModel = try #require(await objectModelRef.states.values.last)
+    return try #require(await stateModel.ref)
+}
+
+private func createActionModel(_ objectModelRef: ObjectModel) async throws {
+    try await #require(objectModelRef.isUpdating == true)
+    
+    let oldCount = await objectModelRef.actions.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.appendNewAction()
+        }
+    }
+    
+    try await #require(objectModelRef.actions.count == oldCount + 1)
 }

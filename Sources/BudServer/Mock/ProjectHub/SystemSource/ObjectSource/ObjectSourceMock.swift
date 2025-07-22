@@ -101,7 +101,8 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         self.states[stateSourceRef.target] = stateSourceRef.id
         
         // notify
-        logger.failure("새로운 StateSource 생성 notify 로직 구현 필요")
+        let diff = StateSourceDiff(stateSourceRef)
+        self.handler?.execute(.stateAdded(diff))
     }
     package func appendNewAction() async {
         logger.start()
@@ -115,7 +116,8 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         self.actions[actionSourceRef.target] = actionSourceRef.id
         
         // notify
-        logger.failure("새로운 ActionSource 생성 notify 로직 구현 필요")
+        let diff = ActionSourceDiff(actionSourceRef)
+        self.handler?.execute(.actionAdded(diff))
     }
     
     package func createChildObject() async {
@@ -145,7 +147,26 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     }
     
     package func removeObject() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ObjectSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        self.states.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        self.actions.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        self.delete()
+        
+        // notify
+        self.handler?.execute(.removed)
     }
 
     

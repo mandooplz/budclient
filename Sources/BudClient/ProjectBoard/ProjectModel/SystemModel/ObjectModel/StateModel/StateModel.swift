@@ -25,6 +25,9 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
         self.name = diff.name
         self.nameInput = diff.name
         
+        self.accessLevel = diff.accessLevel
+        self.stateValue = diff.stateValue
+        
         StateModelManager.register(self)
     }
     func delete() {
@@ -42,8 +45,8 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var accessLevel : AccessLevel = .readAndWrite
-    public var stateValue: StateValue = .AnyValue 
+    public var accessLevel : AccessLevel
+    public var stateValue: StateValue
     
     public internal(set) var getters = OrderedDictionary<GetterID,GetterModel.ID>()
     public internal(set) var setters = OrderedDictionary<SetterID, SetterModel.ID>()

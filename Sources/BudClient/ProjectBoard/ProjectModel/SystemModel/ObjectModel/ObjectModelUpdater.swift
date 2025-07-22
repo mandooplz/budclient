@@ -53,6 +53,15 @@ extension ObjectModel {
                     logger.end("modified ObjectModel")
                     return
                 case .removed:
+                    // remove ObjectModel
+                    objectModelRef.states.values
+                        .compactMap { $0.ref }
+                        .forEach { $0.delete() }
+                    
+                    objectModelRef.actions.values
+                        .compactMap { $0.ref }
+                        .forEach { $0.delete() }
+                    
                     systemModelRef.objects[objectModelRef.target] = nil
                     objectModelRef.delete()
                     

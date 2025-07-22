@@ -55,14 +55,14 @@ package final class ObjectSource: ObjectSourceInterface {
     
     // MARK: action
     package func appendNewState() async {
-        fatalError()
+        fatalError("구현 예정")
     }
     package func appendNewAction() async {
-        fatalError()
+        fatalError("구현 예정")
     }
     
     package func createChildObject() async {
-        fatalError()
+        fatalError("구현 예정")
     }
     
     package func removeObject() async {

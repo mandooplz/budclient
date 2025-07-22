@@ -29,6 +29,9 @@ package final class StateSourceMock: StateSourceInterface {
     nonisolated let target = StateID()
     
     var name: String
+    var accessLevel: AccessLevel = .readAndWrite
+    var stateValue: StateValue = .AnyValue
+    
 
     
     // MARK: action

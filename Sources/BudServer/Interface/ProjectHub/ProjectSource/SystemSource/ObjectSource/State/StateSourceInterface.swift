@@ -34,11 +34,16 @@ package struct StateSourceDiff: Sendable {
     package let target: StateID
     package let name: String
     
+    package let accessLevel: AccessLevel
+    package let stateValue: StateValue
+    
     @Server
     init(_ objectRef: StateSourceMock) {
         self.id = objectRef.id
         self.target = objectRef.target
         self.name = objectRef.name
+        self.accessLevel = objectRef.accessLevel
+        self.stateValue = objectRef.stateValue
     }
 }
 

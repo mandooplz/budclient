@@ -376,6 +376,7 @@ struct ProjectModelTests {
             // then
             await #expect(rootObjectModelRef.id.isExist == false)
         }
+        
         @Test(.disabled("구현 예정")) func deleteStateModels() async throws {
             Issue.record("미구현")
         }
