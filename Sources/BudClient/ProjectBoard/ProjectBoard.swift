@@ -73,7 +73,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await projectHubRef.appendHandler(
-                    for: me,
+                    requester: me,
                     .init({ event in
                         Task { [weak self] in
                             await self?.updaterRef.appendEvent(event)
@@ -84,7 +84,8 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
                     })
                 )
                 
-                await projectHubRef.synchronize(requester: me)
+                await projectHubRef.registerSync(me)
+                await projectHubRef.synchronize()
             }
         }
         

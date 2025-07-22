@@ -9,18 +9,17 @@ import Values
 
 
 // MARK: Interface
-package protocol SystemSourceInterface: Sendable {
+package protocol SystemSourceInterface: Sendable, SyncInterface {
     associatedtype ID: SystemSourceIdentity where ID.Object == Self
     
     // MARK: state
     func setName(_ value: String) async
-    func setHandler(for requester: ObjectID, _ handler: Handler<SystemSourceEvent>) async;
+    func appendHandler(requester: ObjectID, _ handler: Handler<SystemSourceEvent>) async;
     
-    func synchronize(requester: ObjectID) async
-    
-    func notifyNameChanged() async;
     
     // MARK: action
+    func notifyStateChanged() async;
+    
     func addSystemRight() async
     func addSystemLeft() async
     func addSystemTop() async

@@ -10,20 +10,18 @@ import Values
 
 
 // MARK: Interface
-package protocol ObjectSourceInterface: Sendable {
+package protocol ObjectSourceInterface: Sendable, SyncInterface {
     associatedtype ID: ObjectSourceIdentity where ID.Object == Self
     
     // MARK: state
     func setName(_ value: String) async
-    func setHandler(for requester: ObjectID,
-                    _ handler: Handler<ObjectSourceEvent>) async
+    func appendHandler(requester: ObjectID, _ handler: Handler<ObjectSourceEvent>) async
     
-    func notifyNameChanged() async
-    
-    func synchronize(requester: ObjectID) async;
     
     
     // MARK: action
+    func notifyStateChanged() async
+    
     func createChildObject() async
     
     func appendNewState() async

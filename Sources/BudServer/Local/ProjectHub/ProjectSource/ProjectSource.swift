@@ -71,7 +71,7 @@ package final class ProjectSource: ProjectSourceInterface {
     
     package var listener: ListenerRegistration?
     package var handlers: [ObjectID:EventHandler] = [:]
-    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
+    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
         
@@ -146,35 +146,25 @@ package final class ProjectSource: ProjectSourceInterface {
                 }
             })
     }
-    package func removeHandler(of requester: ObjectID) async {
-        logger.start()
-        
-        guard id.isExist else {
-            logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        
-        // mutate
-        self.handlers[requester] = nil
-        
-        self.listener?.remove()
-        self.listener = nil
+    
+    package func registerSync(_ object: ObjectID) async {
+        // Firebase에서 자체적으로 처리함
+        return
     }
-    package func synchronize(requester: ObjectID) async {
+    
+    // MARK: action
+    package func synchronize() async {
         logger.start()
         
         // Firebase.listerner를 등록하는 과정에서 자체적으로 이벤트를 전달한다.
     }
-    
-    package func notifyNameChanged() async {
+    package func notifyStateChanged() async {
         logger.start()
         
         // Firebase에서 내부적으로 이벤트를 전달한다.
         return
     }
     
-    
-    // MARK: action
     package func createSystem() async  {
         logger.start()
         

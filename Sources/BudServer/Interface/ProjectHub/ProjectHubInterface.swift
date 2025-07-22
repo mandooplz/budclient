@@ -9,15 +9,14 @@ import Values
 
 
 // MARK: Interface
-package protocol ProjectHubInterface: Sendable {
+package protocol ProjectHubInterface: Sendable, SyncInterface {
     associatedtype ID: ProjectHubIdentity where ID.Object == Self
     
     // MARK: state
     nonisolated var id: ID { get }
     
-    func appendHandler(for requester: ObjectID, _ handler: Handler<ProjectHubEvent>) async
-    func removeHandler(of requester: ObjectID) async
-    func synchronize(requester: ObjectID) async
+    func appendHandler(requester: ObjectID, _ handler: Handler<ProjectHubEvent>) async
+    
     
     // MARK: action
     func createProject() async

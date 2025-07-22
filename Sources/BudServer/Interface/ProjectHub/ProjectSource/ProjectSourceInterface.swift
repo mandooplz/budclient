@@ -9,7 +9,7 @@ import Values
 
 
 // MARK: Interface
-package protocol ProjectSourceInterface: Sendable {
+package protocol ProjectSourceInterface: Sendable, SyncInterface {
     associatedtype ID: ProjectSourceIdentity where ID.Object == Self
     
     // MARK: state
@@ -17,13 +17,12 @@ package protocol ProjectSourceInterface: Sendable {
     
     func setName(_ value: String) async;
     
-    func appendHandler(for requester: ObjectID, _ handler: Handler<ProjectSourceEvent>) async
-    func removeHandler(of requester: ObjectID) async
-    func synchronize(requester: ObjectID) async
+    func appendHandler(requester: ObjectID, _ handler: Handler<ProjectSourceEvent>) async
     
-    func notifyNameChanged() async;
     
     // MARK: action
+    func notifyStateChanged() async;
+    
     func createSystem() async
     func removeProject() async
 }

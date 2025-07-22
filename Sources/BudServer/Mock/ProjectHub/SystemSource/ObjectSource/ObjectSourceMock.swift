@@ -53,42 +53,63 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         self.name = value
     }
     
-    
-    package var handler: EventHandler?
-    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
-        self.handler = handler
+    var syncQueue: Deque<ObjectID> = []
+    package func registerSync(_ object: ObjectID) async {
+        self.syncQueue.append(object)
     }
-    package func notifyNameChanged() async {
+    
+    
+    package var handlers: [ObjectID: EventHandler] = [:]
+    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
+        self.handlers[requester] = handler
+    }
+    package func notifyStateChanged() async {
         logger.start()
         
         let diff = ObjectSourceDiff(self)
-        
-        self.handler?.execute(.modified(diff))
+
+        for eventHandler in self.handlers.values {
+            eventHandler.execute(.modified(diff))
+        }
     }
     
     
     var states: [StateID: StateSourceMock.ID] = [:]
     var actions: [ActionID: ActionSourceMock.ID] = [:]
     
-    package func synchronize(requester: ObjectID) async {
-        logger.start()
-        
-        self.states.values
-            .compactMap { $0.ref }
-            .map { StateSourceDiff($0) }
-            .forEach {
-                self.handler?.execute(.stateAdded($0))
-            }
-        
-        self.actions.values
-            .compactMap { $0.ref }
-            .map { ActionSourceDiff($0) }
-            .forEach {
-                self.handler?.execute(.actionAdded($0))
-            }
-    }
     
     // MARK: action
+    package func synchronize() async {
+        logger.start()
+        
+        while syncQueue.isEmpty == false {
+            let object = syncQueue.removeFirst()
+            guard let eventHandler = self.handlers[object] else {
+                logger.failure("Object에 해당하는 handler가 존재하지 않습니다.")
+                continue
+            }
+            
+            self.states.values
+                .compactMap { $0.ref }
+                .map { StateSourceDiff($0) }
+                .forEach {
+                    eventHandler.execute(.stateAdded($0))
+                }
+            
+            self.actions.values
+                .compactMap { $0.ref }
+                .map { ActionSourceDiff($0) }
+                .forEach {
+                    eventHandler.execute(.actionAdded($0))
+                }
+        }
+        
+        
+        
+        
+        
+    }
+    
     package func appendNewState() async {
         logger.start()
         
@@ -102,7 +123,9 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         
         // notify
         let diff = StateSourceDiff(stateSourceRef)
-        self.handler?.execute(.stateAdded(diff))
+        
+        self.handlers.values
+            .forEach { $0.execute(.stateAdded(diff)) }
     }
     package func appendNewAction() async {
         logger.start()
@@ -117,7 +140,9 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         
         // notify
         let diff = ActionSourceDiff(actionSourceRef)
-        self.handler?.execute(.actionAdded(diff))
+        
+        self.handlers.values
+            .forEach { $0.execute(.actionAdded(diff)) }
     }
     
     package func createChildObject() async {
@@ -143,7 +168,8 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         // notify
         let diff = ObjectSourceDiff(childObjectSourceRef)
         
-        systemSourceRef.handler?.execute(.objectAdded(diff))
+        systemSourceRef.handlers.values
+            .forEach { $0.execute(.objectAdded(diff)) }
     }
     
     package func removeObject() async {
@@ -166,7 +192,8 @@ package final class ObjectSourceMock: ObjectSourceInterface {
         self.delete()
         
         // notify
-        self.handler?.execute(.removed)
+        self.handlers.values
+            .forEach { $0.execute(.removed) }
     }
 
     

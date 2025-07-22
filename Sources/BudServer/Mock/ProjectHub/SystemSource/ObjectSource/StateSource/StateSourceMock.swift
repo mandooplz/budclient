@@ -43,7 +43,7 @@ package final class StateSourceMock: StateSourceInterface {
         self.syncQueue.append(object)
     }
     
-    package func setHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async {
+    package func appendHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async {
         
         self.handlers[requester] = handler
     }

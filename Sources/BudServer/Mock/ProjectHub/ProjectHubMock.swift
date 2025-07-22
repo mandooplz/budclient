@@ -29,26 +29,32 @@ package final class ProjectHubMock: ProjectHubInterface {
     package var projectSources: Set<ProjectSourceMock.ID> = []
     
     var handlers: [ObjectID:EventHandler] = [:]
-    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
+    var syncQueue: Deque<ObjectID> = []
+    package func registerSync(_ object: ObjectID) async {
+        syncQueue.append(object)
+    }
+
+    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         self.handlers[requester] = handler
     }
-    package func removeHandler(of requester: ObjectID) async {
-        self.handlers[requester] = nil
-    }
-    package func synchronize(requester: ObjectID) async {
+    
+    
+    
+    // MARK: action
+    package func synchronize() async {
         logger.start()
         
         let diffs = self.projectSources
             .compactMap { $0.ref }
             .map { ProjectSourceDiff($0) }
         
-        for initialDiff in diffs {
-            self.handlers[requester]?.execute(.added(initialDiff))
+        for diff in diffs {
+            for eventHandler in self.handlers.values {
+                eventHandler.execute(.added(diff))
+            }
         }
     }
     
-    
-    // MARK: action
     package func createProject() async {
         logger.start()
         // capture

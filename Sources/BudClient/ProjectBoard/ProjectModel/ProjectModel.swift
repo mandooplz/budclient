@@ -90,7 +90,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await projectSourceRef.appendHandler(
-                    for: me,
+                    requester: me,
                     .init({ event in
                         Task { [weak self] in
                             await self?.updaterRef.appendEvent(event)
@@ -100,7 +100,8 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                         }
                     }))
                 
-                await projectSourceRef.synchronize(requester: me)
+                await projectSourceRef.registerSync(me)
+                await projectSourceRef.synchronize()
             }
         }
         
@@ -144,7 +145,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await projectSourceRef.setName(nameInput)
-                await projectSourceRef.notifyNameChanged()
+                await projectSourceRef.notifyStateChanged()
             }
         }
         

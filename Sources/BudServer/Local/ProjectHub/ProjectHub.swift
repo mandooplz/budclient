@@ -29,9 +29,14 @@ package final class ProjectHub: ProjectHubInterface {
     
     var projectSources: [ProjectID: ProjectSource.ID] = [:]
     
+    package func registerSync(_ object: ObjectID) async {
+        // Firebase에서 자체적으로 처리
+        return
+    }
+    
     var listener: ListenerRegistration?
     var handlers: [ObjectID:EventHandler] = [:]
-    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
+    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         // capture
         let projectHub = self.id
         
@@ -121,30 +126,18 @@ package final class ProjectHub: ProjectHubInterface {
                 }
             }
     }
-    package func removeHandler(of requester: ObjectID) async {
-        logger.start()
-        
-        guard id.isExist else {
-            logger.failure("ProjectHub가 존재하지 않아 실행 취소됩니다.")
-            return
-        }
-        
-        self.handlers[requester] = nil
-        
-        self.listener?.remove()
-        self.listener = nil
-    }
-    package func synchronize(requester: ObjectID) async {
-        logger.start()
-        
-        // Firebase에서 알아서 호출해준다.
-    }
     
     package func notifyNameChanged(_ project: ProjectID) async {
         return
     }
     
     // MARK: action
+    package func synchronize() async {
+        logger.start()
+        
+        // Firebase에서 알아서 호출해준다.
+    }
+    
     package func createProject() {
         logger.start()
         

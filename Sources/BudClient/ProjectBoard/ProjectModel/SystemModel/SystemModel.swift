@@ -83,8 +83,8 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
                     return
                 }
                 
-                await systemSourceRef.setHandler(
-                    for: me,
+                await systemSourceRef.appendHandler(
+                    requester: me,
                     .init({ event in
                         Task { [weak self] in
                             await self?.updaterRef.appendEvent(event)
@@ -94,7 +94,8 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
                         }
                     }))
                 
-                await systemSourceRef.synchronize(requester: me)
+                await systemSourceRef.registerSync(me)
+                await systemSourceRef.synchronize()
             }
         }
         
@@ -133,7 +134,7 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await systemSourceRef.setName(nameInput)
-                await systemSourceRef.notifyNameChanged()
+                await systemSourceRef.notifyStateChanged()
             }
         }
     }

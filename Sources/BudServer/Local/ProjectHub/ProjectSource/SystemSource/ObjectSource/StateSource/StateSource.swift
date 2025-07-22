@@ -17,7 +17,7 @@ package final class StateSource: StateSourceInterface {
     nonisolated let id = ID()
     
     var handler: EventHandler?
-    package func setHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async {
+    package func appendHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async {
         fatalError()
     }
     

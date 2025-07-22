@@ -15,17 +15,17 @@ package protocol StateSourceInterface: Sendable, SyncInterface {
     
     
     // MARK: state
-    func setHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async
+    func appendHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async;
     
-    func setName(_ value: String) async
-    func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async
+    func setName(_ value: String) async;
+    func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async;
     
     
     // MARK: action
-    func notifyStateChanged() async
+    func notifyStateChanged() async;
     
-    func appendNewGetter() async
-    func appendNewSetter() async
+    func appendNewGetter() async;
+    func appendNewSetter() async;
 }
 
 

@@ -88,7 +88,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
                     return
                 }
                 
-                await stateSourceRef.setHandler(
+                await stateSourceRef.appendHandler(
                     requester: me,
                     .init({ event in
                         Task { [weak self] in

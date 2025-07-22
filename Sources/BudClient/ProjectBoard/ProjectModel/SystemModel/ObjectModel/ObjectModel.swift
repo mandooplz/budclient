@@ -90,8 +90,8 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
                     return
                 }
                 
-                await objectSourceRef.setHandler(
-                    for: me,
+                await objectSourceRef.appendHandler(
+                    requester: me,
                     .init { event in
                         Task { [weak self] in
                             await self?.updaterRef.appendEvent(event)
@@ -101,7 +101,8 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
                         }
                     })
                 
-                await objectSourceRef.synchronize(requester: me)
+                await objectSourceRef.registerSync(me)
+                await objectSourceRef.synchronize()
             }
         }
         
@@ -142,7 +143,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await objectSourceRef.setName(nameInput)
-                await objectSourceRef.notifyNameChanged()
+                await objectSourceRef.notifyStateChanged()
             }
         }
         

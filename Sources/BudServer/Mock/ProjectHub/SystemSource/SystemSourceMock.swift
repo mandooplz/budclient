@@ -39,39 +39,50 @@ package final class SystemSourceMock: SystemSourceInterface {
     
     private(set) var name: String
     package var location: Location
+    package var objects = OrderedDictionary<ObjectID, ObjectSourceMock.ID>()
+    
+    var syncQueue: Deque<ObjectID> = []
+    package func registerSync(_ object: ObjectID) async {
+        syncQueue.append(object)
+    }
+    
     package func setName(_ value: String) async {
         self.name = value
     }
     
-    package var objects = OrderedDictionary<ObjectID, ObjectSourceMock.ID>()
-
-    
-    
-    var handler: EventHandler?
-    package func setHandler(for requester: ObjectID, _ handler: Handler<SystemSourceEvent>) {
-        self.handler = handler
-    }
-    
-    package func synchronize(requester: ObjectID) async {
-        let diffs = objects.values
-            .compactMap { $0.ref }
-            .map { ObjectSourceDiff($0) }
-        
-        for diff in diffs {
-            self.handler?.execute(.objectAdded(diff))
-        }
-    }
-    
-    package func notifyNameChanged() {
-        // capture
-        guard id.isExist else { return }
-        
-        let diff = SystemSourceDiff(self)
-        handler?.execute(.modified(diff))
+    var handlers: [ObjectID:EventHandler] = [:]
+    package func appendHandler(requester: ObjectID, _ handler: Handler<SystemSourceEvent>) {
+        self.handlers[requester] = handler
     }
     
     
     // MARK: action
+    package func synchronize() {
+        logger.start()
+        
+        while syncQueue.isEmpty == false {
+            let object = syncQueue.removeFirst()
+            guard let eventHandler = handlers[object] else {
+                logger.failure("Object의 EventHandler가 존재하지 않습니다.")
+                continue
+            }
+            
+            self.objects.values
+                .compactMap { $0.ref }
+                .map { ObjectSourceDiff($0) }
+                .forEach { eventHandler.execute(.objectAdded($0)) }
+        }
+    }
+    package func notifyStateChanged() {
+        // capture
+        guard id.isExist else { return }
+        
+        let diff = SystemSourceDiff(self)
+        
+        self.handlers.values
+            .forEach { $0.execute(.modified(diff))}
+    }
+    
     package func addSystemRight() async {
         logger.start()
         
@@ -202,8 +213,6 @@ package final class SystemSourceMock: SystemSourceInterface {
             logger.failure("Root에 해당하는 ObjectSourceMock이 이미 존재합니다.")
             return
         }
-        let handler = self.handler
-        
         
         // mutate
         let rootObjectSourceRef = ObjectSourceMock(
@@ -214,7 +223,9 @@ package final class SystemSourceMock: SystemSourceInterface {
         self.objects[rootObjectSourceRef.target] = rootObjectSourceRef.id
         
         // notify
-        handler?.execute(.objectAdded(.init(rootObjectSourceRef)))
+        let diff = ObjectSourceDiff(rootObjectSourceRef)
+        self.handlers.values
+            .forEach { $0.execute(.objectAdded(diff))}
     }
     
     package func removeSystem() async {
@@ -232,7 +243,8 @@ package final class SystemSourceMock: SystemSourceInterface {
         self.delete()
         
         // notify
-        self.handler?.execute(.removed)
+        self.handlers.values
+            .forEach { $0.execute(.removed) }
     }
     
     

@@ -35,25 +35,31 @@ package final class ObjectSource: ObjectSourceInterface {
     
     var listener: ListenerRegistration?
     var handler: EventHandler?
-    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
+    
+    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         // Firebase를 통해 구독 구현
         fatalError()
     }
-    
-    package func notifyNameChanged() async {
+    package func notifyStateChanged() async {
         logger.start()
         
         // Firebase에 의해 알아서 처리된다.
     }
-    package func synchronize(requester: ObjectID) async {
+    
+    package func registerSync(_ object: ObjectID) async {
+        fatalError()
+    }
+    
+    
+    
+    // MARK: action
+    package func synchronize() async {
         logger.start()
         
         // Firebase에서 자체적으로 첫 이벤트들을 전송
         return
     }
     
-    
-    // MARK: action
     package func appendNewState() async {
         fatalError("구현 예정")
     }

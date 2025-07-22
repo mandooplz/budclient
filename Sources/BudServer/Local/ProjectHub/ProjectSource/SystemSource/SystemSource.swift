@@ -57,7 +57,7 @@ package final class SystemSource: SystemSourceInterface {
     var listener: ListenerRegistration?
     var handler: EventHandler?
     
-    package func setHandler(for requester: ObjectID, _ handler: EventHandler) {
+    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
         // capture
@@ -124,20 +124,23 @@ package final class SystemSource: SystemSourceInterface {
             }
     }
     
-    package func synchronize(requester: ObjectID) async {
+    package func registerSync(_ object: ObjectID) async {
+        // Firebase에서 자체적으로 처리함
+        return
+    }
+    
+    // MARK: action
+    package func synchronize() async {
         logger.start()
         
         // Firebase에서 listener를 등록할 때 내부적으로 호출
         
         return
     }
-    
-    package func notifyNameChanged() async {
+    package func notifyStateChanged() async {
         return
     }
     
-    
-    // MARK: action
     package func addSystemTop() async {
         logger.start()
         

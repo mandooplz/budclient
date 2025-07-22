@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 
 
 
@@ -49,30 +50,34 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     
     package var creator: UserID
     
+    var syncQyeye: Deque<ObjectID> = []
+    package func registerSync(_ object: ObjectID) async {
+        self.syncQyeye.append(object)
+    }
+    
+    
     var handlers = [ObjectID: EventHandler]()
-    package func appendHandler(for requester: ObjectID, _ handler: EventHandler) {
+    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
         handlers[requester] = handler
     }
-    package func removeHandler(of requester: ObjectID) async {
+    
+    
+    // MARK: action
+    package func synchronize() async {
         logger.start()
         
-        handlers[requester] = nil
-    }
-    package func synchronize(requester: ObjectID) async {
-        logger.start()
-        
-        let initialDiffs = self.systems
+        let diffs = self.systems
             .compactMap { $0.ref }
             .map { SystemSourceDiff($0) }
         
-        for initialDiff in initialDiffs {
-            handlers[requester]?.execute(.added(initialDiff))
+        for handler in self.handlers.values {
+            diffs.forEach { handler.execute(.added($0)) }
         }
     }
     
-    package func notifyNameChanged() {
+    package func notifyStateChanged() {
         logger.start()
         
         let diff = ProjectSourceDiff(id: self.id,
@@ -84,8 +89,6 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         }
     }
     
-    
-    // MARK: action
     package func createSystem() {
         // capture
         guard systems.isEmpty else { return }
