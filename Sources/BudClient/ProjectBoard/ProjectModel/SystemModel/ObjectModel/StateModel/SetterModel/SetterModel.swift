@@ -46,9 +46,13 @@ public final class SetterModel: Sendable {
     
     
     // MARK: action
-    public func duplicate() async { }
+    public func duplicate() async {
+        fatalError()
+    }
     
-    public func removeSetter() async { }
+    public func removeSetter() async {
+        fatalError()
+    }
     
     
     // MARK: value

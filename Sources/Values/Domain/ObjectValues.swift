@@ -5,6 +5,7 @@
 //  Created by 김민우 on 7/4/25.
 //
 import Foundation
+import Collections
 
 
 // MARK: Values
@@ -84,15 +85,6 @@ public struct ActionID: IDRepresentable {
 }
 
 
-// MARK: ValueTypeID
-public struct ValueTypeID: IDRepresentable {
-    public let value: UUID
-    public init(_ value: UUID = UUID()) {
-        self.value = value
-    }
-}
-
-
 // MARK: ObjectTypeID
 public struct ObjectTypeID: IDRepresentable {
     public let value: UUID
@@ -101,58 +93,6 @@ public struct ObjectTypeID: IDRepresentable {
     }
 }
 
-
-
-
-
-
-
-// MARK: StateValue
-public struct StateValue: Sendable, Hashable {
-    public let name: String
-    public let isOptional: Bool
-    public let type: ValueTypeID
-    
-    public init(name: String, isOptional: Bool = false, type: ValueTypeID = .init()) {
-        self.name = name
-        self.isOptional = isOptional
-        self.type = type
-    }
-    
-    public static let AnyValue = StateValue.init(name: "Any")
-}
-
-
-// MARK: ParameterValue
-public struct ParameterValue: Sendable, Hashable, Codable {
-    public let name: String
-    public let isOptional: Bool
-    public let type: ValueTypeID
-    
-    public init(name: String, isOptional: Bool = false, type: ValueTypeID = .init()) {
-        self.name = name
-        self.isOptional = isOptional
-        self.type = type
-    }
-    
-    public static let AnyValue = ParameterValue(name: "AnyValue")
-}
-
-
-// MARK: ResultValue
-public struct ResultValue: Sendable, Hashable, Codable {
-    public let name: String
-    public let isOptional: Bool
-    public let type: ValueTypeID
-    
-    public init(name: String, isOptional: Bool = false, type: ValueTypeID = .init()) {
-        self.name = name
-        self.isOptional = isOptional
-        self.type = type
-    }
-    
-    public static let AnyValue = ResultValue(name: "AnyValue")
-}
 
 
 // MARK: Handler

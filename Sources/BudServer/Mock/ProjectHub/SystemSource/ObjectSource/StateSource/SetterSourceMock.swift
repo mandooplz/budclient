@@ -32,7 +32,7 @@ package final class SetterSourceMock: SetterSourceInterface {
     var handlers: [ObjectID:EventHandler?] = [:]
     var name: String
     
-    var parameters: OrderedDictionary<ValueTypeID, ParameterValue> = [:]
+    var parameters: OrderedDictionary<ValueID, ParameterValue> = [:]
     
     package func setHandler(requester: ObjectID, _ handler: EventHandler) async {
         

@@ -43,7 +43,10 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var paremeters = OrderedDictionary<ValueTypeID, ParameterValue>()
+    public internal(set) var paremeters = OrderedDictionary<ValueID, ParameterValue>()
+    private var parameterData = OrderedDictionary<ParameterValue, ValueID>()
+    // isAdult(name: String, name: String, age: Int) -> Bool
+    
     public var result: ResultValue = .AnyValue
     
     public var issue: (any IssueRepresentable)?
@@ -65,6 +68,8 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        fatalError()
     }
     
     public func removeGetter() async {
@@ -77,6 +82,8 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        fatalError()
     }
     
     
