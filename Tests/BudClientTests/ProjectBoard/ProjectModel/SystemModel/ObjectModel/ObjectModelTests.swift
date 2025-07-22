@@ -349,6 +349,14 @@ struct ObjectModelTests {
             let issue = try #require(await objectModelRef.issue as? KnownIssue)
             #expect(issue.reason == "objectModelIsDeleted")
         }
+        
+        @Test func appendStateModel() async throws {
+            // given
+            try await #require(objectModelRef)
+        }
+        @Test func createStateModel() async throws {
+            
+        }
     }
     struct AppendNewAction {
         let budClientRef: BudClient

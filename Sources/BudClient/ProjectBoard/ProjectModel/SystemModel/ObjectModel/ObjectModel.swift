@@ -40,9 +40,8 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let id = ID()
     nonisolated let config: Config<SystemModel.ID>
     nonisolated let target: ObjectID
-    nonisolated let updaterRef: Updater
     nonisolated let source: any ObjectSourceIdentity
-    
+    nonisolated let updaterRef: Updater
     var isUpdating: Bool = false
     
     public internal(set) var name: String
