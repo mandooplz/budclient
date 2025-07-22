@@ -91,7 +91,7 @@ public final class Profile: Debuggable {
             .compactMap { $0.ref }
             .map { $0.objects.values.compactMap { $0.ref } }
             .flatMap { $0 }
-            .forEach { $0.delete() }
+            .forEach { cleanUpObjectModel($0) }
 
         // delete SystemModels
         projectModelRef.systems.values
@@ -110,6 +110,20 @@ public final class Profile: Debuggable {
         
         // delete ProjectModel
         projectModelRef.delete()
+    }
+    private func cleanUpObjectModel(_ objectModelRef: ObjectModel) {
+        // delete StateModels
+        objectModelRef.states.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete ActionModels
+        objectModelRef.actions.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete ObjectModel
+        objectModelRef.delete()
     }
 
 

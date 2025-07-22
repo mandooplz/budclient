@@ -70,6 +70,37 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 업데이트 중입니다.")
+            return
+        }
+        let stateSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await stateSource.ref else {
+                    logger.failure("StateSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await stateSourceRef.setHandler(
+                    .init({ event in
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
+                            
+                            await self?.callback?()
+                        }
+                    }))
+                
+                await stateSource.synchronize(requester: me)
+            }
+        }
+        
+        // mutate
+        self.isUpdating = true
     }
     
     public func pushName() async {
@@ -79,9 +110,36 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
         await captureHook?()
         guard id.isExist else {
             setIssue(Error.stateModelIsDeleted)
-            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard nameInput.isEmpty == false else {
+            setIssue(Error.nameCannotBeEmpty)
+            logger.failure("StateModel의 name이 빈 문자열일 수 없습니다.")
+            return
+        }
+        guard nameInput != name else {
+            setIssue(Error.newNameIsSameAsCurrent)
+            logger.failure("StateModel의 name이 변경되지 않았습니다.")
+            return
+        }
+        let source = self.source
+        let nameInput = self.nameInput
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await source.ref else {
+                    logger.failure("StateSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                 await stateSourceRef.setName(nameInput)
+                 await stateSourceRef.notifyStateChanged()
+            }
+        }
+    }
+    public func pushStateData() async {
+        
     }
 
     public func appendNewGetter() async {
@@ -131,6 +189,8 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     }
     public enum Error: String, Swift.Error {
         case stateModelIsDeleted
+        case nameCannotBeEmpty, newNameIsSameAsCurrent
+        case alreadyUpdating
     }
 }
 

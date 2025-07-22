@@ -29,11 +29,17 @@ extension ObjectModel {
         var queue: Deque<ObjectSourceEvent> = []
         var issue: (any IssueRepresentable)?
         
+        package var captureHook: Hook?
+        package var computeHook: Hook?
+        package var mutateHook: Hook?
+        
         
         // MARK: action
-        func update(mutateHook: Hook? = nil) async {
+        func update() async {
             logger.start()
             
+            // capture
+            await captureHook?()
             guard let objectModelRef = owner.ref else {
                 setIssue(Error.objectModelIsDeleted)
                 logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
@@ -43,6 +49,7 @@ extension ObjectModel {
             let systemModelRef = objectModelRef.config.parent.ref!
             let newConfig = objectModelRef.config.setParent(objectModelRef.id)
             
+            // mutate
             while queue.isEmpty == false {
                 let event = queue.removeFirst()
                 

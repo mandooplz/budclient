@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 
 private let logger = BudLogger("StateSourceMock")
 
@@ -28,13 +29,38 @@ package final class StateSourceMock: StateSourceInterface {
     package nonisolated let id = ID()
     nonisolated let target = StateID()
     
+    var handlers: [ObjectID:EventHandler?] = [:]
     var name: String
     var accessLevel: AccessLevel = .readAndWrite
     var stateValue: StateValue = .AnyValue
     
-
+    var getters: [GetterID: GetterSourceMock.ID] = [:]
+    var setters: [SetterID: SetterSourceMock.ID] = [:]
     
+    package func setHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async {
+        
+        self.handlers[requester] = handler
+    }
+    
+    package func setName(_ value: String) async {
+        self.name = value
+    }
+    package func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async {
+        self.accessLevel = accessLevel
+        self.stateValue = stateValue
+    }
+    
+    
+
     // MARK: action
+    package func notifyStateChanged() async {
+        let diff = StateSourceDiff(self)
+        
+        self.handlers.values
+            .forEach {
+                $0?.execute(.modified(diff))
+            }
+    }
 
     
     
@@ -51,6 +77,7 @@ package final class StateSourceMock: StateSourceInterface {
             StateSourceMockManager.container[self]
         }
     }
+    typealias EventHandler = Handler<StateSourceEvent>
 }
 
 

@@ -9,7 +9,7 @@ import Collections
 
 // MARK: UpdaterInterface
 @MainActor
-package protocol UpdaterInterface: AnyObject, Sendable, Debuggable {
+package protocol UpdaterInterface: AnyObject, Sendable, Debuggable, Hookable {
     associatedtype Event: Sendable
     
     var queue: Deque<Event> { get set }

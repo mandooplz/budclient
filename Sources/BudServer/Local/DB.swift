@@ -17,7 +17,6 @@ enum DB: Sendable {
     static let SetterSources = "SetterSources"
     static let ActionSources = "ActionSources"
     
-    static let valueCardSources = "ValueCardSources"
-    static let objectCardSources = "ObjectCardSources"
+    static let Accounts = "Accounts"
 }
 

@@ -66,6 +66,10 @@ public final class SetterModel: Sendable {
             SetterModelManager.container[self]
         }
     }
+    public enum Error: String, Swift.Error {
+        case setterModelIsDeleted
+        case nameCannotBeEmpty, newNameIsSameAsCurrent
+    }
 }
 
 

@@ -15,10 +15,10 @@ import Values
 struct ProfileTests {
     struct SignOut {
         let budClientRef: BudClient
-        let profileBoardRef: Profile
+        let profileRef: Profile
         init() async throws {
             self.budClientRef = await BudClient()
-            self.profileBoardRef = try await getProfileBoard(budClientRef)
+            self.profileRef = try await getProfileBoard(budClientRef)
         }
         
         @Test func whenProfileBoardIsDeletedBeforeCapture() async throws {
@@ -27,18 +27,18 @@ struct ProfileTests {
             try await #require(budClientRef.profile?.isExist == true)
             
             await budClientRef.saveUserInCache()
-            let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
+            let budCacheRef = try #require(await profileRef.config.budCache.ref)
             try await #require(budCacheRef.getUser() != nil)
             
             // when
-            await profileBoardRef.signOut {
-                await profileBoardRef.delete()
+            await profileRef.signOut {
+                await profileRef.delete()
             } mutateHook: {
                 
             }
 
             // then
-            let issue = try #require(await profileBoardRef.issue as? KnownIssue)
+            let issue = try #require(await profileRef.issue as? KnownIssue)
             #expect(issue.reason == "profileBoardIsDeleted")
             
             try await #require(budClientRef.profile?.isExist == false)
@@ -49,18 +49,18 @@ struct ProfileTests {
             try await #require(budClientRef.profile?.isExist == true)
             
             await budClientRef.saveUserInCache()
-            let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
+            let budCacheRef = try #require(await profileRef.config.budCache.ref)
             try await #require(budCacheRef.getUser() != nil)
             
             // when
-            await profileBoardRef.signOut {
+            await profileRef.signOut {
                 
             } mutateHook: {
-                await profileBoardRef.delete()
+                await profileRef.delete()
             }
 
             // then
-            let issue = try #require(await profileBoardRef.issue as? KnownIssue)
+            let issue = try #require(await profileRef.issue as? KnownIssue)
             #expect(issue.reason == "profileBoardIsDeleted")
             
             try await #require(budClientRef.profile?.isExist == false)
@@ -73,7 +73,7 @@ struct ProfileTests {
             try await #require(budClientRef.isUserSignedIn == true)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             await #expect(budClientRef.isUserSignedIn == false)
@@ -84,7 +84,7 @@ struct ProfileTests {
             try await #require(budClientRef.signInForm == nil)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             await #expect(budClientRef.signInForm != nil)
@@ -94,7 +94,7 @@ struct ProfileTests {
             try await #require(budClientRef.signInForm == nil)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             let signInForm = try #require(await budClientRef.signInForm)
@@ -106,7 +106,7 @@ struct ProfileTests {
             let projectBoard = try #require(await budClientRef.projectBoard)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             await #expect(projectBoard.isExist == false)
@@ -134,7 +134,7 @@ struct ProfileTests {
             try await #require(projectBoardRef.projects.count == runTime)
         
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             for projectModel in await projectBoardRef.projects.values {
@@ -161,7 +161,7 @@ struct ProfileTests {
             try await #require(projectModelRef.systems.count == 1)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             for systemModel in await projectModelRef.systems.values {
@@ -177,7 +177,7 @@ struct ProfileTests {
             try await #require(rootObjectModelRef.id.isExist == true)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             await #expect(rootObjectModelRef.id.isExist == false)
@@ -191,12 +191,62 @@ struct ProfileTests {
             try await createChildObject(rootObjectModelRef)
             try await createChildObject(rootObjectModelRef)
             
+            try await #require(systemModelRef.objects.count == 3)
+            
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             for objectModel in await systemModelRef.objects.values {
                 await #expect(objectModel.isExist == false)
+            }
+        }
+        @Test func deleteStateModels() async throws {
+            // given
+            let projectModelRef = try await createProjectModel(budClientRef)
+            let systemModelRef = try await createSystemModel(projectModelRef)
+            let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
+            
+            try await #require(systemModelRef.objects.count == 1)
+            
+            // given
+            try await #require(rootObjectModelRef.states.count == 0)
+            
+            try await createStateModel(rootObjectModelRef)
+            try await createStateModel(rootObjectModelRef)
+            
+            try await #require(rootObjectModelRef.states.count == 2)
+            
+            // when
+            await profileRef.signOut()
+            
+            // then
+            for stateModel in await rootObjectModelRef.states.values {
+                await #expect(stateModel.isExist == false)
+            }
+        }
+        @Test func deleteActionModels() async throws {
+            // given
+            let projectModelRef = try await createProjectModel(budClientRef)
+            let systemModelRef = try await createSystemModel(projectModelRef)
+            let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
+            
+            try await #require(systemModelRef.objects.count == 1)
+            
+            // given
+            try await #require(rootObjectModelRef.actions.count == 0)
+            
+            try await createActionModel(rootObjectModelRef)
+            try await createActionModel(rootObjectModelRef)
+            
+            try await #require(rootObjectModelRef.actions.count == 2)
+            
+            // when
+            await profileRef.signOut()
+            
+            // then
+            for actionModel in await rootObjectModelRef.actions.values {
+                await #expect(actionModel.isExist == false)
             }
         }
         
@@ -205,7 +255,7 @@ struct ProfileTests {
             let profileBoard = try #require(await budClientRef.profile)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             await #expect(budClientRef.profile == nil)
@@ -216,7 +266,7 @@ struct ProfileTests {
             let community = try #require(await budClientRef.community)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             await #expect(community.isExist == false
@@ -227,11 +277,11 @@ struct ProfileTests {
             // given
             await budClientRef.saveUserInCache()
             
-            let budCacheRef = try #require(await profileBoardRef.config.budCache.ref)
+            let budCacheRef = try #require(await profileRef.config.budCache.ref)
             try await #require(budCacheRef.getUser() != nil)
             
             // when
-            await profileBoardRef.signOut()
+            await profileRef.signOut()
             
             // then
             await #expect(budCacheRef.getUser() == nil)
@@ -344,4 +394,42 @@ private func createChildObject(_ rootObjectModelRef: ObjectModel) async throws {
     
     try #require(newCount == oldCount + 1)
     return
+}
+
+private func createStateModel(_ objectModelRef: ObjectModel) async throws {
+    await objectModelRef.startUpdating()
+    try await #require(objectModelRef.isUpdating == true)
+    
+    let oldCount = await objectModelRef.states.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.appendNewState()
+        }
+    }
+    
+    #expect(await objectModelRef.states.count == oldCount + 1)
+}
+
+private func createActionModel(_ objectModelRef: ObjectModel) async throws {
+    await objectModelRef.startUpdating()
+    try await #require(objectModelRef.isUpdating == true)
+    
+    let oldCount = await objectModelRef.actions.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.appendNewAction()
+        }
+    }
+    
+    #expect(await objectModelRef.actions.count == oldCount + 1)
 }

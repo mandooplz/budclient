@@ -10,6 +10,8 @@ import Values
 @testable import BudClient
 @testable import BudServer
 
+private let logger = BudLogger("ObjectModelUpdaterTest")
+
 
 // MARK: Tests
 @Suite("ObjectModel", .timeLimit(.minutes(1)))
@@ -66,7 +68,7 @@ struct ObjectModelTests {
             #expect(issue.reason == "alreadyUpdating")
         }
         
-        @Test func receiveInitialAdded_StateAdded() async throws {
+        @Test func receiveInitialEvent_StateAdded() async throws {
             // given
             try await #require(objectSourceRef.states.isEmpty)
             await objectSourceRef.appendNewState()
@@ -538,7 +540,7 @@ struct ObjectModelTests {
                 await #expect(actionModel.isExist == false)
             }
         }
-        @Test(.disabled("구현 예정")) func deleteStateModels() async throws {
+        @Test func deleteStateModels() async throws {
             // given
             await objectModelRef.startUpdating()
             try await #require(objectModelRef.isUpdating == true)
@@ -564,10 +566,159 @@ struct ObjectModelTests {
                 await #expect(stateModel.isExist == false)
             }
         }
+        
         @Test(.disabled("구현 예정")) func deleteGetterModels() async throws {
-            
+            Issue.record("구현 예정")
+        }
+        @Test(.disabled("구현 예정")) func deleteSetterModels() async throws {
+            Issue.record("구현 예정")
         }
         
+    }
+}
+
+// MARK: Tests
+@Suite("ObjectModelUpdater", .timeLimit(.minutes(1)))
+struct ObjectModelUpdaterTests {
+    struct Update {
+        let budClientRef: BudClient
+        let objectModelRef: ObjectModel
+        let updaterRef: ObjectModel.Updater
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.objectModelRef = try await getRootObjectModel(budClientRef)
+            self.updaterRef = objectModelRef.updaterRef
+            
+            logger.end("테스트 준비 끝")
+        }
+        
+        @Test func whenObjectModelIsDeleted() async throws {
+            // given
+            try await #require(objectModelRef.id.isExist == true)
+            
+            await updaterRef.setCaptureHook {
+                await objectModelRef.delete()
+            }
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
+        }
+        
+        @Test func deleteObjectModel() async throws {
+            // given
+            await updaterRef.appendEvent(.removed)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(objectModelRef.id.isExist == false)
+        }
+        @Test func removeObjectModelInSystemModel() async throws {
+            // given
+            let systemModelRef = await objectModelRef.config.parent.ref!
+            try await #require(systemModelRef.objects.count == 1)
+            
+            await updaterRef.appendEvent(.removed)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let target = objectModelRef.target
+            await #expect(systemModelRef.objects[target] == nil)
+        }
+        @Test func whenAlreadyRemoved() async throws {
+            // given
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
+        }
+        @Test func removeModifiedEventInQueue() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty)
+            
+            let diff = ObjectSourceDiff(
+                id: ObjectSourceMock.ID(),
+                target: .init(),
+                name: "TEST_OBJECT",
+                role: .root,
+                parent: nil,
+                childs: [])
+            
+            await updaterRef.appendEvent(.modified(diff))
+            
+            try await #require(updaterRef.queue.count == 1)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(updaterRef.queue.isEmpty)
+        }
+        
+        @Test func modifyObjectModelName() async throws {
+            // given
+            let objectSourceRef = try #require(await objectModelRef.source.ref as? ObjectSourceMock)
+            
+            let diff = await ObjectSourceDiff(objectSourceRef)
+            
+            let newName = "NEW_NAME"
+            let newDiff = diff.newName(newName)
+            
+            // when
+            await updaterRef.appendEvent(.modified(newDiff))
+            await updaterRef.update()
+            
+            // then
+            try await #require(updaterRef.issue == nil)
+            await #expect(objectModelRef.name == newName)
+        }
+        @Test func modifyRemovedObjectModel() async throws {
+            // given
+            await objectModelRef.delete()
+            
+            let diff = ObjectSourceDiff(
+                id: objectModelRef.source,
+                target: objectModelRef.target,
+                name: "",
+                role: .root,
+                parent: nil,
+                childs: [])
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "objectModelIsDeleted")
+        }
+        @Test func removeRemovedEventInQueue() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty)
+            
+            await updaterRef.appendEvent(.removed)
+            
+            try await #require(updaterRef.queue.count == 1)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(updaterRef.queue.isEmpty)
+        }
     }
 }
 

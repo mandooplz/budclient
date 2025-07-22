@@ -10,17 +10,34 @@ import Values
 
 // MARK: Object
 @MainActor
-package final class StateSource: Sendable {
+package final class StateSource: StateSourceInterface {
     // MARK: core
     
     // MARK: state
     nonisolated let id = ID()
     
+    var handler: EventHandler?
+    package func setHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async {
+        fatalError()
+    }
+    
+    package func setName(_ value: String) async {
+        fatalError()
+    }
+    package func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async {
+        fatalError()
+    }
+    
+    package func notifyStateChanged() async {
+        fatalError()
+    }
+    
+    
     // MARK: action
     
     // MARK: value
     @MainActor
-    package struct ID: Sendable, Hashable {
+    package struct ID: StateSourceIdentity {
         let value = UUID()
         nonisolated init() { }
         
@@ -31,6 +48,7 @@ package final class StateSource: Sendable {
             StateSourceManager.container[self]
         }
     }
+    typealias EventHandler = Handler<StateSourceEvent>
 }
 
 

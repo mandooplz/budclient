@@ -60,6 +60,10 @@ public final class ActionModel: Sendable {
             ActionModelManager.container[self]
         }
     }
+    public enum Error: String, Swift.Error {
+        case actionModelIsDeleted
+        case nameCannotBeEmpty, newNameIsSameAsCurrent
+    }
 }
 
 

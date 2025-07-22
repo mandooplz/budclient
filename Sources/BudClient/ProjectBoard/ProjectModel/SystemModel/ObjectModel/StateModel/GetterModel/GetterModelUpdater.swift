@@ -45,7 +45,18 @@ extension GetterModel {
                 return
             }
             
-            fatalError()
+            // mutate
+            while queue.isEmpty == false {
+                let event = queue.removeFirst()
+                
+                switch event {
+                case .modified(let getterSourceDiff):
+                    fatalError()
+                case .removed:
+                    getterModelRef.delete()
+                    fatalError()
+                }
+            }
         }
         
         

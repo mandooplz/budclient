@@ -12,10 +12,16 @@ import Values
 package protocol StateSourceInterface: Sendable {
     associatedtype ID: StateSourceIdentity where ID.Object == Self
     
+    
     // MARK: state
-
+    func setHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async
+    
+    func setName(_ value: String) async
+    func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async
+    
     
     // MARK: action
+    func notifyStateChanged() async
 }
 
 
