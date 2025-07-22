@@ -118,7 +118,9 @@ package final class ObjectSourceMock: ObjectSourceInterface {
             return
         }
         
-        let stateSourceRef = StateSourceMock(name: "New State")
+        let stateSourceRef = StateSourceMock(
+            name: "New State",
+            owner: self.id)
         self.states[stateSourceRef.target] = stateSourceRef.id
         
         // notify
@@ -135,7 +137,9 @@ package final class ObjectSourceMock: ObjectSourceInterface {
             return
         }
         
-        let actionSourceRef = ActionSourceMock(name: "New Action")
+        let actionSourceRef = ActionSourceMock(
+            name: "New Action",
+            owner: self.id)
         self.actions[actionSourceRef.target] = actionSourceRef.id
         
         // notify

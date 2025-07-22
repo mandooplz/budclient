@@ -27,7 +27,10 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
         self.nameInput = diff.name
         
         self.accessLevel = diff.accessLevel
+        self.accessLevelInput = diff.accessLevel
+        
         self.stateValue = diff.stateValue
+        self.stateValueInput = diff.stateValue
         
         StateModelManager.register(self)
     }
@@ -47,8 +50,11 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var accessLevel : AccessLevel
-    public var stateValue: StateValue
+    public internal(set) var accessLevel : AccessLevel
+    public var accessLevelInput: AccessLevel
+    
+    public internal(set) var stateValue: StateValue
+    public var stateValueInput: StateValue
     
     public internal(set) var getters = OrderedDictionary<GetterID,GetterModel.ID>()
     public internal(set) var setters = OrderedDictionary<SetterID, SetterModel.ID>()
@@ -115,6 +121,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
         await captureHook?()
         guard id.isExist else {
             setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
         guard nameInput.isEmpty == false else {
@@ -127,13 +134,13 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("StateModel의 name이 변경되지 않았습니다.")
             return
         }
-        let source = self.source
+        let stateSource = self.source
         let nameInput = self.nameInput
         
         // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
-                guard let stateSourceRef = await source.ref else {
+                guard let stateSourceRef = await stateSource.ref else {
                     logger.failure("StateSource가 존재하지 않아 실행 취소됩니다.")
                     return
                 }
@@ -143,8 +150,69 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
             }
         }
     }
-    public func pushStateData() async {
+    public func pushAccessLevel() async {
+        logger.start()
         
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard accessLevelInput != accessLevel else {
+            setIssue(Error.accessLevelIsSameAsCurrent)
+            logger.failure("accessLevelInput이 기존 값과 동일합니다.")
+            return
+        }
+        let stateSource = self.source
+        let accessLevelInput = self.accessLevelInput
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await stateSource.ref else {
+                    logger.failure("StateSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                await stateSourceRef.setAccessLevel(accessLevelInput)
+                await stateSourceRef.notifyStateChanged()
+            }
+        }
+
+        
+    }
+    public func pushStateValue() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard stateValueInput != stateValue else {
+            setIssue(Error.stateValueIsSameAsCurrent)
+            logger.failure("stateValueInput이 기존 값과 동일합니다.")
+            return
+        }
+        let stateSource = self.source
+        let stateValueInput = self.stateValueInput
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await stateSource.ref else {
+                    logger.failure("StateSource가 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                await stateSourceRef.setStateValue(stateValueInput)
+                await stateSourceRef.notifyStateChanged()
+            }
+        }
     }
 
     public func appendNewGetter() async {
@@ -157,6 +225,20 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let stateSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await stateSource.ref else {
+                    logger.failure("StateSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await stateSourceRef.appendNewGetter()
+            }
+        }
+        
     }
     public func appendNewSetter() async {
         logger.start()
@@ -168,12 +250,69 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let stateSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await stateSource.ref else {
+                    logger.failure("StateSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await stateSourceRef.appendNewSetter()
+            }
+        }
     }
     
-    public func duplicate() async { }
+    public func duplicateState() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let stateSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await stateSource.ref else {
+                    logger.failure("StateSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await stateSourceRef.duplicateState()
+            }
+        }
+    }
     
     public func removeState() async {
+        logger.start()
         
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.stateModelIsDeleted)
+            logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let stateSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let stateSourceRef = await stateSource.ref else {
+                    logger.failure("StateSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await stateSourceRef.removeState()
+            }
+        }
     }
     
     
@@ -195,6 +334,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     public enum Error: String, Swift.Error {
         case stateModelIsDeleted
         case nameCannotBeEmpty, newNameIsSameAsCurrent
+        case accessLevelIsSameAsCurrent, stateValueIsSameAsCurrent
         case alreadyUpdating
     }
 }

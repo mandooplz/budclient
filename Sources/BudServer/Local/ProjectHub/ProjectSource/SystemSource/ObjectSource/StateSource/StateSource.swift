@@ -24,7 +24,10 @@ package final class StateSource: StateSourceInterface {
     package func setName(_ value: String) async {
         fatalError()
     }
-    package func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async {
+    package func setStateValue(_ value: StateValue) async {
+        fatalError()
+    }
+    package func setAccessLevel(_ value: AccessLevel) async {
         fatalError()
     }
     
@@ -45,6 +48,13 @@ package final class StateSource: StateSourceInterface {
         fatalError()
     }
     package func appendNewSetter() async {
+        fatalError()
+    }
+    
+    package func duplicateState() async {
+        fatalError()
+    }
+    package func removeState() async {
         fatalError()
     }
     

@@ -18,7 +18,8 @@ package protocol StateSourceInterface: Sendable, SyncInterface {
     func appendHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async;
     
     func setName(_ value: String) async;
-    func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async;
+    func setAccessLevel(_ value: AccessLevel) async;
+    func setStateValue(_ value: StateValue) async;
     
     
     // MARK: action
@@ -26,6 +27,9 @@ package protocol StateSourceInterface: Sendable, SyncInterface {
     
     func appendNewGetter() async;
     func appendNewSetter() async;
+    
+    func duplicateState() async;
+    func removeState() async;
 }
 
 

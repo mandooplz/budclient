@@ -39,7 +39,8 @@ extension StateModel {
             
             // capture
             await captureHook?()
-            guard let stateModelRef = owner.ref else {
+            guard let stateModelRef = owner.ref,
+            let objectModelRef = stateModelRef.config.parent.ref else {
                 setIssue(Error.stateModelIsDeleted)
                 logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
                 return
@@ -51,10 +52,25 @@ extension StateModel {
                 let event = queue.removeFirst()
                 
                 switch event {
-                case .modified(let stateSourceDiff):
-                    fatalError()
+                case .modified(let diff):
+                    stateModelRef.name = diff.name
+                    stateModelRef.accessLevel = diff.accessLevel
+                    stateModelRef.stateValue = diff.stateValue
+                    
+                    logger.end("modified StateModel")
                 case .removed:
-                    fatalError()
+                    stateModelRef.getters.values
+                        .compactMap { $0.ref }
+                        .forEach { $0.delete() }
+                    
+                    stateModelRef.setters.values
+                        .compactMap { $0.ref }
+                        .forEach { $0.delete() }
+                    
+                    objectModelRef.states[stateModelRef.target] = nil
+                    stateModelRef.delete()
+                    
+                    logger.end("removed StateModel")
                 case .getterAdded(let diff):
                     guard stateModelRef.getters[diff.target] == nil else {
                         logger.failure("GetterID를 target으로 갖는 GetterModel이 이미 존재합니다.")

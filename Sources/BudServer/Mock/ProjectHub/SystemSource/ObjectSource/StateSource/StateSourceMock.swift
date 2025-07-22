@@ -15,8 +15,15 @@ private let logger = BudLogger("StateSourceMock")
 @Server
 package final class StateSourceMock: StateSourceInterface {
     // MARK: core
-    init(name: String) {
+    init(name: String,
+         accessLevel: AccessLevel = .readAndWrite,
+         stateValue: StateValue = .AnyValue,
+         owner: ObjectSourceMock.ID) {
+        self.owner = owner
+        
         self.name = name
+        self.accessLevel = accessLevel
+        self.stateValue = stateValue
         
         StateSourceMockManager.register(self)
     }
@@ -27,12 +34,14 @@ package final class StateSourceMock: StateSourceInterface {
     
     // MARK: state
     package nonisolated let id = ID()
+    nonisolated let owner: ObjectSourceMock.ID
     nonisolated let target = StateID()
     
     var handlers: [ObjectID:EventHandler] = [:]
     var name: String
-    var accessLevel: AccessLevel = .readAndWrite
-    var stateValue: StateValue = .AnyValue
+    
+    var accessLevel: AccessLevel
+    var stateValue: StateValue
     
     var syncQueue: Deque<ObjectID> = []
     
@@ -51,21 +60,23 @@ package final class StateSourceMock: StateSourceInterface {
     package func setName(_ value: String) async {
         self.name = value
     }
-    package func setStateData(_ accessLevel: AccessLevel, _ stateValue: StateValue) async {
-        self.accessLevel = accessLevel
-        self.stateValue = stateValue
+    package func setStateValue(_ value: StateValue) async {
+        self.stateValue = value
+    }
+    package func setAccessLevel(_ value: AccessLevel) async {
+        self.accessLevel = value
     }
     
     
 
     // MARK: action
     package func notifyStateChanged() async {
+        logger.start()
+        
         let diff = StateSourceDiff(self)
         
         self.handlers.values
-            .forEach {
-                $0.execute(.modified(diff))
-            }
+            .forEach { $0.execute(.modified(diff))}
     }
     package func synchronize() async {
         logger.start()
@@ -135,6 +146,58 @@ package final class StateSourceMock: StateSourceInterface {
         self.handlers.values.forEach { eventHandler in
             eventHandler.execute(.setterAdded(diff))
         }
+    }
+    
+    package func duplicateState() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let objectSourceRef = self.owner.ref!
+        
+        // mutate
+        let newStateSourceRef = StateSourceMock(
+            name: self.name,
+            accessLevel: self.accessLevel,
+            stateValue: self.stateValue,
+            owner: self.owner
+        )
+        objectSourceRef.states[newStateSourceRef.target] = newStateSourceRef.id
+        
+        // notify
+        let diff = StateSourceDiff(newStateSourceRef)
+        
+        objectSourceRef.handlers.values
+            .forEach { $0.execute(.stateAdded(diff)) }
+    }
+    package func removeState() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let objectSourceRef = self.owner.ref!
+        
+        // mutate
+        self.getters.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        self.setters.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        objectSourceRef.states[self.target] = nil
+        self.delete()
+        
+        // notify
+        self.handlers.values
+            .forEach { $0.execute(.removed) }
     }
 
     

@@ -108,7 +108,7 @@ public struct ObjectTypeID: IDRepresentable {
 
 
 // MARK: StateValue
-public struct StateValue: Sendable {
+public struct StateValue: Sendable, Hashable {
     public let name: String
     public let isOptional: Bool
     public let type: ValueTypeID

@@ -567,11 +567,57 @@ struct ObjectModelTests {
             }
         }
         
-        @Test(.disabled("구현 예정")) func deleteGetterModels() async throws {
-            Issue.record("구현 예정")
+        @Test func deleteGetterModels() async throws {
+            // given
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            let stateModelRef = try await createStateModel(objectModelRef)
+            
+            await stateModelRef.startUpdating()
+            try await #require(stateModelRef.isUpdating == true)
+            
+            // given
+            try await #require(stateModelRef.getters.count == 0)
+            
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.getters.count == 2)
+            
+            // when
+            try await removeObject(objectModelRef)
+            
+            // then
+            for getterModel in await stateModelRef.getters.values {
+                await #expect(getterModel.isExist == false)
+            }
         }
-        @Test(.disabled("구현 예정")) func deleteSetterModels() async throws {
-            Issue.record("구현 예정")
+        @Test func deleteSetterModels() async throws {
+            // given
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            let stateModelRef = try await createStateModel(objectModelRef)
+            
+            await stateModelRef.startUpdating()
+            try await #require(stateModelRef.isUpdating == true)
+            
+            // given
+            try await #require(stateModelRef.setters.count == 0)
+            
+            try await createSetterModel(stateModelRef)
+            try await createSetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.setters.count == 2)
+            
+            // when
+            try await removeObject(objectModelRef)
+            
+            // then
+            for setterModel in await stateModelRef.setters.values {
+                await #expect(setterModel.isExist == false)
+            }
         }
         
     }
@@ -816,6 +862,53 @@ private func createStateModel(_ objectModelRef: ObjectModel) async throws -> Sta
     return try #require(await stateModel.ref)
 }
 
+@discardableResult
+private func createGetterModel(_ stateModelRef: StateModel) async throws -> GetterModel {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    let oldCount = await stateModelRef.getters.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewGetter()
+        }
+    }
+    
+    try await #require(stateModelRef.getters.count == oldCount + 1)
+    
+    let getterModel = try #require(await stateModelRef.getters.values.last)
+    return try #require(await getterModel.ref)
+}
+
+@discardableResult
+private func createSetterModel(_ stateModelRef: StateModel) async throws -> SetterModel {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    let oldCount = await stateModelRef.setters.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewSetter()
+        }
+    }
+    
+    try await #require(stateModelRef.setters.count == oldCount + 1)
+    
+    let setterModel = try #require(await stateModelRef.setters.values.last)
+    return try #require(await setterModel.ref)
+}
+
+
 private func createActionModel(_ objectModelRef: ObjectModel) async throws {
     try await #require(objectModelRef.isUpdating == true)
     
@@ -833,3 +926,21 @@ private func createActionModel(_ objectModelRef: ObjectModel) async throws {
     
     try await #require(objectModelRef.actions.count == oldCount + 1)
 }
+
+
+// MARK: Helpehrs - action
+private func removeObject(_ objectModelRef: ObjectModel) async throws {
+    try await #require(objectModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.removeObject()
+        }
+    }
+}
+
+

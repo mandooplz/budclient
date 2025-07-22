@@ -55,6 +55,7 @@ extension ObjectModel {
                 
                 switch event {
                 case .modified(let diff):
+                    // modify ObjectModel
                     objectModelRef.name = diff.name
                     
                     logger.end("modified ObjectModel")
@@ -63,7 +64,7 @@ extension ObjectModel {
                     // remove ObjectModel
                     objectModelRef.states.values
                         .compactMap { $0.ref }
-                        .forEach { $0.delete() }
+                        .forEach { cleanUpStateModel($0) }
                     
                     objectModelRef.actions.values
                         .compactMap { $0.ref }
@@ -88,6 +89,7 @@ extension ObjectModel {
                     logger.end("added StateModel")
                     
                 case .actionAdded(let diff):
+                    // create ActionModel
                     guard objectModelRef.actions[diff.target] == nil else {
                         logger.failure("Action에 대응되는 ActionModel이 이미 존재합니다.")
                         return
@@ -99,6 +101,20 @@ extension ObjectModel {
                     logger.end("added ActionModel")
                 }
             }
+        }
+        
+        
+        // MARK: Helphers
+        private func cleanUpStateModel(_ stateModelRef: StateModel) {
+            stateModelRef.getters.values
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            stateModelRef.setters.values
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            stateModelRef.delete()
         }
         
         
