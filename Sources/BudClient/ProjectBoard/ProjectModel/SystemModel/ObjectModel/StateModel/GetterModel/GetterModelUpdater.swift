@@ -39,22 +39,27 @@ extension GetterModel {
             
             // capture
             await captureHook?()
-            guard let getterModelRef = owner.ref else {
+            guard let getterModelRef = owner.ref,
+                let stateModelRef = getterModelRef.config.parent.ref else {
                 setIssue(Error.getterModelIsDeleted)
                 logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
                 return
             }
+
             
             // mutate
             while queue.isEmpty == false {
                 let event = queue.removeFirst()
                 
                 switch event {
-                case .modified(let getterSourceDiff):
+                case .modified(let diff):
                     fatalError()
                 case .removed:
+                    // remove GetterModel
+                    stateModelRef.getters[getterModelRef.target] = nil
                     getterModelRef.delete()
-                    fatalError()
+                    
+                    logger.end("removed GetterModel")
                 }
             }
         }

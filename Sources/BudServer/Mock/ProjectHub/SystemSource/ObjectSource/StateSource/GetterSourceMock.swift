@@ -15,8 +15,10 @@ private let logger = BudLogger("GetterSourceMock")
 @Server
 package final class GetterSourceMock: GetterSourceInterface {
     // MARK: core
-    init(name: String) {
+    init(name: String,
+         owner: StateSourceMock.ID) {
         self.name = name
+        self.owner = owner
         
         GetterSourceMockManager.register(self)
     }
@@ -28,6 +30,7 @@ package final class GetterSourceMock: GetterSourceInterface {
     // MARK: state
     package nonisolated let id = ID()
     nonisolated let target = GetterID()
+    nonisolated let owner: StateSourceMock.ID
     
     var handlers: [ObjectID:EventHandler?] = [:]
     var name: String
@@ -50,11 +53,47 @@ package final class GetterSourceMock: GetterSourceInterface {
     }
     
     package func duplicateGetter() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("GetterSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let stateSourceRef = self.owner.ref!
+        
+        // mutate
+        let newGetterSourceRef = GetterSourceMock(
+            name: self.name,
+            owner: self.owner)
+        
+        
+        // notify
+        let diff = GetterSourceDiff(newGetterSourceRef)
+        
+        stateSourceRef.handlers.values
+            .forEach {
+                $0.execute(.getterDuplicated(self.target, diff))
+            }
     }
     
     package func removeGetter() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("GetterSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let stateSourceRef = self.owner.ref!
+        
+        // mutate
+        stateSourceRef.getters[self.target] = nil
+        self.delete()
+        
+        // notify
+        self.handlers.values
+            .forEach { $0?.execute(.removed) }
     }
 
     

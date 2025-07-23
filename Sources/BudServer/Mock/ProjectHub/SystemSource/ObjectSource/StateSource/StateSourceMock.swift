@@ -117,7 +117,7 @@ package final class StateSourceMock: StateSourceInterface {
         }
         
         // mutate
-        let getterSourceRef = GetterSourceMock(name: "New Getter")
+        let getterSourceRef = GetterSourceMock(name: "New Getter", owner: self.id)
         self.getters[getterSourceRef.target]  = getterSourceRef.id
         
         // notify

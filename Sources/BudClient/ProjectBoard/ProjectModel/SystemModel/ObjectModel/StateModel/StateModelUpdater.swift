@@ -83,6 +83,25 @@ extension StateModel {
                     stateModelRef.getters[diff.target] = getterModelRef.id
                     
                     logger.end("added GetterModel")
+                case .getterDuplicated(let getter, let diff):
+                    guard stateModelRef.getters[diff.target] == nil else {
+                        logger.failure("GetterID를 target으로 갖는 GetterModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    guard let index = stateModelRef.getters.index(forKey: getter) else {
+                        logger.failure("복사하려는 GetterModel이 존재하지 않습니다.")
+                        return
+                    }
+                    
+                    let newIndex = index.advanced(by: 1)
+                    
+                    let newGetterModelRef = GetterModel(
+                        config: newConfig,
+                        diff: diff)
+                    
+                    stateModelRef.getters.updateValue(newGetterModelRef.id, forKey: newGetterModelRef.target, insertingAt: newIndex)
+                    
                 case .setterAdded(let diff):
                     guard stateModelRef.setters[diff.target] == nil else {
                         logger.failure("SetterID를 target으로 갖는 SetterModel이 이미 존재합니다.")

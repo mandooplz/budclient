@@ -67,9 +67,11 @@ struct GetterModelTests {
     struct DuplicateGetter {
         let budClientRef: BudClient
         let getterModelRef: GetterModel
+        let stateModelRef: StateModel
         init() async throws {
             self.budClientRef = await BudClient()
             self.getterModelRef = try await getGetterModel(budClientRef)
+            self.stateModelRef = try #require(await getterModelRef.config.parent.ref)
         }
         
         @Test func whenGetterModelIsDeleted() async throws {
@@ -88,8 +90,83 @@ struct GetterModelTests {
             #expect(issue.reason == "getterModelIsDeleted")
         }
         
-        @Test(.disabled()) func appendGetter_StateModel() async throws {
-            Issue.record("구현 예정")
+        @Test func appendGetter_StateModel() async throws {
+            // given
+            try await #require(stateModelRef.isUpdating == true)
+            
+            let oldCount = await stateModelRef.getters.count
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await stateModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await getterModelRef.duplicateGetter()
+                }
+            }
+            
+            // then
+            try await #require(getterModelRef.issue == nil)
+            
+            let newCount = await stateModelRef.getters.count
+            
+            #expect(newCount == oldCount + 1)
+        }
+        @Test func insertGetter_StateModel() async throws {
+            // given
+            try await #require(stateModelRef.isUpdating == true)
+            try await #require(stateModelRef.getters.count == 1)
+            
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.getters.count == 3)
+            
+            let getters = await stateModelRef.getters.values
+            
+            // given
+            let index = try #require(await stateModelRef.getters.index(forKey: getterModelRef.target))
+            
+            let newIndex = index.advanced(by: 1)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await stateModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await getterModelRef.duplicateGetter()
+                }
+            }
+            
+            // then
+            try await #require(stateModelRef.getters.count == 4)
+            
+            let newGetterModel = await stateModelRef.getters.values[newIndex]
+            
+            #expect(getters.contains(newGetterModel) == false)
+        }
+        @Test func createGetter_StateModel() async throws {
+            // given
+            try await #require(stateModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await stateModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await getterModelRef.duplicateGetter()
+                }
+            }
+            
+            // then
+            let newGetterModel = try #require(await stateModelRef.getters.values.last)
+            await #expect(newGetterModel.isExist == true)
         }
     }
     
@@ -115,6 +192,52 @@ struct GetterModelTests {
             // then
             let issue = try #require(await getterModelRef.issue as? KnownIssue)
             #expect(issue.reason == "getterModelIsDeleted")
+        }
+        
+        @Test func removeGetterModel_StateModel() async throws {
+            // given
+            let getter = getterModelRef.target
+            
+            let stateModelRef = try #require(await getterModelRef.config.parent.ref)
+            try await #require(stateModelRef.getters[getter] != nil)
+            
+            await getterModelRef.startUpdating()
+            try await #require(getterModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await getterModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await getterModelRef.removeGetter()
+                }
+            }
+            
+            // then
+            await #expect(stateModelRef.getters[getter] == nil)
+        }
+        @Test func deleteGetterModel() async throws {
+            // given
+            try await #require(getterModelRef.id.isExist == true)
+            
+            await getterModelRef.startUpdating()
+            try await #require(getterModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await getterModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await getterModelRef.removeGetter()
+                }
+            }
+            
+            // then
+            await #expect(getterModelRef.id.isExist == false)
         }
     }
 }
@@ -233,4 +356,24 @@ private func getGetterModel(_ budClientRef: BudClient) async throws-> GetterMode
     
     let getterModel = try #require(await stateModelRef.getters.values.last)
     return try #require(await getterModel.ref)
+}
+
+private func createGetterModel(_ stateModelRef: StateModel) async throws {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    let oldCount = await stateModelRef.getters.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewGetter()
+        }
+    }
+    
+    let newCount = await stateModelRef.getters.count
+    try #require(newCount == oldCount + 1)
 }

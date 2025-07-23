@@ -555,9 +555,19 @@ struct StateModelTests {
             let newIndex = index.advanced(by: 1)
             
             // when
-            await stateModelRef.duplicateState()
+            await withCheckedContinuation { continuation in
+                Task {
+                    await objectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await stateModelRef.duplicateState()
+                }
+            }
             
             // then
+            try await #require(objectModelRef.states.count == 4)
+            
             let newStateModel = await  objectModelRef.states.values[newIndex]
             
             #expect(states.contains(newStateModel) == false)
