@@ -66,16 +66,15 @@ extension ProjectModel {
                     
                 // remove ProjectModel
                 case .removed:
-                    for systemModel in projectModelRef.systems.values {
-                        guard let systemModelRef = systemModel.ref else { continue
-                        }
-                        
-                        for objectModel in systemModelRef.objects.values {
-                            objectModel.ref?.delete()
-                        }
-                        
-                        systemModelRef.delete()
-                    }
+                    projectModelRef.systems.values
+                        .compactMap { $0.ref }
+                        .flatMap { $0.objects.values }
+                        .compactMap { $0.ref }
+                        .forEach { cleanUpObjectModel($0) }
+                    
+                    projectModelRef.systems.values
+                        .compactMap { $0.ref }
+                        .forEach { $0.delete() }
                     
                     projectModelRef.delete()
                     projectBoardRef.projects[projectModelRef.target] = nil
@@ -102,6 +101,41 @@ extension ProjectModel {
                 }
                 
             }
+        }
+        
+        
+        // MARK: Helphers
+        private func cleanUpObjectModel(_ objectModelRef: ObjectModel) {
+            // delete GetterModel
+            objectModelRef.states.values
+                .compactMap { $0.ref }
+                .flatMap { $0.getters.values }
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete SetterModel
+            objectModelRef.states.values
+                .compactMap { $0.ref }
+                .flatMap { $0.setters.values }
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete StateModel
+            objectModelRef.states.values
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete ActioModel
+            objectModelRef.actions.values
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete ObjectModel
+            objectModelRef.delete()
         }
         
         

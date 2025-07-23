@@ -11,7 +11,7 @@ import Values
 
 
 // MARK: Tests
-@Suite("GetterModel")
+@Suite("GetterModel", .timeLimit(.minutes(1)))
 struct GetterModelTests {
     struct StartUpdating {
         let budClientRef: BudClient

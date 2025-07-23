@@ -299,6 +299,7 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
         }
         let systemSource = self.source
         
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let systemSourceRef = await systemSource.ref else {

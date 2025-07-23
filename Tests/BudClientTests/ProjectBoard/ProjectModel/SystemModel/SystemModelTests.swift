@@ -550,42 +550,20 @@ struct SystemModelTests {
              // given
             try await #require(systemModelRef.id.isExist == true)
             
+            await systemModelRef.startUpdating()
+            
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await systemModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await systemModelRef.startUpdating()
-                    
-                    await systemModelRef.removeSystem()
-                }
-            }
+            try await removeSystem(systemModelRef)
             
             // then
             await #expect(systemModelRef.id.isExist == false)
         }
-        
         @Test func deleteObjectModels() async throws {
             // given
             try await #require(systemModelRef.objects.isEmpty)
             try await #require(systemModelRef.root == nil)
             
-            await systemModelRef.startUpdating()
-            
-            await withCheckedContinuation { continuation in
-                Task {
-                    await systemModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await systemModelRef.createRootObject()
-                }
-            }
-            
-            let objectModels = await systemModelRef.objects.values
-            try #require(objectModels.count == 1)
+            try await createRootObject(systemModelRef)
             
             // when
             await withCheckedContinuation { continuation in
@@ -599,14 +577,88 @@ struct SystemModelTests {
             }
             
             // then
-            for objectModel in objectModels {
+            for objectModel in await systemModelRef.objects.values {
                 await #expect(objectModel.isExist == false)
             }
         }
-        @Test(.disabled("구현 예정")) func deleteStateModels() async throws { }
-        @Test(.disabled("구현 예정")) func deleteGetterModels() async throws { }
-        @Test(.disabled("구현 예정")) func deleteSetterModels() async throws { }
-        @Test(.disabled("구현 예정")) func deleteActionModels() async throws { }
+        @Test func deleteStateModels() async throws {
+            // given
+            let rootObjectModelRef = try await createRootObject(systemModelRef)
+            
+            try await #require(rootObjectModelRef.states.count == 0)
+            
+            try await createStateModel(rootObjectModelRef)
+            try await createStateModel(rootObjectModelRef)
+            
+            try await #require(rootObjectModelRef.states.count == 2)
+            
+            // when
+            try await removeSystem(systemModelRef)
+            
+            // then
+            for stateModel in await rootObjectModelRef.states.values {
+                await #expect(stateModel.isExist == false)
+            }
+        }
+        @Test func deleteGetterModels() async throws {
+            // given
+            let rootObjectModelRef = try await createRootObject(systemModelRef)
+            let stateModelRef = try await createStateModel(rootObjectModelRef)
+            
+            try await #require(stateModelRef.getters.count == 0)
+            
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.getters.count == 2)
+            
+            // when
+            try await removeSystem(systemModelRef)
+            
+            // then
+            for getterModel in await stateModelRef.getters.values {
+                await #expect(getterModel.isExist == false)
+            }
+        }
+        @Test func deleteSetterModels() async throws {
+            // given
+            let rootObjectModelRef = try await createRootObject(systemModelRef)
+            let stateModelRef = try await createStateModel(rootObjectModelRef)
+            
+            try await #require(stateModelRef.setters.count == 0)
+            
+            try await createSetterModel(stateModelRef)
+            try await createSetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.setters.count == 2)
+            
+            // when
+            try await removeSystem(systemModelRef)
+            
+            // then
+            for setterModel in await stateModelRef.setters.values {
+                await #expect(setterModel.isExist == false)
+            }
+        }
+        @Test func deleteActionModels() async throws {
+            // given
+            let rootObjectModelRef = try await createRootObject(systemModelRef)
+            
+            try await #require(rootObjectModelRef.actions.count == 0)
+            
+            try await createActionModel(rootObjectModelRef)
+            try await createActionModel(rootObjectModelRef)
+            
+            try await #require(rootObjectModelRef.actions.count == 2)
+            
+            // when
+            try await removeSystem(systemModelRef)
+            
+            // then
+            for actionModel in await rootObjectModelRef.actions.values {
+                await #expect(actionModel.isExist == false)
+            }
+        }
         
         @Test(.disabled("구현 예정")) func deleteFlowModels() async throws { }
     }
@@ -671,4 +723,133 @@ private func getSystemModel(_ budClientRef: BudClient) async throws -> SystemMod
     
     let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
     return systemModelRef
+}
+
+@discardableResult
+private func createRootObject(_ systemModelRef: SystemModel) async throws -> ObjectModel {
+    await systemModelRef.startUpdating()
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await systemModelRef.createRootObject()
+        }
+    }
+    
+    let objectModels = await systemModelRef.objects.values
+    try #require(objectModels.count == 1)
+    
+    return try #require(await objectModels.first?.ref)
+}
+
+@discardableResult
+private func createStateModel(_ objectModelRef: ObjectModel) async throws -> StateModel {
+    
+    await objectModelRef.startUpdating()
+    try await #require(objectModelRef.isUpdating == true)
+    
+    let oldCount = await objectModelRef.states.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.appendNewState()
+        }
+    }
+    
+    let newCount = await objectModelRef.states.count
+    try #require(newCount == oldCount + 1)
+    
+    let newStateModel = try #require(await objectModelRef.states.values.last)
+    
+    return try #require(await newStateModel.ref)
+}
+
+@discardableResult
+private func createActionModel(_ objectModelRef: ObjectModel) async throws -> ActionModel {
+    await objectModelRef.startUpdating()
+    try await #require(objectModelRef.isUpdating == true)
+    
+    let oldCount = await objectModelRef.actions.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.appendNewAction()
+        }
+    }
+    
+    let newCount = await objectModelRef.actions.count
+    try #require(newCount == oldCount + 1)
+    
+    let newActionModel = try #require(await objectModelRef.actions.values.last)
+    
+    return try #require(await newActionModel.ref)
+}
+
+private func createGetterModel(_ stateModelRef: StateModel) async throws {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    let oldCount = await stateModelRef.getters.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewGetter()
+        }
+    }
+    
+    let newCount = await stateModelRef.getters.count
+    
+    try #require(newCount == oldCount + 1)
+}
+
+private func createSetterModel(_ stateModelRef: StateModel) async throws {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    let oldCount = await stateModelRef.setters.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewSetter()
+        }
+    }
+    
+    let newCount = await stateModelRef.setters.count
+    
+    try #require(newCount == oldCount + 1)
+}
+
+
+// MARK: Helphers - action
+private func removeSystem(_ systemModelRef: SystemModel) async throws {
+    try await #require(systemModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await systemModelRef.removeSystem()
+        }
+    }
 }

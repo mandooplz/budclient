@@ -55,9 +55,9 @@ extension SystemModel {
                 switch event {
                 case .removed:
                     // remove SystemModel
-                    for objectModel in systemModelRef.objects.values {
-                        objectModel.ref?.delete()
-                    }
+                    systemModelRef.objects.values
+                        .compactMap { $0.ref }
+                        .forEach { cleanUpObjectModel($0) }
                     
                     systemModelRef.delete()
                     projectModelRef.systems[systemModelRef.target] = nil
@@ -107,13 +107,48 @@ extension SystemModel {
                     
                 case .flowAdded:
                     // create FlowModel
-                    logger.failure("미구현")
-                    return
+                    fatalError()
                 }
             }
             
             callback?()
         }
+        
+        
+        // MARK: Helphers
+        private func cleanUpObjectModel(_ objectModelRef: ObjectModel) {
+            // delete GetterModel
+            objectModelRef.states.values
+                .compactMap { $0.ref }
+                .flatMap { $0.getters.values }
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete SetterModel
+            objectModelRef.states.values
+                .compactMap { $0.ref }
+                .flatMap { $0.setters.values }
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete StateModel
+            objectModelRef.states.values
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete ActioModel
+            objectModelRef.actions.values
+                .compactMap { $0.ref }
+                .forEach { $0.delete() }
+            
+            
+            // delete ObjectModel
+            objectModelRef.delete()
+        }
+        
         
         
         // MARK: value
