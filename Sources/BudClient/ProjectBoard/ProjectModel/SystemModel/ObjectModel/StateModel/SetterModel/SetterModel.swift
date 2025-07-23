@@ -6,6 +6,7 @@
 //
 import Foundation
 import Values
+import Collections
 import BudServer
 
 private let logger = BudLogger("SetterModel")
@@ -45,7 +46,8 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var parameters: [ParameterValue] = [.anyParameter]
+    public var parameters: OrderedDictionary<ParameterValue,ValueID> = [.anyParameter: ParameterValue.anyParameter.type.id]
+    public var parameterIdx: IndexSet = []
     
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?

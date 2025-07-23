@@ -45,7 +45,10 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     
     public internal(set) var systems = OrderedDictionary<SystemID, SystemModel.ID>()
     public internal(set) var workflows = OrderedDictionary<WorkflowID, WorkflowModel.ID>()
-    public internal(set) var valueTypes = OrderedDictionary<ValueID, ValueModel.ID>()
+    
+    public internal(set) var values = OrderedDictionary<ValueID, ValueModel.ID>()
+    
+    
     public var systemLocations: Array<Location> {
         self.systems.values
             .compactMap { $0.ref }

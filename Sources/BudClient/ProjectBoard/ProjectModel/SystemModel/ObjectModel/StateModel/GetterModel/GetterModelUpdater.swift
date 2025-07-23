@@ -53,7 +53,9 @@ extension GetterModel {
                 
                 switch event {
                 case .modified(let diff):
-                    fatalError()
+                    getterModelRef.name = diff.name
+                    
+                    logger.end("modified GetterModel")
                 case .removed:
                     // remove GetterModel
                     stateModelRef.getters[getterModelRef.target] = nil

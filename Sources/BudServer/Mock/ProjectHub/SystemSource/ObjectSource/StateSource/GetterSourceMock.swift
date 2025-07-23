@@ -48,8 +48,19 @@ package final class GetterSourceMock: GetterSourceInterface {
     
     // MARK: action
     package func notifyStateChanged() async {
-        // 바뀐 내용을 전부 알려준다.
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("GetterSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        // notify
+        let diff = GetterSourceDiff(self)
+        self.handlers.values
+            .forEach { $0?.execute(.modified(diff)) }
+        
     }
     
     package func duplicateGetter() async {

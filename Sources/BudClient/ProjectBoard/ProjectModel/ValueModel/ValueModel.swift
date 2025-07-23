@@ -29,6 +29,9 @@ public final class ValueModel: Sendable {
     
     
     // MARK: action
+    public func pushChanges() async {
+        fatalError()
+    }
     
     
     // MARK: value

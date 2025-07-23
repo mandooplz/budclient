@@ -45,7 +45,8 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public internal(set) var paremeters = OrderedDictionary<ValueID, ParameterValue>()
+    public var parameters = OrderedDictionary<ParameterValue, ValueID>()
+    public var parameterIndex: IndexSet = []
     
     public var result: ValueType = .anyValue
     
@@ -112,6 +113,36 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard nameInput.isEmpty == false else {
+            setIssue(Error.nameCannotBeEmpty)
+            logger.failure("GetterModel의 name이 빈 문자열일 수 없습니다.")
+            return
+        }
+        guard nameInput != name else {
+            setIssue(Error.newNameIsSameAsCurrent)
+            logger.failure("GetterModel의 name이 변경되지 않았습니다.")
+            return
+        }
+        
+        let source = self.source
+        let nameInput = self.nameInput
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let getterSourceRef = await source.ref else {
+                    logger.failure("GetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await getterSourceRef.setName(nameInput)
+                await getterSourceRef.notifyStateChanged()
+            }
+        }
+    }
+    public func pushParameterValues() async { }
+    public func pushResult() async {
+        
     }
     
     public func duplicateGetter() async {

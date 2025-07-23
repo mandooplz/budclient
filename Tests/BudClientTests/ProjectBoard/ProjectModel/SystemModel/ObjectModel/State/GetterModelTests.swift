@@ -9,6 +9,8 @@ import Testing
 import Values
 @testable import BudClient
 
+private let logger = BudLogger("GetterModelTests")
+
 
 // MARK: Tests
 @Suite("GetterModel", .timeLimit(.minutes(1)))
@@ -70,6 +72,8 @@ struct GetterModelTests {
         init() async throws {
             self.budClientRef = await BudClient()
             self.getterModelRef = try await getGetterModel(budClientRef)
+            
+            logger.end("테스트 준비 끝")
         }
         
         @Test func whenGetterModelIsDeleted() async throws {
@@ -82,6 +86,114 @@ struct GetterModelTests {
             
             // when
             await getterModelRef.pushName()
+            
+            // then
+            let issue = try #require(await getterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "getterModelIsDeleted")
+        }
+        
+        @Test func whenNameInputIsEmpty() async throws {
+            // given
+            await MainActor.run {
+                getterModelRef.nameInput = ""
+            }
+            
+            // when
+            await getterModelRef.pushName()
+            
+            // then
+            let issue = try #require(await getterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "nameCannotBeEmpty")
+        }
+        @Test func whenNameInputIsSameAsCurrent() async throws {
+            // given
+            let testName = "TEST_GETTER_NAME"
+            await MainActor.run {
+                getterModelRef.name = testName
+                getterModelRef.nameInput = testName
+            }
+            
+            // when
+            await getterModelRef.pushName()
+            
+            // then
+            let issue = try #require(await getterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "newNameIsSameAsCurrent")
+        }
+        
+        @Test func updateNameByUpdater() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                getterModelRef.name = oldName
+                getterModelRef.nameInput = newName
+            }
+            
+            await getterModelRef.startUpdating()
+            try await #require(getterModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await getterModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await getterModelRef.pushName()
+                }
+            }
+            
+            // then
+            await #expect(getterModelRef.name != oldName)
+            await #expect(getterModelRef.name == newName)
+        }
+    }
+    
+    struct PushParameterValues {
+        let budClientRef: BudClient
+        let getterModelRef: GetterModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.getterModelRef = try await getGetterModel(budClientRef)
+        }
+        
+        @Test func whenGetterModelIsDeleted() async throws {
+            // given
+            try await #require(getterModelRef.id.isExist == true)
+            
+            await getterModelRef.setCaptureHook {
+                await getterModelRef.delete()
+            }
+            
+            // when
+            await getterModelRef.pushParameterValues()
+            
+            // then
+            let issue = try #require(await getterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "getterModelIsDeleted")
+        }
+    }
+    
+    struct PushResult {
+        let budClientRef: BudClient
+        let getterModelRef: GetterModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.getterModelRef = try await getGetterModel(budClientRef)
+        }
+        
+        @Test func whenGetterModelIsDeleted() async throws {
+            // given
+            try await #require(getterModelRef.id.isExist == true)
+            
+            await getterModelRef.setCaptureHook {
+                await getterModelRef.delete()
+            }
+            
+            // when
+            await getterModelRef.duplicateGetter()
             
             // then
             let issue = try #require(await getterModelRef.issue as? KnownIssue)

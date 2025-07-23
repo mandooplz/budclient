@@ -67,6 +67,7 @@ public struct StateValue: Sendable, Hashable, Codable {
 }
 
 
+// idAdult(name: String, age: Int) 에서 ParameterValue가 이 값에 해당한다. 
 public struct ParameterValue: Sendable, Hashable, Codable {
     public let name: String
     public let type: ValueType

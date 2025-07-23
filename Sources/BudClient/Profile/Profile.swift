@@ -104,7 +104,7 @@ public final class Profile: Debuggable {
             .forEach { $0.delete() }
         
         // delete ValueModels
-        projectModelRef.valueTypes.values
+        projectModelRef.values.values
             .compactMap { $0.ref }
             .forEach { $0.delete() }
         
