@@ -171,7 +171,7 @@ package final class StateSourceMock: StateSourceInterface {
         let diff = StateSourceDiff(newStateSourceRef)
         
         objectSourceRef.handlers.values
-            .forEach { $0.execute(.stateAdded(diff)) }
+            .forEach { $0.execute(.stateDuplicated(self.target, diff)) }
     }
     package func removeState() async {
         logger.start()

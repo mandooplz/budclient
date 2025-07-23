@@ -14,9 +14,15 @@ package protocol GetterSourceInterface: Sendable {
     associatedtype ID: GetterSourceIdentity where ID.Object == Self
     
     // MARK: state
+    func setName(_ value: String) async
+    func appendHandler(requester: ObjectID, _ handler: Handler<GetterSourceEvent>) async
 
     
     // MARK: action
+    func notifyStateChanged() async
+    
+    func duplicateGetter() async
+    func removeGetter() async
 }
 
 

@@ -88,6 +88,25 @@ extension ObjectModel {
                     
                     logger.end("added StateModel")
                     
+                case .stateDuplicated(let state, let diff):
+                    // duplicate StateModel
+                    guard objectModelRef.states[diff.target] == nil else {
+                        logger.failure("System에 대응되는 SystemModel이 이미 존재합니다.")
+                        return
+                    }
+                    guard let index = objectModelRef.states.index(forKey: state) else {
+                        logger.failure("복사하려는 StateModel이 존재하지 않습니다.")
+                        return
+                    }
+                    
+                    let stateModelRef = StateModel(
+                        config: newConfig,
+                        diff: diff)
+                    objectModelRef.states.updateValue(
+                        stateModelRef.id,
+                        forKey: stateModelRef.target,
+                        insertingAt: index + 1)
+                    objectModelRef.states[diff.target] = stateModelRef.id
                 case .actionAdded(let diff):
                     // create ActionModel
                     guard objectModelRef.actions[diff.target] == nil else {

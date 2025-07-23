@@ -12,17 +12,37 @@ private let logger = BudLogger("GetterSource")
 
 // MARK: Object
 @MainActor
-package final class GetterSource: Sendable {
+package final class GetterSource: GetterSourceInterface {
     // MARK: core
     
     // MARK: state
     nonisolated let id = ID()
     
+    package func appendHandler(requester: ObjectID,
+                               _ handler: Handler<GetterSourceEvent>) async {
+        fatalError()
+    }
+    
+    package func setName(_ value: String) async {
+        fatalError()
+    }
+    
     // MARK: action
+    package func notifyStateChanged() async {
+        fatalError()
+    }
+
+    package func duplicateGetter() async {
+        fatalError()
+    }
+    package func removeGetter() async {
+        fatalError()
+    }
+
     
     // MARK: value
     @MainActor
-    package struct ID: Sendable, Hashable {
+    package struct ID: GetterSourceIdentity {
         let value = UUID()
         nonisolated init() { }
         

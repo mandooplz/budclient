@@ -513,7 +513,7 @@ struct StateModelTests {
             #expect(issue.reason == "stateModelIsDeleted")
         }
         
-        @Test func appendStateModel() async throws {
+        @Test func appendStateModel_ObjectModel() async throws {
             // given
             try await #require(objectModelRef.isUpdating == true)
             
@@ -537,7 +537,32 @@ struct StateModelTests {
             
             #expect(newCount == oldCount + 1)
         }
-        @Test func createStateModel() async throws {
+        @Test func insertStateModel_ObjectModel() async throws {
+            // given
+            try await #require(objectModelRef.isUpdating == true)
+            try await #require(objectModelRef.states.count == 1)
+            
+            try await createNewStateModel(objectModelRef)
+            try await createNewStateModel(objectModelRef)
+            
+            try await #require(objectModelRef.states.count == 3)
+            
+            let states = await objectModelRef.states.values
+            
+            // given
+            let index = try #require(await objectModelRef.states.index(forKey: stateModelRef.target))
+            
+            let newIndex = index.advanced(by: 1)
+            
+            // when
+            await stateModelRef.duplicateState()
+            
+            // then
+            let newStateModel = await  objectModelRef.states.values[newIndex]
+            
+            #expect(states.contains(newStateModel) == false)
+        }
+        @Test func createStateModel_ObjectModel() async throws {
             // given
             try await #require(objectModelRef.isUpdating == true)
             
@@ -867,6 +892,26 @@ private func getStateModel(_ budClientRef: BudClient) async throws-> StateModel 
     try await #require(rootObjectModelRef.states.count == 1)
     
     return try #require(await rootObjectModelRef.states.values.first?.ref)
+}
+
+private func createNewStateModel(_ objectModelRef: ObjectModel) async throws {
+    try await #require(objectModelRef.isUpdating == true)
+    
+    let oldCount = await objectModelRef.states.count
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await objectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.appendNewState()
+        }
+    }
+    
+    let newCount = await objectModelRef.states.count
+    
+    try #require(newCount == oldCount + 1)
 }
 
 @discardableResult

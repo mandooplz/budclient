@@ -45,6 +45,8 @@ package enum ObjectSourceEvent: Sendable {
     case removed
     
     case stateAdded(StateSourceDiff)
+    case stateDuplicated(StateID, StateSourceDiff)
+    
     case actionAdded(ActionSourceDiff)
 }
 

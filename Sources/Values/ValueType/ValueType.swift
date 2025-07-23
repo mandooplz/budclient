@@ -29,10 +29,12 @@ public struct ValueType: Sendable, Hashable, Codable {
     public let associatedTypes: [ValueType]
     public var isGeneric: Bool { associatedTypes.count > 0 }
     
+    
+    // MARK: core
     public static let void = ValueType(id: .init(), name: "void", isOptional: false, description: nil, associatedTypes: [])
     public static let anyValue = ValueType(id: .init(), name: "AnyValue", isOptional: false, description: nil, associatedTypes: [])
     
-    public init(id: ValueID = .init(),
+    package init(id: ValueID = .init(),
                 name: String,
                 isOptional: Bool = false,
                 description: String? = nil,
@@ -43,6 +45,10 @@ public struct ValueType: Sendable, Hashable, Codable {
         self.description = description
         self.associatedTypes = associatedTypes
     }
+    
+    
+    // MARK: operator
+    
 }
 
 

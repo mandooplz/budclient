@@ -31,23 +31,29 @@ package final class GetterSourceMock: GetterSourceInterface {
     
     var handlers: [ObjectID:EventHandler?] = [:]
     var name: String
-    
-    var parameters = OrderedDictionary<ValueID, ParameterValue>()
-    var result: ValueType = .void
-    
-    package func setHandler(requester: ObjectID, _ handler: Handler<GetterSourceEvent>) async {
-        
-        self.handlers[requester] = handler
-    }
-    
     package func setName(_ value: String) async {
         self.name = value
     }
     
-
+    var parameters = OrderedDictionary<ValueID, ParameterValue>()
+    var result: ValueType = .void
+    
+    package func appendHandler(requester: ObjectID, _ handler: Handler<GetterSourceEvent>) async {
+        
+        self.handlers[requester] = handler
+    }
+    
     // MARK: action
     package func notifyStateChanged() async {
         // 바뀐 내용을 전부 알려준다.
+        fatalError()
+    }
+    
+    package func duplicateGetter() async {
+        fatalError()
+    }
+    
+    package func removeGetter() async {
         fatalError()
     }
 

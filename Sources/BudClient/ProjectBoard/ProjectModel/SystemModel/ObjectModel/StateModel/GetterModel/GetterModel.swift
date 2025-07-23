@@ -20,6 +20,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
          diff: GetterSourceDiff) {
         self.target = diff.target
         self.config = config
+        self.source = diff.id
         
         self.name = diff.name
         self.nameInput = diff.name
@@ -37,6 +38,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let id = ID()
     nonisolated let target: GetterID
     nonisolated let config: Config<StateModel.ID>
+    nonisolated let source: any GetterSourceIdentity
     nonisolated let updaterRef: Updater
     var isUpdating: Bool = false
     
@@ -44,8 +46,6 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public var nameInput: String
     
     public internal(set) var paremeters = OrderedDictionary<ValueID, ParameterValue>()
-    private var parameterData = OrderedDictionary<ParameterValue, ValueID>()
-    // isAdult(name: String, name: String, age: Int) -> Bool
     
     public var result: ValueType = .anyValue
     
@@ -58,7 +58,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     
     
     // MARK: action
-    public func duplicate() async {
+    public func startUpdating() async {
         logger.start()
         
         // capture
@@ -68,10 +68,64 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 업데이트 중입니다.")
+            return
+        }
         
-        fatalError()
+        let getterSource = self.source
+        let me = ObjectID(self.id.value)
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let getterSourceRef = await getterSource.ref else {
+                    logger.failure("GetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await getterSourceRef.appendHandler(
+                    requester: me,
+                    .init({ event in
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
+                            
+                            await self?.callback?()
+                        }
+                    }))
+            }
+        }
+        
+        // mutate
+        self.isUpdating = true
     }
     
+    public func duplicateGetter() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.getterModelIsDeleted)
+            logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let getterSource = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let getterSourceRef = await getterSource.ref else {
+                    logger.failure("GetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await getterSourceRef.duplicateGetter()
+            }
+        }
+    }
     public func removeGetter() async {
         logger.start()
         
@@ -82,8 +136,19 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let getterSource = self.source
         
-        fatalError()
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let getterSourceRef = await getterSource.ref else {
+                    logger.failure("GetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await getterSourceRef.removeGetter()
+            }
+        }
     }
     
     
@@ -105,6 +170,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public enum Error: String, Swift.Error {
         case getterModelIsDeleted
         case nameCannotBeEmpty, newNameIsSameAsCurrent
+        case alreadyUpdating
     }
 }
 
