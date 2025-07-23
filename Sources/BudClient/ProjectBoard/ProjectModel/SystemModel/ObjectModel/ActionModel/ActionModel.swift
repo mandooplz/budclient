@@ -39,7 +39,7 @@ public final class ActionModel: Debuggable, EventDebuggable, Hookable {
     public var nameInput: String
     
     public var issue: (any IssueRepresentable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     package var captureHook: Hook?
     package var computeHook: Hook?

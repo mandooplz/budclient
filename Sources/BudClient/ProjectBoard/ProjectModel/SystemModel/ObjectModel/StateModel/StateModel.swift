@@ -60,7 +60,7 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var setters = OrderedDictionary<SetterID, SetterModel.ID>()
     
     public var issue: (any IssueRepresentable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     package var captureHook: Hook?
     package var computeHook: Hook?

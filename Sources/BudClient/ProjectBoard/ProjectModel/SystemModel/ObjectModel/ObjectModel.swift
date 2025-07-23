@@ -55,7 +55,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var actions = OrderedDictionary<ActionID, ActionModel.ID>()
     
     public var issue: (any IssueRepresentable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     package var captureHook: Hook?
     package var computeHook: Hook?
@@ -259,10 +259,10 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
             self.value = value
         }
         
-        var isExist: Bool {
+        public var isExist: Bool {
             ObjectModelManager.container[self] != nil
         }
-        var ref: ObjectModel? {
+        public var ref: ObjectModel? {
             ObjectModelManager.container[self]
         }
     }

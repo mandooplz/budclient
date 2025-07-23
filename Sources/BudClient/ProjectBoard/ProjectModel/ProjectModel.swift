@@ -53,7 +53,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     }
         
     public var issue: (any IssueRepresentable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     package var captureHook: Hook?
     package var computeHook: Hook?

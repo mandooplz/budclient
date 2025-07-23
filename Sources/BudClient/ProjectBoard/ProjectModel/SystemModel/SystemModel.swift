@@ -50,7 +50,7 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
     public var objects = OrderedDictionary<ObjectID, ObjectModel.ID>()
     
     public var issue: (any IssueRepresentable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     package var captureHook: Hook?
     package var computeHook: Hook?

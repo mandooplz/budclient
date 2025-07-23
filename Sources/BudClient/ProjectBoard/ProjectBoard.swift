@@ -37,7 +37,7 @@ public final class ProjectBoard: Debuggable, EventDebuggable, Hookable {
     public internal(set) var projects = OrderedDictionary<ProjectID, ProjectModel.ID>()
     
     public var issue: (any IssueRepresentable)?
-    package var callback: Callback?
+    public var callback: Callback?
     
     package var captureHook: Hook? = nil
     package var computeHook: Hook? = nil
