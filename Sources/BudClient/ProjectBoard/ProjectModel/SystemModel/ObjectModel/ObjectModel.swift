@@ -162,6 +162,7 @@ public final class ObjectModel: Debuggable, EventDebuggable, Hookable {
         
         let objectSource = self.source
         
+        // compute
         await withDiscardingTaskGroup { group in
             group.addTask {
                 guard let objectSourceRef = await objectSource.ref else {
