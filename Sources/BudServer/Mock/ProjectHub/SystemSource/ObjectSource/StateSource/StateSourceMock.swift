@@ -45,8 +45,8 @@ package final class StateSourceMock: StateSourceInterface {
     
     var syncQueue: Deque<ObjectID> = []
     
-    var getters: [GetterID: GetterSourceMock.ID] = [:]
-    var setters: [SetterID: SetterSourceMock.ID] = [:]
+    var getters: OrderedDictionary<GetterID, GetterSourceMock.ID> = [:]
+    var setters: OrderedDictionary<SetterID, SetterSourceMock.ID> = [:]
     
     package func registerSync(_ object: ObjectID) async {
         self.syncQueue.append(object)
@@ -137,7 +137,7 @@ package final class StateSourceMock: StateSourceInterface {
         }
         
         // mutate
-        let setterSourceRef = SetterSourceMock(name: "New Setter")
+        let setterSourceRef = SetterSourceMock(name: "New Setter", owner: self.id)
         self.setters[setterSourceRef.target] = setterSourceRef.id
         
         // notify

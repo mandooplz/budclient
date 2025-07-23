@@ -13,7 +13,7 @@ private let logger = BudLogger("ActionModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class ActionModel: Sendable {
+public final class ActionModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
     init(config: Config<ObjectModel.ID>,
          diff: ActionSourceDiff) {
@@ -38,10 +38,59 @@ public final class ActionModel: Sendable {
     public internal(set) var name: String
     public var nameInput: String
     
+    public var issue: (any IssueRepresentable)?
+    package var callback: Callback?
+    
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
+    
     
     // MARK: action
-    public func removeAction() {
-        fatalError()
+    public func startUpdating() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.actionModelIsDeleted)
+            logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    public func pushName() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.actionModelIsDeleted)
+            logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    
+    public func duplicateAction() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.actionModelIsDeleted)
+            logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    public func removeAction() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.actionModelIsDeleted)
+            logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
     }
     
     

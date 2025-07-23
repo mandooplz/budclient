@@ -69,4 +69,5 @@ package enum StateSourceEvent: Sendable {
     case getterDuplicated(GetterID, GetterSourceDiff)
     
     case setterAdded(SetterSourceDiff)
+    case setterDuplicated(SetterID, SetterSourceDiff)
 }

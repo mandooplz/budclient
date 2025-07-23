@@ -64,6 +64,31 @@ struct GetterModelTests {
         }
     }
     
+    struct PushName {
+        let budClientRef: BudClient
+        let getterModelRef: GetterModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.getterModelRef = try await getGetterModel(budClientRef)
+        }
+        
+        @Test func whenGetterModelIsDeleted() async throws {
+            // given
+            try await #require(getterModelRef.id.isExist == true)
+            
+            await getterModelRef.setCaptureHook {
+                await getterModelRef.delete()
+            }
+            
+            // when
+            await getterModelRef.pushName()
+            
+            // then
+            let issue = try #require(await getterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "getterModelIsDeleted")
+        }
+    }
+    
     struct DuplicateGetter {
         let budClientRef: BudClient
         let getterModelRef: GetterModel

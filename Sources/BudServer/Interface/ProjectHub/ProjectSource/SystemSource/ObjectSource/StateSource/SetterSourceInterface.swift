@@ -13,9 +13,15 @@ package protocol SetterSourceInterface: Sendable {
     associatedtype ID: SetterSourceIdentity where ID.Object == Self
     
     // MARK: state
-
+    func setName(_ value: String) async
+    func appendHandler(requester: ObjectID, _ handler: Handler<SetterSourceEvent>) async
+    
     
     // MARK: action
+    func notifyStateChanged() async
+    
+    func duplicateSetter() async
+    func removeSetter() async
 }
 
 

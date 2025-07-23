@@ -14,9 +14,12 @@ private let logger = BudLogger("SetterSourceMock")
 // MARK: Object
 @Server
 package final class SetterSourceMock: SetterSourceInterface {
+    
+    
     // MARK: core
-    init(name: String) {
+    init(name: String, owner: StateSourceMock.ID) {
         self.name = name
+        self.owner = owner
         
         SetterSourceMockManager.register(self)
     }
@@ -28,9 +31,18 @@ package final class SetterSourceMock: SetterSourceInterface {
     // MARK: state
     package nonisolated let id = ID()
     nonisolated let target = SetterID()
+    nonisolated let owner: StateSourceMock.ID
+    
+    var name: String
+    package func setName(_ value: String) {
+        self.name = value
+    }
     
     var handlers: [ObjectID:EventHandler?] = [:]
-    var name: String
+    package func appendHandler(requester: ObjectID, _ handler: Handler<SetterSourceEvent>) async {
+        self.handlers[requester] = handler
+    }
+    
     
     var parameters: OrderedDictionary<ValueID, ParameterValue> = [:]
     
@@ -46,8 +58,63 @@ package final class SetterSourceMock: SetterSourceInterface {
 
     // MARK: action
     package func notifyStateChanged() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SetterSourceMock이 존재하지 않습니다.")
+            return
+        }
+        
         // 바뀐 내용을 전부 알려준다.
         fatalError()
+    }
+    
+    package func duplicateSetter() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SetterSourceMock이 존재하지 않습니다.")
+            return
+        }
+        let stateSourceRef = self.owner.ref!
+        let index = stateSourceRef.setters.index(forKey: self.target)!
+        
+        // compute
+        let newIndex = index.advanced(by: 1)
+        
+        // mutate
+        let newSetterSourceRef = SetterSourceMock(name: self.name,
+                                                  owner: self.owner)
+        stateSourceRef.setters.updateValue(
+            newSetterSourceRef.id,
+            forKey: newSetterSourceRef.target,
+            insertingAt: newIndex
+        )
+        
+        // notify
+        let diff = SetterSourceDiff(newSetterSourceRef)
+        stateSourceRef.handlers.values
+            .forEach { $0.execute(.setterDuplicated(self.target, diff))}
+    }
+    package func removeSetter() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SetterSourceMock이 존재하지 않습니다.")
+            return
+        }
+        let stateSourceRef = self.owner.ref!
+        
+        // mutate
+        stateSourceRef.setters[self.target] = nil
+        self.delete()
+        
+        // notify
+        self.handlers.values
+            .forEach { $0?.execute(.removed) }
     }
 
     

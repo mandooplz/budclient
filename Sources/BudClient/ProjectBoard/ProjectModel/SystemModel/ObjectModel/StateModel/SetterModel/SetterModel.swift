@@ -13,12 +13,14 @@ private let logger = BudLogger("SetterModel")
 
 // MARK: Object
 @MainActor @Observable
-public final class SetterModel: Sendable {
+public final class SetterModel: Debuggable, EventDebuggable, Hookable {
+    
     // MARK: core
     init(config: Config<StateModel.ID>,
          diff: SetterSourceDiff) {
         self.target = diff.target
         self.config = config
+        self.source = diff.id
         
         self.name = diff.name
         self.nameInput = diff.name
@@ -37,6 +39,7 @@ public final class SetterModel: Sendable {
     nonisolated let target: SetterID
     nonisolated let config: Config<StateModel.ID>
     nonisolated let updaterRef: Updater
+    nonisolated let source: any SetterSourceIdentity
     var isUpdating: Bool = false
     
     public internal(set) var name: String
@@ -44,14 +47,120 @@ public final class SetterModel: Sendable {
     
     public var parameters: [ParameterValue] = [.anyParameter]
     
+    public var issue: (any IssueRepresentable)?
+    package var callback: Callback?
+    
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
+    
     
     // MARK: action
-    public func duplicate() async {
-        fatalError()
+    public func startUpdating() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.setterModelIsDeleted)
+            logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 업데이트 중입니다.")
+            return
+        }
+        let source = self.source
+        let me = ObjectID(self.id.value)
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let setterSourceRef = await source.ref else {
+                    logger.failure("SetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await setterSourceRef.appendHandler(
+                    requester: me,
+                    .init({ event in
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
+                            
+                            await self?.callback?()
+                        }
+                    }))
+            }
+        }
+        
+        // mutate
+        self.isUpdating = true
     }
     
+    public func pushName() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.setterModelIsDeleted)
+            logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        
+    }
+    
+    public func duplicateSetter() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.setterModelIsDeleted)
+            logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let source = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let setterSourceRef = await source.ref else {
+                    logger.failure("SetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await setterSourceRef.duplicateSetter()
+            }
+        }
+    }
     public func removeSetter() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.setterModelIsDeleted)
+            logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let source = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let setterSourceRef = await source.ref else {
+                    logger.failure("SetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await setterSourceRef.removeSetter()
+            }
+        }
     }
     
     
@@ -72,6 +181,7 @@ public final class SetterModel: Sendable {
     }
     public enum Error: String, Swift.Error {
         case setterModelIsDeleted
+        case alreadyUpdating
         case nameCannotBeEmpty, newNameIsSameAsCurrent
     }
 }

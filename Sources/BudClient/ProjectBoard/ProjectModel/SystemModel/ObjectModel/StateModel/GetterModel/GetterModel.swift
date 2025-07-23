@@ -102,6 +102,18 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
         self.isUpdating = true
     }
     
+    public func pushName() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.getterModelIsDeleted)
+            logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    
     public func duplicateGetter() async {
         logger.start()
         

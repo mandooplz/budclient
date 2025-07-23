@@ -39,13 +39,28 @@ extension SetterModel {
             
             // capture
             await captureHook?()
-            guard let getterModelRef = owner.ref else {
+            guard let setterModelRef = owner.ref else {
                 setIssue(Error.setterModelIsDeleted)
                 logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
                 return
             }
+            let stateModelRef = setterModelRef.config.parent.ref!
             
-            fatalError()
+            // mutate
+            while queue.isEmpty == false {
+                let event = queue.removeFirst()
+                
+                switch event {
+                case .modified:
+                    fatalError()
+                case .removed:
+                    stateModelRef.setters[setterModelRef.target] = nil
+                    setterModelRef.delete()
+                    
+                    logger.end("removed SetterModel")
+                }
+                
+            }
         }
         
         
