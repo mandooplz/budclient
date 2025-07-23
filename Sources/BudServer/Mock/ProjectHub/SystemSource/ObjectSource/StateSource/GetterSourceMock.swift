@@ -33,7 +33,7 @@ package final class GetterSourceMock: GetterSourceInterface {
     var name: String
     
     var parameters = OrderedDictionary<ValueID, ParameterValue>()
-    var result = ResultValue.AnyValue
+    var result: ValueType = .void
     
     package func setHandler(requester: ObjectID, _ handler: Handler<GetterSourceEvent>) async {
         

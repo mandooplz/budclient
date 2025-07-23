@@ -42,7 +42,7 @@ public final class SetterModel: Sendable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var parameters: [ParameterValue] = [.AnyValue]
+    public var parameters: [ParameterValue] = [.anyParameter]
     
     
     // MARK: action

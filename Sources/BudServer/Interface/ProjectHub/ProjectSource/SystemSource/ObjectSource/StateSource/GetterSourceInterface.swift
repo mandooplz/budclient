@@ -36,7 +36,7 @@ package struct GetterSourceDiff: Sendable {
     package let name: String
     
     package let parameters: [ParameterValue]
-    package let result: ResultValue
+    package let result: ValueType
     
     @Server
     init(_ objectRef: GetterSourceMock) {

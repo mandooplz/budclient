@@ -17,7 +17,7 @@ package final class StateSourceMock: StateSourceInterface {
     // MARK: core
     init(name: String,
          accessLevel: AccessLevel = .readAndWrite,
-         stateValue: StateValue = .AnyValue,
+         stateValue: StateValue = .anyState,
          owner: ObjectSourceMock.ID) {
         self.owner = owner
         

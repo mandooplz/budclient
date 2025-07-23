@@ -297,8 +297,8 @@ struct StateModelTests {
         @Test func whenStateValueInputIsSameAsCurrent() async throws {
             // given
             await MainActor.run {
-                stateModelRef.stateValue = .AnyValue
-                stateModelRef.stateValueInput = .AnyValue
+                stateModelRef.stateValue = .anyState
+                stateModelRef.stateValueInput = .anyState
             }
             
             // when
@@ -311,8 +311,9 @@ struct StateModelTests {
         
         @Test func updateStateValueByUpdater() async throws {
             // given
-            let oldValue = StateValue.AnyValue
-            let newValue = StateValue(name: "NEW_VALUE")
+            let oldValue = StateValue.anyState
+            let newValue = StateValue(name: "new_state",
+                                      type: .init(name: "NEW_STATE"))
             await MainActor.run {
                 stateModelRef.stateValue = oldValue
                 stateModelRef.stateValueInput = newValue

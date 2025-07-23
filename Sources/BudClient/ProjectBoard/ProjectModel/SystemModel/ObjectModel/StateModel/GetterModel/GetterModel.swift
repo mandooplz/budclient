@@ -47,7 +47,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     private var parameterData = OrderedDictionary<ParameterValue, ValueID>()
     // isAdult(name: String, name: String, age: Int) -> Bool
     
-    public var result: ResultValue = .AnyValue
+    public var result: ValueType = .anyValue
     
     public var issue: (any IssueRepresentable)?
     package var callback: Callback?
