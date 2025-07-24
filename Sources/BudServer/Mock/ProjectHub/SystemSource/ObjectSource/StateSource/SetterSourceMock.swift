@@ -14,8 +14,6 @@ private let logger = BudLogger("SetterSourceMock")
 // MARK: Object
 @Server
 package final class SetterSourceMock: SetterSourceInterface {
-    
-    
     // MARK: core
     init(name: String, owner: StateSourceMock.ID) {
         self.name = name
@@ -44,7 +42,10 @@ package final class SetterSourceMock: SetterSourceInterface {
     }
     
     
-    var parameters: OrderedDictionary<ValueID, ParameterValue> = [:]
+    var parameters: OrderedDictionary<ParameterValue, ValueID> = [:]
+    package func setParameters(_ value: OrderedSet<ParameterValue>) {
+        self.parameters = value.toDictionary()
+    }
     
     package func setHandler(requester: ObjectID, _ handler: EventHandler) async {
         

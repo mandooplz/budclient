@@ -7,7 +7,9 @@
 import Foundation
 import Testing
 import Values
+import Collections
 @testable import BudClient
+@testable import BudServer
 
 
 // MARK: Tests
@@ -263,6 +265,173 @@ struct SetterModelTests {
             
             // then
             await #expect(setterModelRef.id.isExist == false)
+        }
+    }
+}
+
+
+// MARK: Tests - updater
+@Suite("SetterModelUpdater")
+struct SetterModelUpdaterTests {
+    struct Update {
+        let budClientRef: BudClient
+        let setterModelRef: SetterModel
+        let updaterRef: SetterModel.Updater
+        let sourceRef: SetterSourceMock
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.setterModelRef = try await getSetterModel(budClientRef)
+            self.updaterRef = setterModelRef.updaterRef
+            self.sourceRef = try #require(await setterModelRef.source.ref as? SetterSourceMock)
+        }
+        
+        @Test func whenEventQueueIsEmpty() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty == true)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "eventQueueIsEmpty")
+        }
+        @Test func whenSetterModelIsDeleted() async throws {
+            // given
+            try await #require(setterModelRef.id.isExist == true)
+            
+            await updaterRef.setMutateHook {
+                await setterModelRef.delete()
+            }
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            try await #require(setterModelRef.id.isExist == false)
+            
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "setterModelIsDeleted")
+        }
+        
+        @Test func modifySetterModelName() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                setterModelRef.name = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await SetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(setterModelRef.name != oldName)
+            await #expect(setterModelRef.name == newName)
+        }
+        @Test func modifySetterModelNameInput() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                setterModelRef.nameInput = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await SetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(setterModelRef.nameInput != oldName)
+            await #expect(setterModelRef.nameInput == newName)
+        }
+        
+        @Test func modifyParameters() async throws {
+            // given
+            let oldParameters = OrderedSet<ParameterValue>().toDictionary()
+            let newParameters = OrderedSet([
+                ParameterValue(name: "name", type: .stringValue)
+            ])
+            
+            await MainActor.run {
+                setterModelRef.parameters = oldParameters
+            }
+            
+            // given
+            await sourceRef.setParameters(newParameters)
+            
+            let diff = await SetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(setterModelRef.parameters != oldParameters)
+            await #expect(setterModelRef.parameters == newParameters.toDictionary())
+        }
+        @Test func modifyParameterInput() async throws {
+            // given
+            let oldParameters = OrderedSet<ParameterValue>()
+            let newParameters = OrderedSet([
+                ParameterValue(name: "name", type: .stringValue)
+            ])
+            
+            await MainActor.run {
+                setterModelRef.parameterInput = oldParameters
+            }
+            
+            // given
+            await sourceRef.setParameters(newParameters)
+            
+            let diff = await SetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(setterModelRef.parameterInput != oldParameters)
+            await #expect(setterModelRef.parameterInput == newParameters)
+        }
+        
+        @Test func deleteSetterModel() async throws {
+            // given
+            try await #require(setterModelRef.id.isExist == true)
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(setterModelRef.id.isExist == false)
+        }
+        @Test func removeSetterModel_StateModel() async throws {
+            // given
+            let stateModelRef = try #require(await setterModelRef.config.parent.ref)
+            
+            try await #require(stateModelRef.setters.values.contains(setterModelRef.id))
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(stateModelRef.setters.values.contains(setterModelRef.id) == false)
         }
     }
 }

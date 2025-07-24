@@ -26,6 +26,9 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
         self.name = diff.name
         self.nameInput = diff.name
         
+        self.parameters = diff.parameters.toDictionary()
+        self.parameterInput = diff.parameters
+        
         self.updaterRef = Updater(owner: self.id)
         
         SetterModelManager.register(self)

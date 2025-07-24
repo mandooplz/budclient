@@ -39,20 +39,34 @@ extension SetterModel {
             
             // capture
             await captureHook?()
-            guard let setterModelRef = owner.ref else {
-                setIssue(Error.setterModelIsDeleted)
-                logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
+            guard queue.count > 0 else {
+                setIssue(Error.eventQueueIsEmpty)
+                logger.failure("처리할 이벤트가 존재하지 않습니다.")
                 return
             }
-            let stateModelRef = setterModelRef.config.parent.ref!
+            
             
             // mutate
+            await mutateHook?()
             while queue.isEmpty == false {
+                guard let setterModelRef = owner.ref else {
+                    setIssue(Error.setterModelIsDeleted)
+                    logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                let stateModelRef = setterModelRef.config.parent.ref!
+                
                 let event = queue.removeFirst()
                 
                 switch event {
-                case .modified:
-                    fatalError()
+                case .modified(let diff):
+                    setterModelRef.name = diff.name
+                    setterModelRef.nameInput = diff.name
+                    
+                    setterModelRef.parameters = diff.parameters.toDictionary()
+                    setterModelRef.parameterInput = diff.parameters
+                    
+                    logger.end("modified SetterModel")
                 case .removed:
                     stateModelRef.setters[setterModelRef.target] = nil
                     setterModelRef.delete()
@@ -66,6 +80,7 @@ extension SetterModel {
         
         // MARK: value
         public enum Error: String, Swift.Error {
+            case eventQueueIsEmpty
             case setterModelIsDeleted
         }
     }
