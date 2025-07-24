@@ -15,6 +15,8 @@ package protocol GetterSourceInterface: Sendable {
     
     // MARK: state
     func setName(_ value: String) async
+    func setParameters(_ value: OrderedSet<ParameterValue>) async
+    
     func appendHandler(requester: ObjectID, _ handler: Handler<GetterSourceEvent>) async
 
     
@@ -41,7 +43,7 @@ package struct GetterSourceDiff: Sendable {
     package let target: GetterID
     package let name: String
     
-    package let parameters: [ParameterValue]
+    package let parameters: OrderedSet<ParameterValue>
     package let result: ValueType
     
     @Server
@@ -50,8 +52,7 @@ package struct GetterSourceDiff: Sendable {
         self.target = objectRef.target
         self.name = objectRef.name
         
-        self.parameters = objectRef.parameters.values
-            .map { $0 }
+        self.parameters = objectRef.parameters.keys
         self.result = objectRef.result
     }
 }

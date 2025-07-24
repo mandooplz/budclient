@@ -6,8 +6,10 @@
 //
 import Foundation
 import Testing
+import Collections
 import Values
 @testable import BudClient
+@testable import BudServer
 
 private let logger = BudLogger("GetterModelTests")
 
@@ -173,6 +175,52 @@ struct GetterModelTests {
             // then
             let issue = try #require(await getterModelRef.issue as? KnownIssue)
             #expect(issue.reason == "getterModelIsDeleted")
+        }
+        
+        @Test func whenParameterInputIsSameAsCurrent() async throws {
+            // given
+            let parameterValues = await getterModelRef.parameters.keys
+            let parameterInput = await getterModelRef.parameterInput
+            
+            try #require(parameterValues == parameterInput)
+            
+            // when
+            await getterModelRef.pushParameterValues()
+            
+            // then
+            let issue = try #require(await getterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "parametersAreSameAsCurrent")
+        }
+        @Test func updateParametersByUpdater() async throws {
+            // given
+            let parameterInput = OrderedSet([
+                ParameterValue(name: "name", type: .stringValue),
+                ParameterValue(name: "age", type: .intValue)
+            ])
+            
+            await MainActor.run {
+                getterModelRef.parameters = [:]
+                getterModelRef.parameterInput = parameterInput
+            }
+            
+            await getterModelRef.startUpdating()
+            try await #require(getterModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await getterModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await getterModelRef.pushParameterValues()
+                }
+            }
+            
+            // then
+            let dict = parameterInput.toDictionary()
+            
+            await #expect(getterModelRef.parameters == dict)
         }
     }
     
@@ -375,6 +423,85 @@ struct GetterModelTests {
             
             // then
             await #expect(getterModelRef.id.isExist == false)
+        }
+    }
+}
+
+
+// MARK: Tests - updater
+@Suite("GetterModelUpdater")
+struct GetterModelUpdaterTests {
+    struct Update {
+        let budClientRef: BudClient
+        let getterModelRef: GetterModel
+        let sourceRef: GetterSourceMock
+        let updaterRef: GetterModel.Updater
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.getterModelRef = try await getGetterModel(budClientRef)
+            self.sourceRef = try #require(await getterModelRef.source.ref as? GetterSourceMock)
+            self.updaterRef = getterModelRef.updaterRef
+        }
+        
+        @Test func whenGetterModelIsDeleted() async throws {
+            // given
+            try await #require(getterModelRef.id.isExist == true)
+            
+            await updaterRef.setCaptureHook {
+                await getterModelRef.delete()
+            }
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "getterModelIsDeleted")
+        }
+        
+        @Test func modifyGetterModelName() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                getterModelRef.name = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await GetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(getterModelRef.name != oldName)
+            await #expect(getterModelRef.name == newName)
+        }
+        @Test func modifyGetterModelNameInput() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                getterModelRef.nameInput = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await GetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(getterModelRef.nameInput != oldName)
+            await #expect(getterModelRef.nameInput == newName)
         }
     }
 }

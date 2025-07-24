@@ -5,6 +5,7 @@
 //  Created by 김민우 on 7/17/25.
 //
 import Foundation
+import Collections
 import Values
 
 private let logger = BudLogger("GetterSource")
@@ -18,12 +19,15 @@ package final class GetterSource: GetterSourceInterface {
     // MARK: state
     nonisolated let id = ID()
     
-    package func appendHandler(requester: ObjectID,
-                               _ handler: Handler<GetterSourceEvent>) async {
+    package func setName(_ value: String) async {
+        fatalError()
+    }
+    package func setParameters(_ value: OrderedSet<ParameterValue>) async {
         fatalError()
     }
     
-    package func setName(_ value: String) async {
+    package func appendHandler(requester: ObjectID,
+                               _ handler: Handler<GetterSourceEvent>) async {
         fatalError()
     }
     

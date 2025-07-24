@@ -54,6 +54,10 @@ extension GetterModel {
                 switch event {
                 case .modified(let diff):
                     getterModelRef.name = diff.name
+                    getterModelRef.nameInput = diff.name
+                    
+                    getterModelRef.parameters = diff.parameters.toDictionary()
+                    getterModelRef.parameterInput = diff.parameters
                     
                     logger.end("modified GetterModel")
                 case .removed:

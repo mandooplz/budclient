@@ -5,6 +5,7 @@
 //  Created by 김민우 on 7/23/25.
 //
 import Foundation
+import Collections
 
 
 // MARK: ValueID
@@ -12,9 +13,10 @@ import Foundation
 // String, Int, Float
 // Array<Int>, Array<String> -> 모두 동일한 ValueID를 갖는다. 
 public struct ValueID: Sendable, Hashable, Codable {
-    public let value: UUID
+    public let value: String
     
-    public init(_ value: UUID = UUID()) {
+    // MARK: core
+    public init(_ value: String = UUID().uuidString) {
         self.value = value
     }
 }
@@ -31,8 +33,14 @@ public struct ValueType: Sendable, Hashable, Codable {
     
     
     // MARK: core
-    public static let void = ValueType(id: .init(), name: "void", isOptional: false, description: nil, associatedTypes: [])
-    public static let anyValue = ValueType(id: .init(), name: "AnyValue", isOptional: false, description: nil, associatedTypes: [])
+    public static let void = ValueType(id: .init("VOID"),
+                                       name: "void")
+    public static let anyValue = ValueType(id: .init("ANY"),
+                                           name: "AnyValue")
+    public static let stringValue = ValueType(id: .init("STRING"),
+                                              name: "String")
+    public static let intValue = ValueType(id: .init("INT"),
+                                              name: "Int")
     
     package init(id: ValueID = .init(),
                 name: String,
@@ -78,6 +86,13 @@ public struct ParameterValue: Sendable, Hashable, Codable {
     }
     
     public static let anyParameter = Self (name: "anyParameter", type: .anyValue)
+}
+
+public extension OrderedSet<ParameterValue> {
+    func toDictionary() -> OrderedDictionary<ParameterValue, ValueID> {
+        OrderedDictionary(uniqueKeys: self,
+                          values: self.map { $0.type.id })
+    }
 }
 
 

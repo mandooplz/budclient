@@ -46,7 +46,9 @@ let package = Package(
                 "BudClient",
                 "BudServer",
                 "Values",
-                "BudCache"]
+                "BudCache",
+                .product(name: "Collections", package: "swift-collections")
+            ]
         ),
         
         

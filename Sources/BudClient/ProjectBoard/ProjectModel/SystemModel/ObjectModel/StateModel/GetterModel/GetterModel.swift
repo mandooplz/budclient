@@ -25,6 +25,14 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
         self.name = diff.name
         self.nameInput = diff.name
         
+        let dictionary =  OrderedDictionary(uniqueKeys: diff.parameters,
+                                            values: diff.parameters.map { $0.type.id})
+        self.parameters = dictionary
+        self.parameterInput = diff.parameters
+        
+        self.result = diff.result
+        self.resultInput = diff.result
+        
         self.updaterRef = Updater(owner: self.id)
         
         GetterModelManager.register(self)
@@ -45,10 +53,12 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var parameters = OrderedDictionary<ParameterValue, ValueID>()
+    public internal(set) var parameters: OrderedDictionary<ParameterValue, ValueID>
+    public var parameterInput: OrderedSet<ParameterValue>
     public var parameterIndex: IndexSet = []
     
-    public var result: ValueType = .anyValue
+    public var result: ValueType
+    public var resultInput: ValueType
     
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
@@ -140,9 +150,47 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
             }
         }
     }
-    public func pushParameterValues() async { }
-    public func pushResult() async {
+    public func pushParameterValues() async {
+        logger.start()
         
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.getterModelIsDeleted)
+            logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard parameterInput != parameters.keys else {
+            setIssue(Error.parametersAreSameAsCurrent)
+            logger.failure("Parameters에 변경사항이 없습니다.")
+            return
+        }
+        let source = self.source
+        let parameterInput = self.parameterInput
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let getterSourceRef = await source.ref else {
+                    logger.failure("GetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await getterSourceRef.setParameters(parameterInput)
+                await getterSourceRef.notifyStateChanged()
+            }
+        }
+    }
+    public func pushResult() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.getterModelIsDeleted)
+            logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
     }
     
     public func duplicateGetter() async {
@@ -213,6 +261,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public enum Error: String, Swift.Error {
         case getterModelIsDeleted
         case nameCannotBeEmpty, newNameIsSameAsCurrent
+        case parametersAreSameAsCurrent
         case alreadyUpdating
     }
 }
