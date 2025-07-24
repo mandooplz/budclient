@@ -46,8 +46,9 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var parameters: OrderedDictionary<ParameterValue,ValueID> = [.anyParameter: ParameterValue.anyParameter.type.id]
-    public var parameterIdx: IndexSet = []
+    public var parameters: OrderedDictionary<ParameterValue,ValueID>
+    public var parameterInput: OrderedSet<ParameterValue>
+    public var parameterIndex: IndexSet = []
     
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
