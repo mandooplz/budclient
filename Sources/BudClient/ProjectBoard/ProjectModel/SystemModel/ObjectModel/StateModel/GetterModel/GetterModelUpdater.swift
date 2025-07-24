@@ -39,16 +39,21 @@ extension GetterModel {
             
             // capture
             await captureHook?()
-            guard let getterModelRef = owner.ref,
-                let stateModelRef = getterModelRef.config.parent.ref else {
-                setIssue(Error.getterModelIsDeleted)
-                logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
+            guard queue.count > 0 else {
+                setIssue(Error.eventQueueIsEmpty)
+                logger.failure("처리할 Event가 존재하지 않습니다.")
                 return
             }
-
             
             // mutate
+            await mutateHook?()
             while queue.isEmpty == false {
+                guard let getterModelRef = owner.ref,
+                    let stateModelRef = getterModelRef.config.parent.ref else {
+                    setIssue(Error.getterModelIsDeleted)
+                    logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
                 let event = queue.removeFirst()
                 
                 switch event {
@@ -73,6 +78,7 @@ extension GetterModel {
         
         // MARK: value
         public enum Error: String, Swift.Error {
+            case eventQueueIsEmpty
             case getterModelIsDeleted
         }
     }

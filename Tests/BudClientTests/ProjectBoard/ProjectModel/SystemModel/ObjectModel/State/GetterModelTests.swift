@@ -443,15 +443,27 @@ struct GetterModelUpdaterTests {
             self.updaterRef = getterModelRef.updaterRef
         }
         
+        @Test func whenEventQueueIsEmpty() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty == true)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "eventQueueIsEmpty")
+        }
         @Test func whenGetterModelIsDeleted() async throws {
             // given
             try await #require(getterModelRef.id.isExist == true)
             
-            await updaterRef.setCaptureHook {
+            await updaterRef.setMutateHook {
                 await getterModelRef.delete()
             }
             
             // when
+            await updaterRef.appendEvent(.removed)
             await updaterRef.update()
             
             // then
@@ -502,6 +514,80 @@ struct GetterModelUpdaterTests {
             // then
             await #expect(getterModelRef.nameInput != oldName)
             await #expect(getterModelRef.nameInput == newName)
+        }
+        
+        @Test func modifyParameters() async throws {
+            // given
+            let oldParameters = OrderedSet<ParameterValue>().toDictionary()
+            let newParameters = OrderedSet([
+                ParameterValue(name: "name", type: .stringValue)
+            ])
+            
+            await MainActor.run {
+                getterModelRef.parameters = oldParameters
+            }
+            
+            // given
+            await sourceRef.setParameters(newParameters)
+            
+            let diff = await GetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(getterModelRef.parameters != oldParameters)
+            await #expect(getterModelRef.parameters == newParameters.toDictionary())
+        }
+        @Test func modifyParameterInput() async throws {
+            // given
+            let oldParameters = OrderedSet<ParameterValue>()
+            let newParameters = OrderedSet([
+                ParameterValue(name: "name", type: .stringValue)
+            ])
+            
+            await MainActor.run {
+                getterModelRef.parameterInput = oldParameters
+            }
+            
+            // given
+            await sourceRef.setParameters(newParameters)
+            
+            let diff = await GetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(getterModelRef.parameterInput != oldParameters)
+            await #expect(getterModelRef.parameterInput == newParameters)
+        }
+        
+        @Test func deleteGetterModel() async throws {
+            // given
+            try await #require(getterModelRef.id.isExist == true)
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(getterModelRef.id.isExist == false)
+        }
+        @Test func removeGetterModel_StateModel() async throws {
+            // given
+            let stateModelRef = try #require(await getterModelRef.config.parent.ref)
+            
+            try await #require(stateModelRef.getters.values.contains(getterModelRef.id))
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(stateModelRef.getters.values.contains(getterModelRef.id) == false)
         }
     }
 }
