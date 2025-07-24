@@ -25,7 +25,7 @@ public struct ValueID: Sendable, Hashable, Codable {
 // MARK: ValueType
 public struct ValueType: Sendable, Hashable, Codable {
     public let id: ValueID
-    public let name: String
+    public let name: String // 굳이 이름이 필요한가?
     public let isOptional: Bool
     public let description: String?
     public let associatedTypes: [ValueType]

@@ -64,6 +64,9 @@ extension GetterModel {
                     getterModelRef.parameters = diff.parameters.toDictionary()
                     getterModelRef.parameterInput = diff.parameters
                     
+                    getterModelRef.result = diff.result
+                    getterModelRef.resultInput = diff.result
+                    
                     logger.end("modified GetterModel")
                 case .removed:
                     // remove GetterModel

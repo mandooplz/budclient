@@ -44,6 +44,9 @@ package final class GetterSourceMock: GetterSourceInterface {
     }
     
     var result: ValueType = .void
+    package func setResult(_ value: ValueType) async {
+        self.result = value
+    }
     
     package func appendHandler(requester: ObjectID, _ handler: Handler<GetterSourceEvent>) async {
         

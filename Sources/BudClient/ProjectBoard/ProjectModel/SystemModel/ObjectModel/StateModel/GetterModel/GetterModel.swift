@@ -55,7 +55,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     
     public internal(set) var parameters: OrderedDictionary<ParameterValue, ValueID>
     public var parameterInput: OrderedSet<ParameterValue>
-    public var parameterIndex: IndexSet = []
+    public var parameterIndex: IndexSet = [] // 편집을 위한 Index
     
     public var result: ValueType
     public var resultInput: ValueType

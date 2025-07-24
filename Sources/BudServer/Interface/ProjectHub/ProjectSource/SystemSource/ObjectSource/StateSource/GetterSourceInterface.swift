@@ -16,6 +16,7 @@ package protocol GetterSourceInterface: Sendable {
     // MARK: state
     func setName(_ value: String) async
     func setParameters(_ value: OrderedSet<ParameterValue>) async
+    func setResult(_ value: ValueType) async
     
     func appendHandler(requester: ObjectID, _ handler: Handler<GetterSourceEvent>) async
 

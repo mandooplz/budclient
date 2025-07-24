@@ -804,6 +804,34 @@ struct StateModelUpdaterTests {
             self.stateModelRef = try await getStateModel(budClientRef)
             self.updaterRef = stateModelRef.updaterRef
         }
+        
+        @Test func whenEventQueueIsEmpty() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty == true)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "eventQueueIsEmpty")
+        }
+        @Test func whenStateModelIsDeleted() async throws {
+            // given
+            try await #require(stateModelRef.id.isExist == true)
+            
+            await updaterRef.setCaptureHook {
+                await stateModelRef.delete()
+            }
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "stateModelIsDeleted")
+        }
     }
 }
 

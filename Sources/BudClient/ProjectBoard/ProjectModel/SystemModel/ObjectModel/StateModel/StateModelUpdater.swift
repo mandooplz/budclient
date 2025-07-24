@@ -39,23 +39,34 @@ extension StateModel {
             
             // capture
             await captureHook?()
-            guard let stateModelRef = owner.ref,
-            let objectModelRef = stateModelRef.config.parent.ref else {
-                setIssue(Error.stateModelIsDeleted)
-                logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+            guard queue.count > 0 else {
+                setIssue(Error.eventQueueIsEmpty)
+                logger.failure("처리할 이벤트가 없습니다.")
                 return
             }
-            let newConfig = stateModelRef.config.setParent(stateModelRef.id)
             
             // mutate
             while queue.isEmpty == false {
+                guard let stateModelRef = owner.ref,
+                let objectModelRef = stateModelRef.config.parent.ref else {
+                    setIssue(Error.stateModelIsDeleted)
+                    logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                let newConfig = stateModelRef.config.setParent(stateModelRef.id)
+                
                 let event = queue.removeFirst()
                 
                 switch event {
                 case .modified(let diff):
                     stateModelRef.name = diff.name
+                    stateModelRef.nameInput = diff.name
+                    
                     stateModelRef.accessLevel = diff.accessLevel
+                    stateModelRef.accessLevelInput = diff.accessLevel
+                    
                     stateModelRef.stateValue = diff.stateValue
+                    stateModelRef.stateValueInput = diff.stateValue
                     
                     logger.end("modified StateModel")
                 case .removed:
@@ -142,6 +153,7 @@ extension StateModel {
         
         // MARK: value
         public enum Error: String, Swift.Error {
+            case eventQueueIsEmpty
             case stateModelIsDeleted
         }
     }

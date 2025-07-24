@@ -565,6 +565,51 @@ struct GetterModelUpdaterTests {
             await #expect(getterModelRef.parameterInput == newParameters)
         }
         
+        @Test func modifyResult() async throws {
+            // given
+            let oldResult = ValueType.anyValue
+            let newResult = ValueType.intValue
+            
+            await MainActor.run {
+                getterModelRef.result = oldResult
+            }
+            
+            // given
+            await sourceRef.setResult(newResult)
+            
+            let diff = await GetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(getterModelRef.result != oldResult)
+            await #expect(getterModelRef.result == newResult)
+        }
+        @Test func modifyResultInput() async throws {
+            // given
+            let oldResult = ValueType.anyValue
+            let newResult = ValueType.intValue
+            
+            await MainActor.run {
+                getterModelRef.resultInput = oldResult
+            }
+            
+            // given
+            await sourceRef.setResult(newResult)
+            
+            let diff = await GetterSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(getterModelRef.resultInput != oldResult)
+            await #expect(getterModelRef.resultInput == newResult)
+        }
+        
         @Test func deleteGetterModel() async throws {
             // given
             try await #require(getterModelRef.id.isExist == true)

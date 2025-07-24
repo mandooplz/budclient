@@ -25,6 +25,9 @@ package final class GetterSource: GetterSourceInterface {
     package func setParameters(_ value: OrderedSet<ParameterValue>) async {
         fatalError()
     }
+    package func setResult(_ value: ValueType) async {
+        fatalError()
+    }
     
     package func appendHandler(requester: ObjectID,
                                _ handler: Handler<GetterSourceEvent>) async {
