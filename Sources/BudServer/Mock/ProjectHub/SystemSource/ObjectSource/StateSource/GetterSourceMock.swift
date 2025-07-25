@@ -32,7 +32,7 @@ package final class GetterSourceMock: GetterSourceInterface {
     nonisolated let target = GetterID()
     nonisolated let owner: StateSourceMock.ID
     
-    var handlers: [ObjectID:EventHandler?] = [:]
+    var handlers: [ObjectID:EventHandler] = [:]
     var name: String
     package func setName(_ value: String) async {
         self.name = value
@@ -71,7 +71,7 @@ package final class GetterSourceMock: GetterSourceInterface {
         // notify
         let diff = GetterSourceDiff(self)
         self.handlers.values
-            .forEach { $0?.execute(.modified(diff)) }
+            .forEach { $0.execute(.modified(diff)) }
         
     }
     
@@ -94,9 +94,9 @@ package final class GetterSourceMock: GetterSourceInterface {
         // notify
         let diff = GetterSourceDiff(newGetterSourceRef)
         
-        stateSourceRef.handlers.values
+        self.handlers.values
             .forEach {
-                $0.execute(.getterDuplicated(self.target, diff))
+                $0.execute(.getterDuplicated(diff))
             }
     }
     
@@ -116,7 +116,7 @@ package final class GetterSourceMock: GetterSourceInterface {
         
         // notify
         self.handlers.values
-            .forEach { $0?.execute(.removed) }
+            .forEach { $0.execute(.removed) }
     }
 
     

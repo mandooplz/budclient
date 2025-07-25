@@ -282,15 +282,7 @@ struct GetterModelTests {
             let oldCount = await stateModelRef.getters.count
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await stateModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await getterModelRef.duplicateGetter()
-                }
-            }
+            try await duplicateGetter(getterModelRef)
             
             // then
             try await #require(getterModelRef.issue == nil)
@@ -317,15 +309,7 @@ struct GetterModelTests {
             let newIndex = index.advanced(by: 1)
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await stateModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await getterModelRef.duplicateGetter()
-                }
-            }
+            try await duplicateGetter(getterModelRef)
             
             // then
             try await #require(stateModelRef.getters.count == 4)
@@ -339,15 +323,7 @@ struct GetterModelTests {
             try await #require(stateModelRef.isUpdating == true)
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await stateModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await getterModelRef.duplicateGetter()
-                }
-            }
+            try await duplicateGetter(getterModelRef)
             
             // then
             let newGetterModel = try #require(await stateModelRef.getters.values.last)
@@ -771,4 +747,21 @@ private func createGetterModel(_ stateModelRef: StateModel) async throws {
     
     let newCount = await stateModelRef.getters.count
     try #require(newCount == oldCount + 1)
+}
+
+
+// MARK: Helphers - action
+private func duplicateGetter(_ getterModelRef: GetterModel) async throws {
+    await getterModelRef.startUpdating()
+    try await #require(getterModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await getterModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await getterModelRef.duplicateGetter()
+        }
+    }
 }

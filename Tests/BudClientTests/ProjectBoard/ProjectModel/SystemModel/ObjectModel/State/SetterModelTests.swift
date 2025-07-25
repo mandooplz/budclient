@@ -254,15 +254,7 @@ struct SetterModelTests {
             let oldCount = await stateModelRef.setters.count
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await stateModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await setterModelRef.duplicateSetter()
-                }
-            }
+            try await duplicateSetter(setterModelRef)
             
             // then
             try await #require(setterModelRef.issue == nil)
@@ -289,15 +281,7 @@ struct SetterModelTests {
             let newIndex = index.advanced(by: 1)
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await stateModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await setterModelRef.duplicateSetter()
-                }
-            }
+            try await duplicateSetter(setterModelRef)
             
             // then
             try await #require(stateModelRef.setters.count == 4)
@@ -311,15 +295,7 @@ struct SetterModelTests {
             try await #require(stateModelRef.isUpdating == true)
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await stateModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await setterModelRef.duplicateSetter()
-                }
-            }
+            try await duplicateSetter(setterModelRef)
             
             // then
             let newSetterModel = try #require(await stateModelRef.setters.values.last)
@@ -700,4 +676,21 @@ private func createSetterModel(_ stateModelRef: StateModel) async throws {
     
     let newCount = await stateModelRef.setters.count
     try #require(newCount == oldCount + 1)
+}
+
+
+// MARK: Helphers - action
+private func duplicateSetter(_ setterModelRef: SetterModel) async throws {
+    await setterModelRef.startUpdating()
+    try await #require(setterModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await setterModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await setterModelRef.duplicateSetter()
+        }
+    }
 }

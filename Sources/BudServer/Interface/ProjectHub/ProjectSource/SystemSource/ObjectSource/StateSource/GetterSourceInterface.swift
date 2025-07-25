@@ -62,4 +62,6 @@ package struct GetterSourceDiff: Sendable {
 package enum GetterSourceEvent: Sendable {
     case modified(GetterSourceDiff)
     case removed
+    
+    case getterDuplicated(GetterSourceDiff)
 }

@@ -36,7 +36,7 @@ package final class SetterSourceMock: SetterSourceInterface {
         self.name = value
     }
     
-    var handlers: [ObjectID:EventHandler?] = [:]
+    var handlers: [ObjectID:EventHandler] = [:]
     package func appendHandler(requester: ObjectID, _ handler: Handler<SetterSourceEvent>) async {
         self.handlers[requester] = handler
     }
@@ -71,7 +71,7 @@ package final class SetterSourceMock: SetterSourceInterface {
         let diff = SetterSourceDiff(self)
         
         self.handlers.values
-            .forEach { $0?.execute(.modified(diff)) }
+            .forEach { $0.execute(.modified(diff)) }
     }
     
     package func duplicateSetter() async {
@@ -99,8 +99,8 @@ package final class SetterSourceMock: SetterSourceInterface {
         
         // notify
         let diff = SetterSourceDiff(newSetterSourceRef)
-        stateSourceRef.handlers.values
-            .forEach { $0.execute(.setterDuplicated(self.target, diff))}
+        self.handlers.values
+            .forEach { $0.execute(.setterDuplicated(diff))}
     }
     package func removeSetter() async {
         logger.start()
@@ -118,7 +118,7 @@ package final class SetterSourceMock: SetterSourceInterface {
         
         // notify
         self.handlers.values
-            .forEach { $0?.execute(.removed) }
+            .forEach { $0.execute(.removed) }
     }
 
     

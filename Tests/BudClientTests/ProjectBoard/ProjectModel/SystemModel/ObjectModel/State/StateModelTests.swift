@@ -520,15 +520,7 @@ struct StateModelTests {
             let oldCount = await objectModelRef.states.count
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await objectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await stateModelRef.duplicateState()
-                }
-            }
+            try await duplicateStateModel(stateModelRef)
             
             // then
             try await #require(stateModelRef.issue == nil)
@@ -555,15 +547,7 @@ struct StateModelTests {
             let newIndex = index.advanced(by: 1)
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await objectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await stateModelRef.duplicateState()
-                }
-            }
+            try await duplicateStateModel(stateModelRef)
             
             // then
             try await #require(objectModelRef.states.count == 4)
@@ -577,15 +561,7 @@ struct StateModelTests {
             try await #require(objectModelRef.isUpdating == true)
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await objectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await stateModelRef.duplicateState()
-                }
-            }
+            try await duplicateStateModel(stateModelRef)
             
             // then
             let newStateModel = try #require(await objectModelRef.states.values.last)
@@ -599,15 +575,7 @@ struct StateModelTests {
             let originalName = await stateModelRef.name
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await objectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await stateModelRef.duplicateState()
-                }
-            }
+            try await duplicateStateModel(stateModelRef)
             
             // then
             let newStateModelRef = try #require(await objectModelRef.states.values.last?.ref)
@@ -621,15 +589,7 @@ struct StateModelTests {
             let original = await stateModelRef.accessLevel
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await objectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await stateModelRef.duplicateState()
-                }
-            }
+            try await duplicateStateModel(stateModelRef)
             
             // then
             let newStateModelRef = try #require(await objectModelRef.states.values.last?.ref)
@@ -643,15 +603,7 @@ struct StateModelTests {
             let original = await stateModelRef.stateValue
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await objectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await stateModelRef.duplicateState()
-                }
-            }
+            try await duplicateStateModel(stateModelRef)
             
             // then
             let newStateModelRef = try #require(await objectModelRef.states.values.last?.ref)
@@ -1070,3 +1022,19 @@ private func createSetterModel(_ stateModelRef: StateModel) async throws -> Sett
     return try #require(await setterModel.ref)
 }
 
+
+// MARK: Helphers
+private func duplicateStateModel(_ stateModelRef: StateModel) async throws {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.duplicateState()
+        }
+    }
+}

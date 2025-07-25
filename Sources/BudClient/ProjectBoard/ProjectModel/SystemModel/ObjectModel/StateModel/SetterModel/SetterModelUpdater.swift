@@ -72,6 +72,29 @@ extension SetterModel {
                     setterModelRef.delete()
                     
                     logger.end("removed SetterModel")
+                case .setterDuplicated(let diff):
+                    guard stateModelRef.setters[diff.target] == nil else {
+                        logger.failure("SetterID를 target으로 갖는 SetterModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    guard let index = stateModelRef.setters.index(forKey: setterModelRef.target) else {
+                        logger.failure("복사하려는 SetterModel이 존재하지 않아 취소됩니다.")
+                        return
+                    }
+                    
+                    let newIndex = index.advanced(by: 1)
+                    
+                    let newSetterModeRef = SetterModel(
+                        config: setterModelRef.config,
+                        diff: diff)
+                    
+                    stateModelRef.setters.updateValue(
+                        newSetterModeRef.id,
+                        forKey: newSetterModeRef.target,
+                        insertingAt: newIndex)
+                    
+                    logger.end("duplicate Setter")
                 }
                 
             }

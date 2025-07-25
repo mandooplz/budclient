@@ -83,7 +83,7 @@ package final class ActionSourceMock: ActionSourceInterface {
         let diff = ActionSourceDiff(newActionSourceRef)
         
         self.handlers.values
-            .forEach { $0.execute(.actionDuplicated(self.target, diff))}
+            .forEach { $0.execute(.actionDuplicated(diff))}
     }
     package func removeAction() async {
         logger.start()

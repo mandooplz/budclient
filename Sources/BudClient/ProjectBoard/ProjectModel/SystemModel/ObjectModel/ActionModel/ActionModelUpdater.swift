@@ -72,18 +72,17 @@ extension ActionModel {
                     actionModelRef.delete()
                     
                     logger.end("removed ActionModel")
-                case .actionDuplicated(let origin, let diff):
-                    // action의 복사를 Action에서 ㅓ리하는가?
+                case .actionDuplicated(let diff):
+                    // 굳이 origin이 필요할까?
                     guard objectModelRef.actions[diff.target] == nil else {
                         logger.failure("복제된 ActionModel이 이미 존재합니다.")
                         return
                     }
                     
-                    guard let index = objectModelRef.actions.index(forKey: origin) else {
+                    guard let index = objectModelRef.actions.index(forKey: actionModelRef.target) else {
                         logger.failure("복사하려는 ActionModel이 존재하지 않아 취소됩니다.")
                         return
                     }
-                    
                     let newIndex = index.advanced(by: 1)
                     
                     let newActionModelRef = ActionModel(

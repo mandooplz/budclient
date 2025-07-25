@@ -74,6 +74,27 @@ extension GetterModel {
                     getterModelRef.delete()
                     
                     logger.end("removed GetterModel")
+                    
+                case .getterDuplicated(let diff):
+                    guard stateModelRef.getters[diff.target] == nil else {
+                        logger.failure("복제된 GetterModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    guard let index = stateModelRef.getters.index(forKey: getterModelRef.target) else {
+                        logger.failure("복사하려는 GetterModel이 존재하지 않아 취소됩니다.")
+                        return
+                    }
+                    
+                    let newIndex = index.advanced(by: 1)
+                    
+                    let newGetterModelRef = GetterModel(
+                        config: getterModelRef.config,
+                        diff: diff)
+                    
+                    stateModelRef.getters.updateValue(newGetterModelRef.id, forKey: newGetterModelRef.target, insertingAt: newIndex)
+                    
+                    logger.end("duplicate Getter")
                 }
             }
         }

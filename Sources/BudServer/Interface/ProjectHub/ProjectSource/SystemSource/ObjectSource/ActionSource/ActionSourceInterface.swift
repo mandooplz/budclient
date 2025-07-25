@@ -52,5 +52,6 @@ package struct ActionSourceDiff: Sendable {
 package enum ActionSourceEvent: Sendable {
     case modified(ActionSourceDiff)
     case removed
-    case actionDuplicated(ActionID, ActionSourceDiff)
+    
+    case actionDuplicated(ActionSourceDiff)
 }
