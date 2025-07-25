@@ -70,6 +70,10 @@ extension ObjectModel {
                         .compactMap { $0.ref }
                         .forEach { $0.delete() }
                     
+                    if objectModelRef.role == .root {
+                        systemModelRef.root = nil
+                    }
+                    
                     systemModelRef.objects[objectModelRef.target] = nil
                     objectModelRef.delete()
                     

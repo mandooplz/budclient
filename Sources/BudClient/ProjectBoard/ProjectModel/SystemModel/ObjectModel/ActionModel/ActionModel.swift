@@ -57,6 +57,8 @@ public final class ActionModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        logger.failure("미구현")
     }
     public func pushName() async {
         logger.start()
@@ -68,6 +70,8 @@ public final class ActionModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        logger.failure("미구현")
     }
     
     public func duplicateAction() async {
@@ -80,6 +84,8 @@ public final class ActionModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        logger.failure("미구현")
     }
     public func removeAction() async {
         logger.start()
@@ -91,18 +97,20 @@ public final class ActionModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ActionModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        logger.failure("미구현")
     }
     
     
     // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
-        let value: UUID
+        public let value: UUID
         nonisolated init(value: UUID = UUID()) {
             self.value = value
         }
         
-        var isExist: Bool {
+        public var isExist: Bool {
             ActionModelManager.container[self] != nil
         }
         public var ref: ActionModel? {

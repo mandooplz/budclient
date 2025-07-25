@@ -493,6 +493,22 @@ struct ObjectModelTests {
             #expect(issue.reason == "objectModelIsDeleted")
         }
         
+        @Test func setRootNilWhenRemoveRootObject_SystemModel() async throws {
+            // given
+            let systemModelRef = try #require(await objectModelRef.config.parent.ref)
+            
+            try await #require(systemModelRef.objects.count == 1)
+            try await #require(systemModelRef.root != nil)
+            
+            try #require(objectModelRef.role == .root)
+            
+            // when
+            try await removeObject(objectModelRef)
+            
+            // then
+            await #expect(systemModelRef.root == nil)
+        }
+        
         @Test func deleteObjectModel() async throws {
             // given
             await objectModelRef.startUpdating()
@@ -929,6 +945,7 @@ private func createActionModel(_ objectModelRef: ObjectModel) async throws {
 
 // MARK: Helpehrs - action
 private func removeObject(_ objectModelRef: ObjectModel) async throws {
+    await objectModelRef.startUpdating()
     try await #require(objectModelRef.isUpdating == true)
     
     await withCheckedContinuation { continuation in
