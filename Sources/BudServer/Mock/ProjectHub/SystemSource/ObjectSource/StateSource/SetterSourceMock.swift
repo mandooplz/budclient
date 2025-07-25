@@ -67,8 +67,11 @@ package final class SetterSourceMock: SetterSourceInterface {
             return
         }
         
-        // 바뀐 내용을 전부 알려준다.
-        fatalError()
+        // notify
+        let diff = SetterSourceDiff(self)
+        
+        self.handlers.values
+            .forEach { $0?.execute(.modified(diff)) }
     }
     
     package func duplicateSetter() async {

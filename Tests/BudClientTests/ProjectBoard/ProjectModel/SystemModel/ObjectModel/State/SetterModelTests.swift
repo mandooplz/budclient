@@ -89,7 +89,137 @@ struct SetterModelTests {
             let issue = try #require(await setterModelRef.issue as? KnownIssue)
             #expect(issue.reason == "setterModelIsDeleted")
         }
+        
+        @Test func whenNameInputIsEmpty() async throws {
+            // given
+            await MainActor.run {
+                setterModelRef.nameInput = ""
+            }
+            
+            // when
+            await setterModelRef.pushName()
+            
+            // then
+            let issue = try #require(await setterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "nameCannotBeEmpty")
+        }
+        @Test func whenNameInputIsSameAsCurrent() async throws {
+            // given
+            let testName = "TEST_GETTER_NAME"
+            await MainActor.run {
+                setterModelRef.name = testName
+                setterModelRef.nameInput = testName
+            }
+            
+            // when
+            await setterModelRef.pushName()
+            
+            // then
+            let issue = try #require(await setterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "newNameIsSameAsCurrent")
+        }
+        
+        @Test func updateNameByUpdater() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                setterModelRef.name = oldName
+                setterModelRef.nameInput = newName
+            }
+            
+            await setterModelRef.startUpdating()
+            try await #require(setterModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await setterModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await setterModelRef.pushName()
+                }
+            }
+            
+            // then
+            await #expect(setterModelRef.name != oldName)
+            await #expect(setterModelRef.name == newName)
+        }
     }
+    
+    struct PushParameterValues {
+        let budClientRef: BudClient
+        let setterModelRef: SetterModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.setterModelRef = try await getSetterModel(budClientRef)
+        }
+        
+        @Test func whenSetterModelIsDeleted() async throws {
+            // given
+            try await #require(setterModelRef.id.isExist == true)
+            
+            await setterModelRef.setCaptureHook {
+                await setterModelRef.delete()
+            }
+            
+            // when
+            await setterModelRef.pushParameterValues()
+            
+            // then
+            let issue = try #require(await setterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "setterModelIsDeleted")
+        }
+        
+        @Test func whenParameterInputIsSameAsCurrent() async throws {
+            // given
+            let parameterValues = await setterModelRef.parameters.keys
+            let parameterInput = await setterModelRef.parameterInput
+            
+            try #require(parameterValues == parameterInput)
+            
+            // when
+            await setterModelRef.pushParameterValues()
+            
+            // then
+            let issue = try #require(await setterModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "parametersAreSameAsCurrent")
+        }
+        @Test func updateParametersByUpdater() async throws {
+            // given
+            let parameterInput = OrderedSet([
+                ParameterValue(name: "name", type: .stringValue),
+                ParameterValue(name: "age", type: .intValue)
+            ])
+            
+            await MainActor.run {
+                setterModelRef.parameters = [:]
+                setterModelRef.parameterInput = parameterInput
+            }
+            
+            await setterModelRef.startUpdating()
+            try await #require(setterModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await setterModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await setterModelRef.pushParameterValues()
+                }
+            }
+            
+            // then
+            let dict = parameterInput.toDictionary()
+            
+            await #expect(setterModelRef.parameters == dict)
+        }
+    }
+    
     
     struct DuplicateSetter {
         let budClientRef: BudClient

@@ -115,8 +115,63 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard nameInput.isEmpty == false else {
+            setIssue(Error.nameCannotBeEmpty)
+            logger.failure("SetterModel의 name이 빈 문자열일 수 없습니다.")
+            return
+        }
+        guard nameInput != name else {
+            setIssue(Error.newNameIsSameAsCurrent)
+            logger.failure("SetterModel의 name이 변경되지 않았습니다.")
+            return
+        }
+        let source = self.source
+        let nameInput = self.nameInput
         
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let setterSourceRef = await source.ref else {
+                    logger.failure("SetterSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await setterSourceRef.setName(nameInput)
+                await setterSourceRef.notifyStateChanged()
+            }
+        }
         
+    }
+    public func pushParameterValues() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.setterModelIsDeleted)
+            logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        guard parameterInput != parameters.keys else {
+            setIssue(Error.parametersAreSameAsCurrent)
+            logger.failure("Parameters에 변경사항이 없습니다.")
+            return
+        }
+        let source = self.source
+        let parameterInput = self.parameterInput
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let sourceRef = await source.ref else {
+                    logger.failure("SetterSource가 존재하지 않습니다. ")
+                    return
+                }
+                
+                await sourceRef.setParameters(parameterInput)
+                await sourceRef.notifyStateChanged()
+            }
+        }
     }
     
     public func duplicateSetter() async {
@@ -189,6 +244,7 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
         case setterModelIsDeleted
         case alreadyUpdating
         case nameCannotBeEmpty, newNameIsSameAsCurrent
+        case parametersAreSameAsCurrent
     }
 }
 
