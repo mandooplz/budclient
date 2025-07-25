@@ -103,11 +103,6 @@ package final class ObjectSourceMock: ObjectSourceInterface {
                     eventHandler.execute(.actionAdded($0))
                 }
         }
-        
-        
-        
-        
-        
     }
     
     package func appendNewState() async {
@@ -184,6 +179,10 @@ package final class ObjectSourceMock: ObjectSourceInterface {
             logger.failure("ObjectSourceMock이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let systemSourceRef = systemSource.ref!
+        
+        // mutate
+        systemSourceRef.objects[self.target] = nil
         
         self.states.values
             .compactMap { $0.ref }

@@ -38,7 +38,12 @@ package final class GetterSourceMock: GetterSourceInterface {
         self.name = value
     }
     
-    var parameters = OrderedDictionary<ParameterValue, ValueID>()
+    var parameters: OrderedDictionary<ParameterValue, ValueID> = [
+        .init(name: "name", type: .stringValue): ValueType.stringValue.id,
+        .init(name: "age", type: .intValue): ValueType.intValue.id,
+        .init(name: "address", type: .stringValue): ValueType.stringValue.id,
+        .init(name: "year", type: .intValue): ValueType.intValue.id
+    ]
     package func setParameters(_ value: OrderedSet<ParameterValue>) {
         self.parameters = value.toDictionary()
     }
