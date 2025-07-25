@@ -798,10 +798,12 @@ struct StateModelUpdaterTests {
     struct Update {
         let budClientRef: BudClient
         let stateModelRef: StateModel
+        let sourceRef: StateSourceMock
         let updaterRef: StateModel.Updater
         init() async throws {
             self.budClientRef = await BudClient()
             self.stateModelRef = try await getStateModel(budClientRef)
+            self.sourceRef = try #require(await stateModelRef.source.ref as? StateSourceMock)
             self.updaterRef = stateModelRef.updaterRef
         }
         
@@ -831,6 +833,76 @@ struct StateModelUpdaterTests {
             // then
             let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "stateModelIsDeleted")
+        }
+        
+        @Test func modifyStateModelName() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                stateModelRef.name = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await StateSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(stateModelRef.name != oldName)
+            await #expect(stateModelRef.name == newName)
+        }
+        @Test func modifyStateModelNameInput() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                stateModelRef.nameInput = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await StateSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(stateModelRef.nameInput != oldName)
+            await #expect(stateModelRef.nameInput == newName)
+        }
+        
+        @Test func deleteStateModel() async throws {
+            // given
+            try await #require(stateModelRef.id.isExist == true)
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(stateModelRef.id.isExist == false)
+        }
+        @Test func removeStateModel_ObjectModel() async throws {
+            // given
+            let objectModelRef = try #require(await stateModelRef.config.parent.ref)
+            
+            try await #require(objectModelRef.states.values.contains(stateModelRef.id))
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(objectModelRef.states.values.contains(stateModelRef.id) == false)
         }
     }
 }

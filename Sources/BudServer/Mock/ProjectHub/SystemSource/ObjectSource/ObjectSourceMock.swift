@@ -74,8 +74,8 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     }
     
     
-    var states: [StateID: StateSourceMock.ID] = [:]
-    var actions: [ActionID: ActionSourceMock.ID] = [:]
+    var states: OrderedDictionary<StateID, StateSourceMock.ID> = [:]
+    var actions: OrderedDictionary<ActionID, ActionSourceMock.ID> = [:]
     
     
     // MARK: action

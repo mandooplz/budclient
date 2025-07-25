@@ -47,15 +47,15 @@ extension StateModel {
             
             // mutate
             while queue.isEmpty == false {
+                                
                 guard let stateModelRef = owner.ref,
                 let objectModelRef = stateModelRef.config.parent.ref else {
                     setIssue(Error.stateModelIsDeleted)
                     logger.failure("StateModel이 존재하지 않아 실행 취소됩니다.")
                     return
                 }
-                let newConfig = stateModelRef.config.setParent(stateModelRef.id)
-                
                 let event = queue.removeFirst()
+                let newConfig = stateModelRef.config.setParent(stateModelRef.id)
                 
                 switch event {
                 case .modified(let diff):
@@ -96,7 +96,7 @@ extension StateModel {
                     logger.end("added GetterModel")
                 case .getterDuplicated(let getter, let diff):
                     guard stateModelRef.getters[diff.target] == nil else {
-                        logger.failure("GetterID를 target으로 갖는 GetterModel이 이미 존재합니다.")
+                        logger.failure("복제된 GetterModel이 이미 존재합니다.")
                         return
                     }
                     

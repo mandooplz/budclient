@@ -13,9 +13,15 @@ package protocol ActionSourceInterface: Sendable {
     associatedtype ID: ActionSourceIdentity where ID.Object == Self
     
     // MARK: state
+    func setName(_ value: String) async
+    func setHandler(requester: ObjectID, _ handler: Handler<ActionSourceEvent>) async
 
     
     // MARK: action
+    func notifyStateChanged() async
+    
+    func duplicateAction() async
+    func removeAction() async
 }
 
 
@@ -46,4 +52,5 @@ package struct ActionSourceDiff: Sendable {
 package enum ActionSourceEvent: Sendable {
     case modified(ActionSourceDiff)
     case removed
+    case actionDuplicated(ActionID, ActionSourceDiff)
 }
