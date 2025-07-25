@@ -96,6 +96,7 @@ public final class ActionModel: Debuggable, EventDebuggable, Hookable {
         // mutate
         self.isUpdating = true
     }
+    
     public func pushName() async {
         logger.start()
         

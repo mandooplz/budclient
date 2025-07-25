@@ -294,6 +294,50 @@ struct ActionModelTests {
 }
 
 
+// MARK: Tests - updater
+@Suite("ActionModelUpdater")
+struct ActionModelUpdaterTests {
+    struct Update {
+        let budClientRef: BudClient
+        let actionModelRef: ActionModel
+        let updaterRef: ActionModel.Updater
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.actionModelRef = try await getActionModel(budClientRef)
+            self.updaterRef = actionModelRef.updaterRef
+        }
+        
+        @Test func whenEventQueueIsEmpty() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty == true)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "eventQueueIsEmpty")
+        }
+        @Test func whenActionModelIsDeleted() async throws {
+            // given
+            try await #require(actionModelRef.id.isExist == true)
+            
+            await updaterRef.setCaptureHook {
+                await actionModelRef.delete()
+            }
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "actionModelIsDeleted")
+        }
+    }
+}
+
+
 // MARK: Helphers
 private func getActionModel(_ budClientRef: BudClient) async throws -> ActionModel {
     // create SignInForm
