@@ -107,7 +107,8 @@ package final class SystemSource: SystemSourceInterface {
                     switch changed.type {
                     case .added:
                         // create ObjectSource
-                        let objectSourceRef = ObjectSource(id: objectSource)
+                        let objectSourceRef = ObjectSource(
+                            id: objectSource)
                         self.objects[diff.target] = objectSourceRef.id
                         
                         handler.execute(.objectAdded(diff))
@@ -445,7 +446,68 @@ package final class SystemSource: SystemSourceInterface {
     }
     
     package func createRootObject() async {
-        fatalError() // 이를 어떻게 구현할 것인가. 
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        // compute
+        let firebaseDB = Firestore.firestore()
+        
+        let systemSourceDocRef = firebaseDB
+            .collection(DB.ProjectSources)
+            .document(parent.value)
+            .collection(DB.SystemSources)
+            .document(id.value)
+        
+        let objectSourceCollectionRef = systemSourceDocRef
+            .collection(DB.ObjectSources)
+        
+        do {
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
+                do {
+                    // get SystemSourceData
+                    let systemSourceData = try transaction
+                        .getDocument(systemSourceDocRef)
+                        .data(as: SystemSource.Data.self)
+                    
+                    // check root exist
+                    guard systemSourceData.rootExist == false else {
+                        logger.failure("이미 RootObjectSource가 존재합니다.")
+                        return
+                    }
+                    
+                    // create ObjectSource
+                    let newObjectSourceDocRef = objectSourceCollectionRef
+                        .document()
+                    
+                    let newObjectSourceData = ObjectSource.Data(
+                        name: "New Object",
+                        role: .root)
+                    
+                    try transaction.setData(from: newObjectSourceData,
+                                            forDocument: newObjectSourceDocRef)
+                    
+                    
+                    // modify SystemSource.root
+                    transaction.updateData(
+                        [SystemSource.Data.rootExist: true],
+                        forDocument: systemSourceDocRef)
+                    
+                    // return
+                    return
+                } catch(let error as NSError) {
+                    logger.failure(error)
+                    return nil
+                }
+            }
+        } catch {
+            logger.failure(error)
+            return
+        }
     }
     
     package func removeSystem() async {
@@ -519,19 +581,19 @@ package final class SystemSource: SystemSourceInterface {
         @DocumentID var id: String?
         @ServerTimestamp var createdAt: Timestamp?
         @ServerTimestamp var updatedAt: Timestamp?
+        var order: Int
         
         var target: SystemID
         var name: String
         
         var location: Location
-        var root: ObjectID?
+        var rootExist: Bool = false
         
-        init(id: String? = nil,
-             target: SystemID = SystemID(),
+        init(order: Int = 0,
              name: String,
              location: Location) {
-            self.id = id
-            self.target = target
+            self.order = order
+            self.target = SystemID()
             self.name = name
             self.location = location
         }

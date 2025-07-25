@@ -46,7 +46,7 @@ public struct StateID: IDRepresentable {
 
 
 // MARK: AccessLevel
-public enum AccessLevel: String, Sendable, Hashable, CaseIterable, Identifiable {
+public enum AccessLevel: String, Sendable, Hashable, CaseIterable, Identifiable, Codable {
     case readOnly, readAndWrite
     
     public var id: String {

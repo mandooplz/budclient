@@ -6,6 +6,9 @@
 //
 import Foundation
 import Values
+import FirebaseFirestore
+import BudMacro
+import BudServer
 
 
 // MARK: Object
@@ -79,20 +82,22 @@ package final class StateSource: StateSourceInterface {
         @DocumentID var id: String?
         @ServerTimestamp var createdAt: Timestamp?
         @ServerTimestamp var updatedAt: Timestamp?
+        var order: Int
         
         package var target: StateID
         
         package var name: String
         package var accessLevel: AccessLevel
-        package var stateValue: StateValue
+        package var stateValue: Values.StateValue
         
-        init(name: String,
+        init(order: Int = 0, name: String,
              accessLevel: AccessLevel = .readAndWrite,
              stateValue: StateValue = .anyState) {
+            self.order = order
             self.name = name
             self.target = StateID()
             self.accessLevel = accessLevel
-            self.stateValue
+            self.stateValue = stateValue
         }
     }
     typealias EventHandler = Handler<StateSourceEvent>
