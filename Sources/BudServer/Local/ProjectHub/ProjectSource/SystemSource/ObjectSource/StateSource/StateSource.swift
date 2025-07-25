@@ -74,6 +74,27 @@ package final class StateSource: StateSourceInterface {
             StateSourceManager.container[self]
         }
     }
+    @ShowState
+    package struct Data: Codable {
+        @DocumentID var id: String?
+        @ServerTimestamp var createdAt: Timestamp?
+        @ServerTimestamp var updatedAt: Timestamp?
+        
+        package var target: StateID
+        
+        package var name: String
+        package var accessLevel: AccessLevel
+        package var stateValue: StateValue
+        
+        init(name: String,
+             accessLevel: AccessLevel = .readAndWrite,
+             stateValue: StateValue = .anyState) {
+            self.name = name
+            self.target = StateID()
+            self.accessLevel = accessLevel
+            self.stateValue
+        }
+    }
     typealias EventHandler = Handler<StateSourceEvent>
 }
 

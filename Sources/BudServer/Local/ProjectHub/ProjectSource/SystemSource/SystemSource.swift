@@ -46,7 +46,8 @@ package final class SystemSource: SystemSourceInterface {
             .document(id.value)
         
         let updateData: [String: Any] = [
-            Data.name : value
+            Data.name : value,
+            Data.updatedAt: FieldValue.serverTimestamp()
         ]
         
         docRef.updateData(updateData)
@@ -444,7 +445,7 @@ package final class SystemSource: SystemSourceInterface {
     }
     
     package func createRootObject() async {
-        
+        fatalError() // 이를 어떻게 구현할 것인가. 
     }
     
     package func removeSystem() async {
@@ -516,6 +517,9 @@ package final class SystemSource: SystemSourceInterface {
     @ShowState
     struct Data: Hashable, Codable {
         @DocumentID var id: String?
+        @ServerTimestamp var createdAt: Timestamp?
+        @ServerTimestamp var updatedAt: Timestamp?
+        
         var target: SystemID
         var name: String
         

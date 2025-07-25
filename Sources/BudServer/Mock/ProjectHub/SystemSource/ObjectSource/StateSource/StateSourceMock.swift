@@ -45,6 +45,7 @@ package final class StateSourceMock: StateSourceInterface {
     
     var syncQueue: Deque<ObjectID> = []
     
+    //
     var getters: OrderedDictionary<GetterID, GetterSourceMock.ID> = [:]
     var setters: OrderedDictionary<SetterID, SetterSourceMock.ID> = [:]
     

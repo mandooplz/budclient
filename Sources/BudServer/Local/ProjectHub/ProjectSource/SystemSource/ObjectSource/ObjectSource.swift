@@ -95,8 +95,12 @@ package final class ObjectSource: ObjectSourceInterface {
         }
     }
     
+    @ShowState
     package struct Data: Codable {
         @DocumentID var id: String?
+        @ServerTimestamp var createdAt: Timestamp?
+        @ServerTimestamp var updatedAt: Timestamp?
+        
         package var target: ObjectID
         
         package var name: String

@@ -8,6 +8,7 @@ import Foundation
 import Testing
 import Values
 @testable import BudClient
+@testable import BudServer
 
 
 // MARK: Tests
@@ -301,10 +302,12 @@ struct ActionModelUpdaterTests {
         let budClientRef: BudClient
         let actionModelRef: ActionModel
         let updaterRef: ActionModel.Updater
+        let sourceRef: ActionSourceMock
         init() async throws {
             self.budClientRef = await BudClient()
             self.actionModelRef = try await getActionModel(budClientRef)
             self.updaterRef = actionModelRef.updaterRef
+            self.sourceRef = try #require(await actionModelRef.source.ref as? ActionSourceMock)
         }
         
         @Test func whenEventQueueIsEmpty() async throws {
@@ -333,6 +336,76 @@ struct ActionModelUpdaterTests {
             // then
             let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "actionModelIsDeleted")
+        }
+        
+        @Test func modifyActionModelName() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                actionModelRef.name = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await ActionSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(actionModelRef.name != oldName)
+            await #expect(actionModelRef.name == newName)
+        }
+        @Test func modifyActionModelNameInput() async throws {
+            // given
+            let oldName = "OLD_NAME"
+            let newName = "NEW_NAME"
+            
+            await MainActor.run {
+                actionModelRef.nameInput = oldName
+            }
+            
+            // given
+            await sourceRef.setName(newName)
+            
+            let diff = await ActionSourceDiff(sourceRef)
+            
+            // when
+            await updaterRef.appendEvent(.modified(diff))
+            await updaterRef.update()
+            
+            // then
+            await #expect(actionModelRef.nameInput != oldName)
+            await #expect(actionModelRef.nameInput == newName)
+        }
+        
+        @Test func deleteActionModel() async throws {
+            // given
+            try await #require(actionModelRef.id.isExist == true)
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(actionModelRef.id.isExist == false)
+        }
+        @Test func removeActionModel_ObjectModel() async throws {
+            // given
+            let objectModelRef = try #require(await actionModelRef.config.parent.ref)
+            
+            try await #require(objectModelRef.actions.values.contains(actionModelRef.id))
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            await #expect(objectModelRef.actions.values.contains(actionModelRef.id) == false)
         }
     }
 }

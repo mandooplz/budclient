@@ -48,7 +48,8 @@ package final class ProjectSource: ProjectSourceInterface {
         let docRef = db.collection(DB.ProjectSources).document(id.value)
         
         let updateData: [String: Any] = [
-            ProjectSource.Data.name: value
+            Data.name: value,
+            Data.updatedAt: FieldValue.serverTimestamp()
         ]
         
         docRef.updateData(updateData) { error in
@@ -268,6 +269,9 @@ package final class ProjectSource: ProjectSourceInterface {
     @ShowState
     struct Data: Hashable, Codable {
         @DocumentID var id: String?
+        @ServerTimestamp var createdAt: Timestamp?
+        @ServerTimestamp var updatedAt: Timestamp?
+        
         package var name: String
         package var creator: UserID
         package var target: ProjectID

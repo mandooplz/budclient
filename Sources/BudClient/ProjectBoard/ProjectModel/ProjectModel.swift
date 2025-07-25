@@ -16,7 +16,8 @@ private let logger = BudLogger("ProjectModel")
 @MainActor @Observable
 public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
-    init(config: Config<ProjectBoard.ID>, diff: ProjectSourceDiff) {
+    init(config: Config<ProjectBoard.ID>,
+         diff: ProjectSourceDiff) {
         self.config = config
         self.target = diff.target
         self.source = diff.id
@@ -35,17 +36,17 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     // MARK: state
     public nonisolated let id = ID()
     nonisolated let config: Config<ProjectBoard.ID>
-    nonisolated let target: ProjectID
-    nonisolated let source: any ProjectSourceIdentity
     nonisolated let updaterRef: Updater
     var isUpdating: Bool = false
+    
+    nonisolated let target: ProjectID
+    nonisolated let source: any ProjectSourceIdentity
     
     public internal(set) var name: String
     public var nameInput: String
     
     public internal(set) var systems = OrderedDictionary<SystemID, SystemModel.ID>()
     public internal(set) var workflows = OrderedDictionary<WorkflowID, WorkflowModel.ID>()
-    
     public internal(set) var values = OrderedDictionary<ValueID, ValueModel.ID>()
     
     
