@@ -12,7 +12,7 @@ private let logger = BudLogger("ActionSource")
 
 // MARK: Object
 @MainActor
-package final class ActionSource: Sendable {
+package final class ActionSource: ActionSourceInterface {
     // MARK: core
     
     // MARK: state
@@ -22,7 +22,7 @@ package final class ActionSource: Sendable {
     
     // MARK: value
     @MainActor
-    package struct ID: Sendable, Hashable {
+    package struct ID: ActionSourceIdentity {
         let value = UUID()
         nonisolated init() { }
         

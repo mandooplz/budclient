@@ -58,52 +58,46 @@ package final class ProjectHub: ProjectHubInterface {
                     return
                 }
                 
-                snapshot.documentChanges.forEach { diff in
-                    let documentId = diff.document.documentID
+                snapshot.documentChanges.forEach { change in
+                    // get ProjectSource
+                    let documentId = change.document.documentID
                     let projectSource = ProjectSource.ID(documentId)
                     
                     let data: ProjectSource.Data
                     do {
-                        data = try diff.document.data(as: ProjectSource.Data.self)
+                        data = try change.document.data(as: ProjectSource.Data.self)
                     } catch {
                         logger.failure("ProjetSource 디코딩 실패\n\(error)")
                         return
                     }
                     
-                    switch diff.type {
+                    guard let createdAt = data.createdAt?.dateValue(),
+                          let updatedAt = data.updatedAt?.dateValue() else {
+                        logger.failure("ProjectSource의 createdAt, updatedAt이 nil입니다.")
+                        return
+                    }
+                    
+                    let diff = ProjectSourceDiff(
+                        id: projectSource,
+                        target: data.target,
+                        name: data.name,
+                        createdAt: createdAt,
+                        updatedAt: updatedAt,
+                        order: data.order
+                    )
+                    
+                    switch change.type {
                     case .added:
                         // create ProjectSource
                         let projectSourceRef = ProjectSource(id: projectSource,
-                                                             name: data.name,
                                                              target: data.target,
-                                                             parent: self.id)
-                        self.projectSources[data.target] = projectSourceRef.id
-                        
-                        // notify
-                        let diff = ProjectSourceDiff(id: projectSource,
-                                                     target: projectSourceRef.target,
-                                                     name: data.name)
+                                                             parent: me)
+                        me.ref?.projectSources[data.target] = projectSourceRef.id
                         
                         me.ref?.handler?.execute(.added(diff))
                     case .modified:
-                        // serve event
-                        guard let projectSourceRef = projectSource.ref else {
-                            logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
-                            return
-                        }
-                        
-                        let projectSourceHandlers = projectSourceRef.handlers.values
-                        let projectSourceDiff = ProjectSourceDiff(
-                            id: projectSource,
-                            target: data.target,
-                            name: data.name
-                        )
-                        
-                        // modify ProjectSource
-                        projectSourceRef.name = data.name
-                        projectSourceHandlers.forEach { eventHandler in
-                            eventHandler.execute(.modified(projectSourceDiff))
-                        }
+                        // notify
+                        projectSource.ref?.handlers?.execute(.modified(diff))
                     case .removed:
                         guard let projectSourceRef = projectSource.ref else {
                             logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
@@ -112,14 +106,10 @@ package final class ProjectHub: ProjectHubInterface {
                         
                         // remove ProjectSource
                         projectSourceRef.delete()
-                        self.projectSources[data.target] = nil
+                        me.ref?.projectSources[data.target] = nil
                         
-                        // serve event
-                        let projectSourceHandlers = projectSourceRef.handlers.values
-                        
-                        projectSourceHandlers.forEach { eventHandler in
-                            eventHandler.execute(.removed)
-                        }
+                        // notify
+                        projectSource.ref?.handlers?.execute(.removed)
                     }
                 }
             }

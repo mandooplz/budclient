@@ -50,23 +50,40 @@ public struct ProjectSourceDiff: Sendable {
     package let target: ProjectID
     package let name: String
     
+    package let createdAt: Date
+    package let updatedAt: Date
+    package let order: Int
+    
     // MARK: core
-    package init(id: any ProjectSourceIdentity, target: ProjectID, name: String) {
+    package init(id: any ProjectSourceIdentity, target: ProjectID, name: String, createdAt: Date, updatedAt: Date, order: Int) {
         self.id = id
         self.target = target
         self.name = name
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.order = order
     }
     
     @Server
-    init(_ projectSourceMockRef: ProjectSourceMock) {
-        self.id = projectSourceMockRef.id
-        self.target = projectSourceMockRef.target
-        self.name = projectSourceMockRef.name
+    init(_ objectRef: ProjectSourceMock) {
+        self.id = objectRef.id
+        self.target = objectRef.target
+        
+        self.createdAt = objectRef.createdAt
+        self.updatedAt = objectRef.updatedAt
+        self.order = objectRef.order
+        
+        self.name = objectRef.name
     }
     
     // MARK: operator
     package func changeName(_ value: String) -> Self {
-        .init(id: self.id, target: self.target, name: value)
+        .init(id: self.id,
+              target: self.target,
+              name: value,
+              createdAt: self.createdAt,
+              updatedAt: self.updatedAt,
+              order: self.order)
     }
 }
 

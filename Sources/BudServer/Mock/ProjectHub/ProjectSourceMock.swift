@@ -36,6 +36,10 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     nonisolated let target: ProjectID
     nonisolated let projectHub: ProjectHubMock.ID
     
+    var createdAt: Date = .now
+    var updatedAt: Date = .now
+    var order: Int = 0
+    
     var systems: Set<SystemSourceMock.ID> = []
     func isLocationExist(_ location: Location) -> Bool {
         self.systems
@@ -80,9 +84,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     package func notifyStateChanged() {
         logger.start()
         
-        let diff = ProjectSourceDiff(id: self.id,
-                                     target: self.target,
-                                     name: self.name)
+        let diff = ProjectSourceDiff(self)
         
         handlers.values.forEach { eventHandler in
             eventHandler.execute(.modified(diff))

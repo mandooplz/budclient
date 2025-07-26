@@ -18,14 +18,11 @@ private let logger = BudLogger("ProjectSource")
 package final class ProjectSource: ProjectSourceInterface {
     // MARK: core
     init(id: ID,
-         name: String = "New Project",
          target: ProjectID,
          parent: ProjectHub.ID) {
         self.id = id
         self.target = target
         self.parent = parent
-        
-        self.name = name
         
         ProjectSourceManager.register(self)
     }
@@ -42,7 +39,6 @@ package final class ProjectSource: ProjectSourceInterface {
     
     var systems: [SystemID: SystemSource.ID] = [:]
     
-    var name: String
     package func setName(_ value: String) {
         logger.start(value)
         
