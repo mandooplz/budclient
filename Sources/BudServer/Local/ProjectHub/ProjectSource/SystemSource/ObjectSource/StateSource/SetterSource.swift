@@ -34,6 +34,8 @@ package final class SetterSource: SetterSourceInterface {
     nonisolated let target: SetterID
     nonisolated let owner: StateSource.ID
     
+    var handler: EventHandler?
+    
     
     // MARK: action
     package func setName(_ value: String) async {
@@ -61,6 +63,8 @@ package final class SetterSource: SetterSourceInterface {
     }
     
     // MARK: value
+    package typealias EventHandler = Handler<SetterSourceEvent>
+    
     @MainActor
     package struct ID: SetterSourceIdentity {
         let value: String
@@ -73,6 +77,38 @@ package final class SetterSource: SetterSourceInterface {
         }
         package var ref: SetterSource? {
             SetterSourceManager.container[self]
+        }
+    }
+    @ShowState
+    package struct Data: Codable {
+        @DocumentID var id: String?
+        var target: SetterID
+        
+        @ServerTimestamp var createdAt: Timestamp?
+        @ServerTimestamp var updatedAt: Timestamp?
+        var order: Int
+        
+        var name: String
+        var parameters: OrderedSet<ParameterValue>
+        
+        func getDiff(id: SetterSource.ID) throws -> SetterSourceDiff {
+            guard let createdAt = self.createdAt?.dateValue(),
+                  let updatedAt = self.updatedAt?.dateValue() else {
+                throw Error.timeStampParseFailed
+            }
+            
+            return .init(
+                id: id,
+                target: self.target,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                order: self.order,
+                name: self.name,
+                parameters: self.parameters)
+        }
+        
+        enum Error: Swift.Error {
+            case timeStampParseFailed
         }
     }
 }

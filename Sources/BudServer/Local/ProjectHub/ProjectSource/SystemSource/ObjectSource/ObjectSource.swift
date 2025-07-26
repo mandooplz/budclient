@@ -73,7 +73,7 @@ package final class ObjectSource: ObjectSourceInterface {
             .collection(DB.StateSources)
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    logger.failure("SnapshotListener Error: \(String(describing: error))")
+                    logger.failure("SnapshotListener Error: \(error!))")
                     return
                 }
                 
@@ -122,7 +122,7 @@ package final class ObjectSource: ObjectSourceInterface {
             .collection(DB.ActionSources)
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
-                    logger.failure("SnapshotListener Error: \(String(describing: error))")
+                    logger.failure("SnapshotListener Error: \(error!))")
                     return
                 }
                 

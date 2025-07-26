@@ -9,6 +9,8 @@ import Values
 import FirebaseFirestore
 import BudMacro
 
+private let logger = BudLogger("StateSource")
+
 
 // MARK: Object
 @MainActor
@@ -31,10 +33,140 @@ package final class StateSource: StateSourceInterface {
     nonisolated let target: StateID
     nonisolated let owner: ObjectSource.ID
     
+    var listener: Listener?
     var handler: EventHandler?
+    
+    var getters: [GetterID: GetterSource.ID] = [:]
+    var setters: [SetterID: SetterSource.ID] = [:]
     package func appendHandler(requester: ObjectID,
                                _ handler: EventHandler) async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 종료됩니다.")
+            return
+        }
+        guard listener == nil else {
+            logger.failure("GetterSource, SetterSource에 대한 이벤트 리스너가 이미 존재합니다.")
+            return
+        }
+        let me = self.id
+        
+        let objectSource = self.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let stateSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(self.id.value)
+        
+        // compute
+        let getterListener = stateSourceDocRef
+            .collection(DB.GetterSources)
+            .addSnapshotListener { snapshot, error in
+                guard let snapshot else {
+                    logger.failure("SnapshotListener Error: \(error!))")
+                    return
+                }
+                
+                snapshot.documentChanges.forEach { change in
+                    // get StateSource
+                    let documentId = change.document.documentID
+                    let getterSource = GetterSource.ID(documentId)
+                    
+                    // get StateSource.Data
+                    let data: GetterSource.Data
+                    let diff: GetterSourceDiff
+                    do {
+                        data = try change.document.data(as: GetterSource.Data.self)
+                        diff = try data.getDiff(id: getterSource)
+                    } catch {
+                        logger.failure("GetterSource 디코딩 실패\n\(error)")
+                        return
+                    }
+                    
+                    // event
+                    switch change.type {
+                    case .added:
+                        // create StateSource
+                        let getterSourceRef = GetterSource(id: getterSource,
+                                                         target: diff.target,
+                                                         owner: me)
+                        me.ref?.getters[diff.target] = getterSourceRef.id
+                        
+                        // notify
+                        me.ref?.handler?.execute(.getterAdded(diff))
+                    case .modified:
+                        // notify
+                        getterSource.ref?.handler?.execute(.modified(diff))
+                    case .removed:
+                        // notify
+                        getterSource.ref?.handler?.execute(.removed)
+                        
+                        // remove StateSource
+                        getterSource.ref?.delete()
+                        me.ref?.getters[diff.target] = nil
+                    }
+                }
+            }
+        
+        let setterListener = stateSourceDocRef
+            .collection(DB.SetterSources)
+            .addSnapshotListener { snapshot, error in
+                guard let snapshot else {
+                    logger.failure("SnapshotListener Error: \(error!))")
+                    return
+                }
+                
+                snapshot.documentChanges.forEach { change in
+                    // get StateSource
+                    let documentId = change.document.documentID
+                    let setterSource = SetterSource.ID(documentId)
+                    
+                    // get StateSource.Data
+                    let data: SetterSource.Data
+                    let diff: SetterSourceDiff
+                    do {
+                        data = try change.document.data(as: SetterSource.Data.self)
+                        diff = try data.getDiff(id: setterSource)
+                    } catch {
+                        logger.failure("GetterSource 디코딩 실패\n\(error)")
+                        return
+                    }
+                    
+                    // event
+                    switch change.type {
+                    case .added:
+                        // create StateSource
+                        let setterSourceRef = SetterSource(id: setterSource,
+                                                           target: diff.target,
+                                                           owner: me)
+                        me.ref?.setters[diff.target] = setterSourceRef.id
+                        
+                        // notify
+                        me.ref?.handler?.execute(.setterAdded(diff))
+                    case .modified:
+                        // notify
+                        setterSource.ref?.handler?.execute(.modified(diff))
+                    case .removed:
+                        // notify
+                        setterSource.ref?.handler?.execute(.removed)
+                        
+                        // remove StateSource
+                        setterSource.ref?.delete()
+                        me.ref?.setters[diff.target] = nil
+                    }
+                }
+            }
+        
+        // mutate
+        self.handler = handler
+        self.listener = .init(getter: getterListener,
+                              setter: setterListener)
+        
     }
     
     package func setName(_ value: String) async {
@@ -78,6 +210,8 @@ package final class StateSource: StateSourceInterface {
     
     
     // MARK: value
+    package typealias EventHandler = Handler<StateSourceEvent>
+    
     @MainActor
     package struct ID: StateSourceIdentity {
         let value: String
@@ -137,7 +271,11 @@ package final class StateSource: StateSourceInterface {
             case timeStampParsingFailure
         }
     }
-    package typealias EventHandler = Handler<StateSourceEvent>
+    
+    struct Listener {
+        let getter: ListenerRegistration
+        let setter: ListenerRegistration
+    }
 }
 
 

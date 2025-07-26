@@ -33,6 +33,7 @@ package final class GetterSource: GetterSourceInterface {
     nonisolated let target: GetterID
     nonisolated let owner: StateSource.ID
     
+    var handler: EventHandler?
     package func setName(_ value: String) async {
         fatalError()
     }
@@ -62,6 +63,7 @@ package final class GetterSource: GetterSourceInterface {
 
     
     // MARK: value
+    package typealias EventHandler = Handler<GetterSourceEvent>
     @MainActor
     package struct ID: GetterSourceIdentity {
         let value: String
@@ -88,6 +90,27 @@ package final class GetterSource: GetterSourceInterface {
         var name: String
         var parameters: OrderedSet<ParameterValue>
         var result: ValueType
+        
+        func getDiff(id: GetterSource.ID) throws -> GetterSourceDiff {
+            guard let createdAt = self.createdAt?.dateValue(),
+                  let updatedAt = self.updatedAt?.dateValue() else {
+                throw Error.timeStampParseFailed
+            }
+            
+            return .init(
+                id: id,
+                target: self.target,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                order: self.order,
+                name: self.name,
+                parameters: self.parameters,
+                result: self.result)
+        }
+        
+        enum Error: Swift.Error {
+            case timeStampParseFailed
+        }
     }
 }
 
