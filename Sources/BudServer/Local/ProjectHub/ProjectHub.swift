@@ -35,24 +35,23 @@ package final class ProjectHub: ProjectHubInterface {
     }
     
     var listener: ListenerRegistration?
-    var handlers: [ObjectID:EventHandler] = [:]
-    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
+    var handler: EventHandler?
+    package func appendHandler(requester: ObjectID,
+                               _ handler: EventHandler) {
         // capture
-        let projectHub = self.id
-        
-        self.handlers[requester] = handler
-        
-        // mutate - firebase
         guard self.listener == nil else {
-            logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
+            logger.failure("ProjectSource의 Firebase 리스너가 이미 등록되어 있습니다.")
             return
         }
+        let me = self.id
         
+        // compute
         let db = Firestore.firestore()
-        let projectSourcesCollectionRef = db.collection(DB.ProjectSources)
+        let projectSourcesCollectionRef = db
+            .collection(DB.ProjectSources)
             .whereField(ProjectSource.Data.creator, isEqualTo: user.encode())
         
-        self.listener = projectSourcesCollectionRef
+        let projectListener = projectSourcesCollectionRef
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     logger.failure(error!)
@@ -80,14 +79,12 @@ package final class ProjectHub: ProjectHubInterface {
                                                              parent: self.id)
                         self.projectSources[data.target] = projectSourceRef.id
                         
-                        // serve event
+                        // notify
                         let diff = ProjectSourceDiff(id: projectSource,
                                                      target: projectSourceRef.target,
                                                      name: data.name)
                         
-                        projectHub.ref?.handlers.values.forEach { eventHandler in
-                            eventHandler.execute(.added(diff))
-                        }
+                        me.ref?.handler?.execute(.added(diff))
                     case .modified:
                         // serve event
                         guard let projectSourceRef = projectSource.ref else {
@@ -96,9 +93,11 @@ package final class ProjectHub: ProjectHubInterface {
                         }
                         
                         let projectSourceHandlers = projectSourceRef.handlers.values
-                        let projectSourceDiff = ProjectSourceDiff(id: projectSource,
-                                                     target: data.target,
-                                                     name: data.name)
+                        let projectSourceDiff = ProjectSourceDiff(
+                            id: projectSource,
+                            target: data.target,
+                            name: data.name
+                        )
                         
                         // modify ProjectSource
                         projectSourceRef.name = data.name
@@ -111,20 +110,23 @@ package final class ProjectHub: ProjectHubInterface {
                             return
                         }
                         
+                        // remove ProjectSource
+                        projectSourceRef.delete()
+                        self.projectSources[data.target] = nil
+                        
                         // serve event
                         let projectSourceHandlers = projectSourceRef.handlers.values
                         
                         projectSourceHandlers.forEach { eventHandler in
                             eventHandler.execute(.removed)
                         }
-
-                        
-                        // cancel ProjectSource
-                        projectSourceRef.delete()
-                        self.projectSources[data.target] = nil
                     }
                 }
             }
+        
+        // mutate
+        self.handler = handler
+        self.listener = projectListener
     }
     
     package func notifyNameChanged(_ project: ProjectID) async {

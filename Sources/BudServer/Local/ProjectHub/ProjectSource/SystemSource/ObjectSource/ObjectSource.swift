@@ -40,7 +40,8 @@ package final class ObjectSource: ObjectSourceInterface {
     }
     
     
-    package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
+    package func appendHandler(requester: ObjectID,
+                               _ handler: EventHandler) {
         logger.start()
         
         // capture

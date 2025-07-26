@@ -17,7 +17,10 @@ private let logger = BudLogger("ProjectSource")
 @MainActor
 package final class ProjectSource: ProjectSourceInterface {
     // MARK: core
-    init(id: ID, name: String, target: ProjectID, parent: ProjectHub.ID) {
+    init(id: ID,
+         name: String = "New Project",
+         target: ProjectID,
+         parent: ProjectHub.ID) {
         self.id = id
         self.target = target
         self.parent = parent
@@ -71,25 +74,27 @@ package final class ProjectSource: ProjectSourceInterface {
     }
     
     package var listener: ListenerRegistration?
-    package var handlers: [ObjectID:EventHandler] = [:]
+    package var handlers: EventHandler?
     package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
-        
-        
-        // mutate
-        self.handlers[requester] = handler
-        
-        // mutate - firebase
-        let db = Firestore.firestore()
-        let systemSourceCollectionRef = db.collection(DB.ProjectSources)
-            .document(id.value)
-            .collection(DB.SystemSources)
+        // capture
+        guard id.isExist else {
+            logger.failure("ProjectSource가 존재하지 않아 실행취소됩니다.")
+            return
+        }
         guard self.listener == nil else {
             logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
             return
         }
-        self.listener = systemSourceCollectionRef
+        
+        // compute
+        let db = Firestore.firestore()
+        let systemSourceCollectionRef = db.collection(DB.ProjectSources)
+            .document(id.value)
+            .collection(DB.SystemSources)
+        
+        let systemListener = systemSourceCollectionRef
             .addSnapshotListener({ snapshot, error in
                 guard let snapshot else {
                     logger.failure(error!)
@@ -146,6 +151,10 @@ package final class ProjectSource: ProjectSourceInterface {
                     }
                 }
             })
+        
+        // mutate
+        self.handlers = handler
+        self.listener = systemListener
     }
     
     package func registerSync(_ object: ObjectID) async {
@@ -269,19 +278,24 @@ package final class ProjectSource: ProjectSourceInterface {
     @ShowState
     struct Data: Hashable, Codable {
         @DocumentID var id: String?
+        package var target: ProjectID
+        
         @ServerTimestamp var createdAt: Timestamp?
         @ServerTimestamp var updatedAt: Timestamp?
+        var order: Int
         
         package var name: String
         package var creator: UserID
-        package var target: ProjectID
         
         package var systemLocations: Set<Location>
         
-        init(name: String, creator: UserID) {
+        init(name: String,
+             creator: UserID) {
+            self.target = ProjectID()
+            self.order = 0
+            
             self.name = name
             self.creator = creator
-            self.target = ProjectID()
             self.systemLocations = []
         }
     }

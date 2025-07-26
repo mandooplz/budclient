@@ -579,13 +579,13 @@ package final class SystemSource: SystemSourceInterface {
     @ShowState
     struct Data: Hashable, Codable {
         @DocumentID var id: String?
+        var target: SystemID
+        
         @ServerTimestamp var createdAt: Timestamp?
         @ServerTimestamp var updatedAt: Timestamp?
         var order: Int
         
-        var target: SystemID
         var name: String
-        
         var location: Location
         var rootExist: Bool = false
         
