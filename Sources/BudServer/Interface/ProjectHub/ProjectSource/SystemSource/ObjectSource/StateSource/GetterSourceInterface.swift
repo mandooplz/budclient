@@ -42,17 +42,36 @@ package protocol GetterSourceIdentity: Sendable, Hashable {
 package struct GetterSourceDiff: Sendable {
     package let id: any GetterSourceIdentity
     package let target: GetterID
-    package let name: String
     
+    package let createdAt: Date
+    package let updatedAt: Date
+    package let order: Int
+    
+    package let name: String
     package let parameters: OrderedSet<ParameterValue>
     package let result: ValueType
+    
+    package init(id: any GetterSourceIdentity, target: GetterID, createdAt: Date, updatedAt: Date, order: Int, name: String, parameters: OrderedSet<ParameterValue>, result: ValueType) {
+        self.id = id
+        self.target = target
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.order = order
+        self.name = name
+        self.parameters = parameters
+        self.result = result
+    }
     
     @Server
     init(_ objectRef: GetterSourceMock) {
         self.id = objectRef.id
         self.target = objectRef.target
-        self.name = objectRef.name
         
+        self.createdAt = objectRef.createdAt
+        self.updatedAt = objectRef.updatedAt
+        self.order = objectRef.order
+        
+        self.name = objectRef.name
         self.parameters = objectRef.parameters.keys
         self.result = objectRef.result
     }

@@ -17,8 +17,10 @@ private let logger = BudLogger("ObjectSource")
 @MainActor
 package final class ObjectSource: ObjectSourceInterface {
     // MARK: core
-    init(id: ID) {
+    init(id: ID, target: ObjectID, owner: SystemSource.ID) {
         self.id = id
+        self.target = target
+        self.owner = owner
         
         ObjectSourceManager.register(self)
     }
@@ -29,7 +31,10 @@ package final class ObjectSource: ObjectSourceInterface {
     
     // MARK: state
     package nonisolated let id: ID
-    var listener: ListenerRegistration?
+    nonisolated let target: ObjectID
+    nonisolated let owner: SystemSource.ID
+    
+    var listener: EventListener?
     var handler: EventHandler?
     
     var states: [StateID: StateSource.ID] = [:]
@@ -45,24 +50,138 @@ package final class ObjectSource: ObjectSourceInterface {
         logger.start()
         
         // capture
-        let firebaseDB = Firestore.firestore()
+        guard id.isExist else {
+            logger.failure("ObjectSource가 존재하지 않아 실행취소됩니다.")
+            return
+        }
+        guard listener == nil else {
+            logger.failure("StateSource, ActionSource의 Firebase 리스너가 이미 존재합니다.")
+            return
+        }
+        let me = self.id
         
-        // let stateSourceCollectionRef
-        // let actionSourceCollectionRef
+        let systemSourceRef = self.owner.ref!
+        let projectSourceRef = systemSourceRef.owner.ref!
+        
+        let objectSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSourceRef.id.value)
+            .collection(DB.SystemSources).document(systemSourceRef.id.value)
+            .collection(DB.ObjectSources).document(self.id.value)
         
         // compute
-        // stateSourceCollectionRef 스냅샷 리스너 등록
-        // actionSourceCollectionRef 스냅샷 리스너 등록
+        let stateListener = objectSourceDocRef
+            .collection(DB.StateSources)
+            .addSnapshotListener { snapshot, error in
+                guard let snapshot else {
+                    logger.failure("SnapshotListener Error: \(String(describing: error))")
+                    return
+                }
+                
+                snapshot.documentChanges.forEach { change in
+                    // get StateSource
+                    let documentId = change.document.documentID
+                    let stateSource = StateSource.ID(documentId)
+                    
+                    // get StateSource.Data
+                    let data: StateSource.Data
+                    let diff: StateSourceDiff
+                    do {
+                        data = try change.document.data(as: StateSource.Data.self)
+                        diff = try data.getDiff(id: stateSource)
+                    } catch {
+                        logger.failure("StateSource 디코딩 실패\n\(error)")
+                        return
+                    }
+                    
+                    // event
+                    switch change.type {
+                    case .added:
+                        // create StateSource
+                        let stateSourceRef = StateSource(id: stateSource,
+                                                         target: diff.target,
+                                                         owner: me)
+                        me.ref?.states[diff.target] = stateSourceRef.id
+                        
+                        // notify
+                        me.ref?.handler?.execute(.stateAdded(diff))
+                    case .modified:
+                        // notify
+                        stateSource.ref?.handler?.execute(.modified(diff))
+                    case .removed:
+                        // notify
+                        stateSource.ref?.handler?.execute(.removed)
+                        
+                        // remove StateSource
+                        stateSource.ref?.delete()
+                        me.ref?.states[diff.target] = nil
+                    }
+                }
+            }
         
+        let actionListener = objectSourceDocRef
+            .collection(DB.ActionSources)
+            .addSnapshotListener { snapshot, error in
+                guard let snapshot else {
+                    logger.failure("SnapshotListener Error: \(String(describing: error))")
+                    return
+                }
+                
+                snapshot.documentChanges.forEach { change in
+                    // get ActionSource
+                    let documentId = change.document.documentID
+                    let actionSource = ActionSource.ID(documentId)
+                    
+                    // get StateSource.Data
+                    let data: ActionSource.Data
+                    let diff: ActionSourceDiff
+                    do {
+                        data = try change.document.data(as: ActionSource.Data.self)
+                        diff = try data.getDiff(id: actionSource)
+                    } catch {
+                        logger.failure("ActionSource 디코딩 실패\n\(error)")
+                        return
+                    }
+                    
+                    // event
+                    switch change.type {
+                    case .added:
+                        // create StateSource
+                        let actionSourceRef = ActionSource(id: actionSource,
+                                                         target: diff.target,
+                                                         owner: me)
+                        me.ref?.actions[diff.target] = actionSourceRef.id
+                        
+                        // notify
+                        me.ref?.handler?.execute(.actionAdded(diff))
+                    case .modified:
+                        // notify
+                        actionSource.ref?.handler?.execute(.modified(diff))
+                    case .removed:
+                        // notify
+                        actionSource.ref?.handler?.execute(.removed)
+                        
+                        // remove StateSource
+                        actionSource.ref?.delete()
+                        me.ref?.actions[diff.target] = nil
+                    }
+                }
+            }
+        
+        // mutate
+        self.handler = handler
+        self.listener = .init(state: stateListener,
+                              action: actionListener)
     }
     package func notifyStateChanged() async {
         logger.start()
         
-        // Firebase에 의해 알아서 처리된다.
+        logger.failure("Firebase에 의해 알아서 처리됩니다.")
     }
     
     package func registerSync(_ object: ObjectID) async {
-        fatalError()
+        logger.start()
+        
+        logger.failure("Firebase에 의해 알아서 처리됩니다.")
     }
     
     
@@ -71,11 +190,11 @@ package final class ObjectSource: ObjectSourceInterface {
     package func synchronize() async {
         logger.start()
         
-        // Firebase에서 자체적으로 첫 이벤트들을 전송
-        return
+        logger.failure("Firebase에 의해 알아서 처리됩니다.")
     }
     
     package func appendNewState() async {
+        
         fatalError("구현 예정")
     }
     package func appendNewAction() async {
@@ -94,6 +213,15 @@ package final class ObjectSource: ObjectSourceInterface {
     
     // MARK: value
     package typealias EventHandler = Handler<ObjectSourceEvent>
+    struct EventListener {
+        let state: ListenerRegistration
+        let action: ListenerRegistration
+        
+        init(state: ListenerRegistration, action: ListenerRegistration) {
+            self.state = state
+            self.action = action
+        }
+    }
     
     @MainActor
     package struct ID: ObjectSourceIdentity {
@@ -113,17 +241,16 @@ package final class ObjectSource: ObjectSourceInterface {
     @ShowState
     package struct Data: Codable {
         @DocumentID var id: String?
+        package var target: ObjectID
+        
         @ServerTimestamp var createdAt: Timestamp?
         @ServerTimestamp var updatedAt: Timestamp?
         var order: Int
-        
-        package var target: ObjectID
         
         package var name: String
         package var role: ObjectRole
         package var parent: ObjectID?
         package var childs: OrderedSet<ObjectID>
-        
         
         init(order: Int = 0,
              name: String,

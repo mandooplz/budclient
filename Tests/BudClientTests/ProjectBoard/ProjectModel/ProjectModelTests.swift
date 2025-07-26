@@ -482,7 +482,10 @@ struct ProjectModelUpdaterTests {
             let diff = ProjectSourceDiff(
                 id: ProjectSourceMock.ID(),
                 target: newProject,
-                name: "OLD_NAME")
+                name: "OLD_NAME",
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0)
             
             let projectBoardRef = try #require(await projectModelRef.config.parent.ref)
             let projectBoardUpdaterRef = projectBoardRef.updaterRef

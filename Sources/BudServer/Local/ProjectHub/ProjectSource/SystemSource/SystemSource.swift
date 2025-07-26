@@ -19,7 +19,7 @@ package final class SystemSource: SystemSourceInterface {
     init(id: ID, target: SystemID, parent: ProjectSource.ID) {
         self.id = id
         self.target = target
-        self.parent = parent
+        self.owner = parent
         
         SystemSourceManager.register(self)
     }
@@ -33,7 +33,7 @@ package final class SystemSource: SystemSourceInterface {
     // MARK: state
     nonisolated let id: ID
     nonisolated let target: SystemID
-    nonisolated let parent: ProjectSource.ID
+    nonisolated let owner: ProjectSource.ID
     
     package func setName(_ value: String) {
         logger.start()
@@ -41,7 +41,7 @@ package final class SystemSource: SystemSourceInterface {
         // compute
         let db = Firestore.firestore()
         let docRef = db.collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
             .collection(DB.SystemSources)
             .document(id.value)
         
@@ -62,9 +62,11 @@ package final class SystemSource: SystemSourceInterface {
         logger.start()
         
         // capture
+        let me = self.id
+        
         let db = Firestore.firestore()
         let objectSourceCollectionRef = db.collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
             .collection(DB.SystemSources)
             .document(id.value)
             .collection(DB.ObjectSources)
@@ -103,13 +105,15 @@ package final class SystemSource: SystemSourceInterface {
                         parent: data.parent,
                         childs: data.childs)
                     
-                    // ObjectSources 컬렉션 이벤트 처리
+                    // process event
                     switch changed.type {
                     case .added:
                         // create ObjectSource
                         let objectSourceRef = ObjectSource(
-                            id: objectSource)
-                        self.objects[diff.target] = objectSourceRef.id
+                            id: objectSource,
+                            target: diff.target,
+                            owner: me)
+                        me.ref?.objects[diff.target] = objectSourceRef.id
                         
                         handler.execute(.objectAdded(diff))
                         return
@@ -117,10 +121,11 @@ package final class SystemSource: SystemSourceInterface {
                         // modify ObjectSource
                         objectSource.ref?.handler?.execute(.modified(diff))
                     case .removed:
-                        // cancel ObjectSource
+                        // remove ObjectSource
                         objectSource.ref?.delete()
+                        
+                        // notify
                         objectSource.ref?.handler?.execute(.removed)
-                        return
                     }
                 }
             }
@@ -157,11 +162,11 @@ package final class SystemSource: SystemSourceInterface {
         
         let projectSourceDocRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
         
         let systemSourceCollectionRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
             .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
@@ -232,11 +237,11 @@ package final class SystemSource: SystemSourceInterface {
         
         let projectSourceDocRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
         
         let systemSourceCollectionRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
             .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
@@ -307,11 +312,11 @@ package final class SystemSource: SystemSourceInterface {
         
         let projectSourceDocRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
         
         let systemSourceCollectionRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
             .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
@@ -382,11 +387,11 @@ package final class SystemSource: SystemSourceInterface {
         
         let projectSourceDocRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
         
         let systemSourceCollectionRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
             .collection(DB.SystemSources)
         
         let systemSourceDocRef = systemSourceCollectionRef
@@ -459,7 +464,7 @@ package final class SystemSource: SystemSourceInterface {
         
         let systemSourceDocRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
             .collection(DB.SystemSources)
             .document(id.value)
         
@@ -522,7 +527,7 @@ package final class SystemSource: SystemSourceInterface {
         let firebaseDB = Firestore.firestore()
         let projectSourceDocRef = firebaseDB
             .collection(DB.ProjectSources)
-            .document(parent.value)
+            .document(owner.value)
         let systemSourceDocRef = projectSourceDocRef
             .collection(DB.SystemSources)
             .document(id.value)

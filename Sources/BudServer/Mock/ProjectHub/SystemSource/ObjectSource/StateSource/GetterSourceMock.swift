@@ -32,6 +32,10 @@ package final class GetterSourceMock: GetterSourceInterface {
     nonisolated let target = GetterID()
     nonisolated let owner: StateSourceMock.ID
     
+    nonisolated let createdAt: Date = .now
+    var updatedAt: Date = .now
+    var order: Int = 0
+    
     var handlers: [ObjectID:EventHandler] = [:]
     var name: String
     package func setName(_ value: String) async {
@@ -83,7 +87,6 @@ package final class GetterSourceMock: GetterSourceInterface {
             logger.failure("GetterSourceMock이 존재하지 않아 실행 취소됩니다.")
             return
         }
-        let stateSourceRef = self.owner.ref!
         
         // mutate
         let newGetterSourceRef = GetterSourceMock(

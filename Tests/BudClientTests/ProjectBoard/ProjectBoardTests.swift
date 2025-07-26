@@ -180,7 +180,10 @@ struct ProjectBoardUpdaterTests {
             let diff = ProjectSourceDiff(
                 id: projectSourceRef.id,
                 target: projectEditorRef.target,
-                name: "DUPLICATE")
+                name: "DUPLICATE",
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0)
             
             await updaterRef.appendEvent(.added(diff))
             await updaterRef.update()
@@ -197,9 +200,13 @@ struct ProjectBoardUpdaterTests {
             try await #require(projectBoardRef.projects.isEmpty == true)
             
             let newProject = ProjectID()
-            let diff = ProjectSourceDiff(id: ProjectSourceMock.ID(),
-                                         target: newProject,
-                                         name: "")
+            let diff = ProjectSourceDiff(
+                id: ProjectSourceMock.ID(),
+                target: newProject,
+                name: "",
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0)
             
             await updaterRef.appendEvent(.added(diff))
             
@@ -222,7 +229,10 @@ struct ProjectBoardUpdaterTests {
             
             let diff = ProjectSourceDiff(id: newProjectSource,
                                          target: newProject,
-                                         name: "")
+                                         name: "",
+                                         createdAt: .now,
+                                         updatedAt: .now,
+                                         order: 0)
             await updaterRef.appendEvent(.added(diff))
             
             // when

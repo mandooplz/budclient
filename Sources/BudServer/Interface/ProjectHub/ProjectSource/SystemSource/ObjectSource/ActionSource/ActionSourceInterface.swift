@@ -38,12 +38,31 @@ package protocol ActionSourceIdentity: Sendable, Hashable {
 package struct ActionSourceDiff: Sendable {
     package let id: any ActionSourceIdentity
     package let target: ActionID
+    
+    package let createdAt: Date
+    package let updatedAt: Date
+    package let order: Int
+    
     package let name: String
+    
+    package init(id: any ActionSourceIdentity, target: ActionID, createdAt: Date, updatedAt: Date, order: Int, name: String) {
+        self.id = id
+        self.target = target
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.order = order
+        self.name = name
+    }
     
     @Server
     internal init(_ objectRef: ActionSourceMock) {
         self.id = objectRef.id
         self.target = objectRef.target
+        
+        self.createdAt = objectRef.createdAt
+        self.updatedAt = objectRef.updatedAt
+        self.order = objectRef.order
+        
         self.name = objectRef.name
     }
 }

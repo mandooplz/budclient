@@ -57,6 +57,8 @@ package final class ProjectHubMock: ProjectHubInterface {
     
     package func createProject() async {
         logger.start()
+        
+        
         // capture
         guard id.isExist else {
             logger.failure("ProjectHubMock이 존재하지 않아 실행 취소됩니다.")
@@ -74,9 +76,7 @@ package final class ProjectHubMock: ProjectHubInterface {
         projectSources.insert(projectSourceRef.id)
         
         // notify
-        let diff = ProjectSourceDiff(id: projectSourceRef.id,
-                                     target: projectSourceRef.target,
-                                     name: projectSourceRef.name)
+        let diff = ProjectSourceDiff(projectSourceRef)
         
         handlers.values.forEach { eventHandler in
             eventHandler.execute(.added(diff))

@@ -37,6 +37,10 @@ package final class StateSourceMock: StateSourceInterface {
     nonisolated let owner: ObjectSourceMock.ID
     nonisolated let target = StateID()
     
+    nonisolated let createdAt: Date = .now
+    var updatedAt: Date = .now
+    var order: Int = 0
+    
     var handlers: [ObjectID:EventHandler] = [:]
     var name: String
     
@@ -45,7 +49,6 @@ package final class StateSourceMock: StateSourceInterface {
     
     var syncQueue: Deque<ObjectID> = []
     
-    //
     var getters: OrderedDictionary<GetterID, GetterSourceMock.ID> = [:]
     var setters: OrderedDictionary<SetterID, SetterSourceMock.ID> = [:]
     

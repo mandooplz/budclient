@@ -8,19 +8,32 @@ import Foundation
 import Values
 import FirebaseFirestore
 import BudMacro
-import BudServer
 
 
 // MARK: Object
 @MainActor
 package final class StateSource: StateSourceInterface {
     // MARK: core
+    init(id: ID, target: StateID, owner: ObjectSource.ID) {
+        self.id = id
+        self.target = target
+        self.owner = owner
+        
+        StateSourceManager.register(self)
+    }
+    func delete() {
+        StateSourceManager.unregister(self.id)
+    }
+    
     
     // MARK: state
-    nonisolated let id = ID()
+    nonisolated let id: ID
+    nonisolated let target: StateID
+    nonisolated let owner: ObjectSource.ID
     
     var handler: EventHandler?
-    package func appendHandler(requester: ObjectID, _ handler: Handler<StateSourceEvent>) async {
+    package func appendHandler(requester: ObjectID,
+                               _ handler: EventHandler) async {
         fatalError()
     }
     
@@ -67,8 +80,10 @@ package final class StateSource: StateSourceInterface {
     // MARK: value
     @MainActor
     package struct ID: StateSourceIdentity {
-        let value = UUID()
-        nonisolated init() { }
+        let value: String
+        nonisolated init(_ value: String) {
+            self.value = value
+        }
         
         package var isExist: Bool {
             StateSourceManager.container[self] != nil
@@ -80,17 +95,18 @@ package final class StateSource: StateSourceInterface {
     @ShowState
     package struct Data: Codable {
         @DocumentID var id: String?
+        package var target: StateID
+        
         @ServerTimestamp var createdAt: Timestamp?
         @ServerTimestamp var updatedAt: Timestamp?
         var order: Int
-        
-        package var target: StateID
         
         package var name: String
         package var accessLevel: AccessLevel
         package var stateValue: Values.StateValue
         
-        init(order: Int = 0, name: String,
+        init(order: Int = 0,
+             name: String,
              accessLevel: AccessLevel = .readAndWrite,
              stateValue: StateValue = .anyState) {
             self.order = order
@@ -99,8 +115,29 @@ package final class StateSource: StateSourceInterface {
             self.accessLevel = accessLevel
             self.stateValue = stateValue
         }
+        
+        func getDiff(id: StateSource.ID) throws -> StateSourceDiff {
+            guard let createdAt = self.createdAt?.dateValue(),
+                  let updatedAt = self.updatedAt?.dateValue() else {
+                throw Error.timeStampParsingFailure
+            }
+            
+            return .init(
+                id: id,
+                target: self.target,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                order: self.order,
+                name: self.name,
+                accessLevel: self.accessLevel,
+                stateValue: self.stateValue)
+        }
+        
+        enum Error: Swift.Error {
+            case timeStampParsingFailure
+        }
     }
-    typealias EventHandler = Handler<StateSourceEvent>
+    package typealias EventHandler = Handler<StateSourceEvent>
 }
 
 

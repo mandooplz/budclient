@@ -91,7 +91,7 @@ package final class ProjectHub: ProjectHubInterface {
                         // create ProjectSource
                         let projectSourceRef = ProjectSource(id: projectSource,
                                                              target: data.target,
-                                                             parent: me)
+                                                             owner: me)
                         me.ref?.projectSources[data.target] = projectSourceRef.id
                         
                         me.ref?.handler?.execute(.added(diff))

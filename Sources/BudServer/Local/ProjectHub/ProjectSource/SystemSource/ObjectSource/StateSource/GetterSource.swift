@@ -6,6 +6,8 @@
 //
 import Foundation
 import Collections
+import BudMacro
+import FirebaseFirestore
 import Values
 
 private let logger = BudLogger("GetterSource")
@@ -15,9 +17,21 @@ private let logger = BudLogger("GetterSource")
 @MainActor
 package final class GetterSource: GetterSourceInterface {
     // MARK: core
+    init(id: ID, target: GetterID, owner: StateSource.ID) {
+        self.id = id
+        self.target = target
+        self.owner = owner
+        
+        GetterSourceManager.register(self)
+    }
+    func delete() {
+        GetterSourceManager.unregister(self.id)
+    }
     
     // MARK: state
-    nonisolated let id = ID()
+    nonisolated let id: ID
+    nonisolated let target: GetterID
+    nonisolated let owner: StateSource.ID
     
     package func setName(_ value: String) async {
         fatalError()
@@ -50,8 +64,10 @@ package final class GetterSource: GetterSourceInterface {
     // MARK: value
     @MainActor
     package struct ID: GetterSourceIdentity {
-        let value = UUID()
-        nonisolated init() { }
+        let value: String
+        nonisolated init(_ value: String) {
+            self.value = value
+        }
         
         package var isExist: Bool {
             GetterSourceManager.container[self] != nil
@@ -59,6 +75,19 @@ package final class GetterSource: GetterSourceInterface {
         package var ref: GetterSource? {
             GetterSourceManager.container[self]
         }
+    }
+    @ShowState
+    package struct Data: Codable {
+        @DocumentID var id: String?
+        var target: GetterID
+        
+        @ServerTimestamp var createdAt: Timestamp?
+        @ServerTimestamp var updatedAt: Timestamp?
+        var order: Int
+        
+        var name: String
+        var parameters: OrderedSet<ParameterValue>
+        var result: ValueType
     }
 }
 

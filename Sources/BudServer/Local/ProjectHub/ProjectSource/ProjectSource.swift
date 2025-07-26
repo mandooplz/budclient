@@ -19,10 +19,10 @@ package final class ProjectSource: ProjectSourceInterface {
     // MARK: core
     init(id: ID,
          target: ProjectID,
-         parent: ProjectHub.ID) {
+         owner: ProjectHub.ID) {
         self.id = id
         self.target = target
-        self.parent = parent
+        self.owner = owner
         
         ProjectSourceManager.register(self)
     }
@@ -35,7 +35,7 @@ package final class ProjectSource: ProjectSourceInterface {
     // MARK: state
     package nonisolated let id: ID
     nonisolated let target: ProjectID
-    nonisolated let parent: ProjectHub.ID
+    nonisolated let owner: ProjectHub.ID
     
     var systems: [SystemID: SystemSource.ID] = [:]
     
@@ -83,6 +83,7 @@ package final class ProjectSource: ProjectSourceInterface {
             logger.failure("Firebase 리스너가 이미 등록되어 있습니다.")
             return
         }
+        let me = self.id
         
         // compute
         let db = Firestore.firestore()
@@ -120,30 +121,22 @@ package final class ProjectSource: ProjectSourceInterface {
                         // create SystemSource
                         let systemSourceRef = SystemSource(id: systemSource,
                                                            target: data.target,
-                                                           parent: self.id)
+                                                           parent: me)
                         
-                        self.systems[data.target] = systemSourceRef.id
+                        me.ref?.systems[data.target] = systemSourceRef.id
 
                         // serve event
                         handler.execute(.added(diff))
                     case .modified:
-                        guard let systemSourceRef = systemSource.ref else {
-                            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
-                            return
-                        }
-                        
-                        systemSourceRef.handler?.execute(.modified(diff))
+                        // notify
+                        systemSource.ref?.handler?.execute(.modified(diff))
                     case .removed:
-                        guard let systemSourceRef = systemSource.ref else {
-                            logger.failure("SystemSource가 존재하지 않아 실행 취소됩니다.")
-                            return
-                        }
-                        
-                        systemSourceRef.handler?.execute(.removed)
-                        
                         // delete SystemSource
-                        self.systems[data.target] = nil
+                        me.ref?.systems[data.target] = nil
                         systemSource.ref?.delete()
+                        
+                        // notify
+                        systemSource.ref?.handler?.execute(.removed)
                     }
                 }
             })
@@ -241,7 +234,7 @@ package final class ProjectSource: ProjectSourceInterface {
             logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
             return
         }
-        let projectHubRef = parent.ref!
+        let projectHubRef = owner.ref!
         
         // delete ProjectSource
         projectHubRef.projectSources[target] = nil

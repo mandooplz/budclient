@@ -31,6 +31,10 @@ package final class ActionSourceMock: ActionSourceInterface {
     nonisolated let owner: ObjectSourceMock.ID
     nonisolated let target = ActionID()
     
+    nonisolated let createdAt: Date = .now
+    var updatedAt: Date = .now
+    var order: Int = 0
+    
     var name: String
     package func setName(_ value: String) async {
         self.name = value
