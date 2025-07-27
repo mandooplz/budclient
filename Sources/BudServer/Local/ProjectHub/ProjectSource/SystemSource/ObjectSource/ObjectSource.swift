@@ -41,7 +41,13 @@ package final class ObjectSource: ObjectSourceInterface {
     var actions: [ActionID: ActionSource.ID] = [:]
     
     package func setName(_ value: String) async {
-        logger.failure("미구현")
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
     }
     
     

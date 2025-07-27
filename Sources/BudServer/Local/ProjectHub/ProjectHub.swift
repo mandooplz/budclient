@@ -71,11 +71,10 @@ package final class ProjectHub: ProjectHubInterface {
                         return
                     }
                     
-                    guard let createdAt = data.createdAt?.dateValue(),
-                          let updatedAt = data.updatedAt?.dateValue() else {
-                        logger.failure("ProjectSource의 createdAt, updatedAt이 nil입니다.")
-                        return
-                    }
+                    let now = Date.now
+                    
+                    let createdAt = data.createdAt?.dateValue() ?? now
+                    let updatedAt = data.updatedAt?.dateValue() ?? now
                     
                     let diff = ProjectSourceDiff(
                         id: projectSource,
