@@ -39,16 +39,18 @@ package final class ActionSource: ActionSourceInterface {
     }
     
     var handler: EventHandler?
-    package func setHandler(requester: Values.ObjectID, _ handler: Values.Handler<ActionSourceEvent>) async {
-        fatalError()
+    package func appendHandler(requester: ObjectID,
+                               _ handler: EventHandler) async {
+        logger.start()
+        
+        // mutate
+        self.handler = handler
     }
     
     package func notifyStateChanged() async {
         logger.start()
         
         // Firebase에서 자체적으로 처리해준다.
-        
-        return
     }
     package func duplicateAction() async {
         fatalError()
@@ -82,6 +84,14 @@ package final class ActionSource: ActionSourceInterface {
         var order: Int
         
         var name: String
+        
+        init(target: ActionID = ActionID(),
+             order: Int = 0,
+             name: String = "New Action") {
+            self.target = target
+            self.order = order
+            self.name = name
+        }
         
         func getDiff(id: ActionSource.ID) throws -> ActionSourceDiff {
             guard let createdAt = self.createdAt?.dateValue(),

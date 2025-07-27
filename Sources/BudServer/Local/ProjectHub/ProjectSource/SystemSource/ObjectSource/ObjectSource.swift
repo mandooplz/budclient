@@ -172,11 +172,6 @@ package final class ObjectSource: ObjectSourceInterface {
         self.listener = .init(state: stateListener,
                               action: actionListener)
     }
-    package func notifyStateChanged() async {
-        logger.start()
-        
-        logger.failure("Firebase에 의해 알아서 처리됩니다.")
-    }
     
     package func registerSync(_ object: ObjectID) async {
         logger.start()
@@ -192,20 +187,96 @@ package final class ObjectSource: ObjectSourceInterface {
         
         logger.failure("Firebase에 의해 알아서 처리됩니다.")
     }
+    package func notifyStateChanged() async {
+        logger.start()
+        
+        logger.failure("Firebase에 의해 알아서 처리됩니다.")
+    }
     
     package func appendNewState() async {
+        logger.start()
         
-        fatalError("구현 예정")
+        // capture
+        guard id.isExist else {
+            logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let me = self.id
+        
+        let systemSourceRef = self.owner.ref!
+        let projectSourceRef = systemSourceRef.owner.ref!
+        
+        let stateSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSourceRef.id.value)
+            .collection(DB.SystemSources).document(systemSourceRef.id.value)
+            .collection(DB.ObjectSources).document(self.id.value)
+            .collection(DB.StateSources)
+        
+        // compute
+        do {
+            let newDocData = StateSource.Data()
+            try stateSourceCollectionRef.addDocument(from: newDocData)
+        } catch {
+            logger.failure(error)
+            return
+        }
     }
     package func appendNewAction() async {
-        fatalError("구현 예정")
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let me = self.id
+        
+        let systemSourceRef = self.owner.ref!
+        let projectSourceRef = systemSourceRef.owner.ref!
+        
+        let actionSourceColletionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSourceRef.id.value)
+            .collection(DB.SystemSources).document(systemSourceRef.id.value)
+            .collection(DB.ObjectSources).document(self.id.value)
+            .collection(DB.ActionSources)
+        
+        // compute
+        do {
+            let newDocData = ActionSource.Data()
+            try actionSourceColletionRef.addDocument(from: newDocData)
+        } catch {
+            logger.failure(error)
+            return
+        }
     }
     
     package func createChildObject() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let me = self.id
+        
+        let systemSourceRef = self.owner.ref!
+        let projectSourceRef = systemSourceRef.owner.ref!
+        
+        let objectSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSourceRef.id.value)
+            .collection(DB.SystemSources).document(systemSourceRef.id.value)
+            .collection(DB.ObjectSources)
+        
+        let objectSourceDocRef = objectSourceCollectionRef
+            .document(self.id.value)
+        
+        // compute
         fatalError("구현 예정")
     }
     
     package func removeObject() async {
+        // root node에 따라 다르게 적용
         fatalError("구현 예정")
     }
 
@@ -253,7 +324,7 @@ package final class ObjectSource: ObjectSourceInterface {
         package var childs: OrderedSet<ObjectID>
         
         init(order: Int = 0,
-             name: String,
+             name: String = "New Object",
              role: ObjectRole,
              parent: ObjectID? = nil) {
             self.order = order

@@ -517,19 +517,36 @@ struct ObjectModelTests {
             try await #require(objectModelRef.id.isExist == true)
             
             // when
-            await withCheckedContinuation { continuation in
-                Task {
-                    await objectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await objectModelRef.removeObject()
-                }
-            }
+            try await removeObject(objectModelRef)
             
             // then
             await #expect(objectModelRef.id.isExist == false)
         }
+        @Test func deleteChildObjectModels() async throws {
+            // given
+            await objectModelRef.startUpdating()
+            try await #require(objectModelRef.isUpdating == true)
+            
+            let systemModelRef = try #require(await objectModelRef.config.parent.ref)
+            try await #require(systemModelRef.objects.count == 1)
+            
+            try await createChildObjectModel(objectModelRef)
+            try await createChildObjectModel(objectModelRef)
+            try await createChildObjectModel(objectModelRef)
+            
+            try await #require(systemModelRef.objects.count == 4)
+            
+            // when
+            try await removeObject(objectModelRef)
+            
+            // then
+            for objectModel in await systemModelRef.objects.values {
+                await #expect(objectModel.isExist == false)
+            }
+            
+            await #expect(systemModelRef.objects.count == 0)
+        }
+        
         @Test func deleteActionModels() async throws {
             // given
             await objectModelRef.startUpdating()
@@ -955,6 +972,22 @@ private func removeObject(_ objectModelRef: ObjectModel) async throws {
             }
             
             await objectModelRef.removeObject()
+        }
+    }
+}
+
+private func createChildObjectModel(_ objectModelRef: ObjectModel) async throws {
+    let systemModelRef = try #require(await objectModelRef.config.parent.ref)
+    await systemModelRef.startUpdating()
+    try await #require(systemModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await objectModelRef.createChildObject()
         }
     }
 }

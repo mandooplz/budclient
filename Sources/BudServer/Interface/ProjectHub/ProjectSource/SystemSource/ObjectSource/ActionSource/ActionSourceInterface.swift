@@ -14,7 +14,7 @@ package protocol ActionSourceInterface: Sendable {
     
     // MARK: state
     func setName(_ value: String) async
-    func setHandler(requester: ObjectID, _ handler: Handler<ActionSourceEvent>) async
+    func appendHandler(requester: ObjectID, _ handler: Handler<ActionSourceEvent>) async
 
     
     // MARK: action

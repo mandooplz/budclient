@@ -45,13 +45,18 @@ package final class GetterSource: GetterSourceInterface {
     }
     
     package func appendHandler(requester: ObjectID,
-                               _ handler: Handler<GetterSourceEvent>) async {
-        fatalError()
+                               _ handler: EventHandler) async {
+        logger.start()
+        
+        // mutate
+        self.handler = handler
     }
     
     // MARK: action
     package func notifyStateChanged() async {
-        fatalError()
+        logger.start()
+        
+        logger.failure("Firebase에서 처리됨")
     }
 
     package func duplicateGetter() async {

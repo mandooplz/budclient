@@ -80,7 +80,7 @@ public final class ActionModel: Debuggable, EventDebuggable, Hookable {
                     return
                 }
                 
-                await actionSourceRef.setHandler(
+                await actionSourceRef.appendHandler(
                     requester: me,
                     .init { event in
                         Task { [weak self] in

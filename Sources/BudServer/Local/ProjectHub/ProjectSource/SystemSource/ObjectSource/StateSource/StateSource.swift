@@ -240,7 +240,7 @@ package final class StateSource: StateSourceInterface {
         package var stateValue: Values.StateValue
         
         init(order: Int = 0,
-             name: String,
+             name: String = "New State",
              accessLevel: AccessLevel = .readAndWrite,
              stateValue: StateValue = .anyState) {
             self.order = order

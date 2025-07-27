@@ -46,12 +46,18 @@ package final class SetterSource: SetterSourceInterface {
         fatalError()
     }
     
-    package func appendHandler(requester: Values.ObjectID, _ handler: Values.Handler<SetterSourceEvent>) async {
-        fatalError()
+    package func appendHandler(requester: ObjectID,
+                               _ handler: EventHandler) async {
+        logger.start()
+        
+        // mutate
+        self.handler = handler
     }
     
     package func notifyStateChanged() async {
-        fatalError()
+        logger.start()
+        
+        logger.failure("Firebase에서 자체적으로 처리됨")
     }
     
     package func duplicateSetter() async {

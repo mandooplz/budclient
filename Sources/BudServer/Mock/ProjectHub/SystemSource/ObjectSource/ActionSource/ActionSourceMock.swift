@@ -41,7 +41,7 @@ package final class ActionSourceMock: ActionSourceInterface {
     }
     
     var handlers: [ObjectID: EventHandler] = [:]
-    package func setHandler(requester: ObjectID, _ handler: Handler<ActionSourceEvent>) async {
+    package func appendHandler(requester: ObjectID, _ handler: Handler<ActionSourceEvent>) async {
         self.handlers[requester] = handler
     }
 

@@ -70,12 +70,11 @@ extension ObjectModel {
                         .compactMap { $0.ref }
                         .forEach { $0.delete() }
                     
+                    // delte ObjectModel Recursively
                     if objectModelRef.role == .root {
                         systemModelRef.root = nil
                     }
-                    
-                    systemModelRef.objects[objectModelRef.target] = nil
-                    objectModelRef.delete()
+                    cleanUpChildObjectModel(systemModelRef, objectModelRef)
                     
                     logger.end("removed \(objectModelRef.id)")
                 case .stateAdded(let diff):
@@ -119,6 +118,17 @@ extension ObjectModel {
                 .forEach { $0.delete() }
             
             stateModelRef.delete()
+        }
+        private func cleanUpChildObjectModel(_ systemModelRef: SystemModel,
+                                             _ objectModelRef: ObjectModel) {
+            
+            for childObject in objectModelRef.childs {
+                let childObjectModel = systemModelRef.objects[childObject]!
+                cleanUpChildObjectModel(systemModelRef, childObjectModel.ref!)
+            }
+            
+            systemModelRef.objects[objectModelRef.target] = nil
+            objectModelRef.delete()
         }
         
         
