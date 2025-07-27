@@ -201,8 +201,6 @@ package final class ObjectSource: ObjectSourceInterface {
             logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
             return
         }
-        let me = self.id
-        
         let systemSourceRef = self.owner.ref!
         let projectSourceRef = systemSourceRef.owner.ref!
         
@@ -229,8 +227,6 @@ package final class ObjectSource: ObjectSourceInterface {
             logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
             return
         }
-        let me = self.id
-        
         let systemSourceRef = self.owner.ref!
         let projectSourceRef = systemSourceRef.owner.ref!
         
@@ -259,6 +255,7 @@ package final class ObjectSource: ObjectSourceInterface {
             return
         }
         let me = self.id
+        let myTarget = self.target
         
         let systemSourceRef = self.owner.ref!
         let projectSourceRef = systemSourceRef.owner.ref!
@@ -272,7 +269,39 @@ package final class ObjectSource: ObjectSourceInterface {
             .document(self.id.value)
         
         // compute
-        fatalError("구현 예정")
+        do {
+            // 1. 새로운 자식 객체의 데이터 모델 생성
+            //    - role은 .node로, parent는 현재 객체의 target ID로 설정합니다.
+            let newChildData = ObjectSource.Data(role: .node, parent: myTarget)
+            
+            // 2. 새로운 자식 문서에 대한 참조 생성 (아직 서버에 생성되지는 않음)
+            //    - document()를 호출하여 Firestore가 자동으로 고유 ID를 생성하도록 합니다.
+            let newChildDocRef = objectSourceCollectionRef.document()
+            
+            // 3. WriteBatch를 사용하여 여러 쓰기 작업을 원자적으로 묶습니다.
+            let batch = Firestore.firestore().batch()
+            
+            // 작업 1: 새로운 자식 문서를 생성합니다.
+            // Codable 모델을 직접 사용하여 데이터를 설정합니다.
+            try batch.setData(from: newChildData,
+                              forDocument: newChildDocRef)
+            
+            // 작업 2: 부모 문서의 'childs' 배열에 새로운 자식의 target ID를 추가합니다.
+            // FieldValue.arrayUnion을 사용하여 원자적으로 업데이트합니다.
+            batch.updateData([
+                "childs": FieldValue.arrayUnion([newChildData.target])
+            ], forDocument: objectSourceDocRef)
+            
+            // 4. Batch 작업을 서버에 커밋(전송)합니다.
+            try await batch.commit()
+            
+            logger.end("성공: 자식 객체(\(newChildDocRef.documentID))를 생성하고 부모(\(self.id.value))에 연결했습니다.")
+            
+        } catch {
+            // 작업 중 하나라도 실패하면 전체가 롤백됩니다.
+            logger.failure("자식 객체 생성 실패: \(error.localizedDescription)")
+            return
+        }
     }
     
     package func removeObject() async {

@@ -120,14 +120,16 @@ package final class ProjectHub: ProjectHubInterface {
     }
     
     package func notifyNameChanged(_ project: ProjectID) async {
-        return
+        logger.start()
+        
+        logger.failure("Firebase에서 알아서 처리됨")
     }
     
     // MARK: action
     package func synchronize() async {
         logger.start()
         
-        // Firebase에서 알아서 호출해준다.
+        logger.failure("Firebase에서 알아서 처리됨")
     }
     
     package func createProject() {

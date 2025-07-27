@@ -47,8 +47,7 @@ package final class ProjectSource: ProjectSourceInterface {
         let docRef = db.collection(DB.ProjectSources).document(id.value)
         
         let updateData: [String: Any] = [
-            Data.name: value,
-            Data.updatedAt: FieldValue.serverTimestamp()
+            Data.name: value
         ]
         
         docRef.updateData(updateData) { error in
@@ -147,8 +146,9 @@ package final class ProjectSource: ProjectSourceInterface {
     }
     
     package func registerSync(_ object: ObjectID) async {
-        // Firebase에서 자체적으로 처리함
-        return
+        logger.start()
+        
+        logger.failure("Firebase에서 자체적으로 처리됨")
     }
     
     // MARK: action
