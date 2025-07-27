@@ -53,44 +53,51 @@ public struct ObjectSourceDiff: Sendable {
     package let id: any ObjectSourceIdentity
     package let target: ObjectID
     
+    package let createdAt: Date
+    package let updatedAt: Date
+    package let order: Int
+    
     package let name: String
     package let role: ObjectRole
-    
     package let parent: ObjectID?
     package let childs: OrderedSet<ObjectID>
     
     // MARK: core
     @Server
-    init(_ object: ObjectSourceMock) {
-        self.id = object.id
-        self.target = object.target
-        self.name = object.name
+    init(_ objectRef: ObjectSourceMock) {
+        self.id = objectRef.id
+        self.target = objectRef.target
         
-        self.role = object.role
-        self.parent = object.parent
-        self.childs = object.childs
+        self.createdAt = objectRef.createdAt
+        self.updatedAt = objectRef.updateAt
+        self.order = objectRef.order
+        
+        self.name = objectRef.name
+        self.role = objectRef.role
+        self.parent = objectRef.parent
+        self.childs = objectRef.childs
     }
+
     
-    init(id: any ObjectSourceIdentity,
-         target: ObjectID,
-         name: String,
-         role: ObjectRole,
-         parent: ObjectID? = nil,
-         childs: OrderedSet<ObjectID>) {
+    init(id: any ObjectSourceIdentity, target: ObjectID, createdAt: Date, updatedAt: Date, order: Int, name: String, role: ObjectRole, parent: ObjectID?, childs: OrderedSet<ObjectID>) {
         self.id = id
         self.target = target
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.order = order
         self.name = name
-        
         self.role = role
         self.parent = parent
         self.childs = childs
     }
     
-    
     // MARK: operator
     func newName(_ value: String) -> Self {
         .init(id: self.id,
               target: self.target,
+              createdAt: self.createdAt,
+              updatedAt: self.updatedAt,
+              order: self.order,
               name: value,
               role: self.role,
               parent: self.parent,

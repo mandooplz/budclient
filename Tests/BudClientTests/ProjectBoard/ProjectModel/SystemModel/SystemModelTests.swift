@@ -685,6 +685,9 @@ struct SystemModelUpdaterTests {
             let diff = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
                 target: .init(),
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0,
                 name: "TEST_NAME",
                 role: .root,
                 parent: nil,
@@ -707,6 +710,9 @@ struct SystemModelUpdaterTests {
             let diff = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
                 target: .init(),
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0,
                 name: "TEST_NAME",
                 role: .root,
                 parent: nil,
@@ -732,6 +738,9 @@ struct SystemModelUpdaterTests {
             let diff = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
                 target: .init(),
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0,
                 name: "TEST_NAME",
                 role: .root,
                 parent: nil,
@@ -782,6 +791,9 @@ struct SystemModelUpdaterTests {
             
             let diff = SystemSourceDiff(id: SystemSourceMock.ID(),
                                         target: SystemID(),
+                                        createdAt: .now,
+                                        updatedAt: .now,
+                                        order: 0,
                                         name: "",
                                         location: .init(x: 99, y: 99))
             
@@ -807,6 +819,9 @@ struct SystemModelUpdaterTests {
             
             let diff = SystemSourceDiff(id: SystemSourceMock.ID(),
                                         target: SystemID(),
+                                        createdAt: .now,
+                                        updatedAt: .now,
+                                        order: 0,
                                         name: "",
                                         location: .init(x: 99, y: 99))
             
@@ -830,6 +845,9 @@ struct SystemModelUpdaterTests {
             let newSystemSource = SystemSourceMock.ID()
             let diff = SystemSourceDiff(id: newSystemSource,
                                         target: .init(),
+                                        createdAt: .now,
+                                        updatedAt: .now,
+                                        order: 0,
                                         name: "",
                                         location: .init(x: 88, y: 88))
 

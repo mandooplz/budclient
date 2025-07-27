@@ -97,24 +97,17 @@ package final class SetterSource: SetterSourceInterface {
         var name: String
         var parameters: OrderedSet<ParameterValue>
         
-        func getDiff(id: SetterSource.ID) throws -> SetterSourceDiff {
-            guard let createdAt = self.createdAt?.dateValue(),
-                  let updatedAt = self.updatedAt?.dateValue() else {
-                throw Error.timeStampParseFailed
-            }
+        func getDiff(id: SetterSource.ID) -> SetterSourceDiff {
+            let now = Date.now
             
             return .init(
                 id: id,
                 target: self.target,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
+                createdAt: createdAt?.dateValue() ?? now,
+                updatedAt: updatedAt?.dateValue() ?? now,
                 order: self.order,
                 name: self.name,
                 parameters: self.parameters)
-        }
-        
-        enum Error: Swift.Error {
-            case timeStampParseFailed
         }
     }
 }

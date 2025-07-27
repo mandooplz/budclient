@@ -37,6 +37,10 @@ package final class SystemSourceMock: SystemSourceInterface {
     let target: SystemID
     let parent: ProjectSourceMock.ID
     
+    nonisolated let createdAt = Date.now
+    var updatedAt = Date.now
+    var order: Int = 0
+    
     private(set) var name: String
     package var location: Location
     package var objects = OrderedDictionary<ObjectID, ObjectSourceMock.ID>()

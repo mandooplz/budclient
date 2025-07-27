@@ -89,21 +89,17 @@ package final class SystemSource: SystemSourceInterface {
                     // get ObjectSource & data
                     let documentId = changed.document.documentID
                     let objectSource = ObjectSource.ID(documentId)
+                    
                     let data: ObjectSource.Data
+                    let diff: ObjectSourceDiff
                     do {
                         data = try changed.document.data(as: ObjectSource.Data.self)
+                        diff = data.getDiff(id: objectSource)
                     } catch {
                         logger.failure("ObjectSource.Data 디코딩 실패 \(documentId)\n\(error)")
                         return
                     }
                     
-                    let diff = ObjectSourceDiff(
-                        id: objectSource,
-                        target: data.target,
-                        name: data.name,
-                        role: data.role,
-                        parent: data.parent,
-                        childs: data.childs)
                     
                     // process event
                     switch changed.type {
@@ -121,11 +117,11 @@ package final class SystemSource: SystemSourceInterface {
                         // modify ObjectSource
                         objectSource.ref?.handler?.execute(.modified(diff))
                     case .removed:
-                        // remove ObjectSource
-                        objectSource.ref?.delete()
-                        
                         // notify
                         objectSource.ref?.handler?.execute(.removed)
+                        
+                        // remove ObjectSource
+                        objectSource.ref?.delete()
                     }
                 }
             }
@@ -601,6 +597,18 @@ package final class SystemSource: SystemSourceInterface {
             self.target = SystemID()
             self.name = name
             self.location = location
+        }
+        
+        func getDiff(id: SystemSource.ID) -> SystemSourceDiff {
+            let now = Date.now
+            
+            return .init(id: id,
+                         target: self.target,
+                         createdAt: self.createdAt?.dateValue() ?? now,
+                         updatedAt: self.updatedAt?.dateValue() ?? now,
+                         order: self.order,
+                         name: self.name,
+                         location: self.location)
         }
     }
     

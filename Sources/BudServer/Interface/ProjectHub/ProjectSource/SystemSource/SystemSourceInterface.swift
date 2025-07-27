@@ -52,41 +52,56 @@ public enum SystemSourceEvent: Sendable {
 public struct SystemSourceDiff: Sendable {
     package let id: any SystemSourceIdentity
     package let target: SystemID
+    
+    package let createdAt: Date
+    package let updatedAt: Date
+    package let order: Int
+    
     package let name: String
     package let location: Location
     
-    package init(id: any SystemSourceIdentity, target: SystemID, name: String, location: Location) {
+    // MARK: core
+    package init(id: any SystemSourceIdentity, target: SystemID, createdAt: Date, updatedAt: Date, order: Int, name: String, location: Location) {
         self.id = id
         self.target = target
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.order = order
         self.name = name
         self.location = location
     }
     
-    package func newName(_ value: String) -> Self {
-        .init(id: self.id, target: self.target, name: value, location: self.location)
-    }
-    
-    package func newLocation(_ value: Location) -> Self {
-        .init(id: self.id, target: self.target, name: self.name, location: value)
-    }
-}
-
-extension SystemSourceDiff {
     @Server
     init(_ object: SystemSourceMock) {
         self.id = object.id
         self.target = object.target
+        self.createdAt = object.createdAt
+        self.updatedAt = object.updatedAt
+        self.order = object.order
         self.name = object.name
         self.location = object.location
     }
     
-    init?(from data: SystemSource.Data) {
-        guard let id = data.id else { return nil}
-        
-        self.id = SystemSource.ID(id)
-        self.target = data.target
-        self.name = data.name
-        self.location = data.location
+    
+    // MARK: operator
+    package func newName(_ value: String) -> Self {
+        .init(id: self.id,
+              target: self.target,
+              createdAt: self.createdAt,
+              updatedAt: self.updatedAt,
+              order: self.order,
+              name: value,
+              location: self.location)
+    }
+    
+    package func newLocation(_ value: Location) -> Self {
+        .init(id: self.id,
+              target: self.target,
+              createdAt: self.createdAt,
+              updatedAt: self.updatedAt,
+              order: self.order,
+              name: self.name,
+              location: value)
     }
 }
 

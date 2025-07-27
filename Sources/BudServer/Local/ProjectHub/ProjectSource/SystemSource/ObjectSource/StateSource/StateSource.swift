@@ -82,7 +82,7 @@ package final class StateSource: StateSourceInterface {
                     let diff: GetterSourceDiff
                     do {
                         data = try change.document.data(as: GetterSource.Data.self)
-                        diff = try data.getDiff(id: getterSource)
+                        diff = data.getDiff(id: getterSource)
                     } catch {
                         logger.failure("GetterSource 디코딩 실패\n\(error)")
                         return
@@ -131,7 +131,7 @@ package final class StateSource: StateSourceInterface {
                     let diff: SetterSourceDiff
                     do {
                         data = try change.document.data(as: SetterSource.Data.self)
-                        diff = try data.getDiff(id: setterSource)
+                        diff = data.getDiff(id: setterSource)
                     } catch {
                         logger.failure("GetterSource 디코딩 실패\n\(error)")
                         return
@@ -251,25 +251,18 @@ package final class StateSource: StateSourceInterface {
             self.stateValue = stateValue
         }
         
-        func getDiff(id: StateSource.ID) throws -> StateSourceDiff {
-            guard let createdAt = self.createdAt?.dateValue(),
-                  let updatedAt = self.updatedAt?.dateValue() else {
-                throw Error.timeStampParsingFailure
-            }
+        func getDiff(id: StateSource.ID) -> StateSourceDiff {
+            let now = Date.now
             
             return .init(
                 id: id,
                 target: self.target,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
+                createdAt: createdAt?.dateValue() ?? now,
+                updatedAt: updatedAt?.dateValue() ?? now,
                 order: self.order,
                 name: self.name,
                 accessLevel: self.accessLevel,
                 stateValue: self.stateValue)
-        }
-        
-        enum Error: Swift.Error {
-            case timeStampParsingFailure
         }
     }
     

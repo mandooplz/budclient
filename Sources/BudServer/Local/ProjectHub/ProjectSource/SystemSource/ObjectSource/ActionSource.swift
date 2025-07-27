@@ -93,23 +93,16 @@ package final class ActionSource: ActionSourceInterface {
             self.name = name
         }
         
-        func getDiff(id: ActionSource.ID) throws -> ActionSourceDiff {
-            guard let createdAt = self.createdAt?.dateValue(),
-                  let updatedAt = self.updatedAt?.dateValue() else {
-                throw Error.timestampParseFailed
-            }
-            
+        func getDiff(id: ActionSource.ID) -> ActionSourceDiff {
+            let now = Date.now
+
             return .init(
                 id: id,
                 target: self.target,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
+                createdAt: createdAt?.dateValue() ?? now,
+                updatedAt: updatedAt?.dateValue() ?? now,
                 order: self.order,
                 name: self.name)
-        }
-        
-        enum Error: Swift.Error {
-            case timestampParseFailed
         }
     }
     

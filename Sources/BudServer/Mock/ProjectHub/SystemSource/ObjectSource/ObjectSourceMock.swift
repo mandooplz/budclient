@@ -42,6 +42,10 @@ package final class ObjectSourceMock: ObjectSourceInterface {
     package nonisolated let systemSource: SystemSourceMock.ID
     package nonisolated let target = ObjectID()
     
+    nonisolated let createdAt: Date = .now
+    var updateAt: Date = .now
+    var order: Int = 0
+    
     package nonisolated let role: ObjectRole
     package var parent: ObjectID!
     package var childs: OrderedSet<ObjectID> = []

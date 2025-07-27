@@ -96,25 +96,18 @@ package final class GetterSource: GetterSourceInterface {
         var parameters: OrderedSet<ParameterValue>
         var result: ValueType
         
-        func getDiff(id: GetterSource.ID) throws -> GetterSourceDiff {
-            guard let createdAt = self.createdAt?.dateValue(),
-                  let updatedAt = self.updatedAt?.dateValue() else {
-                throw Error.timeStampParseFailed
-            }
+        func getDiff(id: GetterSource.ID) -> GetterSourceDiff {
+            let now = Date.now
             
             return .init(
                 id: id,
                 target: self.target,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
+                createdAt: createdAt?.dateValue() ?? now,
+                updatedAt: updatedAt?.dateValue() ?? now,
                 order: self.order,
                 name: self.name,
                 parameters: self.parameters,
                 result: self.result)
-        }
-        
-        enum Error: Swift.Error {
-            case timeStampParseFailed
         }
     }
 }

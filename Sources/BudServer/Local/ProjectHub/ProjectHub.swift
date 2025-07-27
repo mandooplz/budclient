@@ -64,26 +64,15 @@ package final class ProjectHub: ProjectHubInterface {
                     let projectSource = ProjectSource.ID(documentId)
                     
                     let data: ProjectSource.Data
+                    let diff: ProjectSourceDiff
                     do {
                         data = try change.document.data(as: ProjectSource.Data.self)
+                        diff = data.getDiff(id: projectSource)
                     } catch {
                         logger.failure("ProjetSource 디코딩 실패\n\(error)")
                         return
                     }
                     
-                    let now = Date.now
-                    
-                    let createdAt = data.createdAt?.dateValue() ?? now
-                    let updatedAt = data.updatedAt?.dateValue() ?? now
-                    
-                    let diff = ProjectSourceDiff(
-                        id: projectSource,
-                        target: data.target,
-                        name: data.name,
-                        createdAt: createdAt,
-                        updatedAt: updatedAt,
-                        order: data.order
-                    )
                     
                     switch change.type {
                     case .added:

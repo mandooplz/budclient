@@ -48,6 +48,27 @@ package final class ObjectSource: ObjectSourceInterface {
             logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
             return
         }
+        
+        let objectSource = self.id
+        let systemSource = self.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let objectSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+        
+        let updateFields: [String: Any] = [
+            Data.name: value
+        ]
+        
+        // compute
+        do {
+            try await objectSourceDocRef.updateData(updateFields)
+        } catch {
+            logger.failure("ObjectSource의 name 업데이트 실패\n\(error)")
+            return
+        }
     }
     
     
@@ -93,7 +114,7 @@ package final class ObjectSource: ObjectSourceInterface {
                     let diff: StateSourceDiff
                     do {
                         data = try change.document.data(as: StateSource.Data.self)
-                        diff = try data.getDiff(id: stateSource)
+                        diff = data.getDiff(id: stateSource)
                     } catch {
                         logger.failure("StateSource 디코딩 실패\n\(error)")
                         return
@@ -142,7 +163,7 @@ package final class ObjectSource: ObjectSourceInterface {
                     let diff: ActionSourceDiff
                     do {
                         data = try change.document.data(as: ActionSource.Data.self)
-                        diff = try data.getDiff(id: actionSource)
+                        diff = data.getDiff(id: actionSource)
                     } catch {
                         logger.failure("ActionSource 디코딩 실패\n\(error)")
                         return
@@ -260,7 +281,6 @@ package final class ObjectSource: ObjectSourceInterface {
             logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
             return
         }
-        let me = self.id
         let myTarget = self.target
         
         let systemSourceRef = self.owner.ref!
@@ -276,29 +296,21 @@ package final class ObjectSource: ObjectSourceInterface {
         
         // compute
         do {
-            // 1. 새로운 자식 객체의 데이터 모델 생성
-            //    - role은 .node로, parent는 현재 객체의 target ID로 설정합니다.
-            let newChildData = ObjectSource.Data(role: .node, parent: myTarget)
-            
-            // 2. 새로운 자식 문서에 대한 참조 생성 (아직 서버에 생성되지는 않음)
-            //    - document()를 호출하여 Firestore가 자동으로 고유 ID를 생성하도록 합니다.
-            let newChildDocRef = objectSourceCollectionRef.document()
-            
-            // 3. WriteBatch를 사용하여 여러 쓰기 작업을 원자적으로 묶습니다.
+            // configure batch
             let batch = Firestore.firestore().batch()
             
-            // 작업 1: 새로운 자식 문서를 생성합니다.
-            // Codable 모델을 직접 사용하여 데이터를 설정합니다.
+            // createChildData
+            let newChildData = ObjectSource.Data(role: .node, parent: myTarget)
+            let newChildDocRef = objectSourceCollectionRef.document()
             try batch.setData(from: newChildData,
                               forDocument: newChildDocRef)
             
-            // 작업 2: 부모 문서의 'childs' 배열에 새로운 자식의 target ID를 추가합니다.
-            // FieldValue.arrayUnion을 사용하여 원자적으로 업데이트합니다.
+            // edit ObjectSource.childs
             batch.updateData([
-                "childs": FieldValue.arrayUnion([newChildData.target])
+                "childs": FieldValue.arrayUnion([newChildData.target.encode()])
             ], forDocument: objectSourceDocRef)
             
-            // 4. Batch 작업을 서버에 커밋(전송)합니다.
+            // commit
             try await batch.commit()
             
             logger.end("성공: 자식 객체(\(newChildDocRef.documentID))를 생성하고 부모(\(self.id.value))에 연결했습니다.")
@@ -311,8 +323,30 @@ package final class ObjectSource: ObjectSourceInterface {
     }
     
     package func removeObject() async {
-        // root node에 따라 다르게 적용
-        fatalError("구현 예정")
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ObjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let objectSource = self.id
+        let systemSource = self.owner
+        let proejctSource = systemSource.ref!.owner
+        
+        let objectSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(proejctSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+        
+        // compute
+        do {
+            try await objectSourceDocRef.delete()
+        } catch {
+            logger.failure("ObjectSource 삭제 실패\n\(error)")
+            return
+        }
     }
 
     
@@ -358,6 +392,7 @@ package final class ObjectSource: ObjectSourceInterface {
         package var parent: ObjectID?
         package var childs: OrderedSet<ObjectID>
         
+        // MARK: core
         init(order: Int = 0,
              name: String = "New Object",
              role: ObjectRole,
@@ -375,6 +410,22 @@ package final class ObjectSource: ObjectSourceInterface {
             } else if role == .root && parent != nil {
                 logger.failure("root에 해당하는 Object의 parent가 존재해서는 안됩니다.")
             }
+        }
+        
+        
+        // MARK: operator
+        func getDiff(id: ObjectSource.ID) -> ObjectSourceDiff {
+            let now = Date.now
+            
+            return .init(id: id,
+                         target: self.target,
+                         createdAt: self.createdAt?.dateValue() ?? now,
+                         updatedAt: self.updatedAt?.dateValue() ?? now,
+                         order: self.order,
+                         name: self.name,
+                         role: self.role,
+                         parent: self.parent,
+                         childs: self.childs)
         }
     }
 }

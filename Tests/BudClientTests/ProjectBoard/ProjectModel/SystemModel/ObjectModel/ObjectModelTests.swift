@@ -730,6 +730,9 @@ struct ObjectModelUpdaterTests {
             let diff = ObjectSourceDiff(
                 id: ObjectSourceMock.ID(),
                 target: .init(),
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0,
                 name: "TEST_OBJECT",
                 role: .root,
                 parent: nil,
@@ -770,6 +773,9 @@ struct ObjectModelUpdaterTests {
             let diff = ObjectSourceDiff(
                 id: objectModelRef.source,
                 target: objectModelRef.target,
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0,
                 name: "",
                 role: .root,
                 parent: nil,

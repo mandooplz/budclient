@@ -16,6 +16,7 @@ public struct ObjectID: IDRepresentable {
         self.value = value
     }
     
+    // MARK: core
     public init(_ fromString: String) throws(Error) {
         guard let value = UUID(uuidString: fromString) else {
             throw Error.invalidUUIDString
@@ -23,6 +24,14 @@ public struct ObjectID: IDRepresentable {
         self.value = value
     }
     
+    
+    // MARK: operator
+    package func encode() -> [String: Any] {
+        ["value": value.uuidString]
+    }
+    
+    
+    // MARK: value
     public enum Error: String, Swift.Error {
         case invalidUUIDString
     }

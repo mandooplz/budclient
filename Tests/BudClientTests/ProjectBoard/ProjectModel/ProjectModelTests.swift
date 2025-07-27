@@ -569,6 +569,9 @@ struct ProjectModelUpdaterTests {
             let diff = SystemSourceDiff(
                 id: SystemSourceMock.ID(),
                 target: .init(),
+                createdAt: .now,
+                updatedAt: .now,
+                order: 0,
                 name: "TEST_NAME",
                 location: .init(x: 999, y: 999))
             

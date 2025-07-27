@@ -102,15 +102,12 @@ package final class ProjectSource: ProjectSourceInterface {
                     let systemSource = SystemSource.ID(documentId)
                     
                     let data: SystemSource.Data
+                    let diff: SystemSourceDiff
                     do {
                         data = try changed.document.data(as: SystemSource.Data.self)
+                        diff = data.getDiff(id: systemSource)
                     } catch {
                         logger.failure("SystemSource 디코딩 실패 \(documentId)\n\(error)")
-                        return
-                    }
-                    
-                    guard let diff = SystemSourceDiff(from: data) else {
-                        logger.failure("SystemSourceDiff 변환 실패")
                         return
                     }
                     
@@ -227,24 +224,25 @@ package final class ProjectSource: ProjectSourceInterface {
             return
         }
     }
-    package func removeProject() {
+    package func removeProject() async {
         logger.start()
         
+        // capture
         guard id.isExist else {
             logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
             return
         }
-        let projectHubRef = owner.ref!
         
-        // delete ProjectSource
-        projectHubRef.projectSources[target] = nil
-        self.delete()
+        let projectSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(self.id.value)
         
         // cancel ProjectSourceDocument in FireStore
-        let db = Firestore.firestore()
-        db.collection(DB.ProjectSources)
-            .document(id.value)
-            .delete()
+        do {
+            try await projectSourceDocRef.delete()
+        } catch {
+            logger.failure("ProjectSource 삭제 실패\n\(error)")
+            return
+        }
     }
     
     
@@ -278,6 +276,7 @@ package final class ProjectSource: ProjectSourceInterface {
         
         package var systemLocations: Set<Location>
         
+        // MARK: core
         init(name: String,
              creator: UserID) {
             self.target = ProjectID()
@@ -286,6 +285,18 @@ package final class ProjectSource: ProjectSourceInterface {
             self.name = name
             self.creator = creator
             self.systemLocations = []
+        }
+        
+        // MARK: operator
+        func getDiff(id: ProjectSource.ID) -> ProjectSourceDiff {
+            let now = Date.now
+            
+            return .init(id: id,
+                         target: self.target,
+                         name: self.name,
+                         createdAt: self.createdAt?.dateValue() ?? now,
+                         updatedAt: self.updatedAt?.dateValue() ?? now,
+                         order: self.order)
         }
     }
     package typealias EventHandler = Handler<ProjectSourceEvent>
