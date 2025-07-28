@@ -335,14 +335,45 @@ package final class ObjectSource: ObjectSourceInterface {
         let systemSource = self.owner
         let proejctSource = systemSource.ref!.owner
         
-        let objectSourceDocRef = Firestore.firestore()
+        let firebaseDB = Firestore.firestore()
+        
+        let systemSourceDocRef = firebaseDB
             .collection(DB.ProjectSources).document(proejctSource.value)
             .collection(DB.SystemSources).document(systemSource.value)
+        
+        let objectSourceDocRef = systemSourceDocRef
             .collection(DB.ObjectSources).document(objectSource.value)
         
         // compute
         do {
-            try await objectSourceDocRef.delete()
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, errorPointer in
+                
+                // get ObjectSource
+                let objectRole: ObjectRole
+                do {
+                    let objectSourceData = try transaction
+                        .getDocument(objectSourceDocRef)
+                        .data(as: ObjectSource.Data.self)
+                    
+                    objectRole = objectSourceData.role
+                } catch let error as NSError{
+                    errorPointer?.pointee = error
+                    return
+                }
+
+                // update SystemSourceDocRef when RootObject
+                if objectRole == .root {
+                    transaction.updateData([
+                        SystemSource.Data.rootExist: false
+                    ], forDocument: systemSourceDocRef)
+                }
+                
+                // delete ObjectSource
+                transaction.deleteDocument(objectSourceDocRef)
+                
+                // cloud function will call for cleanup
+                return
+            }
         } catch {
             logger.failure("ObjectSource 삭제 실패\n\(error)")
             return
