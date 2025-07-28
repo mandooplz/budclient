@@ -8,10 +8,12 @@ import Foundation
 import Values
 import BudServer
 
+private let logger = BudLogger("ValueModel")
+
 
 // MARK: Object
 @MainActor @Observable
-public final class ValueModel: Sendable {
+public final class ValueModel: Debuggable, EventDebuggable, Hookable {
     // MARK: core
     init(config: Config<ProjectModel.ID>,
          diff: ValueSourceDiff) {
@@ -37,13 +39,26 @@ public final class ValueModel: Sendable {
     public var description: String?
     
     public var fields: [ValueField] = []
+
+    public var callback: Callback?
+    public var issue: (any IssueRepresentable)?
     
-    
-    
+    package var captureHook: Hook?
+    package var computeHook: Hook?
+    package var mutateHook: Hook?
+
     
     // MARK: action
-    public func pushChanges() async {
-        fatalError()
+    public func startUpdating() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.valueModelIsDeleted)
+            logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
     }
     
     
@@ -59,6 +74,9 @@ public final class ValueModel: Sendable {
         public var ref: ValueModel? {
             ValueModelManager.container[self]
         }
+    }
+    public enum Error: String, Swift.Error {
+        case valueModelIsDeleted
     }
 }
 
