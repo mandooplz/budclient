@@ -50,7 +50,7 @@ package final class ProjectHubMock: ProjectHubInterface {
         
         for diff in diffs {
             for eventHandler in self.handlers.values {
-                eventHandler.execute(.added(diff))
+                eventHandler.execute(.projectAdded(diff))
             }
         }
     }
@@ -79,7 +79,7 @@ package final class ProjectHubMock: ProjectHubInterface {
         let diff = ProjectSourceDiff(projectSourceRef)
         
         handlers.values.forEach { eventHandler in
-            eventHandler.execute(.added(diff))
+            eventHandler.execute(.projectAdded(diff))
         }
     }
     

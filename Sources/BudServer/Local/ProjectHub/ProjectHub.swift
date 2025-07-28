@@ -82,7 +82,7 @@ package final class ProjectHub: ProjectHubInterface {
                                                              owner: me)
                         me.ref?.projectSources[data.target] = projectSourceRef.id
                         
-                        me.ref?.handler?.execute(.added(diff))
+                        me.ref?.handler?.execute(.projectAdded(diff))
                     case .modified:
                         // notify
                         projectSource.ref?.handlers?.execute(.modified(diff))

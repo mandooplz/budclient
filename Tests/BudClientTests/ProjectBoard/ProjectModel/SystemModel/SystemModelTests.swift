@@ -797,7 +797,7 @@ struct SystemModelUpdaterTests {
                                         name: "",
                                         location: .init(x: 99, y: 99))
             
-            await projectModelUpdaterRef.appendEvent(.added(diff))
+            await projectModelUpdaterRef.appendEvent(.systemAdded(diff))
             await projectModelUpdaterRef.update()
             
             let systemModelRef = try #require(await projectModelRef.systems[diff.target]?.ref)
@@ -825,7 +825,7 @@ struct SystemModelUpdaterTests {
                                         name: "",
                                         location: .init(x: 99, y: 99))
             
-            await projectModelUpdaterRef.appendEvent(.added(diff))
+            await projectModelUpdaterRef.appendEvent(.systemAdded(diff))
             await projectModelUpdaterRef.update()
             
             let systemModelRef = try #require(await projectModelRef.systems[diff.target]?.ref)

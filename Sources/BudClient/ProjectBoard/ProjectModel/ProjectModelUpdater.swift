@@ -82,7 +82,7 @@ extension ProjectModel {
                     logger.end("removed ProjectModel")
                     
                 // create SystemModel
-                case .added(let sysDiff):
+                case .systemAdded(let sysDiff):
                     guard projectModelRef.systems[sysDiff.target] == nil else {
                         setIssue(Error.alreadyAdded)
                         logger.failure("SystemModel이 이미 존재합니다.")
@@ -98,6 +98,9 @@ extension ProjectModel {
                     projectModelRef.systems[sysDiff.target] = systemModelRef.id
                     
                     logger.end("added SystemModel")
+                    
+                case .valueAdded:
+                    fatalError()
                 }
                 
             }

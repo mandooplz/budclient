@@ -185,7 +185,7 @@ struct ProjectBoardUpdaterTests {
                 updatedAt: .now,
                 order: 0)
             
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.projectAdded(diff))
             await updaterRef.update()
             
             // then
@@ -208,7 +208,7 @@ struct ProjectBoardUpdaterTests {
                 updatedAt: .now,
                 order: 0)
             
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.projectAdded(diff))
             
             // when
             await updaterRef.update()
@@ -233,7 +233,7 @@ struct ProjectBoardUpdaterTests {
                                          createdAt: .now,
                                          updatedAt: .now,
                                          order: 0)
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.projectAdded(diff))
             
             // when
             await updaterRef.update()

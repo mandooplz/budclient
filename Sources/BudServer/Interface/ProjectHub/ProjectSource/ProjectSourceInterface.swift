@@ -37,15 +37,16 @@ package protocol ProjectSourceIdentity: Sendable, Hashable {
 
 
 // MARK: Values
-public enum ProjectSourceEvent: Sendable {
+package enum ProjectSourceEvent: Sendable {
     case modified(ProjectSourceDiff)
     case removed
     
-    case added(SystemSourceDiff)
+    case systemAdded(SystemSourceDiff)
+    case valueAdded(ValueSourceDiff)
 }
 
 
-public struct ProjectSourceDiff: Sendable {
+package struct ProjectSourceDiff: Sendable {
     package let id: any ProjectSourceIdentity
     package let target: ProjectID
     package let name: String

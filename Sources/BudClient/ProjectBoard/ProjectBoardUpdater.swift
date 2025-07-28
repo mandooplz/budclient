@@ -51,7 +51,7 @@ extension ProjectBoard {
             while queue.isEmpty == false {
                 let event = queue.removeFirst()
                 switch event {
-                case .added(let diff):
+                case .projectAdded(let diff):
                     let newProject = diff.target
                     
                     guard projectBoardRef.projects[newProject] == nil else {

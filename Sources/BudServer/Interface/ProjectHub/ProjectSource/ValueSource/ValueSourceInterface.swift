@@ -18,7 +18,7 @@ package protocol ValueSourceInterface: Sendable, SyncInterface {
     
     
     // MARK: action
-    func synchorize() async
+    func synchorize() async // 과연 필요한가.
 }
 
 
@@ -33,22 +33,28 @@ package protocol ValueSourceIdentity: Sendable, Hashable {
 // MARK: Values
 package enum ValueSourceEvent: Sendable {
     case modified(ValueSourceDiff)
+    case removed
 }
 
-package struct ValueSourceDiff: Sendable {
+public struct ValueSourceDiff: Sendable {
     package let id: any ValueSourceIdentity
-    package let target: ValueID
+    public let target: ValueID
     
-    package let name: String
-    package let description: String?
+    public let name: String
+    public let description: String?
     
-    package let fields: [ValueField]
+    public let fields: [ValueField]
 }
 
 
 public struct ValueField: Sendable, Hashable {
-    let name: String
-    let type: ValueID
+    public let name: String
+    public let type: ValueID
+    
+    public init(name: String, type: ValueID) {
+        self.name = name
+        self.type = type
+    }
 }
 
 

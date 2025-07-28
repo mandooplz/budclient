@@ -115,7 +115,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         let diff = SystemSourceDiff(systemSourceRef)
         
         projectSourceHandlers.forEach { eventHandler in
-            eventHandler.execute(.added(diff))
+            eventHandler.execute(.systemAdded(diff))
         }
     }
     package func addSystemLeft() async {
@@ -144,7 +144,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         let diff = SystemSourceDiff(systemSourceRef)
         
         projectSourceHandlers.forEach { eventHandler in
-            eventHandler.execute(.added(diff))
+            eventHandler.execute(.systemAdded(diff))
         }
     }
     package func addSystemTop() async {
@@ -172,7 +172,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         // notify
         let diff = SystemSourceDiff(systemSourceRef)
         projectSourceHandlers.forEach { eventHandler in
-            eventHandler.execute(.added(diff))
+            eventHandler.execute(.systemAdded(diff))
         }
     }
     package func addSystemBottom() async {
@@ -201,7 +201,7 @@ package final class SystemSourceMock: SystemSourceInterface {
         let diff = SystemSourceDiff(systemSourceRef)
         
         projectSourceHandlers.forEach { eventHandler in
-            eventHandler.execute(.added(diff))
+            eventHandler.execute(.systemAdded(diff))
         }
     }
     

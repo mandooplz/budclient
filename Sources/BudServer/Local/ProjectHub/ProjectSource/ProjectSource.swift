@@ -122,7 +122,7 @@ package final class ProjectSource: ProjectSourceInterface {
                         me.ref?.systems[data.target] = systemSourceRef.id
 
                         // serve event
-                        handler.execute(.added(diff))
+                        handler.execute(.systemAdded(diff))
                     case .modified:
                         // notify
                         systemSource.ref?.handler?.execute(.modified(diff))

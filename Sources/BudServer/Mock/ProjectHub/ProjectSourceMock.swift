@@ -77,7 +77,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
             .map { SystemSourceDiff($0) }
         
         for handler in self.handlers.values {
-            diffs.forEach { handler.execute(.added($0)) }
+            diffs.forEach { handler.execute(.systemAdded($0)) }
         }
     }
     
@@ -106,7 +106,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         let diff = SystemSourceDiff(systemSourceRef)
         
         handlers.values.forEach { handler in
-            handler.execute(.added(diff))
+            handler.execute(.systemAdded(diff))
         }
         
         

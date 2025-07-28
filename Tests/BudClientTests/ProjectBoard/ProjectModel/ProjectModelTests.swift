@@ -490,7 +490,7 @@ struct ProjectModelUpdaterTests {
             let projectBoardRef = try #require(await projectModelRef.config.parent.ref)
             let projectBoardUpdaterRef = projectBoardRef.updaterRef
             
-            await projectBoardUpdaterRef.appendEvent(.added(diff))
+            await projectBoardUpdaterRef.appendEvent(.projectAdded(diff))
             await projectBoardUpdaterRef.update()
             
             let projectModel = try #require(await projectBoardRef.projects[newProject])
@@ -575,7 +575,7 @@ struct ProjectModelUpdaterTests {
                 name: "TEST_NAME",
                 location: .init(x: 999, y: 999))
             
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.systemAdded(diff))
             
             // when
             await updaterRef.update()
@@ -595,11 +595,11 @@ struct ProjectModelUpdaterTests {
             )
             let diff = await SystemSourceDiff(newSystemSourceMockRef)
             
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.systemAdded(diff))
             await updaterRef.update()
             
             // when
-            await updaterRef.appendEvent(.added(diff))
+            await updaterRef.appendEvent(.systemAdded(diff))
             await updaterRef.update()
             
             // then
