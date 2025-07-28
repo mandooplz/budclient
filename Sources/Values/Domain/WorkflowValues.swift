@@ -10,12 +10,20 @@ import Foundation
 // MARK: WorkflowID
 public struct WorkflowID: IDRepresentable {
     public let value: UUID
+    
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
 
 
 // MARK: FlowID
 public struct FlowID: IDRepresentable {
     public let value: UUID
+    
+    public init(_ value: UUID = UUID()) {
+        self.value = value
+    }
 }
 
 

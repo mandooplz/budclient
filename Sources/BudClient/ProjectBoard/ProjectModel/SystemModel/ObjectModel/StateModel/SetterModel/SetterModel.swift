@@ -26,7 +26,7 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
         self.name = diff.name
         self.nameInput = diff.name
         
-        self.parameters = diff.parameters.toDictionary()
+        self.parameters = diff.parameters
         self.parameterInput = diff.parameters
         
         self.updaterRef = Updater(owner: self.id)
@@ -49,8 +49,8 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public var parameters: OrderedDictionary<ParameterValue,ValueID>
-    public var parameterInput: OrderedSet<ParameterValue>
+    public var parameters: [ParameterValue]
+    public var parameterInput: [ParameterValue]
     public var parameterIndex: IndexSet = []
     
     public var issue: (any IssueRepresentable)?
@@ -152,7 +152,7 @@ public final class SetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("SetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
-        guard parameterInput != parameters.keys else {
+        guard parameterInput != parameters else {
             setIssue(Error.parametersAreSameAsCurrent)
             logger.failure("Parameters에 변경사항이 없습니다.")
             return

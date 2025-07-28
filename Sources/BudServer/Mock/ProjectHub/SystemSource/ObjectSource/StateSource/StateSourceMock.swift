@@ -17,13 +17,12 @@ package final class StateSourceMock: StateSourceInterface {
     // MARK: core
     init(name: String,
          accessLevel: AccessLevel = .readAndWrite,
-         stateValue: StateValue = .anyState,
+         stateValue: StateValue? = nil,
          owner: ObjectSourceMock.ID) {
         self.owner = owner
         
         self.name = name
         self.accessLevel = accessLevel
-        self.stateValue = stateValue
         
         StateSourceMockManager.register(self)
     }
@@ -45,7 +44,7 @@ package final class StateSourceMock: StateSourceInterface {
     var name: String
     
     var accessLevel: AccessLevel
-    var stateValue: StateValue
+    var stateValue: StateValue?
     
     var syncQueue: Deque<ObjectID> = []
     
@@ -64,7 +63,7 @@ package final class StateSourceMock: StateSourceInterface {
     package func setName(_ value: String) async {
         self.name = value
     }
-    package func setStateValue(_ value: StateValue) async {
+    package func setStateValue(_ value: StateValue?) async {
         self.stateValue = value
     }
     package func setAccessLevel(_ value: AccessLevel) async {

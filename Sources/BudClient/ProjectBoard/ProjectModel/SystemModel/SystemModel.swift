@@ -23,6 +23,10 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
         self.source = diff.id
         self.updaterRef = Updater(owner: self.id)
         
+        self.createdAt = diff.createdAt
+        self.updatedAt = diff.updatedAt
+        self.order = diff.order
+        
         self.name = diff.name
         self.nameInput = diff.name
         self.location = diff.location
@@ -40,6 +44,10 @@ public final class SystemModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let source: any SystemSourceIdentity
     nonisolated let updaterRef: Updater
     var isUpdating: Bool = false
+    
+    nonisolated let createdAt: Date
+    var updatedAt: Date
+    var order: Int
     
     public internal(set) var name: String
     public var nameInput: String

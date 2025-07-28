@@ -175,7 +175,7 @@ struct SetterModelTests {
         
         @Test func whenParameterInputIsSameAsCurrent() async throws {
             // given
-            let parameterValues = await setterModelRef.parameters.keys
+            let parameterValues = await setterModelRef.parameters
             let parameterInput = await setterModelRef.parameterInput
             
             try #require(parameterValues == parameterInput)
@@ -189,13 +189,13 @@ struct SetterModelTests {
         }
         @Test func updateParametersByUpdater() async throws {
             // given
-            let parameterInput = OrderedSet([
+            let parameterInput = [
                 ParameterValue(name: "name", type: .stringValue),
                 ParameterValue(name: "age", type: .intValue)
-            ])
+            ]
             
             await MainActor.run {
-                setterModelRef.parameters = [:]
+                setterModelRef.parameters = []
                 setterModelRef.parameterInput = parameterInput
             }
             
@@ -214,9 +214,7 @@ struct SetterModelTests {
             }
             
             // then
-            let dict = parameterInput.toDictionary()
-            
-            await #expect(setterModelRef.parameters == dict)
+            await #expect(setterModelRef.parameters == parameterInput)
         }
     }
     
@@ -441,10 +439,10 @@ struct SetterModelUpdaterTests {
         
         @Test func modifyParameters() async throws {
             // given
-            let oldParameters = OrderedSet<ParameterValue>().toDictionary()
-            let newParameters = OrderedSet([
+            let oldParameters = [ParameterValue]()
+            let newParameters = [
                 ParameterValue(name: "name", type: .stringValue)
-            ])
+            ]
             
             await MainActor.run {
                 setterModelRef.parameters = oldParameters
@@ -461,14 +459,14 @@ struct SetterModelUpdaterTests {
             
             // then
             await #expect(setterModelRef.parameters != oldParameters)
-            await #expect(setterModelRef.parameters == newParameters.toDictionary())
+            await #expect(setterModelRef.parameters == newParameters)
         }
         @Test func modifyParameterInput() async throws {
             // given
-            let oldParameters = OrderedSet<ParameterValue>()
-            let newParameters = OrderedSet([
+            let oldParameters = [ParameterValue]()
+            let newParameters = [
                 ParameterValue(name: "name", type: .stringValue)
-            ])
+            ]
             
             await MainActor.run {
                 setterModelRef.parameterInput = oldParameters

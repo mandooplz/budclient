@@ -61,7 +61,7 @@ extension GetterModel {
                     getterModelRef.name = diff.name
                     getterModelRef.nameInput = diff.name
                     
-                    getterModelRef.parameters = diff.parameters.toDictionary()
+                    getterModelRef.parameters = diff.parameters
                     getterModelRef.parameterInput = diff.parameters
                     
                     getterModelRef.result = diff.result

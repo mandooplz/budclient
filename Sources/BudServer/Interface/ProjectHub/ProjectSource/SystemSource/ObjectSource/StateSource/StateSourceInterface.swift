@@ -19,7 +19,7 @@ package protocol StateSourceInterface: Sendable, SyncInterface {
     
     func setName(_ value: String) async;
     func setAccessLevel(_ value: AccessLevel) async;
-    func setStateValue(_ value: StateValue) async;
+    func setStateValue(_ value: StateValue?) async;
     
     
     // MARK: action
@@ -53,9 +53,9 @@ package struct StateSourceDiff: Sendable {
     
     package let name: String
     package let accessLevel: AccessLevel
-    package let stateValue: StateValue
+    package let stateValue: StateValue?
     
-    package init(id: any StateSourceIdentity, target: StateID, createdAt: Date, updatedAt: Date, order: Int, name: String, accessLevel: AccessLevel, stateValue: StateValue) {
+    package init(id: any StateSourceIdentity, target: StateID, createdAt: Date, updatedAt: Date, order: Int, name: String, accessLevel: AccessLevel, stateValue: StateValue?) {
         self.id = id
         self.target = target
         self.createdAt = createdAt

@@ -63,7 +63,7 @@ extension SetterModel {
                     setterModelRef.name = diff.name
                     setterModelRef.nameInput = diff.name
                     
-                    setterModelRef.parameters = diff.parameters.toDictionary()
+                    setterModelRef.parameters = diff.parameters
                     setterModelRef.parameterInput = diff.parameters
                     
                     logger.end("modified SetterModel")

@@ -6,7 +6,6 @@
 //
 import Foundation
 import Values
-import Collections
 
 
 // MARK: Interface
@@ -15,7 +14,7 @@ package protocol SetterSourceInterface: Sendable {
     
     // MARK: state
     func setName(_ value: String) async
-    func setParameters(_ value: OrderedSet<ParameterValue>) async
+    func setParameters(_ value: [ParameterValue]) async
     func appendHandler(requester: ObjectID, _ handler: Handler<SetterSourceEvent>) async
     
     
@@ -46,9 +45,9 @@ package struct SetterSourceDiff: Sendable {
     package let order: Int
     
     package let name: String
-    package let parameters: OrderedSet<ParameterValue>
+    package let parameters: [ParameterValue]
     
-    package init(id: any SetterSourceIdentity, target: SetterID, createdAt: Date, updatedAt: Date, order: Int, name: String, parameters: OrderedSet<ParameterValue>) {
+    package init(id: any SetterSourceIdentity, target: SetterID, createdAt: Date, updatedAt: Date, order: Int, name: String, parameters: [ParameterValue]) {
         self.id = id
         self.target = target
         self.createdAt = createdAt
@@ -68,7 +67,7 @@ package struct SetterSourceDiff: Sendable {
         self.order = objectRef.order
         
         self.name = objectRef.name
-        self.parameters = objectRef.parameters.keys
+        self.parameters = objectRef.parameters
     }
 }
 

@@ -17,7 +17,9 @@ private let logger = BudLogger("GetterSource")
 @MainActor
 package final class GetterSource: GetterSourceInterface {
     // MARK: core
-    init(id: ID, target: GetterID, owner: StateSource.ID) {
+    init(id: ID,
+         target: GetterID,
+         owner: StateSource.ID) {
         self.id = id
         self.target = target
         self.owner = owner
@@ -69,7 +71,7 @@ package final class GetterSource: GetterSourceInterface {
         }
         
     }
-    package func setParameters(_ value: OrderedSet<ParameterValue>) async {
+    package func setParameters(_ value: [ParameterValue]) async {
         logger.start()
         
         // capture
@@ -92,7 +94,7 @@ package final class GetterSource: GetterSourceInterface {
             .collection(DB.GetterSources).document(getterSource.value)
         
         let updateFields: [String: Any] = [
-            "parameters" : value.encode()
+            Data.parameters : value.encode()
         ]
         
         // compute
@@ -103,7 +105,7 @@ package final class GetterSource: GetterSourceInterface {
             return
         }
     }
-    package func setResult(_ value: ValueType) async {
+    package func setResult(_ value: ValueID) async {
         logger.start()
         
         // capture
@@ -126,7 +128,7 @@ package final class GetterSource: GetterSourceInterface {
             .collection(DB.GetterSources).document(getterSource.value)
         
         let updateFields: [String: Any] = [
-            GetterSource.Data.result : value.encode()
+            Data.result : value.encode()
         ]
         
         // compute
@@ -279,13 +281,13 @@ package final class GetterSource: GetterSourceInterface {
         var order: Int
         
         var name: String
-        var parameters: OrderedSet<ParameterValue>
-        var result: ValueType
+        var parameters: [ParameterValue]
+        var result: ValueID?
         
         // MARK: core
         init(name: String = "New Getter",
-             parameters: OrderedSet<ParameterValue> = [],
-             result: ValueType = .void) {
+             parameters: [ParameterValue] = [],
+             result: ValueID? = nil) {
             self.target = GetterID()
             self.order = 0
             

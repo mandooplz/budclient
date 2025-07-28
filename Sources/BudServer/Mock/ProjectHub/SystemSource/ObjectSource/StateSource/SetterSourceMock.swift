@@ -46,9 +46,9 @@ package final class SetterSourceMock: SetterSourceInterface {
     }
     
     
-    var parameters: OrderedDictionary<ParameterValue, ValueID> = [:]
-    package func setParameters(_ value: OrderedSet<ParameterValue>) {
-        self.parameters = value.toDictionary()
+    var parameters: [ParameterValue] = []
+    package func setParameters(_ value: [ParameterValue]) {
+        self.parameters = value
     }
     
     package func setHandler(requester: ObjectID, _ handler: EventHandler) async {

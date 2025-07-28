@@ -34,8 +34,21 @@ package protocol ValueSourceIdentity: Sendable, Hashable {
 package enum ValueSourceEvent: Sendable {
     case modified(ValueSourceDiff)
 }
+
 package struct ValueSourceDiff: Sendable {
+    package let id: any ValueSourceIdentity
+    package let target: ValueID
     
+    package let name: String
+    package let description: String?
+    
+    package let fields: [ValueField]
+}
+
+
+public struct ValueField: Sendable, Hashable {
+    let name: String
+    let type: ValueID
 }
 
 

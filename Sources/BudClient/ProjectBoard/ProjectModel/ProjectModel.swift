@@ -6,7 +6,6 @@
 //
 import Foundation
 import Values
-import Collections
 import BudServer
 
 private let logger = BudLogger("ProjectModel")
@@ -45,16 +44,31 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public internal(set) var systems = OrderedDictionary<SystemID, SystemModel.ID>()
-    public internal(set) var workflows = OrderedDictionary<WorkflowID, WorkflowModel.ID>()
-    public internal(set) var values = OrderedDictionary<ValueID, ValueModel.ID>()
-    
-    
-    public var systemLocations: Array<Location> {
+    var systems: [SystemID: SystemModel.ID] = [:]
+    public var systemList: [SystemModel.ID] {
+        systems.values
+            .sorted {
+                ($0.ref!.updatedAt, $0.ref!.order) < ($1.ref!.updatedAt, $1.ref!.order)
+            }
+    }
+    public var systemLocations: [Location] {
         self.systems.values
             .compactMap { $0.ref }
             .map { $0.location }
     }
+    
+    var workflows: [WorkflowID: WorkflowModel.ID] = [:]
+    public var workflowList: [WorkflowModel.ID] {
+        self.workflows.values
+            .sorted {
+                ($0.ref!.updatedAt, $0.ref!.order) < ($1.ref!.updatedAt, $1.ref!.order)
+            }
+    }
+    
+    var values: [ValueID: ValueModel.ID] = [:]
+    
+    
+    
         
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
@@ -245,3 +259,4 @@ fileprivate final class ProjectModelManager: Sendable {
         container[id] = nil
     }
 }
+

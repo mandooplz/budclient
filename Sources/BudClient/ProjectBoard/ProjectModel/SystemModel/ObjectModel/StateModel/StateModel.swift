@@ -53,8 +53,8 @@ public final class StateModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var accessLevel : AccessLevel
     public var accessLevelInput: AccessLevel
     
-    public internal(set) var stateValue: StateValue
-    public var stateValueInput: StateValue
+    public internal(set) var stateValue: StateValue?
+    public var stateValueInput: StateValue?
     
     public internal(set) var getters = OrderedDictionary<GetterID,GetterModel.ID>()
     public internal(set) var setters = OrderedDictionary<SetterID, SetterModel.ID>()

@@ -25,9 +25,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
         self.name = diff.name
         self.nameInput = diff.name
         
-        let dictionary =  OrderedDictionary(uniqueKeys: diff.parameters,
-                                            values: diff.parameters.map { $0.type.id})
-        self.parameters = dictionary
+        self.parameters = diff.parameters
         self.parameterInput = diff.parameters
         
         self.result = diff.result
@@ -53,12 +51,12 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
     public internal(set) var name: String
     public var nameInput: String
     
-    public internal(set) var parameters: OrderedDictionary<ParameterValue, ValueID>
-    public var parameterInput: OrderedSet<ParameterValue>
+    public internal(set) var parameters: [ParameterValue]
+    public var parameterInput: [ParameterValue]
     public var parameterIndex: IndexSet = []
     
-    public var result: ValueType
-    public var resultInput: ValueType
+    public var result: ValueID?
+    public var resultInput: ValueID?
     
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
@@ -160,7 +158,7 @@ public final class GetterModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("GetterModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
-        guard parameterInput != parameters.keys else {
+        guard parameterInput != parameters else {
             setIssue(Error.parametersAreSameAsCurrent)
             logger.failure("Parameters에 변경사항이 없습니다.")
             return

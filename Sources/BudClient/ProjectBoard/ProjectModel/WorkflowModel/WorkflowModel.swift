@@ -13,8 +13,14 @@ import BudServer
 @MainActor @Observable
 public final class WorkflowModel: Sendable {
     // MARK: core
-    init(config: Config<ProjectModel.ID>) {
+    init(config: Config<ProjectModel.ID>,
+         diff: WorkflowSourceDiff) {
         self.config = config
+        self.target = diff.target
+        
+        self.createdAt = diff.createdAt
+        self.updatedAt = diff.updatedAt
+        self.order = diff.order
         
         WorkflowModelManager.register(self)
     }
@@ -26,6 +32,11 @@ public final class WorkflowModel: Sendable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectModel.ID>
+    nonisolated let target: WorkflowID
+    
+    nonisolated let createdAt: Date
+    var updatedAt: Date
+    var order: Int
     
     
     // MARK: action

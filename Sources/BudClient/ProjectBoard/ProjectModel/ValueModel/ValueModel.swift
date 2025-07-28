@@ -13,8 +13,13 @@ import BudServer
 @MainActor @Observable
 public final class ValueModel: Sendable {
     // MARK: core
-    init(config: Config<ProjectModel.ID>) {
+    init(config: Config<ProjectModel.ID>,
+         diff: ValueSourceDiff) {
         self.config = config
+        self.target = diff.target
+        
+        self.name = diff.name
+        self.description = diff.description
         
         ValueModelManager.register(self)
     }
@@ -26,6 +31,14 @@ public final class ValueModel: Sendable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectModel.ID>
+    nonisolated let target: ValueID
+    
+    public var name: String
+    public var description: String?
+    
+    public var fields: [ValueField] = []
+    
+    
     
     
     // MARK: action

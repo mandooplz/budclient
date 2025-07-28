@@ -201,7 +201,7 @@ package final class StateSource: StateSourceInterface {
             return
         }
     }
-    package func setStateValue(_ value: StateValue) async {
+    package func setStateValue(_ value: StateValue?) async {
         logger.start()
         
         // capture
@@ -221,9 +221,13 @@ package final class StateSource: StateSourceInterface {
             .collection(DB.ObjectSources).document(objectSource.value)
             .collection(DB.StateSources).document(stateSource.value)
         
-        let updateFields: [String: Any] = [
-            Data.accessLevel: value.encode()
-        ]
+        let updateFields: [String: Any] = { @Sendable in
+            if let value {
+                return [Data.stateValue: value.encode() ]
+            } else {
+                return [Data.stateValue: NSNull() ]
+            }
+        }()
         
         // compute
         do {
@@ -474,12 +478,12 @@ package final class StateSource: StateSourceInterface {
         
         package var name: String
         package var accessLevel: AccessLevel
-        package var stateValue: Values.StateValue
+        package var stateValue: StateValue?
         
         init(order: Int = 0,
              name: String = "New State",
              accessLevel: AccessLevel = .readAndWrite,
-             stateValue: StateValue = .anyState) {
+             stateValue: StateValue? = nil) {
             self.order = order
             self.name = name
             self.target = StateID()

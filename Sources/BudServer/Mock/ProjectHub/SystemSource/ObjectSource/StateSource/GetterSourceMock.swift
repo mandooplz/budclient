@@ -6,7 +6,6 @@
 //
 import Foundation
 import Values
-import Collections
 
 private let logger = BudLogger("GetterSourceMock")
 
@@ -42,18 +41,18 @@ package final class GetterSourceMock: GetterSourceInterface {
         self.name = value
     }
     
-    var parameters: OrderedDictionary<ParameterValue, ValueID> = [
-        .init(name: "name", type: .stringValue): ValueType.stringValue.id,
-        .init(name: "age", type: .intValue): ValueType.intValue.id,
-        .init(name: "address", type: .stringValue): ValueType.stringValue.id,
-        .init(name: "year", type: .intValue): ValueType.intValue.id
+    var parameters: [ParameterValue] = [
+        .init(name: "name", type: .stringValue),
+        .init(name: "age", type: .intValue),
+        .init(name: "address", type: .stringValue),
+        .init(name: "year", type: .intValue)
     ]
-    package func setParameters(_ value: OrderedSet<ParameterValue>) {
-        self.parameters = value.toDictionary()
+    package func setParameters(_ value: [ParameterValue]) {
+        self.parameters = value
     }
     
-    var result: ValueType = .void
-    package func setResult(_ value: ValueType) async {
+    var result: ValueID = .voidValue
+    package func setResult(_ value: ValueID) async {
         self.result = value
     }
     

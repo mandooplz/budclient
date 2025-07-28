@@ -6,7 +6,6 @@
 //
 import Foundation
 import Values
-import Collections
 import BudMacro
 import FirebaseFirestore
 
@@ -37,7 +36,6 @@ package final class SetterSource: SetterSourceInterface {
     var handler: EventHandler?
     
     
-    // MARK: action
     package func setName(_ value: String) async {
         logger.start()
         
@@ -73,7 +71,7 @@ package final class SetterSource: SetterSourceInterface {
         }
     }
     
-    package func setParameters(_ value: OrderedSet<Values.ParameterValue>) async {
+    package func setParameters(_ value: [ParameterValue]) async {
         logger.start()
         
         // capture
@@ -116,12 +114,13 @@ package final class SetterSource: SetterSourceInterface {
         self.handler = handler
     }
     
+    
+    // MARK: action
     package func notifyStateChanged() async {
         logger.start()
         
         return
     }
-    
     package func duplicateSetter() async {
         logger.start()
         
@@ -187,7 +186,6 @@ package final class SetterSource: SetterSourceInterface {
             return
         }
     }
-    
     package func removeSetter() async {
         logger.start()
         
@@ -246,11 +244,11 @@ package final class SetterSource: SetterSourceInterface {
         var order: Int
         
         var name: String
-        var parameters: OrderedSet<ParameterValue>
+        var parameters: [ParameterValue]
         
         // MARK: core
         init(name: String = "New Setter",
-             parameters: OrderedSet<ParameterValue> = []) {
+             parameters: [ParameterValue] = []) {
             self.target = SetterID()
             self.order = 0
             
