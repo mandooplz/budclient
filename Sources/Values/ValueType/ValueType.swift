@@ -135,6 +135,10 @@ public extension ParameterValue {
 }
 
 public extension OrderedSet<ParameterValue> {
+    func encode() -> [[String: Any]] {
+        self.map { $0.encode() }
+    }
+    
     func toDictionary() -> OrderedDictionary<ParameterValue, ValueID> {
         OrderedDictionary(uniqueKeys: self,
                           values: self.map { $0.type.id })

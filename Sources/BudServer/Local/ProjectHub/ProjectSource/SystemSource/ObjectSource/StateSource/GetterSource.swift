@@ -92,14 +92,14 @@ package final class GetterSource: GetterSourceInterface {
             .collection(DB.GetterSources).document(getterSource.value)
         
         let updateFields: [String: Any] = [
-            GetterSource.Data.parameters : value.map { $0.encode() }
+            "parameters" : value.encode()
         ]
         
         // compute
         do {
             try await getterSourceDocRef.updateData(updateFields)
         } catch {
-            logger.failure("GetterSource.name 업데이트 실패\n\(error)")
+            logger.failure("GetterSource.parameters 업데이트 실패\n\(error)")
             return
         }
     }
@@ -126,14 +126,14 @@ package final class GetterSource: GetterSourceInterface {
             .collection(DB.GetterSources).document(getterSource.value)
         
         let updateFields: [String: Any] = [
-            GetterSource.Data.result : value.encode() }
+            GetterSource.Data.result : value.encode()
         ]
         
         // compute
         do {
             try await getterSourceDocRef.updateData(updateFields)
         } catch {
-            logger.failure("GetterSource.name 업데이트 실패\n\(error)")
+            logger.failure("GetterSource.result 업데이트 실패\n\(error)")
             return
         }
     }

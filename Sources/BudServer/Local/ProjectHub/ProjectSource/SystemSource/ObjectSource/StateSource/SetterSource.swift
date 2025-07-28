@@ -39,11 +39,73 @@ package final class SetterSource: SetterSourceInterface {
     
     // MARK: action
     package func setName(_ value: String) async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SetterSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let setterSource = self.id
+        let stateSource = self.owner
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let setterSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+            .collection(DB.SetterSources).document(setterSource.value)
+        
+        let updateFields: [String: Any] = [
+            SetterSource.Data.name: value
+        ]
+        
+        // compute
+        do {
+            try await setterSourceDocRef.updateData(updateFields)
+        } catch {
+            logger.failure("SetterSource.name 업데이트 실패\n\(error)")
+            return
+        }
     }
     
     package func setParameters(_ value: OrderedSet<Values.ParameterValue>) async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SetterSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let setterSource = self.id
+        let stateSource = self.owner
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let setterSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+            .collection(DB.SetterSources).document(setterSource.value)
+        
+        let updateFields: [String: Any] = [
+            SetterSource.Data.parameters: value.encode()
+        ]
+        
+        // compute
+        do {
+            try await setterSourceDocRef.updateData(updateFields)
+        } catch {
+            logger.failure("SetterSource.parameters 업데이트 실패\n\(error)")
+            return
+        }
     }
     
     package func appendHandler(requester: ObjectID,
