@@ -291,33 +291,6 @@ struct GetterModelTests {
             
             #expect(newCount == oldCount + 1)
         }
-        @Test func insertGetter_StateModel() async throws {
-            // given
-            try await #require(stateModelRef.isUpdating == true)
-            try await #require(stateModelRef.getters.count == 1)
-            
-            try await createGetterModel(stateModelRef)
-            try await createGetterModel(stateModelRef)
-            
-            try await #require(stateModelRef.getters.count == 3)
-            
-            let getters = await stateModelRef.getters.values
-            
-            // given
-            let index = try #require(await stateModelRef.getters.index(forKey: getterModelRef.target))
-            
-            let newIndex = index.advanced(by: 1)
-            
-            // when
-            try await duplicateGetter(getterModelRef)
-            
-            // then
-            try await #require(stateModelRef.getters.count == 4)
-            
-            let newGetterModel = await stateModelRef.getters.values[newIndex]
-            
-            #expect(getters.contains(newGetterModel) == false)
-        }
         @Test func createGetter_StateModel() async throws {
             // given
             try await #require(stateModelRef.isUpdating == true)
@@ -752,12 +725,14 @@ private func createGetterModel(_ stateModelRef: StateModel) async throws {
 
 // MARK: Helphers - action
 private func duplicateGetter(_ getterModelRef: GetterModel) async throws {
+    let stateModelRef = try #require(await getterModelRef.config.parent.ref)
+    
     await getterModelRef.startUpdating()
     try await #require(getterModelRef.isUpdating == true)
     
     await withCheckedContinuation { continuation in
         Task {
-            await getterModelRef.setCallback {
+            await stateModelRef.setCallback {
                 continuation.resume()
             }
             

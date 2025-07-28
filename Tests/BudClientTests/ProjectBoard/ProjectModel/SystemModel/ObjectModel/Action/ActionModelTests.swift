@@ -191,32 +191,6 @@ struct ActionModelTests {
             
             #expect(newCount == oldCount + 1)
         }
-        @Test func insertActionModel_ObjectModel() async throws {
-            // given
-            try await #require(objectModelRef.actions.count == 1)
-            
-            try await createNewActionModel(objectModelRef)
-            try await createNewActionModel(objectModelRef)
-            
-            try await #require(objectModelRef.actions.count == 3)
-            
-            let actions = await objectModelRef.actions.values
-            
-            // given
-            let index = try #require(await objectModelRef.actions.index(forKey: actionModelRef.target))
-            
-            let newIndex = index.advanced(by: 1)
-            
-            // when
-            try await duplicateAction(actionModelRef)
-            
-            // then
-            try await #require(objectModelRef.actions.count == 4)
-            
-            let newActionModel = await  objectModelRef.actions.values[newIndex]
-            
-            #expect(actions.contains(newActionModel) == false)
-        }
         @Test func createActionModel_ObjectModel() async throws {
             // given
             try await #require(objectModelRef.actions.count == 1)
@@ -526,12 +500,14 @@ private func createNewActionModel(_ objectModelRef: ObjectModel) async throws {
 
 // MARK: Helphers - action
 private func duplicateAction(_ actionModelRef: ActionModel) async throws {
+    let objectModelRef = try #require(await actionModelRef.config.parent.ref)
+    
     await actionModelRef.startUpdating()
     try await #require(actionModelRef.isUpdating == true)
     
     await withCheckedContinuation { continuation in
         Task {
-            await actionModelRef.setCallback {
+            await objectModelRef.setCallback {
                 continuation.resume()
             }
             

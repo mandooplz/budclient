@@ -87,6 +87,7 @@ package final class GetterSourceMock: GetterSourceInterface {
             logger.failure("GetterSourceMock이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let stateSourceRef = self.owner.ref!
         
         // mutate
         let newGetterSourceRef = GetterSourceMock(
@@ -97,10 +98,8 @@ package final class GetterSourceMock: GetterSourceInterface {
         // notify
         let diff = GetterSourceDiff(newGetterSourceRef)
         
-        self.handlers.values
-            .forEach {
-                $0.execute(.getterDuplicated(diff))
-            }
+        stateSourceRef.handlers.values
+            .forEach { $0.execute(.getterAdded(diff))}
     }
     
     package func removeGetter() async {

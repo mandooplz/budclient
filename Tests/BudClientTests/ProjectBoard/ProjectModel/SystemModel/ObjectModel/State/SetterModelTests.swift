@@ -263,33 +263,6 @@ struct SetterModelTests {
             
             #expect(newCount == oldCount + 1)
         }
-        @Test func insertSetter_StateModel() async throws {
-            // given
-            try await #require(stateModelRef.isUpdating == true)
-            try await #require(stateModelRef.setters.count == 1)
-            
-            try await createSetterModel(stateModelRef)
-            try await createSetterModel(stateModelRef)
-            
-            try await #require(stateModelRef.setters.count == 3)
-            
-            let setters = await stateModelRef.setters.values
-            
-            // given
-            let index = try #require(await stateModelRef.setters.index(forKey: setterModelRef.target))
-            
-            let newIndex = index.advanced(by: 1)
-            
-            // when
-            try await duplicateSetter(setterModelRef)
-            
-            // then
-            try await #require(stateModelRef.setters.count == 4)
-            
-            let newSetterModel = await stateModelRef.setters.values[newIndex]
-            
-            #expect(setters.contains(newSetterModel) == false)
-        }
         @Test func createSetter_StateModel() async throws {
             // given
             try await #require(stateModelRef.isUpdating == true)
@@ -681,12 +654,14 @@ private func createSetterModel(_ stateModelRef: StateModel) async throws {
 
 // MARK: Helphers - action
 private func duplicateSetter(_ setterModelRef: SetterModel) async throws {
+    let stateModelRef = try #require(await setterModelRef.config.parent.ref)
+    
     await setterModelRef.startUpdating()
     try await #require(setterModelRef.isUpdating == true)
     
     await withCheckedContinuation { continuation in
         Task {
-            await setterModelRef.setCallback {
+            await stateModelRef.setCallback {
                 continuation.resume()
             }
             

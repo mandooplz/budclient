@@ -103,8 +103,9 @@ package final class SetterSourceMock: SetterSourceInterface {
         
         // notify
         let diff = SetterSourceDiff(newSetterSourceRef)
-        self.handlers.values
-            .forEach { $0.execute(.setterDuplicated(diff))}
+        
+        stateSourceRef.handlers.values
+            .forEach { $0.execute(.setterAdded(diff)) }
     }
     package func removeSetter() async {
         logger.start()

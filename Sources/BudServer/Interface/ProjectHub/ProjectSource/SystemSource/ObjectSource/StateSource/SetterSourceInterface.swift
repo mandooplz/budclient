@@ -76,6 +76,5 @@ package struct SetterSourceDiff: Sendable {
 package enum SetterSourceEvent: Sendable {
     case modified(SetterSourceDiff)
     case removed
-    
-    case setterDuplicated(SetterSourceDiff)
+
 }
