@@ -474,3 +474,4 @@ fileprivate final class ObjectSourceManager: Sendable {
         container[id] = nil
     }
 }
+

@@ -170,41 +170,277 @@ package final class StateSource: StateSourceInterface {
     }
     
     package func setName(_ value: String) async {
+        logger.start()
         
-        fatalError()
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let stateSource = self.id
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let stateSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+        
+        let updateFields: [String: Any] = [
+            StateSource.Data.name: value
+        ]
+        
+        // compute
+        do {
+            try await stateSourceDocRef.updateData(updateFields)
+        } catch {
+            logger.failure("StateSource name 업데이트 실패\n\(error)")
+            return
+        }
     }
     package func setStateValue(_ value: StateValue) async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let stateSource = self.id
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let stateSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+        
+        let updateFields: [String: Any] = [
+            Data.accessLevel: value.encode()
+        ]
+        
+        // compute
+        do {
+            try await stateSourceDocRef.updateData(updateFields)
+        } catch {
+            logger.failure("StateSource stateValue 업데이트 실패\n\(error)")
+            return
+        }
     }
     package func setAccessLevel(_ value: AccessLevel) async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let stateSource = self.id
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let stateSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+        
+        let updateFields: [String: Any] = [
+            Data.accessLevel: value.rawValue
+        ]
+        
+        // compute
+        do {
+            try await stateSourceDocRef.updateData(updateFields)
+        } catch {
+            logger.failure("StateSource accesslevel 업데이트 실패\n\(error)")
+            return
+        }
     }
     
     package func registerSync(_ object: ObjectID) async {
-        fatalError()
+        logger.start()
+        
+        return
     }
     
     
     // MARK: action
     package func synchronize() async {
-        fatalError()
+        logger.start()
+        
+        return
     }
     package func notifyStateChanged() async {
-        fatalError()
+        logger.start()
+        
+        return
     }
     
     package func appendNewGetter() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 취소됩니다. ")
+            return
+        }
+        
+        let stateSource = self.id
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let getterSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+            .collection(DB.GetterSources)
+        
+        // compute
+        let newGetterSourceData = GetterSource.Data()
+        
+        do {
+            try getterSourceCollectionRef.addDocument(from: newGetterSourceData)
+        } catch {
+            logger.failure("GetterSource 생성 실패\n\(error)")
+            return
+        }
+        
     }
     package func appendNewSetter() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 취소됩니다. ")
+            return
+        }
+        
+        let stateSource = self.id
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let setterSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+            .collection(DB.SetterSources)
+        
+        // compute
+        let newSetterSourceData = SetterSource.Data()
+        
+        do {
+            try setterSourceCollectionRef.addDocument(from: newSetterSourceData)
+        } catch {
+            logger.failure("SetterSource 생성 실패\n\(error)")
+            return
+        }
+        
+        
     }
     
     package func duplicateState() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 취소됩니다. ")
+            return
+        }
+        
+        let stateSource = self.id
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let firebaseDB = Firestore.firestore()
+        
+        let stateSourceCollectionRef = firebaseDB
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources)
+        
+        let stateSourceDocRef = stateSourceCollectionRef
+            .document(stateSource.value)
+        
+        // compute
+        do {
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, _ in
+                // get sourceData
+                let sourceData: StateSource.Data
+                do {
+                    sourceData = try transaction.getDocument(stateSourceDocRef)
+                        .data(as: StateSource.Data.self)
+                    
+                } catch {
+                    logger.failure("Get StateSourceData 실패\n\(error)")
+                    return
+                }
+                
+                // create StateSource(duplicated)
+                let newData = StateSource.Data(
+                    name: sourceData.name,
+                    accessLevel: sourceData.accessLevel,
+                    stateValue: sourceData.stateValue
+                )
+                
+                let newDocRef = stateSourceCollectionRef.document()
+                
+                do {
+                    try transaction.setData(from: newData,
+                                                  forDocument: newDocRef)
+                } catch {
+                    logger.failure("Create StateSource 실패\n\(error)")
+                    return
+                }
+                
+                return
+            }
+        } catch {
+            logger.failure(error)
+            return
+        }
     }
     package func removeState() async {
-        fatalError()
+        logger.start()
+
+        // capture
+        guard id.isExist else {
+            logger.failure("StateSource가 존재하지 않아 실행 취소됩니다. ")
+            return
+        }
+        
+        let stateSource = self.id
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let stateSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+        
+        // compute
+        do {
+            try await stateSourceDocRef.delete()
+        } catch {
+            logger.failure("StateSource 삭제 실패\n\(error)")
+            return
+        }
     }
     
     

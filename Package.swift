@@ -78,7 +78,8 @@ let package = Package(
         .target(
             name: "Values",
             dependencies: [
-                .product(name: "Collections", package: "swift-collections")
+                .product(name: "Collections", package: "swift-collections"),
+                .product(name: "BudMacro", package: "budmacro")
             ]
         )
     ]

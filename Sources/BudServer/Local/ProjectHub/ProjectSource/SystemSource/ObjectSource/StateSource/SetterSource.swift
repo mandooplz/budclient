@@ -42,7 +42,7 @@ package final class SetterSource: SetterSourceInterface {
         fatalError()
     }
     
-    package func setParameters(_ value: OrderedCollections.OrderedSet<Values.ParameterValue>) async {
+    package func setParameters(_ value: OrderedSet<Values.ParameterValue>) async {
         fatalError()
     }
     
@@ -57,15 +57,104 @@ package final class SetterSource: SetterSourceInterface {
     package func notifyStateChanged() async {
         logger.start()
         
-        logger.failure("Firebase에서 자체적으로 처리됨")
+        return
     }
     
     package func duplicateSetter() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SetterSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let setterSource = self.id
+        let stateSource = self.owner
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let firebaseDB = Firestore.firestore()
+        
+        let setterSourceCollectionRef = firebaseDB
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+            .collection(DB.SetterSources)
+        
+        let setterSourceDocRef = setterSourceCollectionRef
+            .document(setterSource.value)
+        
+        // compute
+        do {
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, _ in
+                // get SourceData
+                let sourceData: SetterSource.Data
+                do {
+                    sourceData = try transaction
+                        .getDocument(setterSourceDocRef)
+                        .data(as: SetterSource.Data.self)
+                } catch {
+                    logger.failure("SourceData 가져오기 실패\n\(error)")
+                    return
+                }
+                
+                // create SetterSource
+                let newData = SetterSource.Data(
+                    name: sourceData.name,
+                    parameters: sourceData.parameters
+                )
+                
+                let newDocRef = setterSourceCollectionRef.document()
+                
+                do {
+                    try transaction.setData(from: newData,
+                                            forDocument: newDocRef)
+                } catch {
+                    logger.failure("새로운 SetterSource 생성 실패\n\(error)")
+                    return
+                }
+                
+                // return
+                return
+            }
+        } catch {
+            logger.failure("SetterSource 복제 실패\n\(error)")
+            return
+        }
     }
     
     package func removeSetter() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("SetterSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let setterSource = self.id
+        let stateSource = self.owner
+        let objectSource = stateSource.ref!.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let setterSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.StateSources).document(stateSource.value)
+            .collection(DB.SetterSources).document(setterSource.value)
+        
+        // compute
+        do {
+            try await setterSourceDocRef.delete()
+        } catch {
+            logger.failure("SetterSource 삭제 실패\n\(error)")
+            return
+        }
     }
     
     // MARK: value
@@ -97,6 +186,17 @@ package final class SetterSource: SetterSourceInterface {
         var name: String
         var parameters: OrderedSet<ParameterValue>
         
+        // MARK: core
+        init(name: String = "New Setter",
+             parameters: OrderedSet<ParameterValue> = []) {
+            self.target = SetterID()
+            self.order = 0
+            
+            self.name = name
+            self.parameters = parameters
+        }
+        
+        // MARK: operator
         func getDiff(id: SetterSource.ID) -> SetterSourceDiff {
             let now = Date.now
             

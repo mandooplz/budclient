@@ -33,9 +33,37 @@ package final class ActionSource: ActionSourceInterface {
     nonisolated let target: ActionID
     nonisolated let owner: ObjectSource.ID
     
-    // MARK: action
     package func setName(_ value: String) async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ActionSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let actionSource = self.id
+        let objectSource = self.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let actionSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.ActionSources).document(actionSource.value)
+        
+        // compute
+        let updateFields: [String: Any] = [
+            ActionSource.Data.name: value
+        ]
+        
+        do {
+            try await actionSourceDocRef.updateData(updateFields)
+        } catch {
+            logger.failure("ActionSource name 업데이트 실패\n\(error)")
+            return
+        }
     }
     
     var handler: EventHandler?
@@ -47,17 +75,104 @@ package final class ActionSource: ActionSourceInterface {
         self.handler = handler
     }
     
+    
+    // MARK: action
     package func notifyStateChanged() async {
         logger.start()
         
-        // Firebase에서 자체적으로 처리해준다.
+        return
     }
+    
     package func duplicateAction() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ActionSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let actionSource = self.id
+        let objectSource = self.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let firebaseDB = Firestore.firestore()
+        
+        let actionSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.ActionSources)
+        
+        let actionSourceDocRef = actionSourceCollectionRef
+            .document(actionSource.value)
+        
+        // compute
+        do {
+            let _ = try await firebaseDB.runTransaction { @Sendable transaction, _ in
+                // get SourceData
+                let sourceData: ActionSource.Data
+                do {
+                    sourceData = try transaction
+                        .getDocument(actionSourceDocRef)
+                        .data(as: ActionSource.Data.self)
+                } catch {
+                    logger.failure("ActionSource Data 가져오기 실패\n\(error)")
+                    return
+                }
+                
+                // create ActionSource
+                let newData = ActionSource.Data(
+                    name: sourceData.name
+                )
+                
+                let newDocRef = actionSourceCollectionRef.document()
+                
+                do {
+                    try transaction.setData(from: newData,
+                                            forDocument: newDocRef)
+                } catch {
+                    logger.failure("새로운 ActionSource 생성 실패\n\(error)")
+                    return
+                }
+                
+                return
+            }
+        } catch {
+            logger.failure("ActionSource 복제 실패\n\(error)")
+            return
+        }
     }
     package func removeAction() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ActionSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let actionSource = self.id
+        let objectSource = self.owner
+        let systemSource = objectSource.ref!.owner
+        let projectSource = systemSource.ref!.owner
+        
+        let actionSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.SystemSources).document(systemSource.value)
+            .collection(DB.ObjectSources).document(objectSource.value)
+            .collection(DB.ActionSources).document(actionSource.value)
+        
+        // compute
+        do {
+            try await actionSourceDocRef.delete()
+        } catch {
+            logger.failure("ActionSource 삭제 실패\n\(error)")
+            return
+        }
     }
+    
     
     // MARK: value
     @MainActor
