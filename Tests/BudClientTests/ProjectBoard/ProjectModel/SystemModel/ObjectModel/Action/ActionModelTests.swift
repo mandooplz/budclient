@@ -338,6 +338,7 @@ struct ActionModelUpdaterTests {
             #expect(issue.reason == "actionModelIsDeleted")
         }
         
+        // ActionSourceEvent.modify
         @Test func modifyActionModelName() async throws {
             // given
             let oldName = "OLD_NAME"
@@ -383,6 +384,7 @@ struct ActionModelUpdaterTests {
             await #expect(actionModelRef.nameInput == newName)
         }
         
+        // ActionSourceEvent.removed
         @Test func deleteActionModel() async throws {
             // given
             try await #require(actionModelRef.id.isExist == true)

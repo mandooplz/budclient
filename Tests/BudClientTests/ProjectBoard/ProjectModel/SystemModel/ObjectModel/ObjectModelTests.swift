@@ -807,6 +807,8 @@ struct ObjectModelUpdaterTests {
         }
         
         // ObjectSourceEvent.stateAdded
+        
+        // ObjectSourceEvent.actionAdded
     }
 }
 

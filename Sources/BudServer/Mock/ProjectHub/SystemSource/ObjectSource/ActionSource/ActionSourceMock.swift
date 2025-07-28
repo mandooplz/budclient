@@ -78,6 +78,7 @@ package final class ActionSourceMock: ActionSourceInterface {
         let newActionSourceRef = ActionSourceMock(
             name: self.name,
             owner: self.owner)
+        
         objectSourceRef.actions.updateValue(
             newActionSourceRef.id,
             forKey: newActionSourceRef.target,

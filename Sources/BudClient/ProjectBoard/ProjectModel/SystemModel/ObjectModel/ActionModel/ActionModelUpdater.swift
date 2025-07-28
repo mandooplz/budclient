@@ -73,7 +73,6 @@ extension ActionModel {
                     
                     logger.end("removed ActionModel")
                 case .actionDuplicated(let diff):
-                    // 굳이 origin이 필요할까?
                     guard objectModelRef.actions[diff.target] == nil else {
                         logger.failure("복제된 ActionModel이 이미 존재합니다.")
                         return
