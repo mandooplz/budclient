@@ -135,6 +135,7 @@ extension ObjectModel {
         // MARK: value
         enum Error: String, Swift.Error {
             case objectModelIsDeleted
+            case eventQueueIsEmpty
         }
         typealias Event = ObjectSourceEvent
     }

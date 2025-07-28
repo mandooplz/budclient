@@ -365,7 +365,7 @@ struct ProjectModelTests {
         }
         @Test func deleteRootObjectModel() async throws {
             // give
-            let systemModelRef = try await createSystemModel(projectModelRef)
+            let systemModelRef = try await createSystem(projectModelRef)
             let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
             
             try await #require(rootObjectModelRef.id.isExist == true)
@@ -378,7 +378,7 @@ struct ProjectModelTests {
         }
         @Test func deleteStateModels() async throws {
             // given
-            let systemModelRef = try await createSystemModel(projectModelRef)
+            let systemModelRef = try await createSystem(projectModelRef)
             let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
             
             try await #require(rootObjectModelRef.states.count == 0)
@@ -393,7 +393,7 @@ struct ProjectModelTests {
         }
         @Test func deleteGetterModels() async throws {
             // given
-            let systemModelRef = try await createSystemModel(projectModelRef)
+            let systemModelRef = try await createSystem(projectModelRef)
             let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
             let stateModelRef = try await createStateModel(rootObjectModelRef)
             
@@ -414,7 +414,7 @@ struct ProjectModelTests {
         }
         @Test func deleteSetterModels() async throws {
             // given
-            let systemModelRef = try await createSystemModel(projectModelRef)
+            let systemModelRef = try await createSystem(projectModelRef)
             let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
             let stateModelRef = try await createStateModel(rootObjectModelRef)
             
@@ -435,7 +435,7 @@ struct ProjectModelTests {
         }
         @Test func deleteActionModels() async throws {
             // given
-            let systemModelRef = try await createSystemModel(projectModelRef)
+            let systemModelRef = try await createSystem(projectModelRef)
             let rootObjectModelRef = try await createRootObjectModel(systemModelRef)
             
             try await #require(rootObjectModelRef.actions.count == 0)
@@ -470,34 +470,52 @@ struct ProjectModelUpdaterTests {
         let budClientRef: BudClient
         let projectModelRef: ProjectModel
         let updaterRef: ProjectModel.Updater
+        let sourceRef: ProjectSourceMock
         init() async throws {
             self.budClientRef = await BudClient()
             self.projectModelRef = try await getProjectModel(budClientRef)
             self.updaterRef = projectModelRef.updaterRef
+            self.sourceRef = try #require(await projectModelRef.source.ref as? ProjectSourceMock)
         }
         
-        @Test func modifyProjectModel() async throws {
+        @Test func whenProjectModelIsDeleted() async throws {
             // given
-            let newProject = ProjectID()
-            let diff = ProjectSourceDiff(
-                id: ProjectSourceMock.ID(),
-                target: newProject,
-                name: "OLD_NAME",
-                createdAt: .now,
-                updatedAt: .now,
-                order: 0)
+            try await #require(projectModelRef.id.isExist == true)
             
-            let projectBoardRef = try #require(await projectModelRef.config.parent.ref)
-            let projectBoardUpdaterRef = projectBoardRef.updaterRef
+            await updaterRef.setCaptureHook {
+                await projectModelRef.delete()
+            }
             
-            await projectBoardUpdaterRef.appendEvent(.projectAdded(diff))
-            await projectBoardUpdaterRef.update()
+            await updaterRef.appendEvent(.removed)
+            try await #require(updaterRef.queue.isEmpty == false)
             
-            let projectModel = try #require(await projectBoardRef.projects[newProject])
+            // when
+            await updaterRef.update()
             
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectModelIsDeleted")
+        }
+        @Test func whenEventQueueIsEmpty() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty == true)
+            try await #require(updaterRef.issue == nil)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "eventQueueIsEmpty")
+        }
+        
+        // ProjectSourceEvent.modified
+        @Test func modifyProjectModelName() async throws {
             // given
             let newName = "NEW_NAME"
-            let newDiff = diff.changeName(newName)
+            await sourceRef.setName(newName)
+            
+            let newDiff = await ProjectSourceDiff(sourceRef)
             
             // when
             await updaterRef.appendEvent(.modified(newDiff))
@@ -506,10 +524,22 @@ struct ProjectModelUpdaterTests {
             try await #require(updaterRef.isIssueOccurred == false)
             
             // then
-            await #expect(projectModel.ref?.name == newName)
+            await #expect(projectModelRef.name == newName)
         }
         
-        @Test func removeProjectModelWhenAlreadyRemoved() async throws {
+        // ProjectSourceEvent.removed
+        @Test func deleteProjectModel() async throws {
+            // given
+            await updaterRef.appendEvent(.removed)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            try await #require(updaterRef.isIssueOccurred == false)
+            await #expect(projectModelRef.id.isExist == false)
+        }
+        @Test func whenProjectModelAlreadyRemoved() async throws {
             // given
             await updaterRef.appendEvent(.removed)
             await updaterRef.update()
@@ -524,31 +554,12 @@ struct ProjectModelUpdaterTests {
             let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "projectModelIsDeleted")
         }
-        @Test func removeProjectModel() async throws {
-            // given
-            await updaterRef.appendEvent(.removed)
-            
-            // when
-            await updaterRef.update()
-            
-            // then
-            try await #require(updaterRef.isIssueOccurred == false)
-            await #expect(projectModelRef.id.isExist == false)
-        }
-        @Test func removeSystemModels() async throws {
+        @Test func deleteSystemModels() async throws {
             // given
             try await #require(projectModelRef.systems.count == 0)
             
             await projectModelRef.startUpdating()
-            await withCheckedContinuation { continuation in
-                Task {
-                    await projectModelRef.setCallback {
-                        continuation.resume()
-                    }
-                    
-                    await projectModelRef.createFirstSystem()
-                }
-            }
+            try await createSystem(projectModelRef)
             
             try await #require(projectModelRef.systems.count == 1)
             
@@ -561,7 +572,12 @@ struct ProjectModelUpdaterTests {
                 await #expect(systemModel.isExist == false)
             }
         }
+        @Test func deleteObjectModels() async throws {
+            
+        }
         
+        
+        // ProjectSourceEvent.systemAdded
         @Test func createSystemModel() async throws {
             // given
             try await #require(projectModelRef.systems.count == 0)
@@ -586,7 +602,7 @@ struct ProjectModelUpdaterTests {
             
             await #expect(projectModelRef.systems.values.first?.isExist == true)
         }
-        @Test func createSystemModelWhenAlreadyAdded() async throws {
+        @Test func whenSystemModelAlreadyAdded() async throws {
             // given
             let newSystemSourceMockRef = await SystemSourceMock(
                 name: "",
@@ -605,6 +621,45 @@ struct ProjectModelUpdaterTests {
             // then
             try await #require(updaterRef.queue.isEmpty)
             
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyAdded")
+        }
+        
+        // ProjectSourceEvent.valueAdded
+        @Test func createValueModel() async throws {
+            // given
+            try await #require(projectModelRef.values.count == 0)
+            try await #require(updaterRef.queue.isEmpty == true)
+            
+            let valueSourceRef = await ValueSourceMock(owner: sourceRef.id)
+            let newDiff = await ValueSourceDiff(valueSourceRef)
+                        
+            await updaterRef.appendEvent(.valueAdded(newDiff))
+            try await #require(updaterRef.queue.count == 1)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            try await #require(projectModelRef.values.count == 1)
+            
+            let valueModel = try #require(await projectModelRef.values.values.first)
+            await #expect(valueModel.isExist == true)
+        }
+        @Test func whenValueModeAlreadyAdded() async throws {
+            // given
+            let valueSourceRef = await ValueSourceMock(owner: sourceRef.id)
+            let newDiff = await ValueSourceDiff(valueSourceRef)
+            await updaterRef.appendEvent(.valueAdded(newDiff))
+            
+            await updaterRef.update()
+            try await #require(updaterRef.issue == nil)
+            
+            // when
+            await updaterRef.appendEvent(.valueAdded(newDiff))
+            await updaterRef.update()
+            
+            // then
             let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "alreadyAdded")
         }
@@ -654,25 +709,25 @@ private func getProjectModel(_ budClientRef: BudClient) async throws -> ProjectM
     return try #require(await projectBoardRef.projects.values.first?.ref)
 }
 
-private func createSystemModel(_ projectModelRef: ProjectModel) async throws -> SystemModel {
-    try await #require(projectModelRef.systems.isEmpty)
+@discardableResult
+private func createSystem(_ projectModelRef: ProjectModel) async throws -> SystemModel {
+    await projectModelRef.startUpdating()
+    try await #require(projectModelRef.isUpdating == true)
     
     await withCheckedContinuation { continuation in
         Task {
             await projectModelRef.setCallback {
                 continuation.resume()
             }
-            
-            await projectModelRef.startUpdating()
-            
+        
             await projectModelRef.createFirstSystem()
         }
     }
     
-    try await #require(projectModelRef.systems.count == 1)
     return try #require(await projectModelRef.systems.values.first?.ref)
 }
 
+@discardableResult
 private func createRootObjectModel(_ systemModelRef: SystemModel) async throws -> ObjectModel {
     try await #require(systemModelRef.root == nil)
     

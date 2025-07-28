@@ -23,6 +23,7 @@ package protocol ValueSourceInterface: Sendable {
     
     
     // MARK: action
+    func notifyStateChanged() async
     func removeValue() async
 }
 
@@ -53,6 +54,32 @@ package struct ValueSourceDiff: Sendable {
     package let description: String?
     
     package let fields: [ValueField]
+    
+    // MARK: core
+    init(id: any ValueSourceIdentity, target: ValueID, createdAt: Date, updatedAt: Date, order: Int, name: String, description: String?, fields: [ValueField]) {
+        self.id = id
+        self.target = target
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.order = order
+        self.name = name
+        self.description = description
+        self.fields = fields
+    }
+    
+    @Server
+    init(_ objectRef: ValueSourceMock) {
+        self.id = objectRef.id
+        self.target = objectRef.target
+        
+        self.createdAt = objectRef.createdAt
+        self.updatedAt = objectRef.updatedAt
+        self.order = objectRef.order
+        
+        self.name = objectRef.name
+        self.description = objectRef.description
+        self.fields = objectRef.fields
+    }
 }
 
 

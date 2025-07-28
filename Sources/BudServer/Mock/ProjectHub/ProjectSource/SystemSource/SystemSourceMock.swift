@@ -9,12 +9,12 @@ import Values
 import Collections
 
 
+private let logger = BudLogger("SystemSourceMock")
 
 // MARK: Object
 @Server
 package final class SystemSourceMock: SystemSourceInterface {
     // MARK: core
-    private let logger = BudLogger("SystemSourceMock")
     init(name: String,
          location: Location,
          parent: ProjectSourceMock.ID,

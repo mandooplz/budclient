@@ -40,27 +40,29 @@ extension ProjectModel {
             
             // capture
             await captureHook?()
-            guard let projectModelRef = owner.ref else {
-                setIssue(Error.projectModelIsDeleted)
-                logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+            guard queue.count > 0 else {
+                setIssue(Error.eventQueueIsEmpty)
+                logger.failure("이벤트 큐가 비어 있어 실행 취소됩니다.")
                 return
             }
-            let projectBoardRef = projectModelRef.config.parent.ref!
             
             // mutate
+            await mutateHook?()
             while queue.isEmpty == false {
+                guard let projectModelRef = owner.ref,
+                      let projectBoardRef = projectModelRef.config.parent.ref else {
+                    setIssue(Error.projectModelIsDeleted)
+                    logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
                 let event = queue.removeFirst()
+                let newConfig = projectModelRef.config.setParent(owner)
                 
                 switch event {
                 // modify ProjectModel
                 case .modified(let diff):
-                    guard let modifiedModel = projectBoardRef.projects[diff.target] else {
-                        setIssue(Error.alreadyRemoved)
-                        logger.failure(Error.alreadyRemoved)
-                        return
-                    }
-                    
-                    modifiedModel.ref?.name = diff.name
+                    projectModelRef.name = diff.name
                     
                     logger.end("modified ProjectModel")
                     
@@ -89,7 +91,7 @@ extension ProjectModel {
                         return
                     }
                     
-                    let newConfig = projectModelRef.config.setParent(owner)
+                    
                     
                     let systemModelRef = SystemModel(
                         config: newConfig,
@@ -99,8 +101,18 @@ extension ProjectModel {
                     
                     logger.end("added SystemModel")
                     
-                case .valueAdded:
-                    fatalError()
+                case .valueAdded(let diff):
+                    guard projectModelRef.values[diff.target] == nil else {
+                        setIssue(Error.alreadyAdded)
+                        logger.failure("추가된 ValueModel이 이미 존재합니다.")
+                        return
+                    }
+                    
+                    let valueModelRef = ValueModel(config: newConfig,
+                                                   diff: diff)
+                    projectModelRef.values[diff.target] = valueModelRef.id
+                    
+                    logger.end("added ValueModel")
                 }
                 
             }
@@ -145,8 +157,8 @@ extension ProjectModel {
         // MARK: value
         enum Error: String, Swift.Error {
             case projectModelIsDeleted
-            case alreadyAdded
-            case alreadyRemoved
+            case alreadyAdded, alreadyRemoved
+            case eventQueueIsEmpty
         }
     }
 }

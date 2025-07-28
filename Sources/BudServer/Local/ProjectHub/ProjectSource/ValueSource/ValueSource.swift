@@ -62,6 +62,12 @@ package final class ValueSource: ValueSourceInterface {
     
     
     // MARK: action
+    package func notifyStateChanged() async {
+        logger.start()
+        
+        // Firebase에서 알아서 처리됨
+        return
+    }
     package func removeValue() async {
         logger.start()
         
@@ -80,10 +86,10 @@ package final class ValueSource: ValueSourceInterface {
         }
         
         package var isExist: Bool {
-            fatalError()
+            ValueSourceManager.container[self] != nil
         }
         package var ref: ValueSource? {
-            fatalError()
+            ValueSourceManager.container[self]
         }
     }
     
