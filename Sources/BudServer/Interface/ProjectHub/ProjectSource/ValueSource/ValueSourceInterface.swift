@@ -9,16 +9,21 @@ import Values
 
 
 // MARK: Interface
-package protocol ValueSourceInterface: Sendable, SyncInterface {
+package protocol ValueSourceInterface: Sendable {
     associatedtype ID: ValueSourceIdentity where ID.Object == Self
     
     
     // MARK: state
-    func appendHandler(requester: ObjectID, _ handler: Handler<ValueSourceEvent>) async
+    func setName(_ value: String) async
+    func setDescription(_ value: String) async
+    func setFields(_ value: [ValueField]) async
+    
+    func appendHandler(requester: ObjectID, _
+                       handler: Handler<ValueSourceEvent>) async
     
     
     // MARK: action
-    func synchorize() async // 과연 필요한가.
+    func removeValue() async
 }
 
 
@@ -36,18 +41,22 @@ package enum ValueSourceEvent: Sendable {
     case removed
 }
 
-public struct ValueSourceDiff: Sendable {
+package struct ValueSourceDiff: Sendable {
     package let id: any ValueSourceIdentity
-    public let target: ValueID
+    package let target: ValueID
     
-    public let name: String
-    public let description: String?
+    package let createdAt: Date
+    package let updatedAt: Date
+    package let order: Int
     
-    public let fields: [ValueField]
+    package let name: String
+    package let description: String?
+    
+    package let fields: [ValueField]
 }
 
 
-public struct ValueField: Sendable, Hashable {
+public struct ValueField: Sendable, Hashable, Codable {
     public let name: String
     public let type: ValueID
     

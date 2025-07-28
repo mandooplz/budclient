@@ -9,6 +9,8 @@
 // MARK: DB
 enum DB: Sendable {
     static let ProjectSources = "ProjectSources"
+    
+    static let ValueSources = "ValueSources"
     static let SystemSources = "SystemSources"
     
     static let ObjectSources = "ObjectSources"

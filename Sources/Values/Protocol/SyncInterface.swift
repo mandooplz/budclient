@@ -12,6 +12,7 @@ package protocol SyncInterface: Sendable {
     // MARK: state
     func registerSync(_ object: ObjectID) async
     
+    
     // MARK: action
     func synchronize() async
 }

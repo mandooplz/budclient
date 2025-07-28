@@ -38,6 +38,7 @@ package final class ProjectSource: ProjectSourceInterface {
     nonisolated let owner: ProjectHub.ID
     
     var systems: [SystemID: SystemSource.ID] = [:]
+    var values: [ValueID: ValueSource.ID] = [:]
     
     package func setName(_ value: String) {
         logger.start(value)
@@ -68,7 +69,7 @@ package final class ProjectSource: ProjectSourceInterface {
         }
     }
     
-    package var listener: ListenerRegistration?
+    var listener: EventListener?
     package var handlers: EventHandler?
     package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         logger.start()
@@ -85,10 +86,13 @@ package final class ProjectSource: ProjectSourceInterface {
         let me = self.id
         
         // compute
-        let db = Firestore.firestore()
-        let systemSourceCollectionRef = db.collection(DB.ProjectSources)
-            .document(id.value)
+        let systemSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(id.value)
             .collection(DB.SystemSources)
+        
+        let valueSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(id.value)
+            .collection(DB.ValueSources)
         
         let systemListener = systemSourceCollectionRef
             .addSnapshotListener({ snapshot, error in
@@ -137,9 +141,15 @@ package final class ProjectSource: ProjectSourceInterface {
                 }
             })
         
+        let valueListener = valueSourceCollectionRef
+            .addSnapshotListener { snapshot, error in
+                fatalError("구현 필요")
+            }
+        
         // mutate
         self.handlers = handler
-        self.listener = systemListener
+        self.listener = .init(system: systemListener,
+                              value: valueListener)
     }
     
     package func registerSync(_ object: ObjectID) async {
@@ -247,6 +257,8 @@ package final class ProjectSource: ProjectSourceInterface {
     
     
     // MARK: value
+    package typealias EventHandler = Handler<ProjectSourceEvent>
+    
     @MainActor
     package struct ID: ProjectSourceIdentity {
         let value: String
@@ -299,7 +311,16 @@ package final class ProjectSource: ProjectSourceInterface {
                          order: self.order)
         }
     }
-    package typealias EventHandler = Handler<ProjectSourceEvent>
+    
+    struct EventListener {
+        let system: ListenerRegistration
+        let value: ListenerRegistration
+        
+        func remove() -> Void {
+            self.system.remove()
+            self.value.remove()
+        }
+    }
 }
 
 
