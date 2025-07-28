@@ -1,5 +1,5 @@
 {
-  "originHash" : "acd3ac6560596d32823cfbb33fca8c592be292d496084bb07c05f909bcdbf8ef",
+  "originHash" : "e3b6d62b2e4475f48f232d4d5dcd5e509b73c0afeefec3f85d95b66e55fd4112",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -25,7 +25,7 @@
       "location" : "https://github.com/mandooplz/budmacro.git",
       "state" : {
         "branch" : "main",
-        "revision" : "7624a3d9ec2c2123dfd54f18f88c668cb67b4669"
+        "revision" : "9faf09fcd47ac881941dcd9fb39cebfad77b9775"
       }
     },
     {

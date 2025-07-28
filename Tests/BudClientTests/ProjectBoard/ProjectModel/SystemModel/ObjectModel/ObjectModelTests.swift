@@ -686,6 +686,7 @@ struct ObjectModelUpdaterTests {
             #expect(issue.reason == "objectModelIsDeleted")
         }
         
+        // ObjectSourceEvent.removed
         @Test func deleteObjectModel() async throws {
             // given
             await updaterRef.appendEvent(.removed)
@@ -749,6 +750,7 @@ struct ObjectModelUpdaterTests {
             await #expect(updaterRef.queue.isEmpty)
         }
         
+        // ObjectSourceEvent.modified
         @Test func modifyObjectModelName() async throws {
             // given
             let objectSourceRef = try #require(await objectModelRef.source.ref as? ObjectSourceMock)
@@ -803,6 +805,8 @@ struct ObjectModelUpdaterTests {
             // then
             await #expect(updaterRef.queue.isEmpty)
         }
+        
+        // ObjectSourceEvent.stateAdded
     }
 }
 

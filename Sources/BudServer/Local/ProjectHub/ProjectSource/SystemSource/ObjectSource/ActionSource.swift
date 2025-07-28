@@ -61,7 +61,7 @@ package final class ActionSource: ActionSourceInterface {
         do {
             try await actionSourceDocRef.updateData(updateFields)
         } catch {
-            logger.failure("ActionSource name 업데이트 실패\n\(error)")
+            logger.failure("ActionSource.name 업데이트 실패\n\(error)")
             return
         }
     }
