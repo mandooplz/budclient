@@ -22,6 +22,10 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
         self.updaterRef = Updater(owner: self.id)
         self.source = diff.id
         
+        self.createdAt = diff.createdAt
+        self.updatedAt = diff.updatedAt
+        self.order = diff.order
+        
         self.name = diff.name
         self.description = diff.description
         
@@ -39,6 +43,10 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let updaterRef: Updater
     nonisolated let source: any ValueSourceIdentity
     
+    nonisolated let createdAt: Date
+    var updatedAt: Date
+    var order: Int
+    
     public var name: String
     public var description: String?
     
@@ -54,6 +62,18 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
     
     // MARK: action
     public func startUpdating() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.valueModelIsDeleted)
+            logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    
+    public func removeValue() async {
         logger.start()
         
         // capture

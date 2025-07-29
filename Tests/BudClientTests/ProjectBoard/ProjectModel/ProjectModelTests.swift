@@ -259,6 +259,57 @@ struct ProjectModelTests {
             #expect(issue.reason == "firstSystemAlreadyExist")
         }
     }
+    
+    struct CreateValue {
+        let budClientRef: BudClient
+        let projectModelRef: ProjectModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.projectModelRef = try await getProjectModel(budClientRef)
+        }
+        
+        @Test func whenProjectModelIsDeleted() async throws {
+            // given
+            try await #require(projectModelRef.id.isExist == true)
+            
+            await projectModelRef.setCaptureHook {
+                await projectModelRef.delete()
+            }
+            
+            // when
+            await projectModelRef.createValue()
+            
+            // then
+            let issue = try #require(await projectModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "projectModelIsDeleted")
+        }
+        
+        @Test func createValueModel() async throws {
+            // given
+            try await #require(projectModelRef.values.isEmpty == true)
+            
+            await projectModelRef.startUpdating()
+            try await #require(projectModelRef.isUpdating == true)
+            
+            // when
+            await withCheckedContinuation { continuation in
+                Task {
+                    await projectModelRef.setCallback {
+                        continuation.resume()
+                    }
+                    
+                    await projectModelRef.createValue()
+                }
+            }
+            
+            // then
+            try await #require(projectModelRef.values.count == 1)
+            
+            let valueModel = try #require(await projectModelRef.values.values.first)
+            await #expect(valueModel.isExist == true)
+        }
+    }
+    
 
     struct RemoveProject {
         let budClientRef: BudClient
@@ -336,6 +387,25 @@ struct ProjectModelTests {
             
             // then
             await #expect(projectModelRef.id.isExist == false)
+        }
+        
+        @Test func deleteValueModels() async throws {
+            // given
+            try await #require(projectModelRef.values.count == 0)
+            
+            try await createValueModel(projectModelRef)
+            try await createValueModel(projectModelRef)
+            try await createValueModel(projectModelRef)
+            
+            try await #require(projectModelRef.values.count == 3)
+            
+            // when
+            try await removeProject(projectModelRef)
+            
+            // then
+            for valueModel in await projectModelRef.values.values {
+                await #expect(valueModel.isExist == false)
+            }
         }
         
         @Test func deleteSystemModels() async throws {
@@ -457,8 +527,6 @@ struct ProjectModelTests {
         @Test(.disabled("구현 예정")) func deleteFlowModels() async throws {}
         
         @Test(.disabled("구현 예정")) func deleteWorkflowModels() async throws {}
-        
-        @Test(.disabled("구현 예정")) func deleteValueModels() async throws {}
     }
 }
 
@@ -840,6 +908,20 @@ private func createSetterModel(_ stateModelRef: StateModel) async throws {
     try #require(newCount == oldCount + 1)
 }
 
+private func createValueModel(_ projectModelRef: ProjectModel) async throws {
+    await projectModelRef.startUpdating()
+    try await #require(projectModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await projectModelRef.createValue()
+        }
+    }
+}
 
 // MARK: Helpehrs - action
 private func removeProject(_ projectModelRef: ProjectModel) async throws {

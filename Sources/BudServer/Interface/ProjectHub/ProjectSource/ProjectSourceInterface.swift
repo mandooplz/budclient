@@ -24,6 +24,8 @@ package protocol ProjectSourceInterface: Sendable, SyncInterface {
     func notifyStateChanged() async;
     
     func createSystem() async
+    func createValue() async
+    
     func removeProject() async
 }
 

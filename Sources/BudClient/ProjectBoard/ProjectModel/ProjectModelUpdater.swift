@@ -78,6 +78,10 @@ extension ProjectModel {
                         .compactMap { $0.ref }
                         .forEach { $0.delete() }
                     
+                    projectModelRef.values.values
+                        .compactMap { $0.ref }
+                        .forEach { $0.delete() }
+                    
                     projectModelRef.delete()
                     projectBoardRef.projects[projectModelRef.target] = nil
                     

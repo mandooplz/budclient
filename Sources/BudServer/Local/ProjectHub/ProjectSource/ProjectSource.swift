@@ -276,6 +276,30 @@ package final class ProjectSource: ProjectSourceInterface {
             return
         }
     }
+    package func createValue() async {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let valueSourceCollectionRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(self.id.value)
+            .collection(DB.ValueSources)
+        
+        // compute
+        let newValueSourceData = ValueSource.Data()
+        
+        do {
+            let _ = try valueSourceCollectionRef.addDocument(from: newValueSourceData)
+        } catch {
+            logger.failure("Firebase ValueSource 문서 생성 실패\n\(error)")
+            return
+        }
+        
+    }
+    
     package func removeProject() async {
         logger.start()
         

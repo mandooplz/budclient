@@ -40,27 +40,28 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     var updatedAt: Date = .now
     var order: Int = 0
     
+    private(set) var name: String
+    package var creator: UserID
+    
+    var syncQyeye: Deque<ObjectID> = []
     var systems: Set<SystemSourceMock.ID> = []
+    var values: [ValueID:ValueSourceMock.ID] = [:]
+    
+    var handlers = [ObjectID: EventHandler]()
+    
+    
     func isLocationExist(_ location: Location) -> Bool {
         self.systems
             .compactMap { $0.ref }
             .contains { $0.location == location }
     }
-    
-    private(set) var name: String
     package func setName(_ value: String) {
         self.name = value
     }
-    
-    package var creator: UserID
-    
-    var syncQyeye: Deque<ObjectID> = []
     package func registerSync(_ object: ObjectID) async {
         self.syncQyeye.append(object)
     }
     
-    
-    var handlers = [ObjectID: EventHandler]()
     package func appendHandler(requester: ObjectID, _ handler: EventHandler) {
         logger.start()
         
@@ -69,7 +70,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     
     
     // MARK: action
-    package func synchronize() async {
+    package func synchronize() {
         logger.start()
         
         let diffs = self.systems
@@ -80,7 +81,6 @@ package final class ProjectSourceMock: ProjectSourceInterface {
             diffs.forEach { handler.execute(.systemAdded($0)) }
         }
     }
-    
     package func notifyStateChanged() {
         logger.start()
         
@@ -93,7 +93,10 @@ package final class ProjectSourceMock: ProjectSourceInterface {
     
     package func createSystem() {
         // capture
-        guard systems.isEmpty else { return }
+        guard systems.isEmpty else {
+            logger.failure("이미 (0,0) 위치에 SystemSource가 존재합니다.")
+            return
+        }
         
         // mutate
         let systemSourceRef = SystemSourceMock(name: "First System",
@@ -103,6 +106,7 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         self.systems.insert(systemSourceRef.id)
         
         
+        // notify
         let diff = SystemSourceDiff(systemSourceRef)
         
         handlers.values.forEach { handler in
@@ -111,6 +115,25 @@ package final class ProjectSourceMock: ProjectSourceInterface {
         
         
     }
+    package func createValue() {
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ProjectSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        // mutate
+        let newValueSourceRef = ValueSourceMock(owner: self.id)
+        self.values[newValueSourceRef.target] = newValueSourceRef.id
+        
+        // notify
+        let diff = ValueSourceDiff(newValueSourceRef)
+        self.handlers.values
+            .forEach { $0.execute(.valueAdded(diff)) }
+    }
+    
     package func removeProject() {
         // capture
         guard id.isExist else { return }

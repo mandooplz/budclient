@@ -57,6 +57,14 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
             .map { $0.location }
     }
     
+    var values: [ValueID: ValueModel.ID] = [:]
+    public var valueList: [ValueModel.ID] {
+        self.values.values
+            .sorted {
+                ($0.ref!.updatedAt, $0.ref!.order) < ($1.ref!.updatedAt, $1.ref!.order)
+            }
+    }
+    
     var workflows: [WorkflowID: WorkflowModel.ID] = [:]
     public var workflowList: [WorkflowModel.ID] {
         self.workflows.values
@@ -64,11 +72,6 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                 ($0.ref!.updatedAt, $0.ref!.order) < ($1.ref!.updatedAt, $1.ref!.order)
             }
     }
-    
-    var values: [ValueID: ValueModel.ID] = [:]
-    
-    
-    
         
     public var issue: (any IssueRepresentable)?
     public var callback: Callback?
@@ -126,7 +129,6 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         // mutate
         self.isUpdating = true
     }
-    
     public func pushName() async {
         logger.start()
         
@@ -169,6 +171,7 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
         
         logger.end()
     }
+    
     public func createFirstSystem() async {
         logger.start()
         
@@ -194,6 +197,31 @@ public final class ProjectModel: Debuggable, EventDebuggable, Hookable {
                 }
                 
                 await projectSourceRef.createSystem()
+            }
+        }
+    }
+    public func createValue() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.projectModelIsDeleted)
+            logger.failure("ProjectModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        let source = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let projectSoruceRef = await source.ref else {
+                    logger.failure("ProjectSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await projectSoruceRef.createValue()
             }
         }
     }
