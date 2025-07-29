@@ -391,12 +391,53 @@ struct ValueModelUpdaterTests {
             await #expect(valueModelRef.nameInput == newValue)
         }
         @Test func modifyDescriptionAndInput() async throws {
-            Issue.record("구현 예정")
+            // given
+            let oldValue = "OLD_DESCRIPTION"
+            let newValue = "NEW_DESCRIPTION"
+            
+            await MainActor.run {
+                valueModelRef.description = oldValue
+                valueModelRef.descriptionInput = oldValue
+            }
+            
+            // given
+            await sourceRef.setDescription(newValue)
+            
+            let diff = await ValueSourceDiff(sourceRef)
+            await updaterRef.appendEvent(.modified(diff))
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(valueModelRef.description == newValue)
+            await #expect(valueModelRef.descriptionInput == newValue)
         }
         @Test func modifyFieldsAndInput() async throws {
-            Issue.record("구현 예정")
+            // given
+            let oldValue: [ValueField] = []
+            let newValue: [ValueField] = [
+                .init(name: "TEST", type: .stringValue),
+            ]
+            
+            await MainActor.run {
+                valueModelRef.fields = oldValue
+                valueModelRef.fieldsInput = oldValue
+            }
+            
+            // given
+            await sourceRef.setFields(newValue)
+            
+            let diff = await ValueSourceDiff(sourceRef)
+            await updaterRef.appendEvent(.modified(diff))
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(valueModelRef.fields == newValue)
+            await #expect(valueModelRef.fieldsInput == newValue)
         }
-        
         
         // ValueSourceEvent.removed
         @Test func deleteValueModel() async throws {
