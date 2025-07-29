@@ -19,6 +19,8 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
          diff: ValueSourceDiff) {
         self.config = config
         self.target = diff.target
+        self.updaterRef = Updater(owner: self.id)
+        self.source = diff.id
         
         self.name = diff.name
         self.description = diff.description
@@ -34,6 +36,8 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectModel.ID>
     nonisolated let target: ValueID
+    nonisolated let updaterRef: Updater
+    nonisolated let source: any ValueSourceIdentity
     
     public var name: String
     public var description: String?

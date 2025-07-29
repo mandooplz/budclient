@@ -662,10 +662,12 @@ struct ObjectModelUpdaterTests {
         let budClientRef: BudClient
         let objectModelRef: ObjectModel
         let updaterRef: ObjectModel.Updater
+        let sourceRef: ObjectSourceMock
         init() async throws {
             self.budClientRef = await BudClient()
             self.objectModelRef = try await getRootObjectModel(budClientRef)
             self.updaterRef = objectModelRef.updaterRef
+            self.sourceRef = try #require(await objectModelRef.source.ref as? ObjectSourceMock)
             
             logger.end("테스트 준비 끝")
         }
@@ -678,12 +680,25 @@ struct ObjectModelUpdaterTests {
                 await objectModelRef.delete()
             }
             
+            await updaterRef.appendEvent(.removed)
+            
             // when
             await updaterRef.update()
             
             // then
             let issue = try #require(await updaterRef.issue as? KnownIssue)
             #expect(issue.reason == "objectModelIsDeleted")
+        }
+        @Test func whenEventQueueIsEmpty() async throws {
+            // given
+            try await #require(updaterRef.queue.isEmpty == true)
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "eventQueueIsEmpty")
         }
         
         // ObjectSourceEvent.removed
@@ -807,8 +822,48 @@ struct ObjectModelUpdaterTests {
         }
         
         // ObjectSourceEvent.stateAdded
+        @Test func createStateModel() async throws {
+            // given
+            try await #require(objectModelRef.states.isEmpty == true)
+            
+            let stateSourceRef = await StateSourceMock(owner: sourceRef.id)
+            let diff = await StateSourceDiff(stateSourceRef)
+            
+            await updaterRef.appendEvent(.stateAdded(diff))
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            try await #require(updaterRef.issue == nil)
+            
+            try await #require(objectModelRef.states.count == 1)
+            let stateModel = try #require(await objectModelRef.states.values.first)
+            
+            await #expect(stateModel.isExist == true)
+        }
         
         // ObjectSourceEvent.actionAdded
+        @Test func createActionModel() async throws {
+            // given
+            try await #require(objectModelRef.actions.isEmpty == true)
+            
+            let actionSourceRef = await ActionSourceMock(owner: sourceRef.id)
+            let diff = await ActionSourceDiff(actionSourceRef)
+            
+            await updaterRef.appendEvent(.actionAdded(diff))
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            try await #require(updaterRef.issue == nil)
+            
+            try await #require(objectModelRef.actions.count == 1)
+            let actionModel = try #require(await objectModelRef.actions.values.first)
+            
+            await #expect(actionModel.isExist == true)
+        }
     }
 }
 

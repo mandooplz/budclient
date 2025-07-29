@@ -15,7 +15,7 @@ private let logger = BudLogger("StateSourceMock")
 @Server
 package final class StateSourceMock: StateSourceInterface {
     // MARK: core
-    init(name: String,
+    init(name: String = "New State",
          accessLevel: AccessLevel = .readAndWrite,
          stateValue: StateValue? = nil,
          owner: ObjectSourceMock.ID) {

@@ -14,7 +14,7 @@ private let logger = BudLogger("ActionSourceMock")
 @Server
 package final class ActionSourceMock: ActionSourceInterface {
     // MARK: core
-    init(name: String,
+    init(name: String = "New Action",
          owner: ObjectSourceMock.ID) {
         self.name = name
         self.owner = owner

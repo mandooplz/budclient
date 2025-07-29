@@ -40,17 +40,24 @@ extension ObjectModel {
             
             // capture
             await captureHook?()
-            guard let objectModelRef = owner.ref else {
-                setIssue(Error.objectModelIsDeleted)
-                logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+            guard queue.count > 0  else {
+                setIssue(Error.eventQueueIsEmpty)
+                logger.failure("이벤트 큐가 비어있습니다.")
                 return
             }
             
-            let systemModelRef = objectModelRef.config.parent.ref!
-            let newConfig = objectModelRef.config.setParent(objectModelRef.id)
             
             // mutate
+            await mutateHook?()
             while queue.isEmpty == false {
+                guard let objectModelRef = owner.ref else {
+                    setIssue(Error.objectModelIsDeleted)
+                    logger.failure("ObjectModel이 존재하지 않아 실행 취소됩니다.")
+                    return
+                }
+                
+                let systemModelRef = objectModelRef.config.parent.ref!
+                let newConfig = objectModelRef.config.setParent(objectModelRef.id)
                 let event = queue.removeFirst()
                 
                 switch event {
