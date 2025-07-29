@@ -787,6 +787,7 @@ struct StateModelUpdaterTests {
             #expect(issue.reason == "stateModelIsDeleted")
         }
         
+        // StateSourceEvent.modified
         @Test func modifyStateModelName() async throws {
             // given
             let oldName = "OLD_NAME"
@@ -832,6 +833,7 @@ struct StateModelUpdaterTests {
             await #expect(stateModelRef.nameInput == newName)
         }
         
+        // StateSourceEvent.removed
         @Test func deleteStateModel() async throws {
             // given
             try await #require(stateModelRef.id.isExist == true)
@@ -856,6 +858,47 @@ struct StateModelUpdaterTests {
             // then
             await #expect(objectModelRef.states.values.contains(stateModelRef.id) == false)
         }
+        @Test func deleteGetterModels() async throws {
+            // given
+            try await #require(stateModelRef.getters.isEmpty == true)
+            
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.getters.count == 2)
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            for getterModel in await stateModelRef.getters.values {
+                await #expect(getterModel.isExist == false)
+            }
+        }
+        @Test func deleteSetterModels() async throws {
+            // given
+            try await #require(stateModelRef.setters.isEmpty == true)
+            
+            try await createSetterModel(stateModelRef)
+            try await createSetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.setters.count == 2)
+            
+            // when
+            await updaterRef.appendEvent(.removed)
+            await updaterRef.update()
+            
+            // then
+            for setterModel in await stateModelRef.setters.values {
+                await #expect(setterModel.isExist == false)
+            }
+        }
+        
+        // StateSourceEvent.getterAdded
+        
+        
+        // StateSourceEvent.setterAdded
     }
 }
 

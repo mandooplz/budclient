@@ -70,6 +70,7 @@ extension StateModel {
                     
                     logger.end("modified StateModel")
                 case .removed:
+                    // remove StateModel
                     stateModelRef.getters.values
                         .compactMap { $0.ref }
                         .forEach { $0.delete() }
