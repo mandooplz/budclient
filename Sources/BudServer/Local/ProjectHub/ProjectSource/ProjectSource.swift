@@ -101,7 +101,7 @@ package final class ProjectSource: ProjectSourceInterface {
                     return
                 }
                 
-                snapshot.documentChanges.forEach { changed in
+                snapshot.documentChanges.forEach { [weak self] changed in
                     let documentId = changed.document.documentID
                     let systemSource = SystemSource.ID(documentId)
                     
@@ -134,6 +134,8 @@ package final class ProjectSource: ProjectSourceInterface {
                         systemSource.ref?.handler?.execute(.modified(diff))
                     case .removed:
                         // delete SystemSource
+                        self?.cleanUpProjectSource()
+                        
                         me.ref?.systems[data.target] = nil
                         systemSource.ref?.delete()
                         
@@ -319,6 +321,57 @@ package final class ProjectSource: ProjectSourceInterface {
             logger.failure("ProjectSource 삭제 실패\n\(error)")
             return
         }
+    }
+    
+    
+    // MARK: Helhphers
+    private func cleanUpProjectSource() {
+        // delete Getters
+        self.systems.values
+            .compactMap { $0.ref }.flatMap { $0.objects.values }
+            .compactMap { $0.ref }.flatMap { $0.states.values }
+            .compactMap { $0.ref }.flatMap { $0.getters.values }
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        
+        // delete Setters
+        self.systems.values
+            .compactMap { $0.ref }.flatMap { $0.objects.values }
+            .compactMap { $0.ref }.flatMap { $0.states.values }
+            .compactMap { $0.ref }.flatMap { $0.setters.values }
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete States
+        self.systems.values
+            .compactMap { $0.ref }.flatMap { $0.objects.values }
+            .compactMap { $0.ref }.flatMap { $0.states.values }
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete Actions
+        self.systems.values
+            .compactMap { $0.ref }.flatMap { $0.objects.values }
+            .compactMap { $0.ref }.flatMap { $0.actions.values }
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete Objects
+        self.systems.values
+            .compactMap { $0.ref }.flatMap { $0.objects.values }
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete Systems
+        self.systems.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
+        
+        // delete Values
+        self.values.values
+            .compactMap { $0.ref }
+            .forEach { $0.delete() }
     }
     
     

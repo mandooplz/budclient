@@ -24,6 +24,8 @@ package final class StateSource: StateSourceInterface {
         StateSourceManager.register(self)
     }
     func delete() {
+        self.listener?.remove()
+        
         StateSourceManager.unregister(self.id)
     }
     
@@ -509,6 +511,11 @@ package final class StateSource: StateSourceInterface {
     struct Listener {
         let getter: ListenerRegistration
         let setter: ListenerRegistration
+        
+        func remove() {
+            self.getter.remove()
+            self.setter.remove()
+        }
     }
 }
 

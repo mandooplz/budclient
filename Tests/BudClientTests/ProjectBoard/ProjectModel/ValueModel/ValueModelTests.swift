@@ -290,6 +290,10 @@ struct ValueModelUpdaterTests {
         }
         
         // ValueSourceEvent.modified
+        @Test func modifyName() async throws {
+            // given
+            Issue.record("미구현")
+        }
         
         
         // ValueSourceEvent.removed

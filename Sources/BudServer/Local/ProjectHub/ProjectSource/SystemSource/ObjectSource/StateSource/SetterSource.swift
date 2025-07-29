@@ -35,7 +35,6 @@ package final class SetterSource: SetterSourceInterface {
     
     var handler: EventHandler?
     
-    
     package func setName(_ value: String) async {
         logger.start()
         

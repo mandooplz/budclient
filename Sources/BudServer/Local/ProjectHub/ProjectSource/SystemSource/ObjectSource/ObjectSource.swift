@@ -25,6 +25,8 @@ package final class ObjectSource: ObjectSourceInterface {
         ObjectSourceManager.register(self)
     }
     func delete() {
+        self.listener?.remove()
+        
         ObjectSourceManager.unregister(self.id)
     }
     
@@ -391,6 +393,11 @@ package final class ObjectSource: ObjectSourceInterface {
         init(state: ListenerRegistration, action: ListenerRegistration) {
             self.state = state
             self.action = action
+        }
+        
+        func remove() {
+            self.state.remove()
+            self.action.remove()
         }
     }
     
