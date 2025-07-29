@@ -63,6 +63,81 @@ struct ValueModelTests {
         }
     }
     
+    struct PushName {
+        let budClientRef: BudClient
+        let valueModelRef: ValueModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.valueModelRef = try await getValueModel(budClientRef)
+        }
+        
+        @Test func whenValueModelIsDeleted() async throws {
+            // given
+            try await #require(valueModelRef.id.isExist == true)
+            
+            await valueModelRef.setCaptureHook {
+                await valueModelRef.delete()
+            }
+            
+            // when
+            await valueModelRef.pushName()
+            
+            // then
+            let issue = try #require(await valueModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "valueModelIsDeleted")
+        }
+    }
+    
+    struct PushDescription {
+        let budClientRef: BudClient
+        let valueModelRef: ValueModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.valueModelRef = try await getValueModel(budClientRef)
+        }
+        
+        @Test func whenValueModelIsDeleted() async throws {
+            // given
+            try await #require(valueModelRef.id.isExist == true)
+            
+            await valueModelRef.setCaptureHook {
+                await valueModelRef.delete()
+            }
+            
+            // when
+            await valueModelRef.pushDescription()
+            
+            // then
+            let issue = try #require(await valueModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "valueModelIsDeleted")
+        }
+    }
+    
+    struct PushFields {
+        let budClientRef: BudClient
+        let valueModelRef: ValueModel
+        init() async throws {
+            self.budClientRef = await BudClient()
+            self.valueModelRef = try await getValueModel(budClientRef)
+        }
+        
+        @Test func whenValueModelIsDeleted() async throws {
+            // given
+            try await #require(valueModelRef.id.isExist == true)
+            
+            await valueModelRef.setCaptureHook {
+                await valueModelRef.delete()
+            }
+            
+            // when
+            await valueModelRef.pushFields()
+            
+            // then
+            let issue = try #require(await valueModelRef.issue as? KnownIssue)
+            #expect(issue.reason == "valueModelIsDeleted")
+        }
+    }
+    
     
     struct RemoveValue {
         let budClientRef: BudClient
@@ -255,10 +330,12 @@ struct ValueModelUpdaterTests {
     struct Update {
         let budClientRef: BudClient
         let valueModelRef: ValueModel
+        let sourceRef: ValueSourceMock
         let updaterRef: ValueModel.Updater
         init() async throws {
             self.budClientRef = await BudClient()
             self.valueModelRef = try await getValueModel(budClientRef)
+            self.sourceRef = try #require(await valueModelRef.source.ref as? ValueSourceMock)
             self.updaterRef = self.valueModelRef.updaterRef
         }
         
@@ -290,9 +367,34 @@ struct ValueModelUpdaterTests {
         }
         
         // ValueSourceEvent.modified
-        @Test func modifyName() async throws {
+        @Test func modifyNameAndInput() async throws {
             // given
-            Issue.record("미구현")
+            let oldValue = "OLD_NAME"
+            let newValue = "NEW_NAME"
+            
+            await MainActor.run {
+                valueModelRef.name = oldValue
+                valueModelRef.nameInput = oldValue
+            }
+            
+            // given
+            await sourceRef.setName(newValue)
+            
+            let diff = await ValueSourceDiff(sourceRef)
+            await updaterRef.appendEvent(.modified(diff))
+
+            // when
+            await updaterRef.update()
+            
+            // then
+            await #expect(valueModelRef.name == newValue)
+            await #expect(valueModelRef.nameInput == newValue)
+        }
+        @Test func modifyDescriptionAndInput() async throws {
+            Issue.record("구현 예정")
+        }
+        @Test func modifyFieldsAndInput() async throws {
+            Issue.record("구현 예정")
         }
         
         

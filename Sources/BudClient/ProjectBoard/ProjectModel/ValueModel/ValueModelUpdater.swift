@@ -64,8 +64,13 @@ extension ValueModel {
                     valueModelRef.order = diff.order
                     
                     valueModelRef.name = diff.name
+                    valueModelRef.nameInput = diff.name
+                    
                     valueModelRef.description = diff.description
+                    valueModelRef.descriptionInput = diff.description
+                    
                     valueModelRef.fields = diff.fields
+                    valueModelRef.fieldsInput = diff.fields
                     
                     logger.end("modified ValueModel")
                 case .removed:

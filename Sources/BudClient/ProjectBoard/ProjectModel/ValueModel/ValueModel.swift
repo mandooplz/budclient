@@ -27,7 +27,13 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
         self.order = diff.order
         
         self.name = diff.name
+        self.nameInput = diff.name
+        
         self.description = diff.description
+        self.descriptionInput = diff.description
+        
+        self.fields = diff.fields
+        self.fieldsInput = diff.fields
         
         ValueModelManager.register(self)
     }
@@ -48,10 +54,14 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
     var updatedAt: Date
     var order: Int
     
-    public var name: String
-    public var description: String?
+    public internal(set) var name: String
+    public var nameInput: String
     
-    public var fields: [ValueField] = []
+    public internal(set) var description: String?
+    public var descriptionInput: String?
+    
+    public internal(set) var fields: [ValueField]
+    public var fieldsInput: [ValueField]
 
     public var callback: Callback?
     public var issue: (any IssueRepresentable)?
@@ -104,6 +114,40 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
         
         // mutate
         self.isUpdating = true
+    }
+    
+    public func pushName() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.valueModelIsDeleted)
+            logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    public func pushDescription() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.valueModelIsDeleted)
+            logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+    }
+    public func pushFields() async {
+        logger.start()
+        
+        // capture
+        await captureHook?()
+        guard id.isExist else {
+            setIssue(Error.valueModelIsDeleted)
+            logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
     }
     
     public func removeValue() async {
