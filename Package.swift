@@ -59,6 +59,8 @@ let package = Package(
                 "Values",
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseFunctions", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseStorage", package: "firebase-ios-sdk"),
                 .product(name: "Collections", package: "swift-collections"),
                 .product(name: "BudMacro", package: "budmacro")
             ]

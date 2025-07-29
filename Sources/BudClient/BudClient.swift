@@ -16,15 +16,17 @@ private let logger = BudLogger("BudClient")
 @MainActor @Observable
 public final class BudClient: Debuggable {
     // MARK: core
-    public init(plistPath: String) {
+    public init(plistPath: String, useEmulator: Bool = false) {
         self.mode = .real
         self.plistPath = plistPath
+        self.useEmulator = useEmulator
         
         BudClientManager.register(self)
     }
     public init() {
         self.mode = .test
         self.plistPath = ""
+        self.useEmulator = false
         
         BudClientManager.register(self)
     }
@@ -33,6 +35,7 @@ public final class BudClient: Debuggable {
     // MARK: state
     nonisolated let id = ID()
     nonisolated let mode: SystemMode
+    nonisolated let useEmulator: Bool
     private nonisolated let plistPath: String
     var tempConfig: TempConfig<BudClient.ID>?
     
@@ -59,6 +62,7 @@ public final class BudClient: Debuggable {
             return
         }
         
+
         // compute
         let budServer: any BudServerIdentity
         let budCache: any BudCacheIdentity
@@ -68,7 +72,8 @@ public final class BudClient: Debuggable {
                 budServer = await BudServerMock().id
                 budCache = await BudCacheMock().id
             case .real:
-                budServer = try await BudServer(plistPath: plistPath).id
+                budServer = try await BudServer(plistPath: plistPath,
+                                                useEmulators: self.useEmulator).id
                 budCache = BudCache().id
             }
         } catch {
