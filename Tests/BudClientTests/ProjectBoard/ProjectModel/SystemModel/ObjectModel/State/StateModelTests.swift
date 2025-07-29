@@ -529,33 +529,6 @@ struct StateModelTests {
             
             #expect(newCount == oldCount + 1)
         }
-        @Test func insertStateModel_ObjectModel() async throws {
-            // given
-            try await #require(objectModelRef.isUpdating == true)
-            try await #require(objectModelRef.states.count == 1)
-            
-            try await createNewStateModel(objectModelRef)
-            try await createNewStateModel(objectModelRef)
-            
-            try await #require(objectModelRef.states.count == 3)
-            
-            let states = await objectModelRef.states.values
-            
-            // given
-            let index = try #require(await objectModelRef.states.index(forKey: stateModelRef.target))
-            
-            let newIndex = index.advanced(by: 1)
-            
-            // when
-            try await duplicateStateModel(stateModelRef)
-            
-            // then
-            try await #require(objectModelRef.states.count == 4)
-            
-            let newStateModel = await  objectModelRef.states.values[newIndex]
-            
-            #expect(states.contains(newStateModel) == false)
-        }
         @Test func createStateModel_ObjectModel() async throws {
             // given
             try await #require(objectModelRef.isUpdating == true)
@@ -896,9 +869,82 @@ struct StateModelUpdaterTests {
         }
         
         // StateSourceEvent.getterAdded
+        @Test func createGetter() async throws {
+            // given
+            try await #require(stateModelRef.getters.isEmpty == true)
+            
+            let getterSourceRef = await GetterSourceMock(owner: sourceRef.id)
+            let diff = await GetterSourceDiff(getterSourceRef)
+            
+            await updaterRef.appendEvent(.getterAdded(diff))
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            try await #require(updaterRef.issue == nil)
+            try await #require(stateModelRef.getters.count == 1)
+            
+            let getterModel = try #require(await stateModelRef.getters.values.first)
+            await #expect(getterModel.isExist == true)
+        }
+        @Test func whenGetterAlreadyAdded() async throws {
+            // given
+            let getterSourceRef = await GetterSourceMock(owner: sourceRef.id)
+            let diff = await GetterSourceDiff(getterSourceRef)
+            
+            await updaterRef.appendEvent(.getterAdded(diff))
+            await updaterRef.update()
+            
+            try await #require(updaterRef.issue == nil)
+            
+            // when
+            await updaterRef.appendEvent(.getterAdded(diff))
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyAdded")
+        }
         
         
         // StateSourceEvent.setterAdded
+        @Test func createSetter() async throws {
+            // given
+            try await #require(stateModelRef.setters.isEmpty == true)
+            
+            let setterSourceRef = await SetterSourceMock(owner: sourceRef.id)
+            let diff = await SetterSourceDiff(setterSourceRef)
+            
+            await updaterRef.appendEvent(.setterAdded(diff))
+            
+            // when
+            await updaterRef.update()
+            
+            // then
+            try await #require(updaterRef.issue == nil)
+            
+            let setterModel = try #require(await stateModelRef.setters.values.first)
+            await #expect(setterModel.isExist == true)
+        }
+        @Test func whenSetterAlreadyAdded() async throws {
+            // given
+            let setterSourceRef = await SetterSourceMock(owner: sourceRef.id)
+            let diff = await SetterSourceDiff(setterSourceRef)
+            
+            await updaterRef.appendEvent(.setterAdded(diff))
+            await updaterRef.update()
+            
+            try await #require(updaterRef.issue == nil)
+            
+            // when
+            await updaterRef.appendEvent(.setterAdded(diff))
+            await updaterRef.update()
+            
+            // then
+            let issue = try #require(await updaterRef.issue as? KnownIssue)
+            #expect(issue.reason == "alreadyAdded")
+        }
     }
 }
 
@@ -1071,9 +1117,11 @@ private func duplicateStateModel(_ stateModelRef: StateModel) async throws {
     await stateModelRef.startUpdating()
     try await #require(stateModelRef.isUpdating == true)
     
+    let objectModelRef = try #require(await stateModelRef.config.parent.ref)
+    
     await withCheckedContinuation { continuation in
         Task {
-            await stateModelRef.setCallback {
+            await objectModelRef.setCallback {
                 continuation.resume()
             }
             

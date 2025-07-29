@@ -14,7 +14,7 @@ private let logger = BudLogger("GetterSourceMock")
 @Server
 package final class GetterSourceMock: GetterSourceInterface {
     // MARK: core
-    init(name: String,
+    init(name: String = "New Getter",
          owner: StateSourceMock.ID) {
         self.name = name
         self.owner = owner

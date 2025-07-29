@@ -15,7 +15,8 @@ private let logger = BudLogger("SetterSourceMock")
 @Server
 package final class SetterSourceMock: SetterSourceInterface {
     // MARK: core
-    init(name: String, owner: StateSourceMock.ID) {
+    init(name: String = "New Setter",
+         owner: StateSourceMock.ID) {
         self.name = name
         self.owner = owner
         

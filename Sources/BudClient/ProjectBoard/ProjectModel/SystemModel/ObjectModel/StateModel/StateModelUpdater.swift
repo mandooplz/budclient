@@ -84,7 +84,9 @@ extension StateModel {
                     
                     logger.end("removed StateModel")
                 case .getterAdded(let diff):
+                    // add Getter
                     guard stateModelRef.getters[diff.target] == nil else {
+                        setIssue(Error.alreadyAdded)
                         logger.failure("GetterID를 target으로 갖는 GetterModel이 이미 존재합니다.")
                         return
                     }
@@ -96,7 +98,9 @@ extension StateModel {
                     
                     logger.end("added GetterModel")
                 case .setterAdded(let diff):
+                    // create Setter
                     guard stateModelRef.setters[diff.target] == nil else {
+                        setIssue(Error.alreadyAdded)
                         logger.failure("SetterID를 target으로 갖는 SetterModel이 이미 존재합니다.")
                         return
                     }
@@ -105,26 +109,6 @@ extension StateModel {
                     stateModelRef.setters[diff.target] = setterModelRef.id
                     
                     logger.end("added SetterModel")
-                case .stateDuplicated(let diff):
-                    // duplicate StateModel
-                    guard objectModelRef.states[diff.target] == nil else {
-                        logger.failure("System에 대응되는 SystemModel이 이미 존재합니다.")
-                        return
-                    }
-                    guard let index = objectModelRef.states.index(forKey: stateModelRef.target) else {
-                        logger.failure("복사하려는 StateModel이 존재하지 않습니다.")
-                        return
-                    }
-                    
-                    let stateModelRef = StateModel(
-                        config: stateModelRef.config,
-                        diff: diff)
-                    objectModelRef.states.updateValue(
-                        stateModelRef.id,
-                        forKey: stateModelRef.target,
-                        insertingAt: index + 1)
-                    
-                    logger.end("duplicate StateModel")
                 }
             }
         }
@@ -137,6 +121,7 @@ extension StateModel {
         public enum Error: String, Swift.Error {
             case eventQueueIsEmpty
             case stateModelIsDeleted
+            case alreadyAdded
         }
     }
 }

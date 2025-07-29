@@ -119,12 +119,14 @@ package final class ProjectSource: ProjectSourceInterface {
                     switch changed.type {
                     case .added:
                         // create SystemSource
-                        let systemSourceRef = SystemSource(id: systemSource,
-                                                           target: data.target,
-                                                           parent: me)
+                        if me.ref?.systems[data.target] == nil {
+                            let systemSourceRef = SystemSource(id: systemSource,
+                                                               target: data.target,
+                                                               parent: me)
+                            
+                            me.ref?.systems[data.target] = systemSourceRef.id
+                        }
                         
-                        me.ref?.systems[data.target] = systemSourceRef.id
-
                         // serve event
                         handler.execute(.systemAdded(diff))
                     case .modified:
@@ -143,7 +145,47 @@ package final class ProjectSource: ProjectSourceInterface {
         
         let valueListener = valueSourceCollectionRef
             .addSnapshotListener { snapshot, error in
-                fatalError("구현 필요")
+                guard let snapshot else {
+                    logger.failure(error!)
+                    return
+                }
+                
+                snapshot.documentChanges.forEach { changed in
+                    let documentId = changed.document.documentID
+                    let valueSource = ValueSource.ID(documentId)
+                    
+                    let data: ValueSource.Data
+                    let diff: ValueSourceDiff
+                    do {
+                        data = try changed.document.data(as: ValueSource.Data.self)
+                        diff = data.getDiff(id: valueSource)
+                    } catch {
+                        logger.failure("ValueSource 디코딩 실패 \(documentId)")
+                        return
+                    }
+                    
+                    
+                    switch changed.type {
+                    case .added:
+                        if me.ref?.values[data.target] == nil {
+                            let valueSourceRef = ValueSource(id: valueSource,
+                                                             target: data.target,
+                                                             owner: me)
+                            
+                            me.ref?.values[data.target] = valueSourceRef.id
+                        }
+                        
+                        handler.execute(.valueAdded(diff))
+                    case .modified:
+                        valueSource.ref?.handler?.execute(.modified(diff))
+                    case .removed:
+                        // delete ValueSource
+                        me.ref?.values[data.target] = nil
+                        valueSource.ref?.delete()
+                        
+                        valueSource.ref?.handler?.execute(.removed)
+                    }
+                }
             }
         
         // mutate
