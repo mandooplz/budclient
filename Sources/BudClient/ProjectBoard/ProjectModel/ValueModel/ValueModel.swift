@@ -40,8 +40,9 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
     nonisolated let id = ID()
     nonisolated let config: Config<ProjectModel.ID>
     nonisolated let target: ValueID
-    nonisolated let updaterRef: Updater
     nonisolated let source: any ValueSourceIdentity
+    nonisolated let updaterRef: Updater
+    var isUpdating = false
     
     nonisolated let createdAt: Date
     var updatedAt: Date
@@ -71,6 +72,38 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
             logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
             return
         }
+        guard isUpdating == false else {
+            setIssue(Error.alreadyUpdating)
+            logger.failure("이미 업데이트 중입니다.")
+            return
+        }
+        let source = self.source
+        let me = ObjectID(self.id.value)
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let valueSourceRef = await source.ref else {
+                    logger.failure("ValueSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await valueSourceRef.appendHandler(
+                    requester: me,
+                    .init { event in
+                        Task { [weak self] in
+                            await self?.updaterRef.appendEvent(event)
+                            await self?.updaterRef.update()
+                            
+                            await self?.callback?()
+                        }
+                    }
+                )
+            }
+        }
+        
+        // mutate
+        self.isUpdating = true
     }
     
     public func removeValue() async {
@@ -82,6 +115,19 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
             setIssue(Error.valueModelIsDeleted)
             logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
             return
+        }
+        let source = self.source
+        
+        // compute
+        await withDiscardingTaskGroup { group in
+            group.addTask {
+                guard let valueSourceRef = await source.ref else {
+                    logger.failure("ValueSource가 존재하지 않습니다.")
+                    return
+                }
+                
+                await valueSourceRef.removeValue()
+            }
         }
     }
     
@@ -101,6 +147,7 @@ public final class ValueModel: Debuggable, EventDebuggable, Hookable {
     }
     public enum Error: String, Swift.Error {
         case valueModelIsDeleted
+        case alreadyUpdating
     }
 }
 

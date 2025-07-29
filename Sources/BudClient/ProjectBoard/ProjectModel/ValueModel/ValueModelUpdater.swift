@@ -45,12 +45,44 @@ extension ValueModel {
                 logger.failure("ValueModel이 존재하지 않아 실행 취소됩니다.")
                 return
             }
+            guard queue.count > 0 else {
+                setIssue(Error.eventQueueIsEmpty)
+                logger.failure("이벤트 큐가 비어있습니다.")
+                return
+            }
+            
+            // mutate
+            await mutateHook?()
+            while queue.isEmpty == false {
+                let projectModelRef = valueModelRef.config.parent.ref!
+                let event = queue.removeFirst()
+                
+                switch event {
+                case .modified(let diff):
+                    // modified ValueModel
+                    valueModelRef.updatedAt = diff.updatedAt
+                    valueModelRef.order = diff.order
+                    
+                    valueModelRef.name = diff.name
+                    valueModelRef.description = diff.description
+                    valueModelRef.fields = diff.fields
+                    
+                    logger.end("modified ValueModel")
+                case .removed:
+                    // remove ValueModel
+                    projectModelRef.values[valueModelRef.target] = nil
+                    valueModelRef.delete()
+                    
+                    logger.end("removed ValueModel")
+                }
+            }
         }
         
         
         // MARK: value
         enum Error: String, Swift.Error {
             case valueModelIsDeleted
+            case eventQueueIsEmpty
         }
     }
 }

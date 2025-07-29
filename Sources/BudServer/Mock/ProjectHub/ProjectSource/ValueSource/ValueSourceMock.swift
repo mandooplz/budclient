@@ -17,9 +17,11 @@ package final class ValueSourceMock: ValueSourceInterface {
     // MARK: core
     init(owner: ProjectSourceMock.ID) {
         self.owner = owner
+        
+        ValueSourceMockManager.register(self)
     }
     func delete() {
-        
+        ValueSourceMockManager.unregister(self.id)
     }
     
     
@@ -56,10 +58,36 @@ package final class ValueSourceMock: ValueSourceInterface {
     
     // MARK: action
     package func notifyStateChanged() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ValueSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        
+        // notify
+        let diff = ValueSourceDiff(self)
+        
+        self.handler?.execute(.modified(diff))
     }
+    
     package func removeValue() async {
-        fatalError()
+        logger.start()
+        
+        // capture
+        guard id.isExist else {
+            logger.failure("ValueSourceMock이 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let projectSourceRef = self.owner.ref!
+
+        // mutate
+        projectSourceRef.values[self.target] = nil
+        self.delete()
+        
+        // notify
+        self.handler?.execute(.removed)
     }
     
     // MARK: value

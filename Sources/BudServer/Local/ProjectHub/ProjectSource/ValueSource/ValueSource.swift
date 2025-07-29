@@ -68,10 +68,29 @@ package final class ValueSource: ValueSourceInterface {
         // Firebase에서 알아서 처리됨
         return
     }
+    
     package func removeValue() async {
         logger.start()
         
-        fatalError()
+        // capture
+        guard id.isExist else {
+            logger.failure("ValueSource가 존재하지 않아 실행 취소됩니다.")
+            return
+        }
+        let valueSource = self.id
+        let projectSource = self.owner
+        
+        let valueSourceDocRef = Firestore.firestore()
+            .collection(DB.ProjectSources).document(projectSource.value)
+            .collection(DB.ValueSources).document(valueSource.value)
+        
+        // compute
+        do {
+            try await valueSourceDocRef.delete()
+        } catch {
+            logger.failure("Firebase에서 ValueSource 삭제 실패\n\(error) ")
+            return
+        }
     }
     
     
