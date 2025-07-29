@@ -58,6 +58,9 @@ public struct StateValue: Sendable, Hashable, Codable {
             Self.type: self.type ?? NSNull()
         ]
     }
+    package func setType(_ newValue: ValueID?) -> StateValue {
+        .init(name: self.name, type: newValue)
+    }
 }
 
 
@@ -80,6 +83,9 @@ public struct ParameterValue: Sendable, Hashable, Codable {
             Self.name: self.name,
             Self.type: self.type ?? NSNull()
         ]
+    }
+    package func setType(_ newValue: ValueID?) -> ParameterValue {
+        .init(name: self.name, type: newValue)
     }
 }
 

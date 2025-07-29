@@ -112,6 +112,139 @@ struct ValueModelTests {
             // then
             await #expect(projectModelRef.values[target] == nil)
         }
+        
+        @Test func setTypeNilOfStateValue_StateModel() async throws {
+            // given
+            let stateModelRef = try await createStateModel(projectModelRef)
+            
+            let oldValue = StateValue(name: "TEST_STATE",
+                                      type: valueModelRef.target)
+            let newValue = StateValue(name: "TEST_STATE",
+                                      type: nil)
+            await MainActor.run {
+                stateModelRef.stateValue = oldValue
+                stateModelRef.stateValueInput = oldValue
+            }
+            
+            try await #require(stateModelRef.stateValue?.type == valueModelRef.target)
+            
+            // when
+            try await removeValue(valueModelRef)
+            
+            // then
+            try await #require(stateModelRef.stateValue != oldValue)
+            
+            await #expect(stateModelRef.stateValue == newValue)
+            await #expect(stateModelRef.stateValueInput == newValue)
+        }
+        
+        @Test func setTypeNilOfParameterValue_GetterModel() async throws {
+            // given
+            let stateModelRef = try await createStateModel(projectModelRef)
+            
+            try await #require(stateModelRef.getters.count == 0)
+            
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.getters.count == 3)
+            
+            // given
+            let oldValue = ParameterValue(name: "TEST_NAME",
+                                          type: valueModelRef.target)
+            let newValue = oldValue.setType(nil)
+            
+            for getterModel in await stateModelRef.getters.values {
+                let getterModelRef = await getterModel.ref!
+                await MainActor.run {
+                    getterModelRef.parameters = [oldValue]
+                    getterModelRef.parameterInput = [oldValue]
+                }
+            }
+            
+            // when
+            try await removeValue(valueModelRef)
+            
+            // then
+            for getterModel in await stateModelRef.getters.values {
+                let getterModelRef = await getterModel.ref!
+                
+                await #expect(getterModelRef.parameters == [newValue])
+                await #expect(getterModelRef.parameterInput == [newValue])
+            }
+        }
+        @Test func setTypeNilOfResult_GetterModel() async throws {
+            // given
+            let stateModelRef = try await createStateModel(projectModelRef)
+            
+            try await #require(stateModelRef.getters.count == 0)
+            
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            try await createGetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.getters.count == 3)
+            
+            // given
+            let oldValue = valueModelRef.target
+            
+            for getterModel in await stateModelRef.getters.values {
+                let getterModelRef = await getterModel.ref!
+                await MainActor.run {
+                    getterModelRef.result = oldValue
+                    getterModelRef.resultInput = oldValue
+                }
+            }
+            
+            // when
+            try await removeValue(valueModelRef)
+            
+            // then
+            for getterModel in await stateModelRef.getters.values {
+                let getterModelRef = await getterModel.ref!
+                
+                await #expect(getterModelRef.result == nil)
+                await #expect(getterModelRef.resultInput == nil)
+            }
+        }
+
+        @Test func setTypeNilOfParameterValue_SetterModel() async throws {
+            // given
+            let stateModelRef = try await createStateModel(projectModelRef)
+            
+            try await #require(stateModelRef.setters.count == 0)
+            
+            try await createSetterModel(stateModelRef)
+            try await createSetterModel(stateModelRef)
+            try await createSetterModel(stateModelRef)
+            
+            try await #require(stateModelRef.setters.count == 3)
+            
+            // given
+            let oldValue = ParameterValue(name: "TEST_NAME",
+                                          type: valueModelRef.target)
+            let newValue = oldValue.setType(nil)
+            
+            for setterModel in await stateModelRef.setters.values {
+                let setterModelRef = await setterModel.ref!
+                await MainActor.run {
+                    setterModelRef.parameters = [oldValue]
+                    setterModelRef.parameterInput = [oldValue]
+                }
+            }
+            
+            // when
+            try await removeValue(valueModelRef)
+            
+            // then
+            for setterModel in await stateModelRef.setters.values {
+                let setterModelRef = await setterModel.ref!
+                
+                await #expect(setterModelRef.parameters == [newValue])
+                await #expect(setterModelRef.parameterInput == [newValue])
+            }
+        }
     }
 }
 
@@ -252,7 +385,6 @@ private func getValueModel(_ budClientRef: BudClient) async throws -> ValueModel
     return valueModelRef
 }
 
-
 // MARK: Helpehrs - action
 private func removeValue(_ valueModelRef: ValueModel) async throws {
     await valueModelRef.startUpdating()
@@ -265,6 +397,98 @@ private func removeValue(_ valueModelRef: ValueModel) async throws {
             }
             
             await valueModelRef.removeValue()
+        }
+    }
+}
+
+private func createStateModel(_ projectModelRef: ProjectModel) async throws -> StateModel {
+    // create SystemModel
+    try await #require(projectModelRef.systems.count == 0)
+    
+    await projectModelRef.startUpdating()
+    try await #require(projectModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await projectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await projectModelRef.createFirstSystem()
+        }
+    }
+    
+    try await #require(projectModelRef.systems.count == 1)
+    
+    // create ObjectModel
+    let systemModelRef = try #require(await projectModelRef.systems.values.first?.ref)
+    try await #require(systemModelRef.objects.count == 0)
+    
+    await systemModelRef.startUpdating()
+    try await #require(systemModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await systemModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await systemModelRef.createRootObject()
+        }
+    }
+    
+    try await #require(systemModelRef.objects.count == 1)
+    
+    // create StateModel
+    let rootObjectModelRef = try #require(await systemModelRef.objects.values.first?.ref)
+    try await #require(rootObjectModelRef.states.count == 0)
+    
+    await rootObjectModelRef.startUpdating()
+    try await #require(rootObjectModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await rootObjectModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await rootObjectModelRef.appendNewState()
+        }
+    }
+    
+    try await #require(rootObjectModelRef.states.count == 1)
+    
+    // return StateModel
+    let stateModelRef = try #require(await rootObjectModelRef.states.values.first?.ref)
+    return stateModelRef
+}
+private func createGetterModel(_ stateModelRef: StateModel) async throws {
+    
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewGetter()
+        }
+    }
+}
+
+private func createSetterModel(_ stateModelRef: StateModel) async throws {
+    await stateModelRef.startUpdating()
+    try await #require(stateModelRef.isUpdating == true)
+    
+    await withCheckedContinuation { continuation in
+        Task {
+            await stateModelRef.setCallback {
+                continuation.resume()
+            }
+            
+            await stateModelRef.appendNewSetter()
         }
     }
 }

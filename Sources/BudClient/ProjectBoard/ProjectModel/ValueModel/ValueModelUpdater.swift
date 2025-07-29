@@ -69,6 +69,9 @@ extension ValueModel {
                     
                     logger.end("modified ValueModel")
                 case .removed:
+                    // cleanUp State, Getter, Setter
+                    updateTypeOfValues(valueModelRef)
+                    
                     // remove ValueModel
                     projectModelRef.values[valueModelRef.target] = nil
                     valueModelRef.delete()
@@ -76,6 +79,78 @@ extension ValueModel {
                     logger.end("removed ValueModel")
                 }
             }
+        }
+        
+        
+        // MARK: helphers
+        private func updateTypeOfValues(_ valueModelRef: ValueModel) {
+            let valueType = valueModelRef.target
+            let projectModelRef = valueModelRef.config.parent.ref!
+            
+            // update StateModel.stateValue
+            let stateModels = projectModelRef.systems.values
+                .compactMap { systemModel in systemModel.ref }
+                .flatMap { $0.objects.values }
+                .compactMap { objectModel in objectModel.ref }
+                .flatMap { $0.states.values }
+            
+            stateModels
+                .compactMap { $0.ref }
+                .filter { $0.stateValue?.type == valueType }
+                .forEach {
+                    let newValue = $0.stateValue?.setType(nil)
+                    $0.stateValue = newValue
+                    $0.stateValueInput = newValue
+                }
+            
+            // update GetterModel.parameters & parameterInput
+            let getterModels = stateModels
+                .compactMap { $0.ref }
+                .flatMap { $0.getters.values }
+            
+            getterModels
+                .compactMap { $0.ref }
+                .forEach { getterModelRef in
+                    getterModelRef.parameters
+                        .enumerated()
+                        .filter { $0.element.type == valueType }
+                        .forEach { (index, parameterValue) in
+                            let newValue = parameterValue.setType(nil)
+                            
+                            getterModelRef.parameters[index] = newValue
+                            getterModelRef.parameterInput[index] = newValue
+                        }
+                }
+            
+            // update GetterModel.result & resultInput
+            getterModels
+                .compactMap { $0.ref }
+                .forEach { getterModelRef in
+                    getterModelRef.result = nil
+                    getterModelRef.resultInput = nil
+                }
+            
+            
+            // update SetterModel.parameters & parameterInput
+            let setterModels = stateModels
+                .compactMap { $0.ref }
+                .flatMap { $0.setters.values }
+            
+            setterModels
+                .compactMap { $0.ref }
+                .forEach { setterModelRef in
+                    setterModelRef.parameters
+                        .enumerated()
+                        .filter { $0.element.type == valueType }
+                        .forEach { (index, parameterValue) in
+                            let newValue = parameterValue.setType(nil)
+                            
+                            setterModelRef.parameters[index] = newValue
+                            setterModelRef.parameterInput[index] = newValue
+                        }
+                }
+            
+            
         }
         
         
