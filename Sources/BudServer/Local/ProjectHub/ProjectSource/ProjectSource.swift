@@ -134,8 +134,6 @@ package final class ProjectSource: ProjectSourceInterface {
                         systemSource.ref?.handler?.execute(.modified(diff))
                     case .removed:
                         // delete SystemSource
-                        self?.cleanUpProjectSource()
-                        
                         me.ref?.systems[data.target] = nil
                         systemSource.ref?.delete()
                         
@@ -299,7 +297,6 @@ package final class ProjectSource: ProjectSourceInterface {
             logger.failure("Firebase ValueSource 문서 생성 실패\n\(error)")
             return
         }
-        
     }
     
     package func removeProject() async {
@@ -310,6 +307,7 @@ package final class ProjectSource: ProjectSourceInterface {
             logger.failure("ProjectSource가 존재하지 않아 실행 취소됩니다.")
             return
         }
+        let projectHubRef = self.owner.ref!
         
         let projectSourceDocRef = Firestore.firestore()
             .collection(DB.ProjectSources).document(self.id.value)
@@ -321,6 +319,12 @@ package final class ProjectSource: ProjectSourceInterface {
             logger.failure("ProjectSource 삭제 실패\n\(error)")
             return
         }
+        
+        // mutate
+        self.cleanUpProjectSource()
+        
+        projectHubRef.projectSources[self.target] = nil
+        self.delete()
     }
     
     
@@ -398,8 +402,8 @@ package final class ProjectSource: ProjectSourceInterface {
         @DocumentID var id: String?
         package var target: ProjectID
         
-        @ServerTimestamp var createdAt: Date?
-        @ServerTimestamp var updatedAt: Date?
+        @ServerTimestamp var createdAt: Timestamp?
+        @ServerTimestamp var updatedAt: Timestamp?
         var order: Int
         
         package var name: String
@@ -425,8 +429,8 @@ package final class ProjectSource: ProjectSourceInterface {
             return .init(id: id,
                          target: self.target,
                          name: self.name,
-                         createdAt: self.createdAt ?? now,
-                         updatedAt: self.updatedAt ?? now,
+                         createdAt: self.createdAt?.dateValue() ?? now,
+                         updatedAt: self.updatedAt?.dateValue() ?? now,
                          order: self.order)
         }
     }

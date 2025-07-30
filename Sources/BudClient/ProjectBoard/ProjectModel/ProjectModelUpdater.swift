@@ -60,14 +60,14 @@ extension ProjectModel {
                 let newConfig = projectModelRef.config.setParent(owner)
                 
                 switch event {
-                // modify ProjectModel
                 case .modified(let diff):
+                    // modify ProjectModel
                     projectModelRef.name = diff.name
                     
                     logger.end("modified ProjectModel")
                     
-                // remove ProjectModel
                 case .removed:
+                    // remove ProjectModel
                     projectModelRef.systems.values
                         .compactMap { $0.ref }
                         .flatMap { $0.objects.values }
@@ -87,8 +87,8 @@ extension ProjectModel {
                     
                     logger.end("removed ProjectModel")
                     
-                // create SystemModel
                 case .systemAdded(let sysDiff):
+                    // create SystemModel
                     guard projectModelRef.systems[sysDiff.target] == nil else {
                         setIssue(Error.alreadyAdded)
                         logger.failure("SystemModel이 이미 존재합니다.")
@@ -106,6 +106,7 @@ extension ProjectModel {
                     logger.end("added SystemModel")
                     
                 case .valueAdded(let diff):
+                    // create ValueModel
                     guard projectModelRef.values[diff.target] == nil else {
                         setIssue(Error.alreadyAdded)
                         logger.failure("추가된 ValueModel이 이미 존재합니다.")

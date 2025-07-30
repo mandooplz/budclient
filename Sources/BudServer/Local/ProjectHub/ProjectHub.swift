@@ -8,6 +8,7 @@ import Foundation
 import Values
 import Collections
 import FirebaseFirestore
+import FirebaseAuth
 
 private let logger = BudLogger("ProjectHub")
 
@@ -55,6 +56,7 @@ package final class ProjectHub: ProjectHubInterface {
             .addSnapshotListener { snapshot, error in
                 guard let snapshot else {
                     logger.failure(error!)
+                    logger.failure("\(Auth.auth().currentUser)의 ProjectSource snapshot이 없습니다.")
                     return
                 }
                 
@@ -77,11 +79,6 @@ package final class ProjectHub: ProjectHubInterface {
                     switch change.type {
                     case .added:
                         // create ProjectSource
-                        let projectSourceRef = ProjectSource(id: projectSource,
-                                                             target: data.target,
-                                                             owner: me)
-                        me.ref?.projectSources[data.target] = projectSourceRef.id
-                        
                         me.ref?.handler?.execute(.projectAdded(diff))
                     case .modified:
                         // notify
@@ -91,10 +88,6 @@ package final class ProjectHub: ProjectHubInterface {
                             logger.failure("ProjectSource가 존재하지 않아 update가 취소되었습니다.")
                             return
                         }
-                        
-                        // remove ProjectSource
-                        projectSourceRef.delete()
-                        me.ref?.projectSources[data.target] = nil
                         
                         // notify
                         projectSource.ref?.handlers?.execute(.removed)
@@ -117,7 +110,7 @@ package final class ProjectHub: ProjectHubInterface {
     package func synchronize() async {
         logger.start()
         
-        logger.failure("Firebase에서 알아서 처리됨")
+        
     }
     
     package func createProject() {
@@ -125,19 +118,29 @@ package final class ProjectHub: ProjectHubInterface {
         
         let db = Firestore.firestore()
         
+        let projectSource: ProjectSource.ID
+        let target: ProjectID
         do {
             let newProjectName = "Project \(Int.random(in: 1..<1000))"
             
-            // create ProjectSource in Firestore
             let data = ProjectSource.Data(name: newProjectName,
                                           creator: self.user)
             
-            try db.collection(DB.ProjectSources)
+            let docRef = try db.collection(DB.ProjectSources)
                 .addDocument(from: data)
+            
+            projectSource = ProjectSource.ID(docRef.documentID)
+            target = data.target
         } catch {
             logger.failure(error)
             return
         }
+        
+        // mutate
+        let projectSourceRef = ProjectSource(id: projectSource,
+                                             target: target,
+                                             owner: self.id)
+        self.projectSources[target] = projectSourceRef.id
     }
     
     

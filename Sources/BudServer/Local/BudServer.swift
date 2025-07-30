@@ -56,15 +56,16 @@ package final class BudServer: BudServerInterface {
     
     package var accountHub = AccountHub.shared.id
     
-    private var projectHubRef: ProjectHub?
+    private var projectHubs: [UserID: ProjectHub.ID] = [:]
     package func getProjectHub(_ user: UserID) -> ProjectHub.ID {
-        guard let projectHubRef else {
+        // user가 signOut
+        guard let projectHub = projectHubs[user] else {
             let newProjectHubRef = ProjectHub(user: user)
-            self.projectHubRef = newProjectHubRef
+            self.projectHubs[user] = newProjectHubRef.id
             return newProjectHubRef.id
         }
         
-        return projectHubRef.id
+        return projectHub
     }
     
     
