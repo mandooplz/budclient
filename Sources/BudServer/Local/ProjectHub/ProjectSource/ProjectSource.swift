@@ -398,8 +398,8 @@ package final class ProjectSource: ProjectSourceInterface {
         @DocumentID var id: String?
         package var target: ProjectID
         
-        @ServerTimestamp var createdAt: Timestamp?
-        @ServerTimestamp var updatedAt: Timestamp?
+        @ServerTimestamp var createdAt: Date?
+        @ServerTimestamp var updatedAt: Date?
         var order: Int
         
         package var name: String
@@ -425,8 +425,8 @@ package final class ProjectSource: ProjectSourceInterface {
             return .init(id: id,
                          target: self.target,
                          name: self.name,
-                         createdAt: self.createdAt?.dateValue() ?? now,
-                         updatedAt: self.updatedAt?.dateValue() ?? now,
+                         createdAt: self.createdAt ?? now,
+                         updatedAt: self.updatedAt ?? now,
                          order: self.order)
         }
     }
